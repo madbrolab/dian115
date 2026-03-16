@@ -1,2 +1,0 @@
-p115client==0.0.8.4.6
-httpx[http2]
