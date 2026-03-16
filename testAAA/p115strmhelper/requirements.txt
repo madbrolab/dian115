@@ -1,0 +1,16 @@
+orjson~=3.11.7
+p115client==0.0.8.4.6
+p115rsacipher==0.0.1
+python-sqlitedict==0.0.3
+nullbr~=1.0.9
+sentry-sdk~=2.54.0
+aligo~=6.2.8
+qrcode_terminal~=0.8
+pyahocorasick~=2.3.0
+diskcache~=5.6.3
+zstandard~=0.25.0
+mfusepy~=3.1.0
+p115center-sdk==0.0.12
+full_strm_sync==0.1.4
+numpy
+httpx[http2]

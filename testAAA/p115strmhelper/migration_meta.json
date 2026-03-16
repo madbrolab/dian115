@@ -1,0 +1,8 @@
+{
+    "version": "1.0.3",
+    "revision": "c76c9a1f52dc",
+    "models": "db_manager.models",
+    "script_location": "database",
+    "version_location": "database.versions",
+    "db_file_name": "p115strmhelper_file.db"
+}

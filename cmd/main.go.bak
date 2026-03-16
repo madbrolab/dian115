@@ -1,0 +1,332 @@
+package main
+
+import (
+	"flag"
+	"fmt"
+	"log"
+	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
+	"time"
+
+	"strm-manager/internal/api"
+	"strm-manager/internal/client"
+	"strm-manager/internal/config"
+	"strm-manager/internal/model"
+	"strm-manager/internal/service"
+	"strm-manager/internal/store"
+)
+
+var (
+	dbPath  = flag.String("db", "/config/dian115.db", "数据库路径")
+	version = flag.Bool("version", false, "显示版本信息")
+)
+
+const (
+	appVersion = "1.0.0"
+	appName    = "115 STRM Manager"
+)
+
+func main() {
+	flag.Parse()
+
+	if *version {
+		fmt.Printf("%s v%s\n", appName, appVersion)
+		os.Exit(0)
+	}
+
+	log.Printf("启动 %s v%s", appName, appVersion)
+
+	// 从环境变量加载基本配置（端口等）
+	cfg := config.LoadFromEnv()
+
+	// 初始化数据库
+	db, err := store.New(*dbPath)
+	if err != nil {
+		log.Fatalf("初始化数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	log.Printf("数据库路径: %s", *dbPath)
+
+	// 从数据库加载设置
+	cd2Host, _ := db.GetSetting("cd2_host")
+	cd2Username, _ := db.GetSetting("cd2_username")
+	cd2Password, _ := db.GetSetting("cd2_password")
+	cd2APIToken, _ := db.GetSetting("cd2_api_token")
+	cd2UseAPIToken, _ := db.GetSetting("cd2_use_api_token")
+	cd2MountPrefix, _ := db.GetSetting("cd2_mount_prefix")
+	cookie115, _ := db.GetSetting("115_cookie")
+
+	// 初始化CloudDrive2客户端
+	var cd2 *client.CloudDriveClient
+	if cd2UseAPIToken == "true" && cd2APIToken != "" {
+		log.Printf("使用API Token连接CloudDrive2")
+		cd2 = client.NewCloudDriveClientWithToken(cd2Host, cd2APIToken)
+	} else {
+		log.Printf("使用用户名密码连接CloudDrive2")
+		cd2 = client.NewCloudDriveClient(cd2Host, cd2Username, cd2Password)
+	}
+
+	// 初始化115客户端
+	userAgent := "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+	driver115 := client.NewDriver115Client(cookie115, userAgent)
+
+	// 通过环境变量 DEBUG=true 开启全局调试日志
+	debugMode := os.Getenv("DEBUG") == "true"
+	if debugMode {
+		driver115.SetDebug(true)
+		log.Printf("[Debug] 全局调试日志已开启")
+	}
+
+	// 从数据库加载115 API QPS限制
+	if qpsStr, _ := db.GetSetting("115_api_qps"); qpsStr != "" {
+		if qps, err := strconv.Atoi(qpsStr); err == nil && qps > 0 {
+			driver115.SetRateLimit(qps)
+			log.Printf("[Settings] 115 API QPS限制: %d", qps)
+		}
+	}
+
+	// 初始化服务
+	loggerSvc := service.NewLoggerService(db)
+	strmSvc := service.NewSTRMService(db, cd2, cd2MountPrefix)
+	strmSvc.SetLogger(loggerSvc)
+	treeSvc := service.NewTreeService(db, driver115, cd2MountPrefix)
+	treeSvc.SetLogger(loggerSvc)
+	cleanerSvc := service.NewCleanerService()
+	cleanerSvc.SetLogger(loggerSvc)
+	strmSvc.SetTreeService(treeSvc)
+	strmSvc.SetCleanerService(cleanerSvc)
+	monitorSvc := service.NewMonitorService(db, cd2, strmSvc)
+	monitorSvc.SetLogger(loggerSvc)
+	monitorSvc.SetTreeService(treeSvc)
+	monitorSvc.SetCleanerService(cleanerSvc)
+	schedulerSvc := service.NewSchedulerService(db, strmSvc)
+	schedulerSvc.SetLogger(loggerSvc)
+	schedulerSvc.SetTreeService(treeSvc)
+
+	// 初始化全局工作队列（队列容量100，最大3个并发worker）
+	workQueue := service.NewWorkQueue(100, 3, loggerSvc)
+	workQueue.Start()
+	monitorSvc.SetWorkQueue(workQueue)
+	schedulerSvc.SetWorkQueue(workQueue)
+
+	// 从数据库加载第一个启用的Emby配置创建主实例
+	var embySvc *service.EmbyProxyService
+	proxies, err := db.GetEnabledEmbyProxies()
+	if err == nil && len(proxies) > 0 {
+		proxy := proxies[0]
+		embySvc, err = service.NewEmbyProxyServiceWithOptions(
+			proxy.EmbyHost,
+			proxy.APIKey,
+			proxy.LocalOnly,
+			proxy.FallbackLocal,
+			proxy.CloudName,
+			cfg, db, driver115, cd2,
+		)
+		if err != nil {
+			log.Printf("初始化Emby代理失败: %v", err)
+			embySvc = nil
+		} else {
+			log.Printf("已加载Emby配置: %s -> %s", proxy.Name, proxy.EmbyHost)
+		}
+	} else {
+		log.Printf("未找到Emby配置，Emby功能将不可用")
+	}
+
+	if embySvc != nil {
+		embySvc.SetLogger(loggerSvc)
+	}
+	// 注入Emby服务到其他服务
+	strmSvc.SetEmbyService(embySvc)
+	monitorSvc.SetEmbyService(embySvc)
+
+	// 记录系统启动日志
+	loggerSvc.LogSystem(model.LogLevelInfo, "系统启动", map[string]string{
+		"version": appVersion,
+		"db_path": *dbPath,
+	})
+
+	// 创建API服务器
+	server := api.NewServer(cfg, db, cd2, driver115, strmSvc, monitorSvc, embySvc, loggerSvc)
+	server.SetTreeService(treeSvc)
+	server.SetupRouter()
+
+	// 启动定时同步服务
+	if err := schedulerSvc.Start(); err != nil {
+		log.Printf("启动定时同步服务失败: %v", err)
+	}
+
+	// 启动Cookie健康检查（启动时检查一次，然后每30分钟检查一次）
+	go func() {
+		checkCookies := func() {
+			accounts, err := db.GetAllAccounts115()
+			if err != nil || len(accounts) == 0 {
+				return
+			}
+			log.Printf("[CookieCheck] 开始检查 %d 个账号的Cookie有效性...", len(accounts))
+			validCount := 0
+			invalidCount := 0
+			allInvalid := true
+			for _, account := range accounts {
+				status := model.CookieStatusInvalid
+				if _, err := driver115.CheckCookieValid(account.Cookie); err == nil {
+					status = model.CookieStatusValid
+					allInvalid = false
+					validCount++
+					log.Printf("[CookieCheck] 账号 %s (ID:%d) Cookie有效 ✓", account.Name, account.ID)
+				} else {
+					invalidCount++
+					log.Printf("[CookieCheck] 账号 %s (ID:%d) Cookie已失效 ✗", account.Name, account.ID)
+				}
+				db.UpdateAccount115CookieStatus(account.ID, status)
+			}
+			log.Printf("[CookieCheck] 检查完成: 共%d个账号, 有效%d个, 失效%d个", len(accounts), validCount, invalidCount)
+			if invalidCount > 0 {
+				loggerSvc.Log115(model.LogCategoryFail, model.LogLevelWarning, fmt.Sprintf("Cookie检查: %d个有效, %d个失效", validCount, invalidCount), nil)
+			}
+			// 自动切换逻辑
+			autoSwitch, _ := db.GetSetting("115_auto_switch")
+			if autoSwitch == "true" {
+				activeAccount, _ := db.GetActiveAccount115()
+				if activeAccount != nil && activeAccount.CookieStatus != model.CookieStatusValid {
+					nextAccount, _ := db.GetNextValidAccount115(activeAccount.ID)
+					if nextAccount != nil {
+						db.SetActiveAccount115(nextAccount.ID)
+						driver115.SetCookie(nextAccount.Cookie)
+						log.Printf("[CookieCheck] 已自动切换到账号: %s (ID:%d)", nextAccount.Name, nextAccount.ID)
+						loggerSvc.Log115(model.LogCategorySuccess, model.LogLevelInfo, "Cookie失效，已自动切换到: "+nextAccount.Name, nil)
+					} else if allInvalid {
+						log.Printf("[CookieCheck] 所有Cookie均已失效，无可用账号")
+						loggerSvc.Log115(model.LogCategoryError, model.LogLevelError, "所有115 Cookie均已失效", nil)
+					}
+				}
+			}
+		}
+		// 启动时检查一次
+		checkCookies()
+		// 每30分钟检查一次
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			checkCookies()
+		}
+	}()
+
+	// 每日自动签到（每天凌晨0:05执行）
+	go func() {
+		autoSign := func() {
+			accounts, err := db.GetAllAccounts115()
+			if err != nil {
+				log.Printf("[AutoSign] 获取账号列表失败: %v", err)
+				return
+			}
+			signCount := 0
+			skipCount := 0
+			failCount := 0
+			log.Printf("[AutoSign] 开始执行每日签到，共%d个账号...", len(accounts))
+			for _, account := range accounts {
+				if !account.AutoSign {
+					log.Printf("[AutoSign] 账号 %s 未开启自动签到，跳过", account.Name)
+					skipCount++
+					continue
+				}
+				if account.CookieStatus == model.CookieStatusInvalid {
+					log.Printf("[AutoSign] 账号 %s Cookie已失效，跳过", account.Name)
+					skipCount++
+					continue
+				}
+				msg, err := driver115.UserSign(account.Cookie, account.UserID)
+				if err != nil {
+					log.Printf("[AutoSign] 账号 %s 签到失败: %v", account.Name, err)
+					failCount++
+				} else {
+					log.Printf("[AutoSign] 账号 %s 签到成功: %s", account.Name, msg)
+					signCount++
+				}
+			}
+			log.Printf("[AutoSign] 签到完成: 成功%d个, 失败%d个, 跳过%d个", signCount, failCount, skipCount)
+			if signCount > 0 || failCount > 0 {
+				loggerSvc.Log115(model.LogCategoryNormal, model.LogLevelInfo, fmt.Sprintf("每日签到: 成功%d个, 失败%d个, 跳过%d个", signCount, failCount, skipCount), nil)
+			}
+		}
+		// 计算到明天0:05的时间
+		now := time.Now()
+		next := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 5, 0, 0, now.Location())
+		waitDuration := time.Until(next)
+		log.Printf("[AutoSign] 每日签到已启动，下次执行时间: %s (等待 %v)", next.Format("2006-01-02 15:04:05"), waitDuration.Round(time.Minute))
+		time.Sleep(waitDuration)
+		autoSign()
+		// 之后每24小时执行一次
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			autoSign()
+		}
+	}()
+
+	// 自动启动文件监控服务（如果有实时监控规则则自动启动）
+	realtimeRules, _ := db.GetRulesBySyncMode(model.SyncModeRealtime)
+	if len(realtimeRules) > 0 {
+		log.Printf("检测到 %d 个实时监控规则，自动启动文件监控服务...", len(realtimeRules))
+		if err := monitorSvc.Start(); err != nil {
+			log.Printf("自动启动监控服务失败: %v", err)
+		}
+	}
+
+	// 自动启动本地STRM监控服务（如果有本地监控规则则自动启动）
+	localMonitorRules, _ := db.GetRulesBySyncMode(model.SyncModeLocalMonitor)
+	if len(localMonitorRules) > 0 {
+		log.Printf("检测到 %d 个本地STRM监控规则，自动启动本地监控服务...", len(localMonitorRules))
+		localMonitorSvc := service.NewLocalSTRMMonitor(db)
+		if err := localMonitorSvc.Start(); err != nil {
+			log.Printf("自动启动本地监控服务失败: %v", err)
+		}
+	}
+
+	// 启动主服务
+	addr := fmt.Sprintf("%s:%d", cfg.Server.Host, cfg.Server.Port)
+	log.Printf("管理界面: http://%s", addr)
+
+	// 在后台启动主HTTP服务
+	go func() {
+		if err := server.Run(addr); err != nil {
+			log.Fatalf("主服务启动失败: %v", err)
+		}
+	}()
+
+	// 启动Emby代理服务（使用主实例）
+	if embySvc != nil && len(proxies) > 0 {
+		go startEmbyProxy(server, proxies[0])
+	}
+
+	// 等待退出信号
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("正在关闭服务...")
+	schedulerSvc.Stop()
+	monitorSvc.Stop()
+	workQueue.Stop()
+}
+
+// startEmbyProxy 启动Emby代理服务（使用主实例）
+func startEmbyProxy(server *api.Server, proxy *model.EmbyProxy) {
+	addr := fmt.Sprintf(":%d", proxy.ProxyPort)
+	modeStr := "302跳转"
+	if proxy.LocalOnly {
+		modeStr = "本地代理"
+	} else if proxy.FallbackLocal {
+		modeStr = "302跳转(失败回退本地)"
+	}
+	cloudInfo := ""
+	if proxy.CloudName != "" {
+		cloudInfo = fmt.Sprintf(", 云盘: %s", proxy.CloudName)
+	}
+	log.Printf("启动Emby代理: %s -> %s (端口 %d, 模式: %s%s)", proxy.Name, proxy.EmbyHost, proxy.ProxyPort, modeStr, cloudInfo)
+	if err := server.RunEmbyProxyWithOptions(addr, proxy.EmbyHost, proxy.APIKey, proxy.LocalOnly, proxy.FallbackLocal, proxy.CloudName); err != nil {
+		log.Printf("Emby代理 %s 启动失败: %v", proxy.Name, err)
+	}
+}

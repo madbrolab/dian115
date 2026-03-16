@@ -1,0 +1,27 @@
+services:
+  strm-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: strm-manager:latest
+    container_name: strm-manager
+    restart: unless-stopped
+    network_mode: host  # 使用host网络模式，可以访问宿主机网络
+    # ports:  # host模式下不需要端口映射
+    #   - "8095:8095"   # 管理界面
+    #   - "8098:8098"   # Emby代理（默认）
+    volumes:
+      # 配置文件目录
+      - ./config:/config
+      # STRM输出目录 - 根据实际情况修改
+      - /mnt/user/media:/媒体库
+      - /mnt/cache/CloudNAS:/CloudNAS
+    environment:
+      - TZ=Asia/Shanghai
+      - DEBUG=true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8095/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

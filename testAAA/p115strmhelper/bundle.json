@@ -1,0 +1,18 @@
+{
+  "top_level_packages": [
+    "p115client",
+    "p115rsacipher",
+    "qrcode_terminal",
+    "qrcode-terminal"
+  ],
+  "rules": [
+    {
+      "strategy": "author_match",
+      "value": "ChenyangGao"
+    },
+    {
+      "strategy": "package_name_match",
+      "value": ["qrcode_terminal", "qrcode-terminal"]
+    }
+  ]
+}
