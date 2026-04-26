@@ -39,31 +39,12 @@
 ### 订阅管理
 ![订阅管理](screenshots/subscribe.png)
 
-### 文件管理
-![文件管理](screenshots/file-manager.png)
-
-### 卫星任务
-![卫星任务](screenshots/satellite.png)
-
-### 115 账号管理
-![115账号](screenshots/account-115.png)
-
-### 系统设置
-![系统设置](screenshots/settings.png)
-
-### 插件 - 文件秒传
-![文件秒传](screenshots/rapid-upload.png)
-
 ### 插件 - Telegram 频道监控
 ![TG频道监控](screenshots/tg-monitor.png)
-
-### 插件 - Emby 封面生成
-![封面生成](screenshots/emby-cover.png)
 
 
 </details>
 
-> 💡 **提示**：请将截图文件放入 `screenshots/` 目录中，文件名与上述路径对应即可显示。
 
 ---
 
