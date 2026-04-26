@@ -18,11 +18,13 @@
 </p>
 
 ---
+<p align="center">
+  <a href="https://t.me/dian115group">
+    <img src="https://img.shields.io/badge/Telegram-群组-26A5E4?logo=telegram&logoColor=white" alt="点击加入Telegram Group" />
+  </a>
+</p>
 
 ## 📸 界面预览
-
-<details>
-<summary><b>🖥️ 点击展开查看截图</b></summary>
 
 ### 仪表盘
 ![仪表盘](screenshots/dashboard.png)
@@ -41,9 +43,6 @@
 
 ### 插件 - Telegram 频道监控
 ![TG频道监控](screenshots/tg-monitor.png)
-
-
-</details>
 
 
 ---
