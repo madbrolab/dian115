@@ -20,7 +20,7 @@
 ---
 <p align="center">
   <a href="https://t.me/dian115group">
-    <img src="https://img.shields.io/badge/Telegram-群组-26A5E4?logo=telegram&logoColor=white" alt="点击加入Telegram Group" />
+    <img src="https://img.shields.io/badge/Telegram-群组-26A5E4?logo=telegram&logoColor=white" alt="Telegram Group" />
   </a>
 </p>
 
