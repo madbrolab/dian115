@@ -192,7 +192,7 @@ services:
     volumes:
       - ./config:/config        # 配置目录
       - ./media:/media          # 需与 Emby 媒体库挂载路径保持一致
-      - ./CloudNAS:/CloudNAS    # CD2 挂载目录
+      - ./CloudNAS:/CloudNAS:shared    # CD2 挂载目录
 ```
 
 2. 启动服务：
