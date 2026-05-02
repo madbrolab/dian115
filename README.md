@@ -219,7 +219,7 @@ http://<你的IP>:8095
 进入 **系统设置 → 基础设置**：
 - 填写 CD2 地址（如 `http://localhost:19798`）
 - 填写 CD2 API Token
-- 设置 115 网盘挂载前缀（如 `/CloudNAS/CloudDrive`）
+- 设置 115 网盘挂载前缀（如 `/CloudNAS/CloudDrive/open115`）
 
 ### 3. Emby 代理配置
 
