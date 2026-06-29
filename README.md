@@ -160,7 +160,7 @@ mkdir dian115 && cd dian115
 ```yaml
 services:
   dian115:
-    image: yjnas/dian115
+    image: madbrolab/dian115
     container_name: dian115
     restart: unless-stopped
     network_mode: host  # 默认使用 host 网络模式；若使用 bridge 模式，请自行映射 8095 端口及所需反代端口
