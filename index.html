@@ -1,0 +1,1689 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>dian115 使用说明书</title>
+  <meta name="description" content="dian115 部署、路径映射、115、CloudDrive2、Emby、STRM、订阅、整理、插件与 Madby 配置说明。">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f8;
+      --paper: #ffffff;
+      --paper-soft: #f7fafc;
+      --paper-blue: #eef5ff;
+      --ink: #17212b;
+      --text: #26333f;
+      --muted: #64707d;
+      --faint: #8b97a5;
+      --line: #dbe3eb;
+      --line-strong: #c7d3df;
+      --green: #0c8b67;
+      --blue: #2868c7;
+      --amber: #a96300;
+      --red: #bc3a3a;
+      --code-bg: #101826;
+      --sidebar: #111c28;
+      --sidebar-soft: #182638;
+      --sidebar-text: #e8f0f7;
+      --sidebar-muted: #aab8c8;
+      --shadow: 0 18px 48px rgba(20, 32, 46, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.68;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code,
+    pre,
+    kbd {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      padding: 2px 5px;
+      border: 1px solid #d5e0eb;
+      border-radius: 5px;
+      background: #f3f7fb;
+      color: #17314f;
+      overflow-wrap: anywhere;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 12px 0 0;
+      padding: 16px;
+      border-radius: 8px;
+      background: var(--code-bg);
+      color: #e5eefb;
+      font-size: 13px;
+      line-height: 1.58;
+      white-space: pre;
+    }
+
+    pre code {
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: inherit;
+      overflow-wrap: normal;
+    }
+
+    .manual-shell {
+      display: grid;
+      grid-template-columns: 316px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .manual-sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+      padding: 22px 18px;
+      background: var(--sidebar);
+      color: var(--sidebar-text);
+      border-right: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+    }
+
+    .brand img {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: cover;
+    }
+
+    .brand strong {
+      display: block;
+      color: #fff;
+      font-size: 18px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: var(--sidebar-muted);
+      font-size: 12px;
+    }
+
+    .side-block {
+      margin-top: 18px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 8px;
+      background: var(--sidebar-soft);
+    }
+
+    .side-block h2 {
+      margin: 0 0 10px;
+      color: #fff;
+      font-size: 13px;
+      letter-spacing: 0;
+    }
+
+    .side-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--sidebar-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .side-list strong {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .side-nav {
+      display: grid;
+      gap: 4px;
+      margin-top: 18px;
+    }
+
+    .side-nav a {
+      display: flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 6px 10px;
+      border-radius: 7px;
+      color: var(--sidebar-muted);
+      font-size: 13px;
+    }
+
+    .side-nav a:hover {
+      background: rgba(255, 255, 255, .08);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .manual-content {
+      min-width: 0;
+      width: min(100%, 1180px);
+      padding: 34px clamp(22px, 4vw, 58px) 72px;
+    }
+
+    .doc-header {
+      padding: 0 0 26px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 54px);
+      line-height: 1.1;
+    }
+
+    .lead {
+      max-width: 900px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .doc-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 9px;
+      border: 1px solid #cad8e6;
+      border-radius: 999px;
+      background: #fff;
+      color: #415160;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    section {
+      scroll-margin-top: 18px;
+      margin-top: 34px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 34px);
+      line-height: 1.18;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    h4 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .quiet {
+      color: var(--faint);
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.four {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .panel {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: 0 8px 22px rgba(20, 32, 46, .04);
+    }
+
+    .panel.soft {
+      background: var(--paper-soft);
+    }
+
+    .panel.blue {
+      border-color: #cbdcf2;
+      background: var(--paper-blue);
+    }
+
+    .stat {
+      display: grid;
+      gap: 4px;
+      min-height: 96px;
+    }
+
+    .stat strong {
+      color: var(--ink);
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .flow-node {
+      min-height: 112px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .flow-node small {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .field-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .field-list li {
+      position: relative;
+      padding-left: 22px;
+    }
+
+    .field-list li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+    }
+
+    .field-list strong {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .steps {
+      counter-reset: step;
+      display: grid;
+      gap: 14px;
+    }
+
+    .step {
+      counter-increment: step;
+      position: relative;
+      padding-left: 54px;
+    }
+
+    .step::before {
+      content: counter(step);
+      position: absolute;
+      left: 18px;
+      top: 18px;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--green);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .callout {
+      padding: 14px 16px;
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      background: #eef8f4;
+      color: #173c31;
+    }
+
+    .callout.warn {
+      border-left-color: var(--amber);
+      background: #fff7e8;
+      color: #493214;
+    }
+
+    .callout.danger {
+      border-left-color: var(--red);
+      background: #fff1f1;
+      color: #512020;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 11px 13px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: #eef3f7;
+      color: var(--ink);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .dense-table td,
+    .dense-table th {
+      padding: 9px 11px;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .module {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .module-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .module-head span {
+      color: var(--faint);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .key-value {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .kv-row {
+      display: grid;
+      grid-template-columns: 150px minmax(0, 1fr);
+      gap: 12px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .kv-row:first-child {
+      padding-top: 0;
+      border-top: none;
+    }
+
+    .kv-key {
+      color: var(--ink);
+      font-weight: 800;
+    }
+
+    .kv-value {
+      min-width: 0;
+      color: var(--muted);
+    }
+
+    .footer {
+      margin-top: 44px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1120px) {
+      .manual-shell {
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+
+      .flow,
+      .grid.four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 920px) {
+      .manual-shell {
+        display: block;
+      }
+
+      .manual-sidebar {
+        position: relative;
+        height: auto;
+        max-height: none;
+      }
+
+      .side-nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .manual-content {
+        padding: 26px 18px 56px;
+      }
+
+      .grid,
+      .grid.two,
+      .grid.four,
+      .module-grid,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .kv-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .side-nav {
+        grid-template-columns: 1fr;
+      }
+
+      .panel,
+      .module,
+      .step {
+        padding: 15px;
+      }
+
+      .step {
+        padding-left: 15px;
+        padding-top: 52px;
+      }
+
+      .step::before {
+        left: 15px;
+        top: 15px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="manual-shell">
+    <aside class="manual-sidebar" aria-label="说明书目录">
+      <a class="brand" href="#top" aria-label="返回顶部">
+        <img src="assets/logo.png" alt="dian115 logo">
+        <span>
+          <strong>dian115</strong>
+          <span>食用说明</span>
+        </span>
+      </a>
+
+      <div class="side-block">
+        <h2>部署基准</h2>
+        <ul class="side-list">
+          <li><strong>管理端：</strong><code>8095</code></li>
+          <li><strong>Emby 代理：</strong><code>8098</code></li>
+          <li><strong>Navidrome 代理：</strong><code>4534</code></li>
+          <li><strong>核心挂载：</strong><code>/CloudNAS</code></li>
+          <li><strong>配置目录：</strong><code>/config</code></li>
+          <li><strong>媒体目录：</strong><code>/media</code></li>
+        </ul>
+      </div>
+
+      <div class="side-block">
+        <h2>路径原则</h2>
+        <ul class="side-list">
+          <li>CD2、dian115、Emby 都要能看到同一套 <strong>/CloudNAS</strong> 和媒体目录。</li>
+          <li>STRM 云盘名称填写 CD2 里的实际云盘名，例如 <strong>115open</strong>。</li>
+          <li>CD2 挂载前缀填写完整路径，例如 <strong>/CloudNAS/CloudDrive/open115</strong>。</li>
+        </ul>
+      </div>
+
+      <nav class="side-nav" aria-label="页面章节">
+        <a href="#overview">01 功能总览</a>
+        <a href="#prepare">02 准备工作</a>
+        <a href="#deploy">03 部署启动</a>
+        <a href="#paths">04 路径与权限</a>
+        <a href="#initial">05 初始配置</a>
+        <a href="#strm">06 STRM 规则</a>
+        <a href="#emby">07 Emby 与 Madby</a>
+        <a href="#subscribe">08 订阅系统</a>
+        <a href="#organize">09 媒体整理</a>
+        <a href="#plugins">10 插件中心</a>
+        <a href="#tools">11 辅助工具</a>
+        <a href="#ops">12 运维排查</a>
+      </nav>
+    </aside>
+
+    <main id="top" class="manual-content">
+      <header class="doc-header">
+        <p class="eyebrow">使用说明书</p>
+        <h1>dian115 使用说明</h1>
+        <p class="lead">
+          本页按项目前端配置入口整理，重点说明每个模块负责什么、关键字段怎么填、路径如何保持一致，以及 Emby、CloudDrive2、115、STRM、订阅、整理和插件之间的协作关系。
+        </p>
+        <div class="doc-meta" aria-label="文档关键词">
+          <span class="pill">CloudDrive2</span>
+          <span class="pill">115 账号</span>
+          <span class="pill">STRM</span>
+          <span class="pill">Emby 302 代理</span>
+          <span class="pill">PT / 聚合订阅</span>
+          <span class="pill">媒体整理</span>
+          <span class="pill">Madby 插件</span>
+        </div>
+      </header>
+
+      <section id="overview">
+        <div class="section-title">
+          <h2>功能总览</h2>
+        </div>
+
+        <div class="flow" aria-label="系统数据流">
+          <div class="flow-node">
+            <small>01</small>
+            <h3>115 网盘</h3>
+            <p class="muted">提供文件、分享、离线、秒传、签到和资源转存能力。</p>
+          </div>
+          <div class="flow-node">
+            <small>02</small>
+            <h3>CloudDrive2</h3>
+            <p class="muted">把 115 目录挂载到 <code>/CloudNAS</code>，并给 dian115 提供目录树和路径基础。</p>
+          </div>
+          <div class="flow-node">
+            <small>03</small>
+            <h3>dian115</h3>
+            <p class="muted">管理账号、STRM、302 代理、订阅、整理、插件任务和对外 API。</p>
+          </div>
+          <div class="flow-node">
+            <small>04</small>
+            <h3>Emby / Navidrome</h3>
+            <p class="muted">读取本地媒体目录或 STRM 文件，客户端通过代理端口播放。</p>
+          </div>
+          <div class="flow-node">
+            <small>05</small>
+            <h3>Madby 插件</h3>
+            <p class="muted">在 Emby 内增强 FFP、媒体流、字幕、封面、维护和体验能力。</p>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:14px">
+          <table>
+            <thead>
+              <tr>
+                <th>入口</th>
+                <th>主要能力</th>
+                <th>配置后得到什么</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>首页 / 仪表盘</td>
+                <td>查看系统资源、115 状态、重定向统计、同步任务、播放会话和近期运行情况。</td>
+                <td>判断服务是否可用、代理是否命中、任务是否堆积。</td>
+              </tr>
+              <tr>
+                <td>115 账号</td>
+                <td>扫码或 Cookie 登录、多账号备用、自动签到、账号切换、QPS 限制、离线目录和安全码。</td>
+                <td>为转存、直链、秒传、同播复制、分享解析提供账号凭证。</td>
+              </tr>
+              <tr>
+                <td>STRM 规则</td>
+                <td>从 CD2/115 源路径生成 STRM、维护目录树、定时或实时同步、清理失效文件和同步字幕。</td>
+                <td>Emby 可扫描本地 STRM 文件，播放时再由 dian115 转成网盘直链。</td>
+              </tr>
+              <tr>
+                <td>我的媒体</td>
+                <td>配置 Emby 代理、浏览媒体库、分享媒体、音乐代理、Navidrome 目录树。</td>
+                <td>客户端连接代理端口播放，或把媒体库资源推送到其他渠道。</td>
+              </tr>
+              <tr>
+                <td>订阅 / PT 站点</td>
+                <td>TMDB 发现、PT 站点认证、下载器、质量规则、RSS/搜索匹配、聚合订阅。</td>
+                <td>持续追踪电影和剧集，自动寻找、下载、转存或落地资源。</td>
+              </tr>
+              <tr>
+                <td>媒体整理</td>
+                <td>识别文件名、TMDB 匹配、AI 增强、移动/硬链接、命名模板、洗版、多版本、分类和历史记录。</td>
+                <td>把下载目录整理成 Emby 友好的电影、剧集、动漫目录结构。</td>
+              </tr>
+              <tr>
+                <td>插件中心</td>
+                <td>秒传、Telegram 监控、Emby 封面、通知、PT 刷流、癫影、PT 统计、Emby 媒体画像。</td>
+                <td>按需补充自动化能力，不需要的功能可以不配置。</td>
+              </tr>
+              <tr>
+                <td>系统设置</td>
+                <td>CD2、HTTP 代理、FlareSolverr、OpenAPI Key、Webhook、AI、词表、并发和日志。</td>
+                <td>打通外部服务、认证和后台任务运行参数。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="prepare">
+        <div class="section-title">
+          <h2>准备工作</h2>
+        </div>
+
+        <div class="steps">
+          <article class="panel step">
+            <h3>安装 CloudDrive2 并挂载 115</h3>
+            <p>登录 115 账号后添加挂载点。源目录直接选择 115 根目录，挂载点选择 <code>/CloudNAS</code>，高级设置里的权限位置填写 <code>0777</code>。</p>
+            <ul class="field-list">
+              <li><strong>本地目录映射：</strong>宿主机目录需要先映射到 CD2 容器的 <code>/CloudNAS</code>，dian115 再挂载同一个宿主机目录。</li>
+              <li><strong>API Key：</strong>在 CD2 里申请 API Key，建议直接申请根目录权限，避免后续目录树读取不完整。</li>
+              <li><strong>云盘名称：</strong>记住 CD2 中显示的云盘名称，例如 <code>115open</code>，后续 STRM 和 Navidrome 都会用到。</li>
+            </ul>
+          </article>
+
+          <article class="panel step">
+            <h3>安装 Emby 和 Madby 插件</h3>
+            <p>Emby 需要映射媒体目录和 <code>/CloudNAS</code>。媒体目录用于扫描 STRM 或整理后的文件，<code>/CloudNAS</code> 用于 Madby 和路径匹配。</p>
+            <ul class="field-list">
+              <li><strong>媒体路径：</strong>Emby、dian115、整理规则里的路径要保持容器内视角一致，例如都使用 <code>/media</code>。</li>
+              <li><strong>转码与硬件加速：</strong>按你的 Emby 镜像配置设备映射、驱动变量和转码目录；dian115 不接管 Emby 转码本身。</li>
+              <li><strong>Emby API Key：</strong>在 Emby 后台申请，用于代理配置、媒体库读取、媒体画像、封面生成和部分插件。</li>
+              <li><strong>Madby：</strong>安装到 Emby 插件目录后，在插件配置中填写 dian115 地址和 OpenAPI Key。</li>
+            </ul>
+          </article>
+
+          <article class="panel step">
+            <h3>准备 dian115 运行目录</h3>
+            <p>推荐使用 Docker Compose。配置目录、媒体目录和 CD2 挂载目录要固定下来，后续不要频繁改容器路径。</p>
+            <ul class="field-list">
+              <li><strong><code>/config</code>：</strong>保存配置文件、数据库、插件运行数据和任务状态。</li>
+              <li><strong><code>/media</code>：</strong>媒体库目录，需与 Emby 媒体库挂载路径一致。</li>
+              <li><strong><code>/CloudNAS</code>：</strong>CloudDrive2 挂载目录，必须使用 <code>:shared</code> 让挂载传播生效。</li>
+            </ul>
+            <p class="quiet">项目组织地址：<a href="https://github.com/madbrolab" target="_blank" rel="noopener">madbrolab</a>。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="deploy">
+        <div class="section-title">
+          <h2>部署启动</h2>
+        </div>
+
+        <div class="grid two">
+          <article class="panel">
+            <h3>Docker Compose</h3>
+            <p>创建目录并编写 <code>docker-compose.yml</code>：</p>
+            <pre><code>mkdir dian115 &amp;&amp; cd dian115</code></pre>
+            <pre><code>services:
+  dian115:
+    image: madbrolab/dian115
+    container_name: dian115
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./config:/config
+      - ./media:/media
+      - ./CloudNAS:/CloudNAS:shared</code></pre>
+            <p>启动服务：</p>
+            <pre><code>docker compose up -d</code></pre>
+            <p class="muted">首次访问 <code>http://&lt;你的IP&gt;:8095</code> 需要设置管理密码。</p>
+          </article>
+
+          <article class="panel">
+            <h3>网络模式与端口</h3>
+            <p><code>network_mode: host</code> 是推荐模式，容器直接使用宿主机网络，不需要额外映射端口。</p>
+            <div class="table-wrap">
+              <table class="dense-table">
+                <thead>
+                  <tr><th>端口</th><th>用途</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td><code>8095</code></td><td>Web 管理界面。</td></tr>
+                  <tr><td><code>8098</code></td><td>Emby 反向代理默认端口，可在媒体库配置中修改。</td></tr>
+                  <tr><td><code>4534</code></td><td>Navidrome 反向代理默认端口，可在 Navidrome 页面修改。</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="muted" style="margin-top:12px">如果使用 bridge 网络，请自行映射 <code>8095</code> 和所有代理端口。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="paths">
+        <div class="section-title">
+          <h2>路径与权限</h2>
+        </div>
+
+        <div class="callout warn">
+          路径问题是大多数播放失败和同步失败的根源。先把路径统一，再配置 STRM、Emby 代理和整理规则。
+        </div>
+
+        <div class="table-wrap" style="margin-top:14px">
+          <table>
+            <thead>
+              <tr>
+                <th>路径或字段</th>
+                <th>应该怎么理解</th>
+                <th>常见示例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>/CloudNAS</code></td>
+                <td>CD2 的容器挂载目录，也是 dian115 和 Emby 需要能看到的云盘根入口。</td>
+                <td><code>./CloudNAS:/CloudNAS:shared</code></td>
+              </tr>
+              <tr>
+                <td>CD2 挂载前缀</td>
+                <td>dian115 系统设置里的完整云盘挂载路径，用来把本地路径转换为 115 路径。</td>
+                <td><code>/CloudNAS/CloudDrive/open115</code></td>
+              </tr>
+              <tr>
+                <td>STRM 云盘名称</td>
+                <td>CD2 中实际显示的云盘名称，不是自定义备注。</td>
+                <td><code>115open</code></td>
+              </tr>
+              <tr>
+                <td><code>/media</code></td>
+                <td>Emby 和 dian115 都能访问的本地媒体库目录，STRM 输出和整理目标通常放这里。</td>
+                <td><code>./media:/media</code></td>
+              </tr>
+              <tr>
+                <td>权限 <code>0777</code></td>
+                <td>CD2 挂载点权限位置填写 <code>0777</code>，避免容器间读写目录树或生成 STRM 时权限不足。</td>
+                <td>CD2 挂载点高级设置</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid three" style="margin-top:14px">
+          <article class="panel soft">
+            <h3>正确顺序</h3>
+            <p>先让 CD2 挂载正常，再启动 dian115；先保存 CD2 地址和 Token，再添加 STRM 规则；先确认 Emby 能扫描媒体库，再让客户端走代理端口。</p>
+          </article>
+          <article class="panel soft">
+            <h3>路径视角</h3>
+            <p>不要混用宿主机路径和容器路径。前端选择器、STRM 输出、Emby 媒体库、整理规则都应使用容器内可见路径。</p>
+          </article>
+          <article class="panel soft">
+            <h3>修改路径</h3>
+            <p>路径改动后要重新检查 STRM 规则、Navidrome 配置、Emby 媒体画像路径转换和 Madby 数据目录。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="initial">
+        <div class="section-title">
+          <h2>初始配置</h2>
+        </div>
+
+        <div class="module-grid">
+          <article class="module">
+            <div class="module-head">
+              <h3>115 账号</h3>
+              <span>入口：115 账号</span>
+            </div>
+            <p>用于提供 115 接口凭证。账号可通过扫码登录或 Cookie 登录添加，支持多个账号备用。</p>
+            <div class="key-value">
+              <div class="kv-row">
+                <div class="kv-key">设备类型</div>
+                <div class="kv-value">扫码登录时选择登录设备。不同设备类型会影响 Cookie 来源和可用性。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">自动签到</div>
+                <div class="kv-value">用于每日签到任务，可配合通知插件推送结果。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">多账号备用</div>
+                <div class="kv-value">主账号失效或触发限制时，系统可尝试切换备用账号。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">QPS 限制</div>
+                <div class="kv-value">限制 115 接口请求频率。遇到限流、风控或接口失败增多时调低。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">安全码</div>
+                <div class="kv-value">同播复制、清理、部分文件操作会用到。没有这些需求可先不填。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">分享 / 离线目录</div>
+                <div class="kv-value">控制分享转存和磁力离线任务的默认落点，建议建独立目录便于整理。</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>CloudDrive2</h3>
+              <span>入口：系统设置 → 基础设置</span>
+            </div>
+            <p>用于连接 CD2 API，并告诉 dian115 115 云盘在本地挂载树中的真实位置。</p>
+            <div class="key-value">
+              <div class="kv-row">
+                <div class="kv-key">CD2 地址</div>
+                <div class="kv-value">同机 host 网络常用 <code>http://localhost:19798</code>。跨机器部署时填写实际内网地址。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">API Token</div>
+                <div class="kv-value">填写 CD2 里申请的 Token。权限不足会导致路径浏览、目录树和文件操作异常。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">115 挂载前缀</div>
+                <div class="kv-value">填写完整前缀，例如 <code>/CloudNAS/CloudDrive/open115</code>，用于本地路径与 115 路径转换。</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>安全与 OpenAPI</h3>
+              <span>入口：系统设置 → 安全与 API</span>
+            </div>
+            <p>用于外部系统认证，包括 Madby 插件、Webhook、子服务和第三方调用。</p>
+            <div class="key-value">
+              <div class="kv-row">
+                <div class="kv-key">管理密码</div>
+                <div class="kv-value">Web 管理界面的登录密码。首次访问后应立即设置。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">二次验证</div>
+                <div class="kv-value">需要更高安全性时启用，适合公网反代管理端的场景。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">OpenAPI Key</div>
+                <div class="kv-value">生成后妥善保存。Madby、Webhook 和外部接口请求都可以使用它认证。</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>代理与过盾</h3>
+              <span>入口：系统设置 → 基础设置</span>
+            </div>
+            <p>用于解决外部网络访问和 Cloudflare 防护站点访问问题。</p>
+            <div class="key-value">
+              <div class="kv-row">
+                <div class="kv-key">HTTP 代理</div>
+                <div class="kv-value">填写代理主机、端口、用户名和密码。TMDB、Telegram、PT 站点等外部请求可按后端逻辑使用。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">FlareSolverr</div>
+                <div class="kv-value">填写服务地址，例如 <code>http://127.0.0.1:8191</code>。仅访问有防护的站点时需要。</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>AI 与词表</h3>
+              <span>入口：系统设置 → 高级设置 / 词表设置</span>
+            </div>
+            <p>主要服务于媒体整理识别，减少文件名不规范时的误判。</p>
+            <div class="key-value">
+              <div class="kv-row">
+                <div class="kv-key">AI 模型</div>
+                <div class="kv-value">填写协议、Base URL、API Key、模型名、上下文限制、温度、Top P、工具调用策略和超时。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">识别词</div>
+                <div class="kv-value">补充常见别名、制作组、特殊命名，帮助识别器更稳定地提取标题和版本字段。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">屏蔽词</div>
+                <div class="kv-value">整理时忽略无意义或干扰识别的词，例如站点宣传、压制标记、广告字段。</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>系统任务</h3>
+              <span>入口：系统设置 → 系统设置</span>
+            </div>
+            <p>控制后台任务的并发、日志、队列和 Emby ItemID 深度校验。</p>
+            <div class="key-value">
+              <div class="kv-row">
+                <div class="kv-key">日志保留</div>
+                <div class="kv-value">设置日志保留天数，便于排查播放、同步、订阅和整理问题。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">Worker 并发</div>
+                <div class="kv-value">控制后台任务并发。机器弱或 115 接口不稳定时不要盲目调高。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">队列大小</div>
+                <div class="kv-value">限制待处理任务数量，避免大量同步或整理任务挤满资源。</div>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="strm">
+        <div class="section-title">
+          <h2>STRM 规则</h2>
+        </div>
+
+        <div class="callout danger">
+          <strong>云盘名称不是随便写。</strong>这里必须填写 CD2 里的实际云盘名称，例如 <code>115open</code>。它和系统设置里的 CD2 挂载前缀不是同一个字段。
+        </div>
+
+        <div class="table-wrap" style="margin-top:14px">
+          <table>
+            <thead>
+              <tr>
+                <th>配置项</th>
+                <th>说明</th>
+                <th>建议</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>规则名称</td>
+                <td>用于识别这条同步规则。</td>
+                <td>按媒体库命名，例如“电影 115open”“剧集 115open”。</td>
+              </tr>
+              <tr>
+                <td>云盘名称</td>
+                <td>CD2 中实际云盘名，用于源路径拼接和目录树转换。</td>
+                <td>例如 <code>115open</code>，不要填 <code>/CloudNAS</code>。</td>
+              </tr>
+              <tr>
+                <td>源路径</td>
+                <td>115/CD2 中需要生成 STRM 的目录。</td>
+                <td>使用路径选择器选择，避免手写路径漏掉云盘层级。</td>
+              </tr>
+              <tr>
+                <td>输出路径</td>
+                <td>STRM 文件生成到本地哪里，通常是 Emby 扫描的媒体库目录。</td>
+                <td>例如 <code>/media/Movies</code>、<code>/media/TV</code>。</td>
+              </tr>
+              <tr>
+                <td>链接模式</td>
+                <td><code>path</code> 按路径生成；<code>link</code> 使用服务地址生成可访问链接。</td>
+                <td>常规 Emby 本地扫描优先用路径模式。</td>
+              </tr>
+              <tr>
+                <td>服务地址</td>
+                <td>链接模式下写入 STRM 的服务地址。</td>
+                <td>需要客户端能访问该地址。</td>
+              </tr>
+              <tr>
+                <td>同步模式</td>
+                <td>手动、定时、实时。定时使用 Cron；实时监听变化。</td>
+                <td>第一次先手动同步，确认路径正确后再启用自动。</td>
+              </tr>
+              <tr>
+                <td>文件扩展名</td>
+                <td>控制哪些媒体文件生成 STRM。</td>
+                <td>按库类型保留常见视频或音频扩展名，减少无效文件。</td>
+              </tr>
+              <tr>
+                <td>排除目录</td>
+                <td>同步时跳过指定目录。</td>
+                <td>排除花絮、样片、回收站、下载临时目录。</td>
+              </tr>
+              <tr>
+                <td>元数据扩展名</td>
+                <td>允许同步海报、字幕、NFO 等旁路文件。</td>
+                <td>需要 Emby 本地识别元数据时开启。</td>
+              </tr>
+              <tr>
+                <td>智能清理</td>
+                <td>源文件删除后自动清理对应 STRM、元数据和空目录。</td>
+                <td>确认规则稳定后再打开，避免误清理。</td>
+              </tr>
+              <tr>
+                <td>同步字幕</td>
+                <td>把外挂字幕同步到 STRM 输出目录。</td>
+                <td>外挂字幕依赖本地文件时建议开启。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid two" style="margin-top:14px">
+          <article class="panel">
+            <h3>推荐配置流程</h3>
+            <ul class="field-list">
+              <li>先在系统设置中保存 CD2 地址、API Token 和 115 挂载前缀。</li>
+              <li>进入 STRM 规则，填写实际云盘名称并选择源路径。</li>
+              <li>输出路径选择 Emby 已映射的媒体目录。</li>
+              <li>先执行手动同步，确认输出目录下 STRM 文件和目录结构正确。</li>
+              <li>让 Emby 扫描媒体库，客户端通过 dian115 代理端口播放验证。</li>
+              <li>确认稳定后再启用定时、实时和智能清理。</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <h3>同步模式选择</h3>
+            <ul class="field-list">
+              <li><strong>手动：</strong>适合首次配置、迁移、排错和少量目录。</li>
+              <li><strong>定时：</strong>适合资源变化不频繁的库，通过 Cron 控制增量和全量同步。</li>
+              <li><strong>实时：</strong>适合频繁变化的目录，但依赖挂载和事件监听稳定性。</li>
+              <li><strong>全量同步：</strong>用于修复目录树、漏同步或批量路径调整后的重新校准。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="emby">
+        <div class="section-title">
+          <h2>Emby 与 Madby</h2>
+        </div>
+
+        <div class="grid two">
+          <article class="panel">
+            <h3>Emby 代理配置</h3>
+            <p>入口：<strong>我的媒体 → 媒体库配置</strong>。添加代理后，客户端连接 dian115 的代理端口，而不是直接连接 Emby 原端口。</p>
+            <div class="key-value">
+              <div class="kv-row">
+                <div class="kv-key">代理名称</div>
+                <div class="kv-value">用于区分实例，例如“主 Emby”。当前前端提示仅支持单实例。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">Emby 地址</div>
+                <div class="kv-value">填写后端 Emby 地址，例如 <code>http://192.168.1.100:8096</code> 或同机 <code>http://localhost:8096</code>。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">API Key</div>
+                <div class="kv-value">从 Emby 后台申请。用于读取媒体库、同步 ItemID 和代理匹配。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">代理端口</div>
+                <div class="kv-value">默认 <code>8098</code>。客户端服务器地址填写 <code>http://&lt;你的IP&gt;:8098</code>。</div>
+              </div>
+              <div class="kv-row">
+                <div class="kv-key">展示内容</div>
+                <div class="kv-value">选择允许展示的 Emby 媒体库。不选择时按默认逻辑展示。</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel">
+            <h3>代理开关含义</h3>
+            <ul class="field-list">
+              <li><strong>启用代理：</strong>打开后代理端口才可用，修改配置会热更新。</li>
+              <li><strong>本地代理：</strong>不做 302 跳转，直接代理视频数据。适合直链不可用但希望统一入口的场景。</li>
+              <li><strong>回退本地：</strong>302 跳转失败时改走本地代理，提高播放成功率。</li>
+              <li><strong>同播复制：</strong>检测多设备播放同一视频时执行复制逻辑，需要 115 安全码配合。</li>
+              <li><strong>同步 Emby ItemID：</strong>用于建立 Emby 条目和本地路径/115 文件之间的匹配关系。</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="table-wrap" style="margin-top:14px">
+          <table>
+            <thead>
+              <tr>
+                <th>Madby 配置页</th>
+                <th>关键配置</th>
+                <th>作用</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>连接</td>
+                <td>启用插件、dian115 地址、OpenAPI Key、最大并行数、数据目录。</td>
+                <td>让 Emby 插件能调用 dian115，并保存插件运行数据。</td>
+              </tr>
+              <tr>
+                <td>FFP</td>
+                <td>Patch ffprobe、入库自动队列、跳过已有媒体流、严格校验文件大小、Inline 超时。</td>
+                <td>改善 STRM 媒体流注入和 Emby 入库效率。</td>
+              </tr>
+              <tr>
+                <td>扫描增强</td>
+                <td>STRM 探测输入重定向、HTTP 输入加引号、清理内嵌描述、外置 ffprobe。</td>
+                <td>减少 ffprobe 对 STRM 或 HTTP 地址的误解析。</td>
+              </tr>
+              <tr>
+                <td>快照</td>
+                <td>媒体信息 JSON 持久化、注入后自动保存、FFP 前恢复、文件变更校验、快照根目录。</td>
+                <td>缓存媒体流结果，降低重复扫描成本。</td>
+              </tr>
+              <tr>
+                <td>媒体库</td>
+                <td>外挂字幕扫描、缺图刷新、清理失效字幕、语言标准化、多版本合并、章节清理、人物清理。</td>
+                <td>补齐 Emby 扫描后的非 FFP 增强能力。</td>
+              </tr>
+              <tr>
+                <td>字幕</td>
+                <td>SubHD 地址、语言偏好、候选数量、最大下载大小。</td>
+                <td>为媒体自动搜索和下载外挂字幕。</td>
+              </tr>
+              <tr>
+                <td>体验</td>
+                <td>界面增强、隐藏无图人物、只显示演员、禁用合集自动创建、拼音排序、深度删除、HTTP 代理。</td>
+                <td>改善 Emby 管理体验和特定维护动作。</td>
+              </tr>
+              <tr>
+                <td>维护 / 内存</td>
+                <td>元数据标题清理、标题噪声词、定时内存清理、大对象堆整理、归还内存。</td>
+                <td>处理长期运行下的元数据和内存维护。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout" style="margin-top:14px">
+          Madby 中的 dian115 地址填写 Web 管理地址即可，末尾不需要斜杠；OpenAPI Key 使用 dian115 系统设置中生成的 Key。
+        </div>
+      </section>
+
+      <section id="subscribe">
+        <div class="section-title">
+          <h2>订阅系统</h2>
+        </div>
+
+        <div class="grid two">
+          <article class="panel">
+            <h3>订阅入口</h3>
+            <p>订阅页基于 TMDB 发现和搜索：流行趋势、正在热映、热门电影、热门剧集、高分电影等列表都可以发起订阅。</p>
+            <ul class="field-list">
+              <li><strong>媒体类型：</strong>电影或剧集。剧集订阅可按季处理。</li>
+              <li><strong>订阅状态：</strong>会区分 PT 订阅、聚合订阅以及历史冲突状态。</li>
+              <li><strong>默认行为：</strong>系统设置中可配置订阅按钮默认走 PT、聚合或每次询问。</li>
+              <li><strong>癫影资源：</strong>订阅详情中可查看癫影资源，用于手动或聚合流程辅助。</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <h3>PT 站点配置</h3>
+            <p>入口：<strong>PT 站点</strong>。页面分为站点配置、搜索与下载设置、下载任务。</p>
+            <ul class="field-list">
+              <li><strong>站点认证：</strong>按站点要求填写 Cookie、API Key、Authorization、Token、User-Agent。</li>
+              <li><strong>搜索 / RSS：</strong>分别控制站点是否参与搜索、RSS 订阅，以及 RSS 地址和超时时间。</li>
+              <li><strong>优先级：</strong>多个站点都命中时，优先级影响选种排序。</li>
+              <li><strong>代理：</strong>单站点可按需要走 HTTP 代理。</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <h3>下载器配置</h3>
+            <p>支持 qBittorrent 和 Transmission。填写 WebUI 地址、用户名、密码、默认保存路径，并设置默认下载器。</p>
+            <ul class="field-list">
+              <li>保存路径建议与媒体整理源路径对应，便于下载完成后自动整理。</li>
+              <li>下载器 WebUI 必须能从 dian115 容器访问。</li>
+              <li>PT 刷流也会复用下载器配置。</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <h3>PT 策略</h3>
+            <p>策略决定什么时候搜、搜哪些站、选哪个种、是否下载。</p>
+            <ul class="field-list">
+              <li><strong>自动搜索：</strong>按间隔检查订阅，支持多名称搜索。</li>
+              <li><strong>RSS 匹配：</strong>从站点 RSS 中快速匹配新资源。</li>
+              <li><strong>节流参数：</strong>站点间休眠、最大翻页、页间休眠用于降低请求压力。</li>
+              <li><strong>过滤条件：</strong>包含词、排除词、只要免费、最少做种、最大体积。</li>
+              <li><strong>排序：</strong>按质量规则、体积、做种、发布时间和站点优先级综合处理。</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="table-wrap" style="margin-top:14px">
+          <table>
+            <thead>
+              <tr>
+                <th>质量规则</th>
+                <th>含义</th>
+                <th>示例</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>&amp;</code></td>
+                <td>同一层级内必须同时满足，表示 AND。</td>
+                <td><code>4K&amp;HEVC&amp;HDR</code></td>
+              </tr>
+              <tr>
+                <td><code>&gt;</code></td>
+                <td>不同层级的优先顺序，越靠前越优先。</td>
+                <td><code>4K&amp;DV&gt;4K&amp;HEVC&gt;1080P&amp;HEVC</code></td>
+              </tr>
+              <tr>
+                <td><code>!</code></td>
+                <td>排除某个标签。</td>
+                <td><code>1080P&amp;!AV1</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid two" style="margin-top:14px">
+          <article class="panel blue">
+            <h3>聚合订阅</h3>
+            <p>聚合订阅可从 TG 资源频道和癫影资源中寻找匹配资源。系统设置里可设置默认来源、是否启用订阅、质量规则组和癫影检查间隔。</p>
+            <ul class="field-list">
+              <li><strong>TG 严格模式：</strong>开启后必须命中质量规则才转存；关闭后命中 TMDB ID 即可转存。</li>
+              <li><strong>质量规则组：</strong>可按电影和剧集分别选择预设。</li>
+              <li><strong>检查间隔：</strong>新建订阅会立即检查一次，之后按间隔检查活跃意图。</li>
+            </ul>
+          </article>
+
+          <article class="panel blue">
+            <h3>订阅落地建议</h3>
+            <p>PT 下载完成后通常进入下载目录，再由媒体整理移动或硬链接到 <code>/media</code>。聚合或分享转存的资源则先进入 115 指定目录，再由 CD2、STRM 和 Emby 扫描串起来。</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="organize">
+        <div class="section-title">
+          <h2>媒体整理</h2>
+        </div>
+
+        <div class="module-grid">
+          <article class="module">
+            <div class="module-head">
+              <h3>文件管理</h3>
+              <span>入口：文件管理</span>
+            </div>
+            <p>用于浏览本地媒体目录，支持打开文件夹、预览、下载、识别、整理、重命名、移动、复制、复制路径和删除。</p>
+            <ul class="field-list">
+              <li>“识别”会展示标题、媒体类型、季集、年份和 TMDB 匹配信息。</li>
+              <li>“整理”会按整理规则匹配目标路径并执行移动或硬链接。</li>
+              <li>适合处理少量异常文件，批量任务建议使用整理规则。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>全局设置</h3>
+              <span>入口：媒体整理 → 全局设置</span>
+            </div>
+            <p>控制命名模板、整理行为、洗版评分和字段命名映射。</p>
+            <ul class="field-list">
+              <li><strong>电影 / 剧集模板：</strong>使用 <code>{变量}</code> 占位符，斜杠表示目录层级。</li>
+              <li><strong>多版目录模板：</strong>用于多版本洗版或保留多版本时的目录结构。</li>
+              <li><strong>动漫独立整理：</strong>开启后动漫可以使用独立分类规则。</li>
+              <li><strong>并发整理数：</strong>默认保守即可，机械盘或弱机器不建议调太高。</li>
+              <li><strong>字段映射：</strong>把识别出的值统一成自定义写法，例如 <code>2160P</code> 统一成 <code>4K</code>。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>整理规则</h3>
+              <span>入口：媒体整理 → 整理规则</span>
+            </div>
+            <p>规则决定从哪里整理到哪里，以及使用什么策略处理重复和多版本。</p>
+            <ul class="field-list">
+              <li><strong>源路径 / 目标路径：</strong>选择容器内可见路径，不要填写宿主机路径。</li>
+              <li><strong>整理方式：</strong>移动或硬链接。硬链接要求源和目标在同一文件系统。</li>
+              <li><strong>一级类型目录：</strong>按电影、剧集、动漫建立顶层目录。</li>
+              <li><strong>二级分类：</strong>结合分类配置输出到华语、欧美、动画等目录。</li>
+              <li><strong>同步字幕：</strong>移动或硬链接媒体时同步外挂字幕。</li>
+              <li><strong>自动监控：</strong>监听源路径变化，自动触发整理。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>重复与洗版</h3>
+              <span>规则内配置</span>
+            </div>
+            <p>重复文件策略用于处理同一媒体已有目标文件的情况。</p>
+            <ul class="field-list">
+              <li><strong>跳过：</strong>目标存在时不处理，最稳妥。</li>
+              <li><strong>保留全部：</strong>全部落地，适合人工后续筛选。</li>
+              <li><strong>大小比较：</strong>按文件大小保留更合适的版本。</li>
+              <li><strong>评分洗版：</strong>按分辨率、片源、编码、HDR、音频、字幕等评分保留。</li>
+              <li><strong>多版本洗版：</strong>按槽位规则保留多个版本，例如 4K DV、4K HDR、1080P。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>前置过滤与 AI</h3>
+              <span>规则内配置</span>
+            </div>
+            <p>前置过滤用于在整理前排除不想要的版本，AI 用于文件名不规范时增强识别。</p>
+            <ul class="field-list">
+              <li><strong>前置过滤：</strong>按字段和值排除资源，可选择被排除时删除源文件。</li>
+              <li><strong>正则无标题时调用 AI：</strong>文件名无法提取标题才调用 AI。</li>
+              <li><strong>TMDB 未命中时调用 AI：</strong>正则结果无法匹配 TMDB 时辅助重识别。</li>
+              <li><strong>始终调用 AI：</strong>识别更积极，但成本和耗时更高。</li>
+              <li><strong>FFprobe 解析：</strong>读取媒体流信息辅助命名、评分和洗版。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>分类、测试与历史</h3>
+              <span>媒体整理页面</span>
+            </div>
+            <p>分类配置、识别测试和整理历史用于把规则调准。</p>
+            <ul class="field-list">
+              <li><strong>分类配置：</strong>按媒体类型、TMDB 类型、原始语言、制片国家输出到不同分类目录。</li>
+              <li><strong>识别测试：</strong>输入文件名快速验证正则、TMDB 和 AI 结果。</li>
+              <li><strong>整理历史：</strong>按状态、模式、关键词筛选，支持批量删除、批量改名、清理目标文件。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="plugins">
+        <div class="section-title">
+          <h2>插件中心</h2>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>插件</th>
+                <th>用途</th>
+                <th>关键配置</th>
+                <th>结果</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>文件秒传</td>
+                <td>通过 SHA1 哈希把本地文件秒传到 115，不需要真实上传完整文件数据。</td>
+                <td>手动选择本地目录、115 目标目录、是否递归、秒传后处理、失败处理、字幕上传和最大记录数。</td>
+                <td>生成秒传记录，成功后得到 115 文件和 PickCode。</td>
+              </tr>
+              <tr>
+                <td>Telegram 频道监控</td>
+                <td>监控频道消息，识别 115 分享链接，支持自动转发和自动明文分享。</td>
+                <td>TG 客户端、监控频道、明文分享目标、Emby 媒体库白名单、入库后分享、转发 Bot Token、白名单。</td>
+                <td>自动发现频道资源，转存或转发到指定频道。</td>
+              </tr>
+              <tr>
+                <td>Emby 封面生成</td>
+                <td>为 Emby 媒体库生成静态或动态封面。</td>
+                <td>媒体库、封面风格、中文/英文字体、标题、分辨率、自定义素材目录、海报数量、动图尺寸、帧率、角标。</td>
+                <td>生成 PNG、GIF 或 APNG，并可上传回 Emby。</td>
+              </tr>
+              <tr>
+                <td>通知插件</td>
+                <td>统一推送账号、订阅、整理、刷流、插件等事件。</td>
+                <td>企业微信 CorpID、AgentID、Secret、Token、AES Key、代理回调；Telegram Bot Token、白名单、通知类型、静默时段、公开地址。</td>
+                <td>重要任务完成或异常时自动通知。</td>
+              </tr>
+              <tr>
+                <td>PT 刷流</td>
+                <td>按站点最新种子自动刷流，兼顾促销、H&amp;R、体积、速度和删种规则。</td>
+                <td>刷流站点、下载器、保存路径、qB 分类、活动时间、促销要求、H&amp;R、体积、做种数、发布时间、关键词、磁盘和速度限制、删种规则。</td>
+                <td>自动添加刷流任务，并按条件保种或删种。</td>
+              </tr>
+              <tr>
+                <td>癫影</td>
+                <td>通过癫影 OpenAPI Key 签到、上传分享和资源检索。</td>
+                <td>账号名称、OpenAPI Key、签到模式、自动签到时间、签到通知、默认分享设置。</td>
+                <td>可进行签到、分享资源，门户用户解锁资源时可获取 115 URL。</td>
+              </tr>
+              <tr>
+                <td>PT 站点统计</td>
+                <td>集中查看 PT 站点上传、下载、分享率、魔力和做种数据。</td>
+                <td>依赖 PT 站点配置中的认证信息。</td>
+                <td>快速判断 PT 账号健康状态和站点表现。</td>
+              </tr>
+              <tr>
+                <td>Emby 媒体画像</td>
+                <td>拉取 Emby 已扫描媒体的容器、媒体流和章节信息，并定位 115 SHA1。</td>
+                <td>Emby 地址、API Key、CD2 路径转换、pickcode 正则、分页大小。</td>
+                <td>把旧库或已有库信息汇报为 dian115 可利用的媒体画像数据。</td>
+              </tr>
+              <tr>
+                <td>影巢</td>
+                <td>该插件已下线，前端仅保留卡片说明。</td>
+                <td>无需配置。</td>
+                <td>无运行功能。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="tools">
+        <div class="section-title">
+          <h2>辅助工具</h2>
+        </div>
+
+        <div class="module-grid">
+          <article class="module">
+            <div class="module-head">
+              <h3>Navidrome 代理</h3>
+              <span>入口：我的媒体 → NAVIDROME</span>
+            </div>
+            <p>用于把 115 音乐资源通过 Navidrome/Subsonic 协议稳定播放。</p>
+            <ul class="field-list">
+              <li>填写配置名称、后端地址、用户名、密码和代理端口，默认 <code>4534</code>。</li>
+              <li>选择 CD2 源路径、本地路径和同步模式。</li>
+              <li>云盘名称同样填写 CD2 里的实际名称，例如 <code>115open</code>。</li>
+              <li>支持构建目录树、增量同步、全量同步、302 回退本地和智能清理。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>卫星服务</h3>
+              <span>入口：卫星服务</span>
+            </div>
+            <p>用于发布 STRM 规则目录树，并给子服务客户端分配 API Key。</p>
+            <ul class="field-list">
+              <li>选择 STRM 规则发布文件树，子服务可通过 API 获取对应规则文件信息。</li>
+              <li>添加子服务时填写名称、允许规则、过期天数和备注。</li>
+              <li>API Key 只在创建时显示一次，需要妥善保存。</li>
+              <li>请求日志可查看客户端、类型、详情、状态和 IP。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>缓存管理</h3>
+              <span>入口：缓存管理</span>
+            </div>
+            <p>集中维护 TMDB、115 分享、TG 监控分享和离线链接缓存。</p>
+            <ul class="field-list">
+              <li>TMDB 缓存减少重复请求并提高订阅和整理页面加载速度。</li>
+              <li>115 分享缓存用于避免重复解析同一分享链接。</li>
+              <li>TG 监控分享缓存用于频道监控去重和状态追踪。</li>
+              <li>离线链接缓存用于磁力、ED2K 等离线任务去重和复用。</li>
+            </ul>
+          </article>
+
+          <article class="module">
+            <div class="module-head">
+              <h3>ED2K / 离线任务</h3>
+              <span>入口：相关任务页</span>
+            </div>
+            <p>用于管理离线链接相关任务。配置前先确认 115 账号可用，并设置好离线下载目录。</p>
+            <ul class="field-list">
+              <li>建议把离线目录和整理源目录分开，避免未完成文件被整理。</li>
+              <li>失败任务优先检查账号状态、链接有效性和 115 离线配额。</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="ops">
+        <div class="section-title">
+          <h2>运维排查</h2>
+        </div>
+
+        <div class="grid two">
+          <article class="panel">
+            <h3>上线前检查</h3>
+            <ul class="field-list">
+              <li>CD2 能在 <code>/CloudNAS</code> 看到 115 根目录。</li>
+              <li>dian115 系统设置里的 CD2 地址、API Token、挂载前缀保存并测试成功。</li>
+              <li>Emby、dian115、CD2 的媒体路径一致，Emby API Key 可用。</li>
+              <li>STRM 规则里的云盘名称填的是 CD2 实际云盘名称。</li>
+              <li>手动同步 STRM 后，Emby 可以扫描到媒体条目。</li>
+              <li>客户端连接 dian115 代理端口后能播放网盘内容。</li>
+              <li>Madby 插件能连接 dian115，OpenAPI Key 校验正常。</li>
+            </ul>
+          </article>
+
+          <article class="panel">
+            <h3>常见问题</h3>
+            <ul class="field-list">
+              <li><strong>路径浏览为空：</strong>检查 CD2 地址、Token、根目录权限和 <code>/CloudNAS</code> 挂载传播。</li>
+              <li><strong>STRM 生成失败：</strong>检查输出目录权限、云盘名称、源路径和排除规则。</li>
+              <li><strong>Emby 能扫但不能播：</strong>检查客户端是否连接代理端口、ItemID 是否同步、302 是否失败、回退本地是否开启。</li>
+              <li><strong>直链不稳定：</strong>检查 115 账号状态、QPS、Cookie 过期、备用账号和网络代理。</li>
+              <li><strong>订阅不下载：</strong>检查站点认证、下载器连接、质量规则、包含/排除词和体积限制。</li>
+              <li><strong>整理结果不对：</strong>先用识别测试验证文件名，再检查命名模板、分类规则、前置过滤和 AI 设置。</li>
+              <li><strong>通知收不到：</strong>检查 Telegram 白名单、企业微信回调、公网地址、静默时段和通知类型开关。</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="table-wrap" style="margin-top:14px">
+          <table>
+            <thead>
+              <tr>
+                <th>场景</th>
+                <th>优先查看</th>
+                <th>处理方向</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>首次部署</td>
+                <td>容器日志、系统设置、CD2 连接测试。</td>
+                <td>先确认 <code>/config</code> 可写、<code>/CloudNAS</code> 可见、端口未占用。</td>
+              </tr>
+              <tr>
+                <td>播放失败</td>
+                <td>代理配置、Emby ItemID、播放请求日志、115 账号状态。</td>
+                <td>从本地代理和回退本地开始验证，再排查 302 直链。</td>
+              </tr>
+              <tr>
+                <td>同步异常</td>
+                <td>STRM 任务日志、规则源路径、输出路径权限。</td>
+                <td>先手动全量同步一小段目录，确认规则正确后再扩大范围。</td>
+              </tr>
+              <tr>
+                <td>订阅漏资源</td>
+                <td>PT 站点搜索结果、RSS、质量规则、聚合来源。</td>
+                <td>降低过滤条件，确认站点能搜到，再恢复目标质量规则。</td>
+              </tr>
+              <tr>
+                <td>整理误判</td>
+                <td>识别测试、整理历史、词表、AI 调用记录。</td>
+                <td>先补词表和规则，再考虑开启更积极的 AI 模式。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p class="footer">文档根据当前项目前端配置页和 Madby 插件配置整理，更新时间：2026-07-02。</p>
+    </main>
+  </div>
+</body>
+</html>
