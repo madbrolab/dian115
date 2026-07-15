@@ -658,6 +658,10 @@
       font-size: 20px;
     }
 
+    .mini-title[id] {
+      scroll-margin-top: 86px;
+    }
+
     .split-note {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -689,6 +693,81 @@
       display: block;
       margin-bottom: 4px;
       color: var(--ink);
+    }
+
+    .purchase-panel {
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      margin: 14px 0 18px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .purchase-qr {
+      margin: 0;
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+    }
+
+    .purchase-qr img {
+      width: min(100%, 220px);
+      aspect-ratio: 1;
+      object-fit: contain;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: #ffffff;
+    }
+
+    .purchase-qr figcaption {
+      color: var(--faint);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .purchase-amount {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 0 0 12px;
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .purchase-amount strong {
+      color: var(--red);
+      font-size: 30px;
+      line-height: 1;
+    }
+
+    .purchase-list {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+
+    .contact-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 7px 11px;
+      border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+      border-radius: 8px;
+      background: var(--primary-weak);
+      color: var(--primary);
+      font-weight: 800;
     }
 
     .footer {
@@ -742,7 +821,8 @@
     @media (max-width: 720px) {
       .grid.two,
       .grid.three,
-      .split-note {
+      .split-note,
+      .purchase-panel {
         grid-template-columns: 1fr;
       }
 
@@ -860,6 +940,7 @@
       <nav>
         <a href="#overview">项目定位</a>
         <a href="#quick-start">部署与启动</a>
+        <a href="#purchase">购买与激活</a>
         <a href="#migration">旧库迁移重点</a>
         <a href="#baseline">基础配置顺序</a>
         <a href="#workflows">核心使用流程</a>
@@ -1076,6 +1157,27 @@
           <div class="callout warning">
             <strong>暴露范围：</strong>
             FlareSolverr 会启动浏览器环境，首次请求可能比普通 HTTP 请求慢。<code>8191</code> 端口只建议内网访问，不要直接暴露到公网。
+          </div>
+
+          <h3 class="mini-title" id="purchase">购买与激活码</h3>
+          <div class="purchase-panel">
+            <figure class="purchase-qr">
+              <img src="wiki-assets/payment-qr.png" alt="DIAN-115 购买扫码支付二维码" />
+              <figcaption>扫码支付后请务必备注邮箱</figcaption>
+            </figure>
+            <div>
+              <p class="purchase-amount"><span>授权价格</span><strong>199R</strong></p>
+              <p>支付时请在备注中填写用于接收激活码的邮箱。激活码会按备注邮箱发送；如果备注缺失或邮箱写错，会影响发码和后续核对。</p>
+              <ul class="purchase-list">
+                <li>完成支付后，回到授权弹窗或授权页填写收到的 License Key。</li>
+                <li>如果长时间未接收到激活码，请通过 Telegram 联系 <a class="route" href="https://t.me/succt" target="_blank" rel="noopener">@succt</a>，并提供支付时间、备注邮箱和必要的支付核对信息。</li>
+                <li>建议加入 Telegram 群组获取公告、更新说明和使用交流。</li>
+              </ul>
+              <div class="contact-row">
+                <a class="contact-link" href="https://t.me/succt" target="_blank" rel="noopener">联系 @succt</a>
+                <a class="contact-link" href="https://t.me/dian115group" target="_blank" rel="noopener">加入 TG 群组</a>
+              </div>
+            </div>
           </div>
 
           <h3 class="mini-title">启动后检查</h3>
