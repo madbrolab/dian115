@@ -356,6 +356,93 @@
       font-size: 13px;
     }
 
+    .showcase {
+      width: min(var(--content), calc(100vw - 32px));
+      margin: 0 auto 28px;
+      padding: 8px 0 0;
+    }
+
+    .showcase-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    .showcase-head .label {
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .showcase-head h2 {
+      margin-top: 5px;
+      font-size: 30px;
+    }
+
+    .showcase-head p {
+      margin: 8px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+    }
+
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.42fr) minmax(260px, 0.58fr);
+      gap: 14px;
+      align-items: stretch;
+    }
+
+    .screenshot-card,
+    .screenshot-feature {
+      margin: 0;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .screenshot-feature img,
+    .screenshot-card img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 2303 / 1331;
+      object-fit: cover;
+      background: var(--surface-soft);
+    }
+
+    .screenshot-feature figcaption,
+    .screenshot-card figcaption {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .screenshot-feature figcaption strong,
+    .screenshot-card figcaption strong {
+      color: var(--ink);
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .screenshot-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .screenshot-gallery {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
     .shell {
       width: min(var(--content), calc(100vw - 32px));
       margin: 0 auto 70px;
@@ -800,6 +887,7 @@
       }
 
       .hero,
+      .showcase-grid,
       .shell {
         grid-template-columns: 1fr;
       }
@@ -822,6 +910,7 @@
       .grid.two,
       .grid.three,
       .split-note,
+      .screenshot-gallery,
       .purchase-panel {
         grid-template-columns: 1fr;
       }
@@ -834,6 +923,7 @@
 
       .topbar-inner,
       .hero,
+      .showcase,
       .shell,
       .footer-inner {
         width: min(100vw - 20px, var(--content));
@@ -867,6 +957,7 @@
       </a>
       <nav class="topnav" aria-label="顶部导航">
         <a href="#quick-start">部署启动</a>
+        <a href="#screenshots">项目截图</a>
         <a href="#migration">旧库迁移</a>
         <a href="#baseline">基础配置</a>
         <a href="#workflows">核心流程</a>
@@ -931,6 +1022,69 @@
     </aside>
   </section>
 
+  <section class="showcase" id="screenshots" aria-label="项目截图">
+    <div class="showcase-head">
+      <div>
+        <div class="label">Project Screenshots</div>
+        <h2>项目实际截图</h2>
+        <p>先看真实工作台：部署、授权、资源发现、账号、媒体整理、插件、缓存、日志和系统设置都在同一套流程里串起来。</p>
+      </div>
+      <a class="btn primary" href="#purchase">购买与激活</a>
+    </div>
+
+    <div class="showcase-grid">
+      <figure class="screenshot-feature">
+        <img src="wiki-assets/screenshots/dashboard.png" alt="DIAN-115 仪表板截图" decoding="async" />
+        <figcaption><strong>仪表板</strong><span>任务、队列、媒体状态和关键运行指标集中查看。</span></figcaption>
+      </figure>
+      <div class="screenshot-stack">
+        <figure class="screenshot-card">
+          <img src="wiki-assets/screenshots/discovery.png" alt="DIAN-115 探索发现截图" loading="lazy" decoding="async" />
+          <figcaption><strong>探索发现</strong><span>PT、TG、公开资源和订阅入口。</span></figcaption>
+        </figure>
+        <figure class="screenshot-card">
+          <img src="wiki-assets/screenshots/media.png" alt="DIAN-115 我的媒体截图" loading="lazy" decoding="async" />
+          <figcaption><strong>我的媒体</strong><span>Emby、分享、缺集和媒体运营。</span></figcaption>
+        </figure>
+      </div>
+    </div>
+
+    <div class="screenshot-gallery" aria-label="更多项目截图">
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/organize.png" alt="媒体整理截图" loading="lazy" decoding="async" />
+        <figcaption><strong>媒体整理</strong><span>识别、命名、洗版和入库。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/plugins.png" alt="插件中心截图" loading="lazy" decoding="async" />
+        <figcaption><strong>插件中心</strong><span>TG、秒传、画像、通知等扩展。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/accounts.png" alt="账号管理截图" loading="lazy" decoding="async" />
+        <figcaption><strong>账号管理</strong><span>115 Cookie、健康检查和回收站。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/settings.png" alt="系统设置截图" loading="lazy" decoding="async" />
+        <figcaption><strong>系统设置</strong><span>CD2、代理、OpenAPI、Webhook 和 AI。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/pt-sites.png" alt="PT 站点截图" loading="lazy" decoding="async" />
+        <figcaption><strong>PT 站点</strong><span>站点 Cookie、RSS、搜索和刷流。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/files.png" alt="文件管理截图" loading="lazy" decoding="async" />
+        <figcaption><strong>文件管理</strong><span>本地目录浏览、预览和整理。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/media-cache.png" alt="媒体缓存截图" loading="lazy" decoding="async" />
+        <figcaption><strong>媒体缓存</strong><span>TMDB、分享、离线和资源缓存维护。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/logs.png" alt="运行日志截图" loading="lazy" decoding="async" />
+        <figcaption><strong>运行日志</strong><span>排障、任务事件和运行状态追踪。</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
   <main class="shell" id="main">
     <aside class="toc" aria-label="页面目录">
       <div class="toc-search">
@@ -939,6 +1093,7 @@
       </div>
       <nav>
         <a href="#overview">项目定位</a>
+        <a href="#screenshots">项目截图</a>
         <a href="#quick-start">部署与启动</a>
         <a href="#purchase">购买与激活</a>
         <a href="#migration">旧库迁移重点</a>
