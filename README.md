@@ -242,4 +242,3 @@ Emby 媒体画像是旧库迁移的关键插件，不是普通辅助工具。推
 - [Emby](https://emby.media/)
 - [Navidrome](https://www.navidrome.org/)
 - [TMDB](https://www.themoviedb.org/)
-- [MoviePilot](https://github.com/jxxghp/MoviePilot)
