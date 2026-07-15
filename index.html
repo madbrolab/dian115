@@ -974,7 +974,7 @@
       <span class="eyebrow">Usage Wiki</span>
       <h1>DIAN-115 完整使用说明</h1>
       <p>
-        从第一次启动、旧库迁移、账号授权、资源发现、订阅、下载、整理、STRM、Emby 入库、分享，到排障维护，按真实使用顺序把 DIAN-115 跑通。
+        从第一次启动、旧库迁移、账号接入、资源发现、订阅、下载、整理、STRM、Emby 入库、分享，到排障维护，按真实使用顺序把 DIAN-115 跑通。
       </p>
       <div class="hero-actions">
         <a class="btn primary" href="#quick-start">按顺序配置</a>
@@ -1027,9 +1027,9 @@
       <div>
         <div class="label">Project Screenshots</div>
         <h2>项目实际截图</h2>
-        <p>先看真实工作台：部署、授权、资源发现、账号、媒体整理、插件、缓存、日志和系统设置都在同一套流程里串起来。</p>
+        <p>先看真实工作台：部署、捐赠支持、资源发现、账号、媒体整理、插件、缓存、日志和系统设置都在同一套流程里串起来。</p>
       </div>
-      <a class="btn primary" href="#purchase">购买与激活</a>
+      <a class="btn primary" href="#purchase">捐赠与激活</a>
     </div>
 
     <div class="showcase-grid">
@@ -1095,7 +1095,7 @@
         <a href="#overview">项目定位</a>
         <a href="#screenshots">项目截图</a>
         <a href="#quick-start">部署与启动</a>
-        <a href="#purchase">购买与激活</a>
+        <a href="#purchase">捐赠与激活</a>
         <a href="#migration">旧库迁移重点</a>
         <a href="#baseline">基础配置顺序</a>
         <a href="#workflows">核心使用流程</a>
@@ -1314,18 +1314,18 @@
             FlareSolverr 会启动浏览器环境，首次请求可能比普通 HTTP 请求慢。<code>8191</code> 端口只建议内网访问，不要直接暴露到公网。
           </div>
 
-          <h3 class="mini-title" id="purchase">购买与激活码</h3>
+          <h3 class="mini-title" id="purchase">捐赠与激活码</h3>
           <div class="purchase-panel">
             <figure class="purchase-qr">
-              <img src="wiki-assets/payment-qr.png" alt="DIAN-115 购买扫码支付二维码" />
-              <figcaption>扫码支付后请务必备注邮箱</figcaption>
+              <img src="wiki-assets/payment-qr.png" alt="DIAN-115 捐赠扫码二维码" />
+              <figcaption>扫码捐赠后请务必备注邮箱</figcaption>
             </figure>
             <div>
-              <p class="purchase-amount"><span>授权价格</span><strong>199R</strong></p>
-              <p>支付时请在备注中填写用于接收激活码的邮箱。激活码会按备注邮箱发送；如果备注缺失或邮箱写错，会影响发码和后续核对。</p>
+              <p class="purchase-amount"><span>捐赠金额</span><strong>199R</strong></p>
+              <p>捐赠时请在备注中填写用于接收激活码的邮箱。激活码会按备注邮箱发送；如果备注缺失或邮箱写错，会影响发码和后续核对。</p>
               <ul class="purchase-list">
-                <li>完成支付后，回到授权弹窗或授权页填写收到的 License Key。</li>
-                <li>如果长时间未接收到激活码，请通过 Telegram 联系 <a class="route" href="https://t.me/succt" target="_blank" rel="noopener">@succt</a>，并提供支付时间、备注邮箱和必要的支付核对信息。</li>
+                <li>完成捐赠后，回到激活弹窗或激活页填写收到的 License Key。</li>
+                <li>如果长时间未接收到激活码，请通过 Telegram 联系 <a class="route" href="https://t.me/succt" target="_blank" rel="noopener">@succt</a>，并提供捐赠时间、备注邮箱和必要的核对信息。</li>
                 <li>建议加入 Telegram 群组获取公告、更新说明和使用交流。</li>
               </ul>
               <div class="contact-row">
@@ -1346,13 +1346,13 @@
             <div class="step">
               <div>
                 <h3>打开管理后台</h3>
-                <p>浏览器访问 <code>http://服务器IP:8095</code>。第一次进入会要求设置管理员密码；如果授权守卫提示需要激活，按页面提示填写 License Key，成功后再继续配置。</p>
+                <p>浏览器访问 <code>http://服务器IP:8095</code>。第一次进入会要求设置管理员密码；如果页面提示需要激活，按提示填写 License Key，成功后再继续配置。</p>
               </div>
             </div>
             <div class="step">
               <div>
                 <h3>确认数据持久化</h3>
-                <p>重启容器后密码、授权、115 账号、设置项仍应存在。若重启后全部丢失，先检查 <code>/config</code> 是否正确挂载，不要继续配置大量账号。</p>
+                <p>重启容器后密码、激活状态、115 账号、设置项仍应存在。若重启后全部丢失，先检查 <code>/config</code> 是否正确挂载，不要继续配置大量账号。</p>
               </div>
             </div>
             <div class="step">
@@ -1387,8 +1387,8 @@
                   <td>数据库是否持久化、浏览器 Cookie、时间是否准确。</td>
                 </tr>
                 <tr>
-                  <td>授权状态</td>
-                  <td>顶部用户区或授权弹窗</td>
+                  <td>激活状态</td>
+                  <td>顶部用户区或激活弹窗</td>
                   <td>状态为可用，功能页面可正常访问。</td>
                   <td>License Key、验证服务器网络、离线宽限期。</td>
                 </tr>
@@ -2193,9 +2193,9 @@
                   <td>确认容器重启后 <code>dian115.db</code> 没有被重建，宿主机目录可写。</td>
                 </tr>
                 <tr>
-                  <td>授权不可用或被踢下线</td>
+                  <td>激活状态不可用或被踢下线</td>
                   <td>Guard 状态、验证服务器网络、License Key</td>
-                  <td>在授权页重试或更换密钥；被踢下线通常需要手动重启容器恢复会话。</td>
+                  <td>在激活页重试或更换密钥；被踢下线通常需要手动重启容器恢复会话。</td>
                 </tr>
                 <tr>
                   <td>115 转存、分享、离线失败</td>
