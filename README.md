@@ -116,26 +116,9 @@ http://<服务器IP>:8095
 
 ### 桥接网络或反向代理场景
 
-如果 Docker 环境不适合使用 `host` 网络，或者需要反向代理统一入口，可以改用端口映射：
+如果 Docker 环境不适合使用 `host` 网络，或者需要反向代理统一入口，可以改用端口映射
 
-```yaml
-services:
-  dian115:
-    image: madbrolab/dian115
-    container_name: dian115
-    restart: unless-stopped
-    ports:
-      - "8095:8095"
-      - "8098:8098"
-      - "4534:4534"
-    volumes:
-      - ./config:/config
-      - ./media:/media
-      - ./CloudNAS:/CloudNAS:shared
-    environment:
-      - PORT=8095
-      - TZ=Asia/Shanghai
-      # - DIAN115_HTTP_PROXY=http://代理服务器IP:7890
+
 ```
 
 ### 端口与目录
