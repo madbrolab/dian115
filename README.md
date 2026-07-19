@@ -93,9 +93,11 @@ services:
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./config:/config
-      - ./media:/media
-      - ./CloudNAS:/CloudNAS:shared
+      - ~/config:/config #配置文件目录
+      - ~/dian115AI:/dian115AI  #使用AI工具必填 持久化存放AI产生的长期记忆文件等
+      - /var/run/docker.sock:/var/run/docker.sock #如需自动更新或镜像管理相关功能 请加入此项
+      - ~/media:/media  #本地媒体目录 根据自己实际情况改写  务必跟EMBY保持匹配
+      - ~/CloudNAS:/CloudNAS:shared  #CD2挂载目录 根据自己实际情况改写  务必跟EMBY，CD2保持匹配
 ```
 
 启动：
