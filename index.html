@@ -209,6 +209,11 @@
       cursor: pointer;
     }
 
+    .topnav a {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
     .topnav a:hover,
     .theme-toggle:hover {
       border-color: var(--border);
@@ -884,6 +889,11 @@
         width: 100%;
         overflow-x: auto;
         margin-left: 0;
+        scrollbar-width: none;
+      }
+
+      .topnav::-webkit-scrollbar {
+        display: none;
       }
 
       .hero,
@@ -974,7 +984,7 @@
       <span class="eyebrow">Usage Wiki</span>
       <h1>DIAN-115 完整使用说明</h1>
       <p>
-        从第一次启动、旧库迁移、账号接入、资源发现、订阅、下载、整理、STRM、Emby 入库、分享，到排障维护，按真实使用顺序把 DIAN-115 跑通。
+        从第一次启动、旧库迁移、账号接入、七路资源发现、订阅、下载转存、媒体整理、STRM、Emby 入库、分享，到插件扩展与容器运维，按真实使用顺序把 DIAN-115 跑通。
       </p>
       <div class="hero-actions">
         <a class="btn primary" href="#quick-start">按顺序配置</a>
@@ -984,11 +994,13 @@
       <div class="pill-row" aria-label="能力标签">
         <span class="pill">115 多账号</span>
         <span class="pill">CD2 挂载</span>
-        <span class="pill">PT / TG / 癫影</span>
+        <span class="pill">PT / TG / BT / 卫星</span>
         <span class="pill">媒体整理</span>
         <span class="pill">STRM</span>
         <span class="pill">Emby / Navidrome</span>
         <span class="pill">AI 助手与字幕</span>
+        <span class="pill">11 个内置插件</span>
+        <span class="pill">DianCupLite</span>
       </div>
     </div>
 
@@ -1027,7 +1039,7 @@
       <div>
         <div class="label">Project Screenshots</div>
         <h2>项目实际截图</h2>
-        <p>先看真实工作台：部署、捐赠支持、资源发现、账号、媒体整理、插件、缓存、日志和系统设置都在同一套流程里串起来。</p>
+        <p>先看真实工作台：资源发现、媒体订阅、下载转存、整理入库、插件扩展、容器运维和门户运营都在同一套流程里串起来。</p>
       </div>
       <a class="btn primary" href="#purchase">捐赠与激活</a>
     </div>
@@ -1040,47 +1052,35 @@
       <div class="screenshot-stack">
         <figure class="screenshot-card">
           <img src="wiki-assets/screenshots/discovery.png" alt="DIAN-115 探索发现截图" loading="lazy" decoding="async" />
-          <figcaption><strong>探索发现</strong><span>PT、TG、公开资源和订阅入口。</span></figcaption>
+          <figcaption><strong>探索发现</strong><span>TMDB、PT、TG 与四路公网检索入口。</span></figcaption>
         </figure>
         <figure class="screenshot-card">
-          <img src="wiki-assets/screenshots/media.png" alt="DIAN-115 我的媒体截图" loading="lazy" decoding="async" />
-          <figcaption><strong>我的媒体</strong><span>Emby、分享、缺集和媒体运营。</span></figcaption>
+          <img src="wiki-assets/screenshots/media-subscription.png" alt="DIAN-115 媒体订阅截图" loading="lazy" decoding="async" />
+          <figcaption><strong>媒体订阅</strong><span>电影、电视剧、演员与多来源订阅策略。</span></figcaption>
         </figure>
       </div>
     </div>
 
     <div class="screenshot-gallery" aria-label="更多项目截图">
       <figure class="screenshot-card">
+        <img src="wiki-assets/screenshots/media.png" alt="DIAN-115 我的媒体截图" loading="lazy" decoding="async" />
+        <figcaption><strong>我的媒体</strong><span>Emby 指标、分享、ED2K、缺集与 Navidrome。</span></figcaption>
+      </figure>
+      <figure class="screenshot-card">
         <img src="wiki-assets/screenshots/organize.png" alt="媒体整理截图" loading="lazy" decoding="async" />
-        <figcaption><strong>媒体整理</strong><span>识别、命名、洗版和入库。</span></figcaption>
+        <figcaption><strong>媒体整理</strong><span>识别、刮削、归档、洗版与 STRM 规则。</span></figcaption>
       </figure>
       <figure class="screenshot-card">
         <img src="wiki-assets/screenshots/plugins.png" alt="插件中心截图" loading="lazy" decoding="async" />
-        <figcaption><strong>插件中心</strong><span>TG、秒传、画像、通知等扩展。</span></figcaption>
+        <figcaption><strong>插件中心</strong><span>11 个扩展覆盖 115、PT、Emby、AI 与网络运维。</span></figcaption>
       </figure>
       <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/accounts.png" alt="账号管理截图" loading="lazy" decoding="async" />
-        <figcaption><strong>账号管理</strong><span>115 Cookie、健康检查和回收站。</span></figcaption>
+        <img src="wiki-assets/screenshots/container-update.png" alt="DianCupLite 容器更新截图" loading="lazy" decoding="async" />
+        <figcaption><strong>容器更新</strong><span>DianCupLite 管理镜像检查、更新、启停与回滚。</span></figcaption>
       </figure>
       <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/settings.png" alt="系统设置截图" loading="lazy" decoding="async" />
-        <figcaption><strong>系统设置</strong><span>CD2、代理、OpenAPI、Webhook 和 AI。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/pt-sites.png" alt="PT 站点截图" loading="lazy" decoding="async" />
-        <figcaption><strong>PT 站点</strong><span>站点 Cookie、RSS、搜索和刷流。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/files.png" alt="文件管理截图" loading="lazy" decoding="async" />
-        <figcaption><strong>文件管理</strong><span>本地目录浏览、预览和整理。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/media-cache.png" alt="媒体缓存截图" loading="lazy" decoding="async" />
-        <figcaption><strong>媒体缓存</strong><span>TMDB、分享、离线和资源缓存维护。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/logs.png" alt="运行日志截图" loading="lazy" decoding="async" />
-        <figcaption><strong>运行日志</strong><span>排障、任务事件和运行状态追踪。</span></figcaption>
+        <img src="wiki-assets/screenshots/portal.png" alt="DIAN-115 门户管理截图" loading="lazy" decoding="async" />
+        <figcaption><strong>门户管理</strong><span>用户、邀请、求片、工单、积分、审核与广播。</span></figcaption>
       </figure>
     </div>
   </section>
@@ -1115,7 +1115,7 @@
         <div class="section-head">
           <div class="label">01 Overview</div>
           <h2>DIAN-115 是什么</h2>
-          <p>DIAN-115 是围绕 115 网盘、CloudDrive2、Emby、PT、Telegram 和媒体库迁移的一套媒体自动化控制台。它不是单纯的文件管理器，也不是单纯的前端皮肤，而是把资源获取、旧库迁移、整理入库、播放分发和维护排障串起来。</p>
+          <p>DIAN-115 是围绕 115 网盘、CloudDrive2、Emby、Navidrome、PT、Telegram 与公网 BT 索引构建的媒体自动化控制台。它把内容发现、订阅追踪、下载转存、旧库迁移、整理入库、播放分发、插件扩展和容器运维串成一条可视化工作流。</p>
         </div>
         <div class="section-body">
           <div class="grid three">
@@ -1129,7 +1129,7 @@
             </div>
             <div class="card">
               <h3>播放与分发</h3>
-              <p>通过 Emby / Navidrome 代理、媒体分享和 Telegram 通知，把媒体能力交付给自己或用户。</p>
+              <p>通过 Emby / Navidrome、媒体分享、Telegram 通知与门户运营，把媒体能力交付给自己或用户。</p>
             </div>
           </div>
 
@@ -1948,7 +1948,7 @@
                 <tr>
                   <td><span class="route">/resources/plugins</span></td>
                   <td>插件中心</td>
-                  <td>进入秒传、TG 监控、通知、Emby 封面、PT 刷流、癫影、PT 统计、媒体画像、AI 字幕等扩展。</td>
+                  <td>进入文件秒传、多号云迁移、TG 监控、Emby 封面、通知、PT 刷流、癫影、PT 统计、媒体画像、CLASH 监控与 AI 字幕翻译。</td>
                   <td>按场景打开插件配置页。</td>
                 </tr>
               </tbody>
@@ -1960,6 +1960,10 @@
             <div class="card">
               <h3><span class="route">/control/jobs</span> 任务队列</h3>
               <p>查看运行中、排队中、完成、失败、取消任务；可取消任务、删除历史、查看任务日志和定时调度。整理、STRM、订阅、字幕、插件任务都应在这里有迹可循。</p>
+            </div>
+            <div class="card">
+              <h3><span class="route">/control/container-update</span> 容器更新</h3>
+              <p>DianCupLite 集中检查远端镜像摘要，管理容器启停、重启、手动或 Cron 更新、镜像清理、更新记录与自更新回滚。</p>
             </div>
             <div class="card">
               <h3><span class="route">/control/logs</span> 运行日志</h3>
@@ -1981,7 +1985,7 @@
         <div class="section-head">
           <div class="label">08 Plugins</div>
           <h2>插件使用指南</h2>
-          <p>插件按需启用。先理解插件解决什么问题，再配置账号和目标目录。</p>
+          <p>插件中心提供 11 个内置扩展，按需补充 115、PT、Emby、AI、通知和网络运维能力。</p>
         </div>
         <div class="section-body">
           <div class="callout good">
@@ -2000,55 +2004,67 @@
               </thead>
               <tbody>
                 <tr>
-                  <td>秒传上传</td>
+                  <td>文件秒传（v1.0.0）</td>
                   <td>把本地文件或目录快速上传到 115，优先 SHA1 秒传，失败时可普通上传。</td>
                   <td>选择本地源、115 目标目录、成功/失败后处理、普通上传限速、并发和记录保留。</td>
                   <td>目录监控可自动处理新增文件；失败目录不要放在监控目录内部，避免循环处理。</td>
                 </tr>
                 <tr>
-                  <td>Telegram 频道监控</td>
+                  <td>多号云迁移（v1.1.0）</td>
+                  <td>比较主账号与备用账号目录树，把备用账号缺失的文件按 SHA1 单向秒传过去。</td>
+                  <td>选择源目录、备用 CK 池目标账号和目标目录，配置实时监控或定时同步。</td>
+                  <td>先预览目录树差异再执行；迁移只补缺失文件，不反向覆盖主账号内容。</td>
+                </tr>
+                <tr>
+                  <td>Telegram 频道监控（v1.0.0）</td>
                   <td>监控 TG 频道里的 115 分享、磁链、ED2K 等资源，并转存或转发。</td>
                   <td>连接 TG 客户端，添加监控频道和转发目标，配置独立的监控转发 Bot Token 与白名单。</td>
                   <td>资源页可搜索、清空、转存到 115、离线下载；自动转发需要 Bot 在目标频道有权限。</td>
                 </tr>
                 <tr>
-                  <td>通知插件</td>
-                  <td>把系统事件发到 Telegram。</td>
-                  <td>填写 Bot Token、白名单，选择通知类型、静默时段和公网通知图片地址。</td>
-                  <td>保存后先测试连接，再发送测试消息；静默时段只拦截主动通知，命令回复不受影响。</td>
-                </tr>
-                <tr>
-                  <td>Emby 媒体库封面</td>
+                  <td>Emby 封面生成（v1.0.0）</td>
                   <td>为 Emby 媒体库生成统一风格封面。</td>
                   <td>选择封面风格、媒体库、字体、字号、标题位置、分辨率、素材来源和自动刷新策略。</td>
                   <td>可 AI 翻译英文标题、批量生成、每天全量生成、入库后延迟刷新、清理素材缓存。</td>
                 </tr>
                 <tr>
-                  <td>PT 刷流</td>
+                  <td>通知插件（v2.0.0）</td>
+                  <td>把播放、入库、文件操作、任务、账号和系统告警统一发到 Telegram。</td>
+                  <td>填写 Bot Token、白名单，选择通知类型、静默时段和公网通知图片地址。</td>
+                  <td>保存后先测试连接，再发送测试消息；静默时段只拦截主动通知，命令回复不受影响。</td>
+                </tr>
+                <tr>
+                  <td>PT 刷流（v1.0.0）</td>
                   <td>按站点最新种子自动刷流，维护上传量和分享率。</td>
                   <td>选择刷流站点、下载器、保存路径、促销类型、H&R、大小、做种范围、删种规则。</td>
                   <td>超过上传/下载速度或活动任务上限会暂停新增；保留标签优先级最高，订阅命中的种子可排除。</td>
                 </tr>
                 <tr>
-                  <td>癫影插件</td>
+                  <td>癫影（v1.0.0）</td>
                   <td>使用癫影 OpenAPI Key 签到、上传分享资源、配置分享积分和 FFP 资源能力。</td>
                   <td>添加账号 Key，设置签到模式、签到时间段、默认分享账号和解锁积分。</td>
                   <td>FFP 统计可查看调用、命中、贡献和站点缓存；上传到癫影可用分享码或 ED2K 模式。</td>
                 </tr>
                 <tr>
-                  <td>PT 站点统计</td>
+                  <td>PT 站点统计（v1.0.0）</td>
                   <td>集中查看 PT 站点上传、下载、分享率、魔力、做种和健康状态。</td>
                   <td>先在 PT 站点配置中添加并启用站点。</td>
                   <td>可刷新全部或单站，按站点、域名、用户搜索，快速发现分享率和做种异常。</td>
                 </tr>
                 <tr>
-                  <td>Emby 媒体画像</td>
+                  <td>Emby 媒体画像（v1.0.0）</td>
                   <td>从其它工具生成的旧 Emby 库迁移到本项目时使用，是迁移链路的核心插件。</td>
                   <td>填写旧 Emby 地址和 API Key，配置路径替换，把旧库路径匹配到 DIAN-115 的 115/CD2 目录树。</td>
                   <td>先建目录树不生成 STRM；拉取画像后配合 Madby 与 FFP 上报，最后再生成新 STRM。</td>
                 </tr>
                 <tr>
-                  <td>AI 字幕翻译</td>
+                  <td>CLASH 监控（v1.0.0）</td>
+                  <td>监控代理域名访问健康，并联动 Clash / Mihomo Selector 自动切换节点。</td>
+                  <td>填写控制器地址和密钥，选择策略组、测试地址、健康阈值与候选节点。</td>
+                  <td>先测试控制器和节点延迟；可查看切换事件、连接与每日用量，并发送测试报告。</td>
+                </tr>
+                <tr>
+                  <td>AI 字幕翻译（v1.0.0）</td>
                   <td>把已有非中文字幕翻译成中文外挂字幕。</td>
                   <td>配置字幕风格、AI 使用位置、最大字符数、媒体库白名单、外挂/内封处理策略。</td>
                   <td>只处理 MP4/MKV 且已有非中文字幕源；PGS/DVD 图像字幕不会 OCR；任务进度可看翻译对照和日志。</td>
@@ -2283,6 +2299,7 @@
                 <tr><td>配置 PT 站点</td><td><span class="route">/resources/sites</span></td><td>站点配置</td></tr>
                 <tr><td>打开插件</td><td><span class="route">/resources/plugins</span></td><td>插件中心</td></tr>
                 <tr><td>看后台任务</td><td><span class="route">/control/jobs</span></td><td>任务队列</td></tr>
+                <tr><td>更新与管理容器</td><td><span class="route">/control/container-update</span></td><td>容器更新</td></tr>
                 <tr><td>查日志</td><td><span class="route">/control/logs</span></td><td>运行日志</td></tr>
                 <tr><td>清缓存</td><td><span class="route">/control/cache</span></td><td>缓存管理</td></tr>
                 <tr><td>运营门户</td><td><span class="route">/control/portal</span></td><td>门户管理</td></tr>
@@ -2303,14 +2320,16 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><td>秒传上传</td><td><span class="route">/resources/plugins/rapid-upload</span></td><td>手动秒传、目录监控、上传记录。</td></tr>
-                <tr><td>Telegram 频道监控</td><td><span class="route">/resources/plugins/tg-channel</span></td><td>TG 客户端、频道资源、转发 Bot。</td></tr>
+                <tr><td>文件秒传</td><td><span class="route">/resources/plugins/rapid-upload</span></td><td>手动秒传、目录监控、上传记录。</td></tr>
+                <tr><td>多号云迁移</td><td><span class="route">/resources/plugins/account-migration</span></td><td>多账号目录树比较、差异预览与单向秒传。</td></tr>
+                <tr><td>Telegram 频道监控</td><td><span class="route">/resources/plugins/tg-channel-monitor</span></td><td>TG 客户端、频道资源、转发 Bot。</td></tr>
                 <tr><td>Emby 封面生成</td><td><span class="route">/resources/plugins/emby-cover</span></td><td>封面生成、参数、标题、清理。</td></tr>
-                <tr><td>通知插件</td><td><span class="route">/resources/plugins/notifications</span></td><td>Telegram 通知、通知类型、静默时段、图片。</td></tr>
+                <tr><td>通知插件</td><td><span class="route">/resources/plugins/notify</span></td><td>Telegram 通知、通知类型、静默时段、图片。</td></tr>
                 <tr><td>PT 刷流</td><td><span class="route">/resources/plugins/pt-brush</span></td><td>刷流配置、任务、日志。</td></tr>
                 <tr><td>癫影插件</td><td><span class="route">/resources/plugins/dianying</span></td><td>癫影账号、签到、分享积分、FFP 统计。</td></tr>
                 <tr><td>PT 站点统计</td><td><span class="route">/resources/plugins/pt-site-stats</span></td><td>上传、下载、分享率、做种统计。</td></tr>
                 <tr><td>Emby 媒体画像</td><td><span class="route">/resources/plugins/emby-media-lite</span></td><td>旧库迁移、Emby 拉取、上报与清理。</td></tr>
+                <tr><td>CLASH 监控</td><td><span class="route">/resources/plugins/clash-monitor</span></td><td>代理健康、节点测速、自动切换与用量统计。</td></tr>
                 <tr><td>AI 字幕翻译</td><td><span class="route">/resources/plugins/ai-subtitle</span></td><td>字幕策略、选媒体翻译、任务进度、词表。</td></tr>
               </tbody>
             </table>
