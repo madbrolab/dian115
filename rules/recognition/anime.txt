@@ -1,0 +1,469 @@
+# 自定义识别词 - 动漫
+# 不含 TMDB 强绑；保留动漫标题、季集映射及集数偏移。
+# 来源：rules.txt
+
+(?<=Ore.dake.Level.Up.na.Ken.*?)2025 => 2024
+Ore.dake.Level.Up.na.Ken.Season.2.*Arise.from.the.Shadow.S02 => Ore.dake.Level.Up.na.Ken.S01
+
+(?i)^MushokuTenseiS2~IsekaiIttaraHonkiDasu~.*?@Feimao\((\d{1,3})\)$ => Mushoku.Tensei.Isekai.Ittara.Honki.Dasu.S02E\1.2160p.60fps.x265.FLAC.AAC-Feimao
+
+# 无名记忆 第二季
+Unnamed Memory Act.2 => 无名记忆 S01
+(?<=Strange-Raw.*?)Unnamed Memory S02 => 无名记忆 S01 && S01 <> Bilibili >> EP+12
+Unnamed.Memory.S02 => 无名记忆 S01 && S01 <> 1080p >> EP+12
+
+# 药屋少女的呢喃
+Kusuriya.no.Hitorigoto.S02 => Kusuriya no Hitorigoto S01 && S01 <> 2025 >> EP+24
+
+# Re:从零开始的异世界生活 第三季
+Re.Zero.kara.Hajimeru.Isekai.Seikatsu.S03(?=.*ADWeb) => Re.Zero.kara.Hajimeru.Isekai.Seikatsu.S01 && S01 <> 2024 >> EP+50
+(?<=ANi.*?)Re：從零開始的異世界生活 第三季 => Re.Zero.kara.Hajimeru.Isekai.Seikatsu.S01 && S01 <> 1080P >> EP+50
+(?<=ANi.*?)Re：从零开始的异世界生活 第三季 => Re.Zero.kara.Hajimeru.Isekai.Seikatsu.S01 && S01 <> 1080P >> EP+50
+My.Dress-Up.Darling.S02 => 更衣人偶坠入爱河（2022） S01 && S01 <> 2025 >> EP+12
+Frieren: Beyond Journey's End(?=.*FROGWeb) => 葬送的芙莉莲 S01 && S01 <> 2026 >> EP+28
+
+## 10月新番 ##
+(?<=ANi.*?)刀劍神域外傳 Gun Gale Online II => 刀劍神域外傳 Gun Gale Online S02
+
+#重来吧，魔王大人！ (2019)
+魔王陛下，RETRY！R => 重来吧，魔王大人！ (2019)
+魔王陛下，RETRY！ => 重来吧，魔王大人！ (2019)
+
+#转生贵族靠着鉴定技能一飞冲天 第二季
+轉生貴族憑鑑定技能扭轉人生 第二季 - (1[3-9]|2[0-9]) => 转生贵族靠着鉴定技能一飞冲天 S01E\1
+转生贵族凭鉴定技能扭转人生 第二季 - (1[3-9]|2[0-9]) => 转生贵族靠着鉴定技能一飞冲天 S01E\1
+
+#极速车魂
+MF Ghost S02E => MF Ghost.S01E  && .S01E <>  2024 >> EP+12
+燃油车斗魂 => 极速车魂
+
+#香格里拉边境第二季
+ShangriLa.Frontier.S02(?=.*ADWeb) => ShangriLa.Frontier.S01 && S01 <> 2024 >> EP+25
+(?<=ANi.*?)香格里拉・开拓异境～粪作猎手挑战神作～ 第二季 => ShangriLa.Frontier.S01 && S01 <> 1080P >> EP+25
+(?<=ANi.*?)香格里拉・開拓異境～糞作獵手挑戰神作～ 第二季 => ShangriLa.Frontier.S01 && S01 <> 1080P >> EP+25
+
+#你与我最后的战场，亦或是世界起始的圣战 (2020)
+這是妳與我的最後戰場，或是開創世界的聖戰 第二季 => 你与我最后的战场，亦或是世界起始的圣战 S02
+
+#战国妖狐 (2024)
+戰國妖狐 千魔混沌編​ - 特別篇 => 战国妖狐 (2024).S00E01
+最強肉盾的迷宮攻略～擁有稀少技能體力 9999 的肉盾，被勇者隊伍辭退了～ => 最强肉盾的迷宫攻略～拥有稀少技能体力9999的肉盾，被勇者队伍辞退了～
+
+#大叔新人冒险者，被最强小队拼死锻炼后无敌了
+新人大叔冒險者，被最強隊伍操到死成無敵 => 大叔新人冒险者，被最强小队拼死锻炼后无敌了
+
+#百变的七仓同学 (2024)
+模擬後宮體驗 => 百变的七仓同学
+
+#身为VTuber的我因为忘记关台而成了传说 (2024)
+身為 VTuber 的我因為忘記關台而成了傳說 => 身为VTuber的我因为忘记关台而成了传说
+VTuber.nanda.ga => VTuber.nandaga
+
+#妖精的尾巴 百年任务
+魔導少年 百年任務 => 妖精的尾巴 百年任务
+
+#亚刻奥特曼 (2024)
+超人力霸王雅克 => 亚刻奥特曼
+
+#疑似后宫
+模擬後宮體驗 => 疑似后宫
+
+#尼尔：自动人形
+尼爾：自動人形 Ver1.1a - => 尼尔：自动人形 (2023).S01E
+
+#2.5次元的诱惑
+2.5 次元的誘惑 => 2.5次元的诱惑
+
+#前辈是男孩子
+學姊是男孩 => 前辈是男孩子
+
+#我要【招架】一切~反误解的世界最强想成为冒险者～
+我要【招架】一切～反誤解的世界最強想成為冒險家 => 我要【招架】一切~反误解的世界最强想成为冒险者～
+
+#靠废柴技能【状态异常】成为最强的我将蹂躏一切
+靠废柴技能【状态异常】成为最强的我将蹂躏一切 => 靠废柴技能状态异常成为最强的我将蹂躏一切
+
+(?i)^MushokuTensei~IsekaiIttaraHonkiDasu~.*?@Feimao\((\d{1,3})\)$ => Mushoku.Tensei.Jobless.Reincarnation.S01E\1.2160p.60fps.x265.FLAC.AAC-Feimao
+
+#深夜重拳 (2024)
+深夜 Punch => 深夜冲击
+
+#魔法少女与邪恶曾经敌对。 (2024)
+曾經、魔法少女和邪惡相互為敵。 => 魔法少女与邪恶曾经敌对。
+曾经、魔法少女和邪恶相互为敌。 => 魔法少女与邪恶曾经敌对。
+
+#物语系列 (2009)
+物語系列 第外季＆第怪季 => 物语系列 (2009).S05
+物语系列 第外季＆第怪季 => 物语系列 (2009).S05
+
+#天行九歌
+Tian.Xing.Jiu.Ge => 天行九歌
+
+#狐妖小红娘 镜花缘篇
+(?<=Fox.Spirit.Matchmaker.*?)2024 => 2015 && S01 <> 2160p >> EP+157
+(?<=Fox.Spirit.Matchmaker.*?)S12E(?=.*ADWeb) => S01E && S01E  <> 2024 >> EP+157
+(?<=Fox.Spirit.Matchmaker.*?)2024(?=.*ADWeb) => 2015
+(?<=Fox.Spirit.Matchmaker.*?)2024(?=.*PTerWEB) => 2015 && S01 <> 2160p >> EP+157
+(?<=Fox.Spirit.Matchmaker.*?)2024(?=.*PTerWEB) => 2015 && S01 <> 1080p >> EP+157
+Kimetsu no Yaiba：Hashira Geiko-hen => 鬼灭之刃 S5
+(雀魂 KANG!! / Jantama Kan!!)|(Jantama Kan!!) => 雀魂 S02
+
+#咒术回战
+Jujutsu Kaisen S2 => Jujutsu Kaisen S1
+仙逆【HDVWEB】
+Renegade Immortal 2024 S02E(2[5-9]|[3-6][0-9]|7[0-6]).*HDVWEB => 仙逆.S01E\1.2023 && S01 <> 2023 >> EP+24
+仙逆.Renegade.Immortal.2024.S02E(2[5-9]|[3-6][0-9]|7[0-6]).*HDVWEB => 仙逆.S01E\1.2023 && S01 <> 2023 >> EP+24
+
+#诛仙【HDVWEB】
+诛仙.Jade.Dynasty.S01(?=.*E(2[7-9]|3[0-9]|4[0-9]|5[0-2]).*ADWeb) => 诛仙.S02 && S02 <> 2024 >> EP-26
+诛仙.Jade.Dynasty.S01(?=.*E(2[7-9]|3[0-9]|4[0-9]|5[0-2]).*HHWEB) => 诛仙.S02 && S02 <> 2022 >> EP-26
+Jade.Dynasty.S01(?=.*E(2[7-9]|3[0-9]|4[0-9]|5[0-2]).*HHWEB) => 诛仙.S02 && S02 <> 2022 >> EP-26
+
+#一念永恒-【QHstudIo】【Momoda】【ADWeb】
+##第三季
+A.Will.Eternal.2024.S03E(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-4]).*QHstudIo => 一念永恒.S01E\1.2020 && S01 <> 2020 >>  EP+106
+A.Will.Eternal.2024.S03E(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-4]).*ZmWeb => 一念永恒.S01E\1.2020 && S01 <> 2020 >> EP+106
+A.Will.Eternal.S03E(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-4]).2160p.TX.WEB-DL.AAC2.0.H.265.*MWeb => 一念永恒.S01E\1.2020 && S01 <> 2020 >> EP+106
+A.Will.Eternal.S01E(0[1-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-4]).2160p.TX.WEB-DL.AAC2.0.H.265.*MWeb => 一念永恒.S01E\1.2020 && S01 <> 2020 >> EP+106
+(?<=Yi.Nian.Yong.Heng.S03.*?)2024 => 2020
+Yi.Nian.Yong.Heng.S03 => A.Will.Eternal.S01 && S01 <> 2020 >> EP+106
+
+#进击的巨人 完结篇（前篇）【ADWeb】
+Shingeki.no.Kyojin.The.Final.Season.Kanketsu-hen.Zenpen.S01E => Attack.on.Titan.S00 && S00 <> 2023 >> EP+35
+
+#进击的巨人 完结篇（后篇）【ADWeb】
+Shingeki.no.Kyojin.The.Final.Season.Kanketsu-hen.Kouhen.S01 => Attack.on.Titan.S00E && S00 <> 2023 >> EP+36
+
+#咒术回战 【ADWeb】
+Jujutsu.Kaisen.S02E => Jujutsu.Kaisen.S01E && Jujutsu.Kaisen.S01E <> 2023 >> EP+24
+
+#吞噬星空 【ADWeb订阅第2-4季】【QHstudIo】
+(?<=Swallowed.Star.S04.*?)2023 => 2020
+(?<=Swallowed.Star.S02.*?)2021 => 2020
+(?<=Swallowed.Star.S03.*?)2022 => 2020
+Swallowed.Star.S04 => Swallowed.Star.S01 && S01 <> 2020 >> EP+85
+吞噬星空.第3季.Swallowed.Star.S03 => 吞噬星空.第1季.Swallowed.Star.S01
+吞噬星空.第2季.Swallowed.Star.S02 => 吞噬星空.第1季.Swallowed.Star.S01
+Swallowed.Star.2022.S03E(0[1-9]|1[0-9]|2[0-9]|30|31|32|33).*QHstudIo => 吞噬星空.S01E\1.2021 && S01 <> 2021 >> EP+52
+Swallowed.Star.Ⅱ.2021.S02E(0[1-9]|1[0-9]|2[0-6]).*QHstudIo => 吞噬星空.S01E\1.2021 && S01 <> 2021 >> EP+26
+
+#百炼成神第二季【ADWeb】
+Apotheosis.?S02E(?=.*ADWeb) => Apotheosis S01E && Apotheosis S01E <> 2023 >> EP+52
+(?<=Apotheosis.S01.*?)2023 => 2022
+
+#以上是旧添加的
+#青之驱魔师 (2011)
+青之驅魔師 雪之盡頭篇 => 青之驱魔师 (2011).S04
+
+#暗杀女仆冥土小姐 (2024)
+女僕冥土小姐 => 暗杀女仆冥土小姐
+
+#被队伍驱逐的治愈师，其实是最强的 (2024)
+被逐出隊伍的治癒師，其實是最強 => 被队伍驱逐的治愈师，其实是最强的
+
+#神劍闖江湖 ―明治劍客浪漫譚― 京都動亂
+神劍闖江湖 ―明治劍客浪漫譚― 京都動亂 => 浪客剑心－明治剑客浪漫谭－  &&  - <> [1080P] >> EP+24
+
+#吞噬星空 【ADWeb订阅第5季】
+(?<=Swallowed.Star.S05.*?)2024 => 2020
+Swallowed.Star.S05 => Swallowed.Star.S01
+
+#真的要结婚吗 (2024)
+聽說你們要結婚！？ => 真的要结婚吗
+
+#新网球王子 U-17世界杯篇 (2022)
+新網球王子 U-17 世界盃 SEMIFINAL => 新网球王子 U-17世界杯篇 (2022).S02
+
+#没能成为魔法师的女孩子的故事
+當不成魔法師的女孩 => 没能成为魔法师的女孩子的故事
+
+#完美世界剧场版【PterWEB】
+(?<=Perfect.World.*?)2024(?=.*PTerWEB) => Movie.2024
+(?<=Perfect.World.Movie.2024.*?)S00(?=.*PTerWEB) => S01 && E <> 2160p >> EP-8
+Log Horizon 2 => 记录的地平线 S02
+Log Horizon - Entaku Houkai => 记录的地平线 S03
+Log Horizon Entaku Houkai => 记录的地平线 S03
+物語系列 第外季＆第怪季 - 06.5 => 物語系列 - S00E48
+物语系列 外传季&怪物季 - 06.5 => 物语系列 - S00E48
+
+#RE:从零开始的异世界生活
+#ANI
+Re：從零開始的異世界生活 第三季 => Re：从零开始的异世界生活 && Re：从零开始的异世界生活 -  <> [1080P] >>  EP+50
+
+#ADWEB
+Re.Zero.kara.Hajimeru.Isekai.Seikatsu.S03 => Re：从零开始的异世界生活 && Re：从零开始的异世界生活 <> .2024 >>  EP+50
+
+#死神 千年血战篇【ADWeb】
+(Bleach|BLEACH).Sennen.Kessen.?[Hh]en.S01 => Bleach.Sennen.Kessen.Hen.S02
+
+#关于我转生变成史莱姆这档事 第三季
+關於我轉生變成史萊姆這檔事 第三季 - 66 => 关于我转生变成史莱姆这档事 S03E18
+關於我轉生變成史萊姆這檔事 第三季 - 67 => 关于我转生变成史莱姆这档事 S03E19
+關於我轉生變成史萊姆這檔事 第三季 - 68 => 关于我转生变成史莱姆这档事 S03E20
+關於我轉生變成史萊姆這檔事 第三季 - 69 => 关于我转生变成史莱姆这档事 S03E21
+關於我轉生變成史萊姆這檔事 第三季 - 70 => 关于我转生变成史莱姆这档事 S03E22
+關於我轉生變成史萊姆這檔事 第三季 - 71 => 关于我转生变成史莱姆这档事 S03E23
+關於我轉生變成史萊姆這檔事 第三季 - 72 => 关于我转生变成史莱姆这档事 S03E24
+關於我轉生變成史萊姆這檔事 第三季 - <> [1080P] >> EP-49
+
+#永生【ADWeb订阅第四季】
+IMMORTALITY.S01(?=.*E(4[1-9]|5[0-6]).*ADWeb) => IMMORTALITY.S04 && S04 <> 2022 >> EP-40
+
+#后空翻少年！！ 剧场版 (2022)
+電影版 後空翻少年!! - 電影 => 后空翻少年！！ 剧场版 (2022)
+
+#銀魂 THE FINAL
+銀魂 THE FINAL => 银魂：最终篇 (2021)
+
+#銀魂劇場版 完結篇：永遠的萬事屋
+銀魂劇場版 完結篇：永遠的萬事屋 => 银魂完结篇：直到永远的万事屋 (2013)
+
+#世界一初戀～求婚編～
+世界一初戀～求婚編～ => 世界第一初恋：求婚篇 (2020)
+
+#荒野的壽飛行隊 完全版
+荒野的壽飛行隊 完全版 => 荒野的寿飞行队 完全版 (2020)
+
+#时光沙漏 fragtime
+时光沙漏 fragtime => 时光沙漏 (2019)
+
+#ZERO-ONE Others 假面骑士灭亡迅雷
+ZERO-ONE Others 假面骑士灭亡迅雷 [电影] - 01 => 假面骑士01 外传 假面骑士灭亡迅雷 (2021)
+ZERO-ONE Others 假面骑士灭亡迅雷 [电影] [中文配音] - 01 => 假面骑士01 外传 假面骑士灭亡迅雷 (2021)
+
+#超時空甩尾
+超時空甩尾 => 红线 (2010)
+
+#妖獸都市 1987 劇場版
+妖獸都市 1987 劇場版 => 妖兽都市 (1987)
+
+#狐妖小红娘 镜花缘篇
+Fox Spirit Matchmaker S12 => Fox Spirit Matchmaker S01
+
+#狐妖小红娘 镜花缘篇PTERWEB订阅
+狐妖小红娘 第158-167集 => 狐妖小红娘
+
+#天行九歌
+Tian Xing Jiu Ge => 天行九歌
+
+#異世界自殺突擊隊(2024)
+異世界自殺突擊隊 => 异世界自杀小队
+超人力霸王雅克 - 06.5 => 亚刻奥特曼 (2024).S00E01
+2.5次元的诱惑 => 2.5次元的诱惑
+
+#我要【招架】一切~反误解的世界最强想成为冒险者～
+我要【招架】一切～反誤解的世界最強想成為冒險家 => 我要招架一切~反误解的世界最强想成为冒险者～
+我要【招架】一切~反误解的世界最强想成为冒险者～ => 我要招架一切~反误解的世界最强想成为冒险者～
+【我推的孩子】 => 我推的孩子 S01
+戰國妖狐 千魔混沌篇 => 战国妖狐 S02 && 战国妖狐 S02 <> [1080P] >> EP-13
+
+#我的妻子没有感情
+我的妻子不具感情 => 我的妻子没有感情
+\[Movie\]
+AnimeF@ADE => ADE
+AnimeF@ADWeb => ADWeb
+(?i)^MushokuTenseiS2~IsekaiIttaraHonkiDasu~.*?@Feimao\((\d{1,3})\)$ => Mushoku.Tensei.Jobless.Reincarnation.S02E\1.2160p.60fps.x265.FLAC.AAC-Feimao
+episode\.\d{1}
+DTS-HDMA5.1 => DTS-HD.MA5.1
+\.(第\d{1,2}集)\. => \1
+(?<=(VCB-Studio|ANi).*?)(?i)Season( *)0?(\d+) => S\2
+(?<=SBSUB.*DR.*?)- => part
+[CHS_CHT_JP]\(\w{8}\)
+[CHT_JP]\(\w{8}\)
+[CHS_JP]\(\w{8}\)
+\[SBSUB\]\[CONAN\]\[DR => [银色子弹字幕组][名侦探柯南][S01E
+\[SBSUB\]\[CONAN\]\[ => [银色子弹字幕组][名侦探柯南][S01E
+chs&jpn => jpsc
+cht&jpn => jptc
+(?<=(VCB-Studio|ANi).*?)2nd Season => S02
+(?<=(VCB-Studio|ANi).*?)IV => S04
+(?<=(VCB-Studio|ANi).*?)III => S03
+(?<=(VCB-Studio|ANi).*?)II => S02
+(?<=VCB-Studio.*?)\(\d{2}\)
+[【\[](Fin|END)[】\]]|(?:|\s|\s-\s)(Fin|END)(?=\])|(?<=\d{1,2})_?(Fin|END)
+(?<=[\[【].*?(?:组|組|sub|S(?:UB|ub|tudio)|Raw(?:|s)|社)[\]】])(?:(?:\[|【|★|)\d{1,2}月新番(?:\]|】|★|)|)[\[【](.*?)[\]】] => \1
+(?i)(CHS|GB|SC)(&|_|＆|\x20)(CHT|BIG5|TC)(&|_|＆|\x20)JA?PN? => 简繁日内封
+(?i)(CHS|GB|SC)_JA?PN?(&|＆|\x20)(CHT|BIG5|TC)_JA?PN? => 简繁日内封
+(?i)(CHS|GB|SC)(&|＆|\x20)(CHT|BIG5|TC) => 简繁内封
+(?i)(CHS|GB|SC)(_|&|＆|\x20)JA?PN? => 简日双语
+(?i)\[JA?PN?(_|&|＆|\x20)?(SC|CHS|GB)\] => [简日双语]
+(.*)(VCB-Studio)(.*)(Ma10p_?|Hi10p_?)(.*) => \1\2\3\5
+S(eason)? ?0?([2-9]) *\[(OVA|OAD)0?\(?(\d)?\)?\] => S0E\2\4
+(S(eason)? ?0?1 *)?\[(OVA|OAD)(\d+)?\] => S0E\4
+(S(eason)? ?\d+)? *\[\d+\(?(OVA|OAD)\)?\] => S0
+(?<=[\W_])4(?:k|K)(?=[\W_]) => 2160p
+(?i)\bSBSUB\b => 银色子弹字幕组
+(?i)\bNekomoe kisstan\b => 喵萌奶茶屋
+(?i)\bOPFansMaplesnow\b => OPFans枫雪动漫
+(?i)\bSakurato\b|樱都字幕组|桜都字幕组|桜都 => 桜都字幕组
+(?i)\bHaruhana\b => ❀拨雪寻春❀
+(?<=S\d{2}E\d{2}).+(?=(2160|1080)p.+(NTb|FLUX))
+
+#排球少年
+ハイキュー!! OAD => Haikyuu!! S00E
+Haikyuu!! OVA => Haikyuu!! S00E && S00E <> - >> EP+3
+Haikyuu!! To The Top => Haikyuu!! S04
+
+#影之诗F
+Shadowverse Flame => 影之诗 S02
+
+#摇曳露营
+Yuru Camp \[Heya Camp EP00\] => Yuru Camp S00E01
+Yuru Camp \[Hora Camp\] => Yuru Camp S00E02
+Yuru Camp \[Survival Camp\] => Yuru Camp S00E03
+Yuru Camp Season 2 \[Mystery Camp\] => Yuru Camp S00E04
+Yuru Camp Season 2 \[Tabisuru Shima Rin\] => Yuru Camp S00E05
+Heya Camp \[SP\] => 房间露营△ S00E01
+Heya Camp => 房间露营△
+金田一少年之事件簿・歌剧院新杀人事件 => 金田一少年事件簿：新歌剧院杀人事件
+
+#秀逗魔导士
+秀逗魔导士SPECIAL \- S1 => 秀逗魔导士 - S0
+秀逗魔导士EXCELLENT \- S1 => 秀逗魔导士 - S0 && S0E <> 集 >> EP+3
+秀逗魔导士完全无欠版 => 秀逗魔导士Perfect
+
+#白箱
+Exodus\! => 白箱 S00E01
+Daisan Hikou Shoujotai => 白箱 S00E02
+
+#女神异闻录4
+Persona4 the ANIMATION \[01\(Director's Cut Ver\.\)\] => 女神异闻录4 S00E02
+Persona4 the ANIMATION \[True End Episode\] => 女神异闻录4 S00E01
+Persona4 the Golden ANIMATION \[Another End Episode => 女神异闻录4 黄金版 S00E01
+
+#惊爆草莓
+ストロベリー・パニック => 惊爆草莓 S01E
+
+#放浪男孩
+放浪息子 第12話 => 放浪男孩 S01E11
+放浪息子 第10話(?!.*TV放送) => 放浪男孩 S00E01
+放浪息子 第11話 => 放浪男孩 S00E02
+
+#稻荷恋之歌
+いなり、こんこん、恋いろは。 OAD => 稻荷恋之歌 S00E01
+
+#微笑的闪士
+\[Magic-Raws\] Bonus Scenes => [Magic-Raws]微笑的闪士 S00E01
+
+#斩服少女
+KILL la KILL \[25\] => Kill la Kill S00E01
+KILL la KILL \[Memories of Mikisugi Aikuro\] => Kill la Kill S00E02
+KILL la KILL \[Making of KILL la KILL 500 Days Part => Kill la Kill S00E0 && S00E <> \] >> EP+2
+KILL la KILL \[KILL la KILL Voices\] => Kill la Kill S00E05
+
+#太空丹迪
+Space Dandy (?=(0[1-9]|1[0-3])) => 太空丹迪S01E
+Space Dandy (?=(1[4-9]|2[0-2])) => 太空丹迪S02E0 && S02E0 <> BD >> EP-13
+Space Dandy (?=(2[3-6])) => 太空丹迪S02E && S02E <> BD >> EP-13
+
+#星际牛仔
+Cowboy Bebop => 星际牛仔.1998
+
+#圣母在上
+(?<=Maria-sama ga Miteru.*?)Vol.0(\d) => S0\1
+Maria-sama ga Miteru \[SP03\] => 圣母在上 S00
+
+#噬魂师
+Soul Eater \[SP10\] => Soul Eater S00
+
+#噬血狂袭
+ストライク・ザ・ブラッド FINAL => 噬血狂袭 S05
+ストライク・ザ・ブラッド IV => 噬血狂袭 S04
+ストライク・ザ・ブラッド III => 噬血狂袭 S03
+ストライク・ザ・ブラッド II => 噬血狂袭 S02
+ストライク・ザ・ブラッド ヴァルキュリアの王国篇 => 噬血狂袭 S00
+ストライク・ザ・ブラッド 消えた聖槍篇 => 噬血狂袭 S00E03
+
+#恶魔高校D×D
+High School D×D New Born - SP => High School D×D S00E && S00E <> BD >> EP+11
+High School D×D - SP => High School D×D S00E && S00E <> BD >> EP+1
+High School D×D Hero => High School D×D S04 && S04 <> BD >> EP+1
+High School D×D New Born - (0[1-9]|1[0-2]) => High School D×D S03E\1
+High School D×D New Born - 13 => High School D×D S00E16
+High School D×D New - (0[1-9]|1[0-2]) => High School D×D S02E\1
+High School D×D New - 13 => High School D×D S00E11
+High School D×D - (0[1-9]|1[0-2]) => High School D×D S01E\1
+High School D×D - (?=(1[3-4])) => High School D×D S00E0 && S00E0 <> BD >> EP-5
+
+#圣痕炼金士
+Seikon no Qwaser II \[(\d{2}).*\] => 圣痕炼金士 S02E\1
+(?<!II.*)(?<=Seikon no Qwaser.*)SP(?=(0[1-9]|1[0-6])) => S00E
+(?<=Seikon no Qwaser.*)\[OVA\] => S00E17
+Seikon no Qwaser II \[SP => 圣痕炼金士 S00E && S00E <> Ma10p >> EP+18
+
+#物语系列
+Bakemonogatari (0[1-9]|1[0-2]) => 物语系列 S01E\1
+Bakemonogatari (?=(1[3-5])) => 物语系列 S00E0 && S00E0 <> BD >> EP-11
+Nisemonogatari => 物语系列 S02E
+Nekomonogatari \(Kuro\) => 物语系列 S00E && S00E <> BD >> EP+5
+Nekomonogatari \(Shiro\) Recap 01 => 物语系列 S00E10
+Nekomonogatari \(Shiro\) => 物语系列 S03E
+Kabukimonogatari Recap 02 => 物语系列 S00E11
+Kabukimonogatari => 物语系列 S03E && S03E <> BD >> EP+5
+Otorimonogatari Recap 03 => 物语系列 S00E12
+Otorimonogatari => 物语系列 S03E && S03E <> BD >> EP+9
+Onimonogatari => 物语系列 S03E && S03E <> BD >> EP+13
+Koimonogatari => 物语系列 S03E && S03E <> BD >> EP+17
+Hanamonogatari => 物语系列 S00E && S00E <> BD >> EP+12
+Tsukimonogatari => 物语系列 S00E && S00E <> BD >> EP+17
+Zoku Owarimonogatari 01 => 物语系列 S00E42
+Zoku Owarimonogatari 02 => 物语系列 S00E43
+Zoku Owarimonogatari 03 => 物语系列 S00E44
+Zoku Owarimonogatari 04 => 物语系列 S00E45
+Zoku Owarimonogatari 05 => 物语系列 S00E46
+Zoku Owarimonogatari 06 => 物语系列 S00E47
+Owarimonogatari S2 => 物语系列 S00E && S00E <> BD >> EP+34
+Owarimonogatari 01 => 物语系列 S04E01 part1
+Owarimonogatari 02 => 物语系列 S04E01 part2
+Owarimonogatari 10 => 物语系列 S04E09
+Owarimonogatari => 物语系列 S04E && S04E <> BD >> EP-1
+Koyomimonogatari => 物语系列 S00E && S00E <> BD >> EP+21
+Kizumonogatari 01 => 伤物语1：铁血篇
+Kizumonogatari 02 => 伤物语2：热血篇
+Kizumonogatari 03 => 伤物语3：冷血篇
+
+#死神 千年血战篇
+死神 千年血战篇 => 死神 S02
+BLEACH_Sennen_Kessen-hen => 死神 S02
+
+#突击莉莉
+Assault Lily Fruits => 突击莉莉 S00 && S00 <> Ma10p >> EP+1
+
+#邪神与厨二病少女
+邪神与厨二病少女 \- S1E12 => 邪神与厨二病少女 S00E01
+邪神与厨二病少女 \- S2E12 => 邪神与厨二病少女 S00E02
+
+#约会大作战
+\(BDBOX Ver\.\)
+Date A Live Mayuri Judgement => 约会大作战 万由里裁决
+Date A Live \[13\] => 约会大作战 S00E01
+Date a Live V => 约会大作战 S05
+Date a Live IV => 约会大作战 S04
+Date A Live III => 约会大作战 S03
+Date A Live II \[11\] => 约会大作战 S00E02
+Date A Live II => 约会大作战 S02
+
+#天降之物
+Sora no Otoshimono II => 天降之物 S02
+Sora no Otoshimono \[14\] => 天降之物 S00E01
+Heaven's Lost Property Final：Eternal My Master\[Voice Comic v2\] => 天降之物 S00E02
+
+#魔装学园H×H
+Hybrid x Heart Magias Academy Ataraxia\]\[Love Room => 魔装学园H×H S00E0
+
+#异种族风俗娘评鉴指南
+Ishuzoku Reviewers \[06\(B Part Another World Ver\.\)\] => 异种族风俗娘评鉴指南 S00E01
+
+#魔乳秘剑帖
+楓の千房さまおっぱい成長記録 => 魔乳秘剑帖 S00E0 && S00E0 <> 」 >> EP+4
+美乳鍛錬☆ちちとぎ => 魔乳秘剑帖 S00E0
+
+#间谍过家家
+SPYxFAMILY S2 \[ => 间谍过家家 S02E && S02E <> Ma10p >> EP-25
+
+#一拳超人
+One-Punch Man \[OAD\] => One-Punch Man S00E01
+One-Punch Man \[OVA => One-Punch Man S00E && S00E <> Ma10p >> EP+1
+Clannad 2007 SP => Clannad S00E
+Clannad ~After Story~ 2008 EP => Clannad S02E
+Clannad ~After Story~ 2008 SP => Clannad S00E && S00E <> BluRay >> EP+2

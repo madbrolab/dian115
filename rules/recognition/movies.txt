@@ -1,0 +1,15 @@
+# 自定义识别词 - 电影
+# 不含 TMDB 强绑；仅保留电影标题修正。
+# 来源：rules.txt
+
+#奥本海默
+Oppenheimer\.2023 => 奥本海默
+
+#战争与和平
+War and Peace 1966 Criterion Collection Part IV => 战争与和平4：皮埃尔·别祖霍夫
+War and Peace 1966 Criterion Collection Part III => 战争与和平3：1812年
+War and Peace 1966 Criterion Collection Part II => 战争与和平2：娜塔莎·罗斯托娃
+War and Peace 1966 Criterion Collection Part I => 战争与和平1：安德烈·博尔孔斯基
+
+#行骗天下JP：运势篇
+The.Confidenceman.JP.Unsei.Hen.SP => 行骗天下JP：运势篇
