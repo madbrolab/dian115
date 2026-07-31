@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/logo.png" alt="DIAN-115" width="86" />
+  <img src="frontend/public/logo.jpg" alt="DIAN-115" width="86" />
 </p>
 
 <h1 align="center">DIAN-115</h1>
