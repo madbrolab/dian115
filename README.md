@@ -38,28 +38,28 @@ Wiki 按真实使用顺序整理：部署、旧 Emby 库迁移、115/CD2/Emby/Ma
 
 <p align="center">
   <img src="screenshots/discovery.png" alt="探索发现" width="49%" />
-  <img src="screenshots/media.png" alt="我的媒体" width="49%" />
+  <img src="screenshots/subscriptions.png" alt="媒体订阅" width="49%" />
 </p>
 
 <p align="center">
   <img src="screenshots/organize.png" alt="媒体整理" width="49%" />
+  <img src="screenshots/media.png" alt="我的媒体" width="49%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/files.png" alt="文件管理" width="49%" />
+  <img src="screenshots/accounts.png" alt="账号配置" width="49%" />
+</p>
+
+<p align="center">
+  <img src="screenshots/pt-sites.png" alt="PT 站点" width="49%" />
   <img src="screenshots/plugins.png" alt="插件中心" width="49%" />
 </p>
 
 <p align="center">
-  <img src="screenshots/accounts.png" alt="账号管理" width="49%" />
-  <img src="screenshots/settings.png" alt="系统设置" width="49%" />
+  <img src="screenshots/satellite.png" alt="卫星任务" width="49%" />
+  <img src="screenshots/container-update.png" alt="容器更新" width="49%" />
 </p>
-
-<details>
-<summary>查看更多截图</summary>
-
-![PT 站点](screenshots/pt-sites.png)
-![文件管理](screenshots/files.png)
-![媒体缓存](screenshots/media-cache.png)
-![运行日志](screenshots/logs.png)
-
-</details>
 
 ## DIAN-115 能做什么
 
