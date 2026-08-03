@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="title desc">
+  <title id="title">DIAN115</title>
+  <desc id="desc">DIAN115 mark for light backgrounds.</desc>
+  <path fill="#222831" fill-rule="evenodd" d="M20 0h68c69 0 112 39 112 100S157 200 88 200H20C9 200 0 191 0 180V20C0 9 9 0 20 0Zm26 34v132h42c47 0 76-24 76-66s-29-66-76-66H46Z"/>
+  <path fill="#2196F3" d="m77 67 58 33-58 33V67Z"/>
+</svg>

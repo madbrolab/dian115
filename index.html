@@ -1,1189 +1,185 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="light">
+<html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="DIAN-115 Wiki：从首次部署、旧库迁移、基础配置、媒体自动化、插件到日常维护的完整使用说明。" />
-  <title>DIAN-115 使用 Wiki</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f5f7fb;
-      --band: #eef3f8;
-      --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --text: #172033;
-      --muted: #5d697b;
-      --faint: #8b96a6;
-      --border: #dbe3ee;
-      --primary: #2f6fed;
-      --primary-weak: #eaf1ff;
-      --green: #148a58;
-      --green-weak: #eaf7f0;
-      --amber: #a56713;
-      --amber-weak: #fff5df;
-      --red: #c83f4c;
-      --red-weak: #fff0f2;
-      --teal: #0b7b83;
-      --teal-weak: #e8f7f8;
-      --ink: #233045;
-      --shadow: 0 14px 40px rgba(28, 43, 68, 0.10);
-      --shadow-sm: 0 8px 24px rgba(28, 43, 68, 0.08);
-      --radius: 8px;
-      --content: 1180px;
-      --font: "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
-      --mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-    }
-
-    html[data-theme="dark"] {
-      color-scheme: dark;
-      --bg: #111723;
-      --band: #182132;
-      --surface: #1c2535;
-      --surface-soft: #222d40;
-      --text: rgba(255, 255, 255, 0.92);
-      --muted: rgba(255, 255, 255, 0.68);
-      --faint: rgba(255, 255, 255, 0.44);
-      --border: rgba(255, 255, 255, 0.12);
-      --primary: #76a7ff;
-      --primary-weak: rgba(118, 167, 255, 0.14);
-      --green: #5fd29a;
-      --green-weak: rgba(95, 210, 154, 0.14);
-      --amber: #f4c36b;
-      --amber-weak: rgba(244, 195, 107, 0.14);
-      --red: #ff7b8a;
-      --red-weak: rgba(255, 123, 138, 0.14);
-      --teal: #55d5dc;
-      --teal-weak: rgba(85, 213, 220, 0.14);
-      --ink: rgba(255, 255, 255, 0.88);
-      --shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
-      --shadow-sm: 0 10px 26px rgba(0, 0, 0, 0.28);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      min-width: 320px;
-      background: linear-gradient(180deg, var(--band) 0, var(--bg) 420px);
-      color: var(--text);
-      font-family: var(--font);
-      font-size: 15px;
-      line-height: 1.7;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      opacity: 0.42;
-      background-image:
-        linear-gradient(var(--border) 1px, transparent 1px),
-        linear-gradient(90deg, var(--border) 1px, transparent 1px);
-      background-size: 44px 44px;
-      mask-image: linear-gradient(180deg, #000 0, transparent 520px);
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    code {
-      padding: 1px 5px;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      background: var(--surface-soft);
-      font-family: var(--mono);
-      font-size: 0.92em;
-    }
-
-    pre {
-      margin: 14px 0;
-      padding: 14px 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #101827;
-      color: #eef5ff;
-      overflow: auto;
-      box-shadow: var(--shadow-sm);
-    }
-
-    html[data-theme="dark"] pre {
-      background: #0c111c;
-    }
-
-    pre code {
-      padding: 0;
-      border: 0;
-      border-radius: 0;
-      background: transparent;
-      color: inherit;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .skip {
-      position: absolute;
-      left: 16px;
-      top: -48px;
-      z-index: 20;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .skip:focus {
-      top: 12px;
-    }
-
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      border-bottom: 1px solid var(--border);
-      background: color-mix(in srgb, var(--surface) 90%, transparent);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-    }
-
-    .topbar-inner {
-      width: min(var(--content), calc(100vw - 32px));
-      min-height: 64px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 18px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 186px;
-      font-weight: 800;
-      color: var(--ink);
-    }
-
-    .brand img {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      object-fit: cover;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .brand small {
-      display: block;
-      color: var(--muted);
-      font-weight: 600;
-      font-size: 12px;
-      line-height: 1.2;
-    }
-
-    .topnav {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-left: auto;
-    }
-
-    .topnav a,
-    .theme-toggle {
-      min-height: 36px;
-      padding: 7px 11px;
-      border: 1px solid transparent;
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: 14px;
-      background: transparent;
-      cursor: pointer;
-    }
-
-    .topnav a {
-      flex: 0 0 auto;
-      white-space: nowrap;
-    }
-
-    .topnav a:hover,
-    .theme-toggle:hover {
-      border-color: var(--border);
-      background: var(--surface-soft);
-      color: var(--text);
-    }
-
-    .hero {
-      width: min(var(--content), calc(100vw - 32px));
-      margin: 0 auto;
-      padding: 62px 0 34px;
-      display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
-      gap: 30px;
-      align-items: stretch;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      min-height: 30px;
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--surface);
-      color: var(--teal);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    h1,
-    h2,
-    h3,
-    h4 {
-      margin: 0;
-      line-height: 1.25;
-      color: var(--ink);
-      letter-spacing: 0;
-    }
-
-    h1 {
-      margin-top: 20px;
-      font-size: 44px;
-      max-width: 780px;
-    }
-
-    .hero p {
-      margin: 18px 0 0;
-      max-width: 780px;
-      color: var(--muted);
-      font-size: 17px;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 24px;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 40px;
-      padding: 9px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      font-weight: 800;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .btn.primary {
-      border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
-      background: var(--primary);
-      color: #ffffff;
-    }
-
-    .hero-panel {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .hero-panel-head {
-      padding: 18px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface-soft);
-    }
-
-    .hero-panel-head strong {
-      display: block;
-      color: var(--ink);
-      font-size: 16px;
-    }
-
-    .hero-panel-head span {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .flow-list {
-      display: grid;
-      gap: 0;
-    }
-
-    .flow-item {
-      display: grid;
-      grid-template-columns: 34px 1fr;
-      gap: 12px;
-      padding: 14px 18px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .flow-item:last-child {
-      border-bottom: 0;
-    }
-
-    .flow-num {
-      width: 30px;
-      height: 30px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      background: var(--primary-weak);
-      color: var(--primary);
-      font-weight: 900;
-      font-family: var(--mono);
-    }
-
-    .flow-item strong {
-      display: block;
-      color: var(--ink);
-    }
-
-    .flow-item span {
-      display: block;
-      margin-top: 2px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .showcase {
-      width: min(var(--content), calc(100vw - 32px));
-      margin: 0 auto 28px;
-      padding: 8px 0 0;
-    }
-
-    .showcase-head {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 14px;
-    }
-
-    .showcase-head .label {
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .showcase-head h2 {
-      margin-top: 5px;
-      font-size: 30px;
-    }
-
-    .showcase-head p {
-      margin: 8px 0 0;
-      max-width: 760px;
-      color: var(--muted);
-    }
-
-    .showcase-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.42fr) minmax(260px, 0.58fr);
-      gap: 14px;
-      align-items: stretch;
-    }
-
-    .screenshot-card,
-    .screenshot-feature {
-      margin: 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      overflow: hidden;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .screenshot-feature img,
-    .screenshot-card img {
-      display: block;
-      width: 100%;
-      aspect-ratio: 2303 / 1331;
-      object-fit: cover;
-      background: var(--surface-soft);
-    }
-
-    .screenshot-feature figcaption,
-    .screenshot-card figcaption {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 12px 14px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .screenshot-feature figcaption strong,
-    .screenshot-card figcaption strong {
-      color: var(--ink);
-      font-size: 14px;
-      white-space: nowrap;
-    }
-
-    .screenshot-stack {
-      display: grid;
-      gap: 14px;
-    }
-
-    .screenshot-gallery {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 14px;
-      margin-top: 14px;
-    }
-
-    .shell {
-      width: min(var(--content), calc(100vw - 32px));
-      margin: 0 auto 70px;
-      display: grid;
-      grid-template-columns: 260px minmax(0, 1fr);
-      gap: 24px;
-    }
-
-    .toc {
-      position: sticky;
-      top: 84px;
-      align-self: start;
-      max-height: calc(100vh - 104px);
-      overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .toc-search {
-      padding: 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .toc-search input {
-      width: 100%;
-      min-height: 38px;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface-soft);
-      color: var(--text);
-      font: inherit;
-    }
-
-    .search-count {
-      margin-top: 7px;
-      color: var(--faint);
-      font-size: 12px;
-    }
-
-    .toc nav {
-      padding: 8px;
-    }
-
-    .toc a {
-      display: block;
-      padding: 8px 10px;
-      border-radius: 8px;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .toc a:hover,
-    .toc a.active {
-      background: var(--primary-weak);
-      color: var(--primary);
-      font-weight: 800;
-    }
-
-    .content {
-      min-width: 0;
-      display: grid;
-      gap: 22px;
-    }
-
-    .doc-section {
-      scroll-margin-top: 86px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
-      overflow: hidden;
-    }
-
-    .doc-section.is-hidden {
-      display: none;
-    }
-
-    .section-head {
-      padding: 24px 26px 18px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface-soft);
-    }
-
-    .section-head .label {
-      color: var(--primary);
-      font-size: 13px;
-      font-weight: 900;
-      text-transform: uppercase;
-    }
-
-    .section-head h2 {
-      margin-top: 7px;
-      font-size: 28px;
-    }
-
-    .section-head p {
-      margin: 10px 0 0;
-      color: var(--muted);
-      max-width: 840px;
-    }
-
-    .section-body {
-      padding: 24px 26px 28px;
-    }
-
-    .section-body > *:first-child {
-      margin-top: 0;
-    }
-
-    .section-body > *:last-child {
-      margin-bottom: 0;
-    }
-
-    p {
-      margin: 12px 0;
-    }
-
-    .grid {
-      display: grid;
-      gap: 14px;
-    }
-
-    .grid.two {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .grid.three {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .card {
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      padding: 16px;
-    }
-
-    .card h3 {
-      margin-bottom: 8px;
-      font-size: 17px;
-    }
-
-    .card p,
-    .card li {
-      color: var(--muted);
-    }
-
-    .card p {
-      margin: 8px 0 0;
-    }
-
-    .callout {
-      margin: 18px 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      background: var(--primary-weak);
-    }
-
-    .callout strong {
-      color: var(--ink);
-    }
-
-    .callout.warning {
-      background: var(--amber-weak);
-      border-color: color-mix(in srgb, var(--amber) 30%, var(--border));
-    }
-
-    .callout.danger {
-      background: var(--red-weak);
-      border-color: color-mix(in srgb, var(--red) 28%, var(--border));
-    }
-
-    .callout.good {
-      background: var(--green-weak);
-      border-color: color-mix(in srgb, var(--green) 30%, var(--border));
-    }
-
-    .pill-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin: 12px 0 0;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 28px;
-      padding: 4px 9px;
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: var(--surface-soft);
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .steps {
-      counter-reset: step;
-      display: grid;
-      gap: 12px;
-      margin: 16px 0;
-    }
-
-    .step {
-      counter-increment: step;
-      display: grid;
-      grid-template-columns: 42px 1fr;
-      gap: 12px;
-      padding: 15px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-    }
-
-    .step::before {
-      content: counter(step);
-      width: 34px;
-      height: 34px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      background: var(--teal-weak);
-      color: var(--teal);
-      font-family: var(--mono);
-      font-weight: 900;
-    }
-
-    .step h3 {
-      font-size: 16px;
-      margin-bottom: 5px;
-    }
-
-    .step p {
-      margin: 0;
-      color: var(--muted);
-    }
-
-    ul,
-    ol {
-      padding-left: 20px;
-      margin: 10px 0;
-    }
-
-    li {
-      margin: 5px 0;
-    }
-
-    .table-wrap {
-      width: 100%;
-      overflow: auto;
-      margin: 14px 0;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 760px;
-      background: var(--surface);
-    }
-
-    th,
-    td {
-      padding: 11px 12px;
-      border-bottom: 1px solid var(--border);
-      text-align: left;
-      vertical-align: top;
-    }
-
-    th {
-      background: var(--surface-soft);
-      color: var(--ink);
-      font-size: 13px;
-    }
-
-    td {
-      color: var(--muted);
-    }
-
-    tr:last-child td {
-      border-bottom: 0;
-    }
-
-    .route {
-      color: var(--primary);
-      font-family: var(--mono);
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .mini-title {
-      margin: 24px 0 10px;
-      font-size: 20px;
-    }
-
-    .mini-title[id] {
-      scroll-margin-top: 86px;
-    }
-
-    .split-note {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 14px;
-      margin: 16px 0;
-    }
-
-    .note {
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--primary);
-      border-radius: var(--radius);
-      padding: 14px;
-      background: var(--surface-soft);
-    }
-
-    .note.green {
-      border-left-color: var(--green);
-    }
-
-    .note.amber {
-      border-left-color: var(--amber);
-    }
-
-    .note.red {
-      border-left-color: var(--red);
-    }
-
-    .note strong {
-      display: block;
-      margin-bottom: 4px;
-      color: var(--ink);
-    }
-
-    .purchase-panel {
-      display: grid;
-      grid-template-columns: 230px minmax(0, 1fr);
-      gap: 18px;
-      align-items: start;
-      margin: 14px 0 18px;
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      box-shadow: var(--shadow-sm);
-    }
-
-    .purchase-qr {
-      margin: 0;
-      display: grid;
-      gap: 10px;
-      justify-items: center;
-    }
-
-    .purchase-qr img {
-      width: min(100%, 220px);
-      aspect-ratio: 1;
-      object-fit: contain;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: #ffffff;
-    }
-
-    .purchase-qr figcaption {
-      color: var(--faint);
-      font-size: 13px;
-      text-align: center;
-    }
-
-    .purchase-amount {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 8px;
-      margin: 0 0 12px;
-      color: var(--ink);
-      font-weight: 900;
-    }
-
-    .purchase-amount strong {
-      color: var(--red);
-      font-size: 30px;
-      line-height: 1;
-    }
-
-    .purchase-list {
-      margin: 10px 0 0;
-      padding-left: 20px;
-      color: var(--muted);
-    }
-
-    .contact-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .contact-link {
-      display: inline-flex;
-      align-items: center;
-      min-height: 36px;
-      padding: 7px 11px;
-      border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
-      border-radius: 8px;
-      background: var(--primary-weak);
-      color: var(--primary);
-      font-weight: 800;
-    }
-
-    .footer {
-      border-top: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--muted);
-    }
-
-    .footer-inner {
-      width: min(var(--content), calc(100vw - 32px));
-      margin: 0 auto;
-      padding: 24px 0;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    @media (max-width: 980px) {
-      .topbar-inner {
-        flex-wrap: wrap;
-        padding: 10px 0;
-      }
-
-      .topnav {
-        order: 3;
-        width: 100%;
-        overflow-x: auto;
-        margin-left: 0;
-        scrollbar-width: none;
-      }
-
-      .topnav::-webkit-scrollbar {
-        display: none;
-      }
-
-      .hero,
-      .showcase-grid,
-      .shell {
-        grid-template-columns: 1fr;
-      }
-
-      .hero {
-        padding-top: 40px;
-      }
-
-      h1 {
-        font-size: 34px;
-      }
-
-      .toc {
-        position: static;
-        max-height: none;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .grid.two,
-      .grid.three,
-      .split-note,
-      .screenshot-gallery,
-      .purchase-panel {
-        grid-template-columns: 1fr;
-      }
-
-      .section-head,
-      .section-body {
-        padding-left: 18px;
-        padding-right: 18px;
-      }
-
-      .topbar-inner,
-      .hero,
-      .showcase,
-      .shell,
-      .footer-inner {
-        width: min(100vw - 20px, var(--content));
-      }
-
-      h1 {
-        font-size: 30px;
-      }
-
-      .section-head h2 {
-        font-size: 24px;
-      }
-
-      .step {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="dian115 部署、配置、功能与日常维护 Wiki。">
+  <meta name="theme-color" content="#ffffff">
+  <title>dian115 用户 Wiki</title>
+  <link rel="icon" href="assets/brand-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/wiki.css">
 </head>
 <body>
-  <a class="skip" href="#main">跳到正文</a>
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <defs>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M14 5c3-3 6-2 6-2s1 3-2 6l-7 7-4-4zM7 12l-4 1 3 3m6 1-1 4-3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="15" cy="8" r="1.5" fill="currentColor"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19 13.5v-3l-2-.7-.7-1.7.9-1.9-2.1-2.1-1.9.9-1.7-.7L10.5 2h-3l-.7 2.3-1.7.7-1.9-.9-2.1 2.1.9 1.9-.7 1.7-2.3.7v3l2.3.7.7 1.7-.9 1.9 2.1 2.1 1.9-.9 1.7.7.7 2.3h3l.7-2.3 1.7-.7 1.9.9 2.1-2.1-.9-1.9.7-1.7z" transform="translate(2) scale(.83)" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="3" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7" rx="1" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6m0-10h.01" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="m12 3 10 18H2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5m0 3h.01" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8 12 2.6 2.6L16.5 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-dashboard" viewBox="0 0 24 24"><path d="M4 14a8 8 0 1 1 16 0v5H4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m12 14 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="14" r="1.5" fill="currentColor"/></symbol>
+      <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="m15.5 8.5-2 5-5 2 2-5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-wand" viewBox="0 0 24 24"><path d="m15 4 5 5L8 21H3v-5zM6 4v4M4 6h4m10 7v4m-2-2h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="m8.7 10.7 6.6-4.1m-6.6 6.7 6.6 4.1" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="m11 12 9-9m-3 3 3 3m-6 0 3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M8 3h4v3a2 2 0 1 0 4 0V3h5v5h-3a2 2 0 1 0 0 4h3v5h-5v3H8v-3H3v-5h3a2 2 0 1 0 0-4H3V3z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-satellite" viewBox="0 0 24 24"><path d="m5 5 14 14M8 3l5 5-5 5-5-5zm8 8 5 5-5 5-5-5zM4 20l4-4m8-8 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5zm9 5v10l-9 5-9-5V7m9 5v10" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+      <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 21c0-4 3-7 7-7s7 3 7 7m1-18a4 4 0 0 1 0 8m1 3c3 1 4 3 4 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+      <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3v4M8 13h.01M16 13h.01M8 17h8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></symbol>
+      <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="18" height="6" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 5-6 7 6 7m8-14 6 7-6 7m-2-16-4 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m8.5 12 2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+      <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 15 7-7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+      <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7-10 10M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    </defs>
+  </svg>
 
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a class="brand" href="#top" aria-label="DIAN-115 Wiki 首页">
-        <img src="wiki-assets/logo.png" alt="DIAN-115" />
-        <span>
-          DIAN-115
-          <small>完整使用 Wiki</small>
-        </span>
-      </a>
-      <nav class="topnav" aria-label="顶部导航">
-        <a href="#quick-start">部署启动</a>
-        <a href="#screenshots">项目截图</a>
-        <a href="#migration">旧库迁移</a>
-        <a href="#baseline">基础配置</a>
-        <a href="#workflows">核心流程</a>
-        <a href="#modules">功能模块</a>
-        <a href="#plugins">插件</a>
-        <a href="#maintenance">维护</a>
-      </nav>
-      <button class="theme-toggle" id="themeToggle" type="button">切换主题</button>
-    </div>
-  </header>
+  <div class="mobile-bar">
+    <button id="menuButton" type="button" aria-label="打开目录" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
+    <img src="assets/brand-logo.svg" alt="DIAN115">
+    <button id="mobileSearchButton" type="button" aria-label="搜索文档"><svg><use href="#i-search"/></svg></button>
+  </div>
 
-  <section class="hero" id="top">
-    <div>
-      <span class="eyebrow">Usage Wiki</span>
-      <h1>DIAN-115 完整使用说明</h1>
-      <p>
-        从第一次启动、旧库迁移、账号接入、七路资源发现、订阅、下载转存、媒体整理、STRM、Emby 入库、分享，到插件扩展与容器运维，按真实使用顺序把 DIAN-115 跑通。
-      </p>
-      <div class="hero-actions">
-        <a class="btn primary" href="#quick-start">按顺序配置</a>
-        <a class="btn" href="#workflows">看完整闭环</a>
-        <a class="btn" href="#routes">查入口速查表</a>
+  <div class="nav-mask" id="navMask"></div>
+  <div class="search-results" id="searchResults" role="listbox" aria-label="搜索结果"></div>
+
+  <div class="app-shell">
+    <aside class="left-rail" id="leftRail" aria-label="Wiki 主目录">
+      <a class="brand" href="#top" aria-label="返回顶部"><img src="assets/brand-logo.svg" alt="DIAN115"></a>
+      <div class="search-box">
+        <svg><use href="#i-search"/></svg>
+        <input id="wikiSearch" type="search" placeholder="搜索功能或配置…" autocomplete="off" aria-label="搜索 Wiki">
+        <kbd>/</kbd>
       </div>
-      <div class="pill-row" aria-label="能力标签">
-        <span class="pill">115 多账号</span>
-        <span class="pill">CD2 挂载</span>
-        <span class="pill">PT / TG / BT / 卫星</span>
-        <span class="pill">媒体整理</span>
-        <span class="pill">STRM</span>
-        <span class="pill">Emby / Navidrome</span>
-        <span class="pill">AI 助手与字幕</span>
-        <span class="pill">11 个内置插件</span>
-        <span class="pill">DianCupLite</span>
-      </div>
-    </div>
-
-    <aside class="hero-panel" aria-label="推荐阅读顺序">
-      <div class="hero-panel-head">
-        <strong>推荐阅读顺序</strong>
-        <span>第一次使用按这个顺序走，最少绕路。</span>
-      </div>
-      <div class="flow-list">
-        <a class="flow-item" href="#quick-start">
-          <span class="flow-num">1</span>
-          <span><strong>部署启动</strong><span>Compose、端口、挂载和首次登录。</span></span>
-        </a>
-        <a class="flow-item" href="#migration">
-          <span class="flow-num">2</span>
-          <span><strong>旧库迁移</strong><span>迁移其它工具生成的 Emby 库。</span></span>
-        </a>
-        <a class="flow-item" href="#baseline">
-          <span class="flow-num">3</span>
-          <span><strong>基础配置</strong><span>115、CD2、Emby、PT、TG、AI。</span></span>
-        </a>
-        <a class="flow-item" href="#workflows">
-          <span class="flow-num">4</span>
-          <span><strong>跑通闭环</strong><span>发现资源到整理入库再到分享。</span></span>
-        </a>
-        <a class="flow-item" href="#maintenance">
-          <span class="flow-num">5</span>
-          <span><strong>日常维护</strong><span>队列、日志、缓存、备份和排障。</span></span>
-        </a>
-      </div>
-    </aside>
-  </section>
-
-  <section class="showcase" id="screenshots" aria-label="项目截图">
-    <div class="showcase-head">
-      <div>
-        <div class="label">Project Screenshots</div>
-        <h2>项目实际截图</h2>
-        <p>先看真实工作台：资源发现、媒体订阅、下载转存、整理入库、插件扩展、容器运维和门户运营都在同一套流程里串起来。</p>
-      </div>
-      <a class="btn primary" href="#purchase">捐赠与激活</a>
-    </div>
-
-    <div class="showcase-grid">
-      <figure class="screenshot-feature">
-        <img src="wiki-assets/screenshots/dashboard.png" alt="DIAN-115 仪表板截图" decoding="async" />
-        <figcaption><strong>仪表板</strong><span>任务、队列、媒体状态和关键运行指标集中查看。</span></figcaption>
-      </figure>
-      <div class="screenshot-stack">
-        <figure class="screenshot-card">
-          <img src="wiki-assets/screenshots/discovery.png" alt="DIAN-115 探索发现截图" loading="lazy" decoding="async" />
-          <figcaption><strong>探索发现</strong><span>TMDB、PT、TG 与四路公网检索入口。</span></figcaption>
-        </figure>
-        <figure class="screenshot-card">
-          <img src="wiki-assets/screenshots/media-subscription.png" alt="DIAN-115 媒体订阅截图" loading="lazy" decoding="async" />
-          <figcaption><strong>媒体订阅</strong><span>电影、电视剧、演员与多来源订阅策略。</span></figcaption>
-        </figure>
-      </div>
-    </div>
-
-    <div class="screenshot-gallery" aria-label="更多项目截图">
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/media.png" alt="DIAN-115 我的媒体截图" loading="lazy" decoding="async" />
-        <figcaption><strong>我的媒体</strong><span>Emby 指标、分享、ED2K、缺集与 Navidrome。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/organize.png" alt="媒体整理截图" loading="lazy" decoding="async" />
-        <figcaption><strong>媒体整理</strong><span>识别、刮削、归档、洗版与 STRM 规则。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/plugins.png" alt="插件中心截图" loading="lazy" decoding="async" />
-        <figcaption><strong>插件中心</strong><span>11 个扩展覆盖 115、PT、Emby、AI 与网络运维。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/container-update.png" alt="DianCupLite 容器更新截图" loading="lazy" decoding="async" />
-        <figcaption><strong>容器更新</strong><span>DianCupLite 管理镜像检查、更新、启停与回滚。</span></figcaption>
-      </figure>
-      <figure class="screenshot-card">
-        <img src="wiki-assets/screenshots/portal.png" alt="DIAN-115 门户管理截图" loading="lazy" decoding="async" />
-        <figcaption><strong>门户管理</strong><span>用户、邀请、求片、工单、积分、审核与广播。</span></figcaption>
-      </figure>
-    </div>
-  </section>
-
-  <main class="shell" id="main">
-    <aside class="toc" aria-label="页面目录">
-      <div class="toc-search">
-        <input id="wikiSearch" type="search" placeholder="搜索 Wiki 内容..." autocomplete="off" />
-        <div class="search-count" id="searchCount">输入关键词过滤章节</div>
-      </div>
-      <nav>
-        <a href="#overview">项目定位</a>
-        <a href="#screenshots">项目截图</a>
-        <a href="#quick-start">部署与启动</a>
-        <a href="#purchase">捐赠与激活</a>
-        <a href="#migration">旧库迁移重点</a>
-        <a href="#baseline">基础配置顺序</a>
-        <a href="#workflows">核心使用流程</a>
-        <a href="#organize">整理与 STRM</a>
-        <a href="#modules">功能模块说明</a>
-        <a href="#plugins">插件使用指南</a>
-        <a href="#portal">门户简述</a>
-        <a href="#maintenance">日常维护</a>
-        <a href="#troubleshooting">常见问题</a>
-        <a href="#routes">入口速查表</a>
-        <a href="#appendix">附录</a>
-      </nav>
-    </aside>
-
-    <article class="content">
-      <section class="doc-section" id="overview" data-search>
-        <div class="section-head">
-          <div class="label">01 Overview</div>
-          <h2>DIAN-115 是什么</h2>
-          <p>DIAN-115 是围绕 115 网盘、CloudDrive2、Emby、Navidrome、PT、Telegram 与公网 BT 索引构建的媒体自动化控制台。它把内容发现、订阅追踪、下载转存、旧库迁移、整理入库、播放分发、插件扩展和容器运维串成一条可视化工作流。</p>
+      <nav class="nav-scroll">
+        <div class="nav-group">
+          <div class="nav-group-title"><b>00</b> 开始阅读</div>
+          <a class="nav-link active" href="#top"><svg><use href="#i-home"/></svg>Wiki 首页</a>
         </div>
-        <div class="section-body">
-          <div class="grid three">
-            <div class="card">
-              <h3>资源进入</h3>
-              <p>通过探索发现、PT 搜索、RSS、Telegram 频道监控、海盗湾、UIndex、TGx、TheRARBG、癫影资源和演员订阅，把可用资源汇集到项目里。</p>
+        <div class="nav-group">
+          <div class="nav-group-title"><b>01</b> 部署流程</div>
+          <a class="nav-link" href="#deploy"><svg><use href="#i-rocket"/></svg>部署总览</a>
+          <a class="nav-link" href="#deploy-compose"><svg><use href="#i-code"/></svg>Compose 部署</a>
+          <a class="nav-link" href="#deploy-flaresolverr"><svg><use href="#i-shield"/></svg>FlareSolverr 过盾</a>
+          <a class="nav-link" href="#deploy-first-run"><svg><use href="#i-shield"/></svg>首次启动与验收</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><b>02</b> 配置流程</div>
+          <a class="nav-link" href="#configure"><svg><use href="#i-settings"/></svg>配置总览</a>
+          <a class="nav-link" href="#configure-order"><svg><use href="#i-check"/></svg>推荐顺序</a>
+          <a class="nav-link" href="#configure-migration"><svg><use href="#i-database"/></svg>旧 Emby 库迁移</a>
+          <a class="nav-link" href="#configure-check"><svg><use href="#i-shield"/></svg>上线检查</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><b>03</b> 部分功能导览</div>
+          <a class="nav-link" href="#features"><svg><use href="#i-grid"/></svg>常用功能概览</a>
+          <a class="nav-link" href="#feature-dashboard"><svg><use href="#i-dashboard"/></svg>仪表板</a>
+          <a class="nav-link" href="#feature-discover"><svg><use href="#i-compass"/></svg>探索发现</a>
+          <a class="nav-link" href="#feature-subscription"><svg><use href="#i-bell"/></svg>订阅</a>
+          <a class="nav-link" href="#feature-organize"><svg><use href="#i-wand"/></svg>媒体整理</a>
+          <a class="nav-link" href="#feature-strm"><svg><use href="#i-code"/></svg>STRM 规则</a>
+          <a class="nav-link" href="#feature-sharing"><svg><use href="#i-share"/></svg>媒体分享</a>
+          <a class="nav-link" href="#feature-files"><svg><use href="#i-folder"/></svg>文件管理</a>
+          <a class="nav-link" href="#feature-accounts"><svg><use href="#i-key"/></svg>账号池配置</a>
+          <a class="nav-link" href="#feature-pt"><svg><use href="#i-globe"/></svg>PT 站点相关</a>
+          <a class="nav-link" href="#feature-plugins"><svg><use href="#i-puzzle"/></svg>插件中心</a>
+          <a class="nav-link" href="#feature-satellite"><svg><use href="#i-satellite"/></svg>卫星发布树</a>
+          <a class="nav-link" href="#feature-container"><svg><use href="#i-box"/></svg>容器更新</a>
+          <a class="nav-link" href="#feature-cache"><svg><use href="#i-database"/></svg>全局 / FFP 缓存</a>
+          <a class="nav-link" href="#feature-portal"><svg><use href="#i-users"/></svg>门户功能</a>
+          <a class="nav-link" href="#feature-music"><svg><use href="#i-music"/></svg>音乐代理与播放器</a>
+          <a class="nav-link" href="#feature-ai"><svg><use href="#i-bot"/></svg>AI 助手</a>
+          <a class="nav-link" href="#feature-more"><svg><use href="#i-grid"/></svg>更多常用能力</a>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title"><b>04</b> 捐赠方式</div>
+          <a class="nav-link" href="#support"><svg><use href="#i-heart"/></svg>捐赠与激活</a>
+        </div>
+      </nav>
+      <div class="rail-foot"><strong>dian115 用户 Wiki</strong>部署 · 配置 · 使用 · 维护</div>
+    </aside>
+
+    <main class="page-main" id="top">
+      <div class="content-wrap">
+        <header class="hero searchable" data-search-title="首页 快速开始">
+          <div class="eyebrow"><svg><use href="#i-grid"/></svg>DIAN115 PRODUCT WIKI</div>
+          <h1>从部署到日常使用，轻松上手 dian115</h1>
+          <p class="lead">从服务部署和基础配置开始，逐步完成资源发现、订阅、整理、STRM、分享与系统维护。首次安装可按顺序操作；需要调整某项功能时，可直接从目录进入对应章节。</p>
+          <div class="hero-meta">
+            <span class="chip blue">部署与配置</span>
+            <span class="chip">资源发现与订阅</span>
+            <span class="chip">媒体整理与 STRM</span>
+            <span class="chip">分享与扩展</span>
+            <span class="chip">日常维护</span>
+          </div>
+        </header>
+
+        <div class="quick-path" aria-label="快速入口">
+          <a href="#deploy"><b>01 · INSTALL</b><strong>部署流程</strong><small>从 Docker 到首次登录</small></a>
+          <a href="#configure"><b>02 · CONFIG</b><strong>配置流程</strong><small>按依赖顺序完成接入</small></a>
+          <a href="#features"><b>03 · GUIDE</b><strong>功能简介</strong><small>部分重点功能与插件说明</small></a>
+          <a href="#support"><b>04 · SUPPORT</b><strong>捐赠方式</strong><small>捐赠、邮箱备注与激活</small></a>
+        </div>
+
+        <section class="doc-section searchable" id="deploy" data-search-title="部署流程 Docker CloudDrive2 Emby Navidrome">
+          <div class="section-heading">
+            <span class="section-number">01</span>
+            <div><h2>部署流程</h2><p>先把路径与持久化设计正确，再启动容器；这比启动后反复改路径可靠得多。</p></div>
+          </div>
+
+          <div class="subsection" id="deploy-prepare">
+            <h3>部署前准备</h3>
+            <div class="grid-3">
+              <article class="mini-card"><span class="icon-box"><svg><use href="#i-server"/></svg></span><strong>Docker 环境</strong><p>Linux 主机、Docker Engine 与 Compose v2。主服务默认 <code>8095</code>，Emby 代理 <code>8098</code>，Navidrome 代理 <code>4534</code>；<code>6060</code> 仅供内网调试。</p></article>
+              <article class="mini-card"><span class="icon-box"><svg><use href="#i-folder"/></svg></span><strong>持久化目录</strong><p><code>/config</code> 保存数据库、配置与缓存；使用 AI 工具时持久化 <code>/dian115AI</code>，用于长期记忆与工作文件。更新前优先备份整个 <code>/config</code>。</p></article>
+              <article class="mini-card"><span class="icon-box"><svg><use href="#i-shield"/></svg></span><strong>路径可见性</strong><p>推荐使用 <code>/media</code> 与 <code>/CloudNAS:shared</code>。dian115、CloudDrive2 与 Emby 对同一媒体的容器路径必须一致或可转换。</p></article>
             </div>
-            <div class="card">
-              <h3>自动处理</h3>
-              <p>把订阅命中的资源转存、离线下载或交给下载器，再通过整理规则识别、改名、洗版、多版本策略、分类配置和 STRM 规则进入媒体库。</p>
-            </div>
-            <div class="card">
-              <h3>播放与分发</h3>
-              <p>通过 Emby / Navidrome、媒体分享、Telegram 通知与门户运营，把媒体能力交付给自己或用户。</p>
+
+            <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>先决定路径，后创建规则</strong><p>整理、STRM、Emby、Navidrome 和文件管理会共同引用路径。部署后再改变映射，容易造成旧规则失效、重复扫描或媒体路径无法匹配。</p></div></div>
+
+            <div class="flow" aria-label="媒体工作流">
+              <div class="flow-item"><b>115 网盘</b><small>资源与账号</small></div>
+              <div class="flow-item"><b>CloudDrive2</b><small>挂载与目录树</small></div>
+              <div class="flow-item"><b>dian115</b><small>发现、订阅、整理</small></div>
+              <div class="flow-item"><b>Emby / Navi</b><small>媒体服务</small></div>
+              <div class="flow-item"><b>播放端</b><small>302 / 本地代理</small></div>
             </div>
           </div>
 
-          <div class="callout good">
-            <strong>最重要的理解：</strong>
-            115 账号负责网盘能力，CD2 负责云盘挂载和路径映射，Emby / Navidrome 负责播放与媒体库，DIAN-115 负责把它们之间的自动化流程、监控和运营动作统一起来。
-          </div>
-
-          <h3 class="mini-title">适合的场景</h3>
-          <ul>
-            <li>希望从 PT、TG、公开 BT、癫影等来源发现资源，并统一订阅、下载和转存。</li>
-            <li>希望把 115 或 CD2 挂载里的媒体按统一命名规则整理到电影、剧集和多版本目录。</li>
-            <li>希望用 STRM 让 Emby 读取云盘媒体，减少本地占用，并支持入库通知和自动分享。</li>
-            <li>已经用其它工具生成过 Emby 媒体库，希望把旧库迁移到本项目，并尽量保留媒体路径、画像和 FFP 识别成果。</li>
-          </ul>
-
-          <h3 class="mini-title">不建议一上来就做的事</h3>
-          <ul>
-            <li>没有配置 115 和 CD2 就直接创建 STRM 规则。路径映射不清楚时，后面排障会很痛苦。</li>
-            <li>没有小范围测试整理规则就启用自动监控。先用识别测试和一小段目录验证命名、洗版和分类。</li>
-            <li>没有配置通知和日志就跑大批量任务。出现限流、验证码、路径错误时很难第一时间发现。</li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="doc-section" id="quick-start" data-search>
-        <div class="section-head">
-          <div class="label">02 Deploy & First Run</div>
-          <h2>部署方法与第一次启动</h2>
-          <p>先把服务稳定跑起来，确认网络模式、端口、目录挂载和数据持久化都正确，再进入旧库迁移和功能配置。首次配置不要急着开自动化。</p>
-        </div>
-        <div class="section-body">
-          <h3 class="mini-title">推荐部署：Docker Compose</h3>
-          <p>GitHub README 的快速部署使用 <code>madbrolab/dian115</code> 镜像和 <code>host</code> 网络模式，适合 Linux、NAS、Unraid 等服务端环境。新建工作目录后保存下面的 <code>docker-compose.yml</code>，再启动服务。</p>
-          <pre><code>services:
+          <div class="subsection searchable" id="deploy-compose" data-search-title="Docker Compose 部署配置示例">
+            <h3>Docker Compose 部署</h3>
+            <p>Linux、NAS 与 Unraid 优先使用 <code>host</code> 网络；不支持 host 网络或需要反向代理统一入口时，再改用桥接网络。两种写法二选一，不要同时保留 <code>network_mode: host</code> 与 <code>ports</code>。</p>
+            <div class="code-block">
+              <div class="code-head"><span>docker-compose.yml · 推荐 host 网络</span><button class="copy-btn" type="button">复制</button></div>
+              <pre><code>services:
   dian115:
     image: madbrolab/dian115
     container_name: dian115
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./config:/config
-      - ./media:/media
-      - ./CloudNAS:/CloudNAS:shared</code></pre>
-          <pre><code>docker compose up -d</code></pre>
+      - ~/config:/config
+      - ~/dian115AI:/dian115AI
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/media:/media
+      - ~/CloudNAS:/CloudNAS:shared</code></pre>
+            </div>
+            <div class="callout"><svg><use href="#i-info"/></svg><div><strong>host 网络不写 ports</strong><p>服务直接占用宿主机端口，管理后台通常访问 <code>http://服务器IP:8095</code>。Docker Socket 仅供 DianCupLite 自动更新和镜像管理；不用相关功能可删除该挂载。使用 AI 工具时应保留 <code>/dian115AI</code> 持久化。</p></div></div>
 
-          <div class="callout warning">
-            <strong>host 网络的含义：</strong>
-            使用 <code>network_mode: host</code> 时不用写 <code>ports</code> 映射，服务直接占用宿主机端口。访问地址通常是 <code>http://服务器IP:8095</code>。如果你的 Docker 环境不支持 host 网络，或需要通过反向代理统一入口，改用桥接网络写法。
-          </div>
-
-          <h3 class="mini-title">桥接网络或反向代理场景</h3>
-          <p>桥接网络需要明确映射端口。主服务默认 <code>8095</code>；Emby 代理默认 <code>8098</code>；Navidrome 代理默认 <code>4534</code>。代理端口后续可以在页面里改，Compose 里只暴露你实际会用到的端口。</p>
-          <pre><code>services:
+            <div class="code-block">
+              <div class="code-head"><span>docker-compose.yml · 桥接网络 / 反向代理</span><button class="copy-btn" type="button">复制</button></div>
+              <pre><code>services:
   dian115:
     image: madbrolab/dian115
     container_name: dian115
@@ -1193,76 +189,48 @@
       - "8098:8098"
       - "4534:4534"
     volumes:
-      - ./config:/config
-      - ./media:/media
-      - ./CloudNAS:/CloudNAS:shared
+      - ~/config:/config
+      - ~/dian115AI:/dian115AI
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/media:/media
+      - ~/CloudNAS:/CloudNAS:shared
     environment:
       - PORT=8095
       - TZ=Asia/Shanghai
       # - DIAN115_HTTP_PROXY=http://代理服务器IP:7890</code></pre>
-
-          <h3 class="mini-title">端口与目录挂载</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>项目</th>
-                  <th>默认值</th>
-                  <th>用途</th>
-                  <th>注意</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>主服务端口</td>
-                  <td><code>8095</code></td>
-                  <td>Web 管理、API、插件入口。</td>
-                  <td>可用 <code>PORT</code> 环境变量修改，反代时指向这个端口。</td>
-                </tr>
-                <tr>
-                  <td>Emby 代理端口</td>
-                  <td><code>8098</code></td>
-                  <td>Emby 反向代理、播放重定向。</td>
-                  <td>页面里可自定义；桥接网络要同步映射对应端口。</td>
-                </tr>
-                <tr>
-                  <td>Navidrome 代理端口</td>
-                  <td><code>4534</code></td>
-                  <td>音乐库代理。</td>
-                  <td>不用音乐代理可以不暴露。</td>
-                </tr>
-                <tr>
-                  <td>调试端口</td>
-                  <td><code>6060</code></td>
-                  <td>pprof / 调试。</td>
-                  <td>只在明确排障时内网开放，不建议公网暴露。</td>
-                </tr>
-                <tr>
-                  <td>数据目录</td>
-                  <td><code>/config</code></td>
-                  <td>数据库、配置、运行缓存。</td>
-                  <td>必须持久化；数据库默认 <code>/config/dian115.db</code>。</td>
-                </tr>
-                <tr>
-                  <td>媒体库目录</td>
-                  <td><code>/media</code></td>
-                  <td>Emby 能看到的媒体或 STRM 输出目录。</td>
-                  <td>尽量和 Emby 媒体库路径保持一致，否则需要路径替换。</td>
-                </tr>
-                <tr>
-                  <td>CD2 挂载目录</td>
-                  <td><code>/CloudNAS</code></td>
-                  <td>CloudDrive2 115 挂载根目录。</td>
-                  <td>迁移旧库、整理和 STRM 都依赖这条路径，先固定再配置规则。</td>
-                </tr>
-              </tbody>
-            </table>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>项目</th><th>默认值</th><th>用途与注意</th></tr></thead>
+                <tbody>
+                  <tr><td>主服务</td><td><code>8095</code></td><td>Web 管理、API 与插件入口；可用 <code>PORT</code> 修改。</td></tr>
+                  <tr><td>Emby 代理</td><td><code>8098</code></td><td>反向代理与播放重定向；页面改端口后 Compose 映射也要同步。</td></tr>
+                  <tr><td>Navidrome 代理</td><td><code>4534</code></td><td>不用音乐代理时无需暴露。</td></tr>
+                  <tr><td>调试端口</td><td><code>6060</code></td><td>pprof / 调试，仅在明确排障时向内网开放。</td></tr>
+                  <tr><td>数据目录</td><td><code>/config</code></td><td>数据库默认位于 <code>/config/dian115.db</code>，必须持久化。</td></tr>
+                  <tr><td>媒体 / CD2</td><td><code>/media</code>、<code>/CloudNAS</code></td><td>与 Emby、CD2 的路径保持一致；CloudNAS 挂载保留 <code>:shared</code>。</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="code-block">
+              <div class="code-head"><span>启动与检查</span><button class="copy-btn" type="button">复制</button></div>
+              <pre><code>docker compose pull
+docker compose up -d
+docker compose ps
+docker compose logs --tail=200 dian115</code></pre>
+            </div>
+            <div class="grid-2">
+              <article class="card"><h4>Docker Socket 是可选能力</h4><p>它只用于 DianCupLite 读取容器与镜像、检查摘要并执行更新。无需 <code>privileged</code>，也不要把宿主机根目录映射为 <code>/:/host</code>。</p></article>
+              <article class="card"><h4>路径先固定再建规则</h4><p><code>~/media</code> 与 <code>~/CloudNAS</code> 只是宿主机示例，请改成真实目录；容器内建议继续使用 <code>/media</code> 与 <code>/CloudNAS</code>，减少 Emby、整理和 STRM 的路径替换。</p></article>
+            </div>
           </div>
 
-          <h3 class="mini-title">FlareSolverr 部署：给 Cloudflare 站点过盾</h3>
-          <p>UIndex 等资源站可能会触发 Cloudflare 验证。需要这类站点时，单独部署 FlareSolverr，然后在 DIAN-115 的系统设置里填写服务地址并测试。没有使用这些站点时可以先不部署。</p>
-          <p>入口：<span class="route">/control/settings</span> 的「基础设置」或代理相关配置中填写 FlareSolverr 服务地址。保存后回到探索发现，用 UIndex 等需要过盾的站点做一次小范围搜索测试。</p>
-          <pre><code>services:
+          <div class="subsection searchable" id="deploy-flaresolverr" data-search-title="FlareSolverr 过盾 Cloudflare UIndex 8191 部署">
+            <h3>FlareSolverr 过盾工具部署</h3>
+            <p>UIndex 等资源站可能触发 Cloudflare 验证。只有使用这类站点时才需要单独部署 FlareSolverr，然后在“系统设置”的基础设置或代理相关配置中填写服务地址并测试。</p>
+            <div class="code-block">
+              <div class="code-head"><span>docker-compose.yml · FlareSolverr</span><button class="copy-btn" type="button">复制</button></div>
+              <pre><code>services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
@@ -1277,1161 +245,437 @@
       - TZ=Asia/Shanghai
     volumes:
       - ./flaresolverr:/config</code></pre>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>DIAN-115 与 FlareSolverr 的位置</th>
-                  <th>服务地址填写</th>
-                  <th>说明</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>同一个 Compose 桥接网络</td>
-                  <td><code>http://flaresolverr:8191</code></td>
-                  <td>推荐把两个服务放进同一个 Compose 文件，容器名可直接解析。</td>
-                </tr>
-                <tr>
-                  <td>DIAN-115 使用 host 网络，FlareSolverr 端口映射到宿主机</td>
-                  <td><code>http://127.0.0.1:8191</code> 或 <code>http://服务器IP:8191</code></td>
-                  <td>只有同一台宿主机上才适合用 <code>127.0.0.1</code>。</td>
-                </tr>
-                <tr>
-                  <td>分别部署在不同机器</td>
-                  <td><code>http://FlareSolverr机器IP:8191</code></td>
-                  <td>确认防火墙和 Docker 端口都放行，尽量只允许内网访问。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="callout warning">
-            <strong>最常见的填错：</strong>
-            DIAN-115 在容器里运行时，<code>127.0.0.1</code> 指的是 DIAN-115 容器自己，不是宿主机，也不是另一个容器。除非使用 host 网络或同一网络命名空间，否则不要把另一个容器的服务地址写成 <code>127.0.0.1</code>。
-          </div>
-          <div class="callout warning">
-            <strong>暴露范围：</strong>
-            FlareSolverr 会启动浏览器环境，首次请求可能比普通 HTTP 请求慢。<code>8191</code> 端口只建议内网访问，不要直接暴露到公网。
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>部署关系</th><th>dian115 中填写</th><th>说明</th></tr></thead>
+                <tbody>
+                  <tr><td>同一个 Compose 桥接网络</td><td><code>http://flaresolverr:8191</code></td><td>推荐方式，容器名可直接解析。</td></tr>
+                  <tr><td>dian115 使用 host，FlareSolverr 在同一宿主机</td><td><code>http://127.0.0.1:8191</code> 或 <code>http://服务器IP:8191</code></td><td>只有同机 host 网络才适合使用 127.0.0.1。</td></tr>
+                  <tr><td>分别部署在不同机器</td><td><code>http://FlareSolverr机器IP:8191</code></td><td>确认防火墙与端口放行，尽量只允许内网访问。</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>最常见的地址错误</strong><p>桥接网络中的 <code>127.0.0.1</code> 只指向 dian115 容器自己，并不代表宿主机或 FlareSolverr 容器。首次请求启动浏览器环境可能较慢；<code>8191</code> 不要直接暴露到公网。</p></div></div>
           </div>
 
-          <h3 class="mini-title" id="purchase">捐赠与激活码</h3>
-          <div class="purchase-panel">
-            <figure class="purchase-qr">
-              <img src="wiki-assets/payment-qr.png" alt="DIAN-115 捐赠扫码二维码" />
-              <figcaption>扫码捐赠后请务必备注邮箱</figcaption>
-            </figure>
+          <div class="subsection searchable" id="deploy-first-run" data-search-title="首次启动 管理员密码 健康检查 更新 备份">
+            <h3>首次启动、验收与更新</h3>
+            <ol class="step-list">
+              <li><strong>打开管理界面</strong><span>访问 <code>http://主机IP:8095</code>。首次使用会要求设置管理员密码，项目没有需要猜测的默认密码。</span></li>
+              <li><strong>完成授权激活</strong><span>如果授权守卫提示激活，按提示填写收到的 License Key。捐赠、邮箱备注和发码核对方式见“捐赠与激活”。</span></li>
+              <li><strong>立即完成安全设置</strong><span>设置强密码；需要外部访问时启用两步验证。OpenAPI Key 只在确实使用 Webhook、Madby 或外部 API 时创建。</span></li>
+              <li><strong>检查容器内路径</strong><span>文件管理应能看到 <code>/CloudNAS</code> 与 <code>/media</code>；看不到时先修正 Compose，不要继续创建整理或 STRM 规则。</span></li>
+              <li><strong>观察日志与运行状态</strong><span>确认容器没有反复重启，数据库位于 <code>/config</code>，端口没有冲突，页面能正常刷新。</span></li>
+            </ol>
+            <div class="callout success"><svg><use href="#i-check"/></svg><div><strong>最小验收标准</strong><p>重启容器后管理员密码、激活状态和配置仍在；文件管理能浏览映射目录；仪表板没有持续性的数据库或权限错误。满足这些条件后再进入业务配置。</p></div></div>
+
+            <details class="details">
+              <summary>更新与回滚前应该做什么？</summary>
+              <div class="details-content">
+                <ul class="check-list">
+                  <li>备份宿主机的 <code>config</code> 目录；这里包含主数据库、分库、缓存索引与运行设置。</li>
+                  <li>使用 GitHub AI 工具时，同时备份 <code>dian115AI</code> 工作区内尚未推送的改动。</li>
+                  <li>更新前结束重要整理、分享、秒传、字幕或容器更新任务，避免中途重启。</li>
+                  <li>常规更新使用 <code>docker compose pull</code> 与 <code>docker compose up -d</code>；完成后检查健康状态与最近日志。</li>
+                </ul>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="doc-section searchable" id="configure" data-search-title="配置流程 系统设置 115 CloudDrive2 Emby TMDB PT AI">
+          <div class="section-heading">
+            <span class="section-number">02</span>
+            <div><h2>配置流程</h2><p>推荐顺序遵循“基础连接 → 资源来源 → 自动化 → 对外服务”，可避免路径和账号反复返工。</p></div>
+          </div>
+
+          <div class="subsection searchable" id="configure-order" data-search-title="配置推荐顺序">
+            <h3>推荐配置顺序</h3>
+            <ol class="step-list">
+              <li><strong>管理员与授权</strong><span>设置管理员密码并完成 License 激活；确认容器重启后密码、激活状态和数据库都能保留。</span></li>
+              <li><strong>115 主账号与目录</strong><span>扫码添加账号，选定活跃主账号，保存安全码，并设置转存、离线、秘享接收及各渠道默认目录。</span></li>
+              <li><strong>CloudDrive2</strong><span>填写 CD2 地址、API Token 与容器内挂载根，例如 <code>/CloudNAS</code>；选择主账号实际对应的云盘并执行连接测试。</span></li>
+              <li><strong>判断是否迁移旧 Emby 库</strong><span>已有其它工具生成的媒体库时，先完成下方“Emby 媒体画像 → Madby → FFP”迁移链路，不要立刻大规模生成新 STRM。</span></li>
+              <li><strong>媒体服务与外部接口</strong><span>接入 Emby / Navidrome，按需生成 OpenAPI Key，配置 Webhook、Madby、HTTP 代理和 TMDB 网络。</span></li>
+              <li><strong>下载器与资源来源</strong><span>先让下载器连接成功、保存路径正确，再添加 PT 站点、RSS、Telegram 频道监控和癫影账号。</span></li>
+              <li><strong>订阅、整理与 STRM</strong><span>先用一个小目录测试识别、命名、洗版和多版槽位；STRM 先全量建树，再生成文件，最后开启实时或定时同步。</span></li>
+              <li><strong>AI、通知与门户</strong><span>最后配置 AI 提供商、Telegram 通知、门户和卫星服务。它们依赖前面的账号、路径与媒体服务。</span></li>
+            </ol>
+          </div>
+
+          <div class="subsection searchable" id="configure-migration" data-search-title="旧 Emby 库迁移 Emby 媒体画像 Madby FFP STRM 路径替换">
+            <h3>旧 Emby 库迁移：先保留画像，再生成 STRM</h3>
+            <p>如果旧 Emby 媒体库由其它工具生成，“Emby 媒体画像”不是普通辅助插件，而是迁移链路的第一步。目标是把旧路径、媒体流信息与 SHA1 画像先匹配和上报，避免新旧条目混在一起。</p>
+            <ol class="step-list compact">
+              <li><strong>完成最小连接</strong><span>先配置管理员、授权、115 主账号、CD2 地址/API Token 与挂载路径。</span></li>
+              <li><strong>只构建目录树</strong><span>在 STRM 规则中先同步目录树，暂时不要生成 STRM，也不要让新 Emby 大规模扫描。</span></li>
+              <li><strong>拉取旧库画像</strong><span>进入“插件中心 → Emby 媒体画像”，填写旧 Emby 地址与 API Key，读取旧库条目、文件路径和媒体流信息。</span></li>
+              <li><strong>配置路径替换</strong><span>把旧 Emby 文件路径映射到 dian115 新的 115 / CD2 目录树，检查匹配率和未匹配记录。</span></li>
+              <li><strong>接入 Madby</strong><span>填写 dian115 地址与 OpenAPI Key；避免原生 Webhook 和 Madby 对同一事件重复通知。</span></li>
+              <li><strong>上报 FFP</strong><span>将可用画像上报到癫影 SHA1 FFP，尽量保留旧库的容器、媒体流、章节与技术字段识别成果。</span></li>
+              <li><strong>最后切换新库</strong><span>确认路径、Madby、FFP 和通知都正常后，再生成新 STRM，并让新的或干净的 Emby 媒体库扫描。</span></li>
+            </ol>
+            <div class="callout danger"><svg><use href="#i-alert"/></svg><div><strong>不要同时迁移与大规模扫描</strong><p>旧路径尚未匹配时就生成新 STRM 并扫描，会把旧库画像、新 STRM 和新 Emby 条目混在一起，后续很难判断重复、缺集与画像归属。</p></div></div>
+          </div>
+
+          <div class="subsection">
+            <h3>关键配置卡片</h3>
+            <div class="grid-2">
+              <article class="card"><h4>系统设置</h4><ul class="plain-list"><li>基础：CD2 地址、挂载路径、系统参数、HTTP 代理。</li><li>安全与 API：登录密码、两步验证、OpenAPI Key。</li><li>词表：识别替换词、制作组、占位符与分类相关词表。</li><li>高级：Webhook、AI 提供商池、背景及外部集成。</li></ul></article>
+              <article class="card"><h4>账号配置</h4><ul class="plain-list"><li>主账号参与全局 115 客户端、签到、目录和自动切换。</li><li>备用 CK 池独立存在，不会自动成为活跃主账号。</li><li>QPS 限制按账号负载设置；高并发不等于更稳定。</li><li>转存、离线与秘享目录用途不同，不建议指向同一临时目录。</li></ul></article>
+              <article class="card"><h4>媒体路径</h4><ul class="plain-list"><li>Emby、dian115 和 CD2 对同一媒体的路径必须可转换。</li><li>本地整理仅支持本地到本地；硬链接要求同一文件系统。</li><li>CD2 整理要求源与目标都在 CD2 挂载根下，操作由 CD2 完成。</li><li>混合“本地 → CD2 / CD2 → 本地”不属于整理规则支持范围。</li></ul></article>
+              <article class="card"><h4>AI 与外部接口</h4><ul class="plain-list"><li>AI 支持 OpenAI Chat Completions 或 Responses 协议。</li><li>每个使用位置可单独选择提供商和模型。</li><li>Webhook / Madby 使用 OpenAPI Key，密钥不要放入截图、日志或公开 Wiki。</li><li>管理模式 AI 可调用后台工具，应保留危险操作确认。</li></ul></article>
+            </div>
+          </div>
+
+          <div class="subsection searchable" id="configure-check" data-search-title="配置上线检查 故障排查">
+            <h3>上线前检查</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>检查项</th><th>通过标准</th><th>失败时优先检查</th></tr></thead>
+                <tbody>
+                  <tr><td>CD2</td><td>连接测试成功，能浏览正确云盘目录</td><td>地址、挂载根、容器路径、云盘名称</td></tr>
+                  <tr><td>115 账号</td><td>Cookie 有效，账号检查正常，目录 CID 已确认</td><td>设备类型、扫码状态、验证码、QPS 与风控</td></tr>
+                  <tr><td>TMDB</td><td>探索页能显示元数据与海报</td><td>代理、语言、网络与缓存</td></tr>
+                  <tr><td>Emby</td><td>库统计可读取，代理播放链路正常</td><td>地址、API Key、路径转换、ItemID 同步</td></tr>
+                  <tr><td>PT</td><td>站点可搜索，下载器能添加测试任务</td><td>站点认证、代理、保存路径、客户端标签</td></tr>
+                  <tr><td>整理</td><td>识别测试命中 TMDB，小样本按预期命名</td><td>词表、来源路径、媒体类型、AI 触发条件</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="callout"><svg><use href="#i-info"/></svg><div><strong>验证时从小范围开始</strong><p>订阅、整理、自动分享、刷流和容器更新都具备批量能力。第一次配置请只使用一个站点、一个小目录或一部媒体验证，确认日志与目标结果后再扩大范围。</p></div></div>
+          </div>
+        </section>
+
+        <section class="doc-section searchable" id="features" data-search-title="功能简介 部分重点功能 常用能力 插件 STRM 下载 任务日志">
+          <div class="section-heading">
+            <span class="section-number">03</span>
+            <div><h2>部分功能导览</h2><p>按用户任务解释常用能力与边界；这里只选取重点功能，不代表 dian115 只有这些功能。</p></div>
+          </div>
+          <div class="callout"><svg><use href="#i-info"/></svg><div><strong>常用能力持续扩展</strong><p>dian115 还包含追剧日历、下载管理、任务队列、运行日志、网络测试、路径与缓存维护等能力，可按实际使用场景逐步配置。</p></div></div>
+
+          <article class="feature-card searchable" id="feature-dashboard" data-search-title="仪表板 总览 资源趋势 系统状态 任务队列 302 播放">
+            <header class="feature-head"><span class="feature-index">01</span><div class="feature-title"><h3>仪表板</h3><p>一眼判断系统是否健康、任务是否堆积、媒体链路是否工作。</p></div><span class="feature-badge">入口：总览</span></header>
+            <div class="feature-body">
+              <p>仪表板把“文件、资源、连接、任务、下载与播放”放在同一屏。它不是只看数字的装饰页，而是日常排障的第一站。</p>
+              <div class="feature-points">
+                <div class="point"><b>趋势与资源</b><span>查看 STRM、软连接新增趋势，以及 CPU、系统内存和 dian115 自身内存占用。</span></div>
+                <div class="point"><b>连接与账号</b><span>集中确认 CD2、115、Emby、Navidrome 与监控模式，并查看网盘容量和账号数量。</span></div>
+                <div class="point"><b>任务与播放</b><span>显示全局任务队列、下载速度、302 播放统计、播放排行与当前播放会话。</span></div>
+              </div>
+              <div class="callout"><svg><use href="#i-info"/></svg><div><strong>建议的巡检顺序</strong><p>先看系统连接状态，再看任务失败数，最后检查日志。CPU 短时升高不一定是故障；持续高占用同时伴随队列不前进才值得重点排查。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/dashboard.png"><img src="assets/screenshots/dashboard.png" alt="dian115 仪表板界面" loading="lazy"></button><figcaption><b>仪表板</b><span>点击截图可放大</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-discover" data-search-title="探索发现 PT 磁力 癫影 TG频道 TMDB 海盗湾 UIndex TGx TheRARBG">
+            <header class="feature-head"><span class="feature-index">02</span><div class="feature-title"><h3>探索发现</h3><p>把媒体元数据、PT、磁力、癫影和 TG 频道资源统一到一个发现入口。</p></div><span class="feature-badge">入口：探索发现</span></header>
+            <div class="feature-body">
+              <p>“探索”负责从媒体角度找内容，“资源页签”负责从下载来源角度找文件。先选中媒体再订阅，或直接在对应来源中搜索，二者服务于不同场景。</p>
+              <div class="grid-2">
+                <article class="mini-card"><span class="icon-box"><svg><use href="#i-compass"/></svg></span><strong>探索 / TMDB</strong><p>按电影、剧集、热度、上映时间、评分、类型、语言、年份和地区筛选；卡片会显示评分、媒体类型与是否已拥有，适合从“想看什么”出发。</p></article>
+                <article class="mini-card"><span class="icon-box"><svg><use href="#i-globe"/></svg></span><strong>PT</strong><p>汇集已启用站点的最新种子与搜索结果。可结合站点、促销、大小、做种数和质量条件筛选；下载前仍需正确配置站点与下载器。</p></article>
+                <article class="mini-card"><span class="icon-box"><svg><use href="#i-database"/></svg></span><strong>癫影</strong><p>通过已配置的癫影 OpenAPI 账号检索平台资源；在聚合订阅中可作为资源来源之一。签到、上传分享和账号能力在“癫影”插件内管理。</p></article>
+                <article class="mini-card"><span class="icon-box"><svg><use href="#i-share"/></svg></span><strong>TG 频道</strong><p>展示 Telegram 频道监控插件采集并解析的 115 分享。频道需要先完成 TG 登录、监控目标与转存策略配置，缓存用于去重和状态追踪。</p></article>
+              </div>
+              <div class="subsection">
+                <h3>磁力来源怎么理解</h3>
+                <p>海盗湾、UIndex、TGx 与 TheRARBG 是独立的公开索引页签，适合“已知道关键字，直接找磁力”的场景。资源进入 115 离线前会经过链接解析、去重与离线任务处理；请自行确认资源版权与所在地法律要求。</p>
+                <div class="feature-points">
+                  <div class="point"><b>来源隔离</b><span>各索引的可用性、字段和排序不完全相同，某一页签异常不代表其他来源不可用。</span></div>
+                  <div class="point"><b>结果去重</b><span>离线链接缓存减少同一磁力或 ED2K 的重复解析与重复提交。</span></div>
+                  <div class="point"><b>落地位置</b><span>最终目录由活跃 115 账号的离线目录或对应渠道默认目录决定。</span></div>
+                </div>
+              </div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/discover.png"><img src="assets/screenshots/discover.png" alt="dian115 探索发现界面" loading="lazy"></button><figcaption><b>探索发现</b><span>媒体探索与多来源资源页签</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-subscription" data-search-title="订阅 电影 剧集 演员 聚合 PT 癫影 TG RSS 质量方案 自动搜索">
+            <header class="feature-head"><span class="feature-index">03</span><div class="feature-title"><h3>订阅</h3><p>从“想要某部媒体”开始，自动搜索、筛选、下载与后处理。</p></div><span class="feature-badge">入口：媒体订阅</span></header>
+            <div class="feature-body">
+              <p>订阅支持电影、剧集和精准演员订阅。每条订阅背后是一个持续评估的意图：系统根据来源策略找候选，按质量方案筛选，成功后交给下载器或聚合资源链路。</p>
+              <div class="feature-points">
+                <div class="point"><b>电影 / 剧集</b><span>按 TMDB 身份持续追踪；剧集理解季与集的覆盖情况，避免只根据标题粗略判断。</span></div>
+                <div class="point"><b>演员订阅</b><span>先从 TMDB 确认演员身份，再按媒体类型、年份等规则扫描作品；可暂停、重评估并查看每项排除原因。</span></div>
+                <div class="point"><b>来源组合</b><span>可使用癫影、PT、TG 资源或聚合策略。入口行为可设为固定模式，也可每次询问。</span></div>
+              </div>
+              <details class="details" open>
+                <summary>一条订阅如何执行</summary>
+                <div class="details-content">
+                  <div class="flow">
+                    <div class="flow-item"><b>创建意图</b><small>媒体 / 季 / 演员</small></div>
+                    <div class="flow-item"><b>检索来源</b><small>癫影 / PT / TG</small></div>
+                    <div class="flow-item"><b>过滤排序</b><small>质量、体积、促销</small></div>
+                    <div class="flow-item"><b>执行落地</b><small>转存或下载器</small></div>
+                    <div class="flow-item"><b>后处理</b><small>秒传、整理、通知</small></div>
+                  </div>
+                  <ul class="check-list">
+                    <li>全局质量方案由电影与剧集分别维护，订阅只引用方案，避免每条订阅复制一套复杂规则。</li>
+                    <li>PT 支持周期自动搜索与独立 RSS 反向匹配；关闭自动搜索不会阻止手动搜索。</li>
+                    <li>候选可按自定义优先级逐层比较，跨站同质量候选可保留为失败换源。</li>
+                    <li>PT 下载完成后可对选中的视频/字幕秒传到 115；失败后可选择普通上传或 CD2 投递。</li>
+                  </ul>
+                </div>
+              </details>
+              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>“PT 成功”与“115 后处理成功”是两件事</strong><p>PT 成功表示任务已添加并完成文件选择。后续秒传或 CD2 投递是独立任务，失败不会把已经完成的 PT 下载标记为失败，也不会自动停止做种。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/subscriptions.png"><img src="assets/screenshots/subscriptions.png" alt="dian115 媒体订阅设置界面" loading="lazy"></button><figcaption><b>媒体订阅</b><span>电影、剧集、演员与全局来源策略</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-organize" data-search-title="媒体整理 文件整理 识别 评分洗版 多版共存 GuessIt TMDB AI ffprobe 硬链接">
+            <header class="feature-head"><span class="feature-index">04</span><div class="feature-title"><h3>媒体整理</h3><p>识别、分类、命名与版本决策的完整流水线。</p></div><span class="feature-badge">入口：媒体整理</span></header>
+            <div class="feature-body">
+              <p>整理不是简单移动文件。它会先判断规则与路径模式，再识别媒体身份、读取技术字段、应用分类和命名，最后根据重复策略决定跳过、覆盖或保留多个版本。</p>
+              <div class="grid-2">
+                <article class="card"><h4>文件整理</h4><ul class="plain-list"><li><b>本地模式：</b>源和目标均为本地路径，支持移动与硬链接；硬链接要求同一文件系统。</li><li><b>CD2 模式：</b>源与目标都位于 CD2 挂载根下，通过 CD2 操作，传输方式为移动。</li><li>支持文件扩展名、最小体积、排除目录/关键词、字幕联动、失败目录与自动监控。</li></ul></article>
+                <article class="card"><h4>识别链路</h4><ul class="plain-list"><li>全局词表与 GuessIt 3.8.0 先提取标题、年份、季集和技术字段。</li><li>TMDB 用标题和路径证据确认媒体身份，并返回海报与规范名称。</li><li>可在“无标题”“TMDB 未命中”或“始终”三种时机调用 AI 二次识别。</li><li>ffprobe 读取真实媒体流信息，辅助命名、评分与洗版。</li></ul></article>
+              </div>
+              <div class="subsection">
+                <h3>评分洗版与多版共存</h3>
+                <div class="table-wrap"><table><thead><tr><th>策略分组</th><th>可选策略</th><th>适用场景</th></tr></thead><tbody>
+                  <tr><td>单一版本</td><td>跳过、按大小比较、评分洗版</td><td>媒体库中每个电影或剧集只保留一个目标版本。</td></tr>
+                  <tr><td>多版共存</td><td>全部保留、多版本洗版</td><td>同一媒体保留多个版本；可用规则级槽位管理不同版本类型。</td></tr>
+                </tbody></table></div>
+                <ul class="check-list">
+                  <li><b>评分洗版：</b>新旧文件使用同一套全局评分规则比较；只有新版本胜出时才执行替换，历史页会记录结果与原因。</li>
+                  <li><b>多版共存：</b>为 4K、杜比视界、HDR、1080P 等需求设计独立槽位；版本目录和别名由全局配置统一控制。</li>
+                  <li><b>多版本洗版：</b>只在同一槽位内竞争，不会用一个版本误删另一个目标槽位；被淘汰文件是否删除由规则明确控制。</li>
+                  <li><b>前置过滤：</b>识别完成后立即判断不需要的版本，避免无效文件进入后续命名与比较。</li>
+                </ul>
+              </div>
+              <div class="callout danger"><svg><use href="#i-alert"/></svg><div><strong>洗版前先关闭自动删除</strong><p>第一次调规则时，先保留被过滤或被淘汰的源文件，使用“识别测试”和小样本历史确认分数、槽位与命名都正确，再考虑开启删除。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/organize.png"><img src="assets/screenshots/organize.png" alt="dian115 媒体整理界面" loading="lazy"></button><figcaption><b>媒体整理</b><span>规则、历史、分类、识别测试与全局配置</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-strm" data-search-title="STRM 规则 目录树 全量 增量 实时同步 孤立清理 链接模式 Emby">
+            <header class="feature-head"><span class="feature-index">05</span><div class="feature-title"><h3>STRM 规则</h3><p>把 115 / CD2 目录树转换为 Emby 可扫描的轻量媒体入口。</p></div><span class="feature-badge">入口：媒体整理 → STRM 规则</span></header>
+            <div class="feature-body">
+              <p>STRM 的核心不是“批量生成文本文件”，而是维护源目录树、输出目录、链接模式与同步状态。路径设计正确后，Emby 扫描的是本地 STRM 输出，播放时再由 dian115 的代理或重定向链路定位真实媒体。</p>
+              <div class="feature-points">
+                <div class="point"><b>目录树同步</b><span>支持全量建树、增量更新、实时或定时同步；源目录变化后用孤立清理移除已不存在的输出。</span></div>
+                <div class="point"><b>生成与链接</b><span>按规则生成 STRM，并配置可被播放端访问的服务地址；反向代理场景要确认外部地址与端口真实可达。</span></div>
+                <div class="point"><b>Emby 入库</b><span>输出目录必须对 Emby 可见。先检查少量文件的路径、命名和播放，再扩大扫描范围。</span></div>
+              </div>
+              <div class="flow" aria-label="STRM 推荐执行顺序">
+                <div class="flow-item"><b>建目录树</b><small>暂不生成</small></div>
+                <div class="flow-item"><b>检查映射</b><small>115 / CD2 / Emby</small></div>
+                <div class="flow-item"><b>生成 STRM</b><small>小范围验证</small></div>
+                <div class="flow-item"><b>Emby 扫描</b><small>确认可播放</small></div>
+                <div class="flow-item"><b>开启同步</b><small>实时或定时</small></div>
+              </div>
+              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>STRM 与卫星发布树不是同一能力</strong><p>STRM 规则面向本机 Emby 生成媒体入口；卫星发布树把指定规则的目录树授权给其它 dian115 子服务。旧库迁移时应先建树、迁移画像，最后再生成新 STRM。</p></div></div>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-sharing" data-search-title="媒体分享 Emby TG 癫影 115 链接 ED2K 自动分享 季度 单集 多版本">
+            <header class="feature-head"><span class="feature-index">06</span><div class="feature-title"><h3>媒体分享</h3><p>从 Emby 媒体库精确选择版本、季度或单集，并分享到不同目标。</p></div><span class="feature-badge">入口：我的媒体 → 媒体分享</span></header>
+            <div class="feature-body">
+              <p>媒体分享读取 Emby 已入库条目，同时依赖 dian115 文件树中的 115 文件身份。它能按电影版本、剧集季度与单集选择文件，避免“整库打包式分享”。</p>
+              <div class="feature-points">
+                <div class="point"><b>精确选择</b><span>电影可选择多个已入库版本；剧集可按季、集和字幕范围组织分享清单。</span></div>
+                <div class="point"><b>两种载体</b><span>115 明文链接适合快速领取；ED2K 适合规避链接风控与跨系统流转。</span></div>
+                <div class="point"><b>多个目标</b><span>可发往 Telegram、上传到癫影，或在启用秘享空间后生成限时限次短码。</span></div>
+              </div>
+              <details class="details"><summary>自动分享策略</summary><div class="details-content"><ul class="check-list">
+                <li>收到 Emby 入库通知后进入防抖窗口，把同一批入库聚合后按队列间隔创建分享。</li>
+                <li>TG 与癫影可分别启用，并为每个目标选择 115 链接或 ED2K 模式。</li>
+                <li>遇到 115 链接风控时可自动回退到 ED2K，完成与失败通知分别控制。</li>
+                <li>链接模式有每日上限；ED2K 沿用独立任务页的额度和通知设置。</li>
+              </ul></div></details>
+              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>分享前必须先有文件身份</strong><p>如果提示 file_tree 找不到、缺 CID 或无法映射 115 路径，请先扫描对应目录树并完成 Emby 路径转换。只有海报和 Emby ItemID 不足以创建真实分享。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/media.png"><img src="assets/screenshots/media.png" alt="dian115 我的媒体界面" loading="lazy"></button><figcaption><b>我的媒体</b><span>媒体统计、分享、缺集与代理控制入口</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-files" data-search-title="文件管理 上传 下载 预览 移动 复制 重命名 删除 识别 整理 秘享">
+            <header class="feature-head"><span class="feature-index">07</span><div class="feature-title"><h3>文件管理</h3><p>管理容器可见的本地与挂载目录，并直接触发识别、整理和秘享。</p></div><span class="feature-badge">入口：文件管理</span></header>
+            <div class="feature-body">
+              <p>文件管理器只操作容器已经挂载并允许访问的路径。它提供面包屑、网格/列表浏览和批量选择，适合处理待整理目录与少量人工修正。</p>
+              <div class="feature-points"><div class="point"><b>日常文件操作</b><span>上传、下载、预览、新建文件夹、重命名、移动、复制、复制路径与删除。</span></div><div class="point"><b>媒体操作</b><span>对文件或目录执行识别；系统按当前路径选择同模式的已启用整理规则。</span></div><div class="point"><b>分享操作</b><span>启用秘享空间后，可从当前选中项生成内容快照和秘享短码。</span></div></div>
+              <div class="callout danger"><svg><use href="#i-alert"/></svg><div><strong>删除不可撤销</strong><p>文件管理中的删除直接作用于容器所见路径，不等同于 115 网盘回收站。批量移动、复制和删除前，先核对顶部当前路径与已选项目数量。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/files.png"><img src="assets/screenshots/files.png" alt="dian115 文件管理界面" loading="lazy"></button><figcaption><b>文件管理</b><span>路径、批量操作与媒体工具</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-accounts" data-search-title="账号池配置 115 主账号 备用 CK QPS 自动切换 转存 离线 回收站 我的分享">
+            <header class="feature-head"><span class="feature-index">08</span><div class="feature-title"><h3>账号池配置</h3><p>把主账号、备用 CK、目录策略与账号运维分开管理。</p></div><span class="feature-badge">入口：账号配置</span></header>
+            <div class="feature-body">
+              <div class="grid-2"><article class="card"><h4>主账号池</h4><p>主账号可扫码添加、检查、刷新、编辑和激活；活跃账号供全局 115 客户端使用。可设置自动切换与 API QPS 上限，并查看 Cookie、VIP、空间与签到状态。</p></article><article class="card"><h4>备用 CK 池</h4><p>这是独立备用池：不会成为活跃账号，不参与主账号自动切换、签到、目录设置、批量检查或全局客户端；只有明确支持备用池的功能才会轮询取用。</p></article></div>
+              <ul class="check-list"><li>为主账号选择真实对应的 CD2 云盘，避免跨账号目录与文件身份错配。</li><li>分别设置转存、离线下载、秘享接收目录；可添加多个备用目录供风控或容量场景切换。</li><li>按 TG、癫影、PT 等渠道设置默认目录；PT 秒传只使用转存目录，不会回退到离线目录。</li><li>“我的分享”可查看、取消或清理过期记录；“回收站”支持安全码与定期清理设置。</li></ul>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/accounts.png"><img src="assets/screenshots/accounts.png" alt="dian115 账号配置界面" loading="lazy"></button><figcaption><b>账号配置</b><span>账号池、备用 CK、分享与回收站</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-pt" data-search-title="PT 站点 认证 Cookie RSS 搜索 下载器 刷流 统计">
+            <header class="feature-head"><span class="feature-index">09</span><div class="feature-title"><h3>PT 站点相关</h3><p>站点连接、搜索、RSS、下载与刷流是四层能力，需逐层验证。</p></div><span class="feature-badge">入口：站点配置</span></header>
+            <div class="feature-body">
+              <div class="feature-points"><div class="point"><b>站点配置</b><span>维护站点类型、域名与认证信息，单独控制启用、代理、超时、搜索和 RSS。</span></div><div class="point"><b>账户视图</b><span>刷新上传、下载、分享率、等级、魔力与做种等数据，快速判断账号健康。</span></div><div class="point"><b>任务执行</b><span>搜索结果进入订阅策略或手动下载，真正落地由已配置的 qBittorrent / Transmission 下载器完成。</span></div></div>
+              <div class="callout"><svg><use href="#i-info"/></svg><div><strong>推荐的 PT 排障顺序</strong><p>先验证站点认证与搜索，再验证下载器连接与保存路径，之后开启 RSS，最后才启用 PT 刷流。刷流插件会自动添加和删种，不应作为连接测试工具。</p></div></div>
+              <details class="details"><summary>PT 刷流与站点统计有什么不同？</summary><div class="details-content"><p><b>PT 站点统计</b>是只读汇总，集中查看账户表现；<b>PT 刷流</b>会根据促销、H&amp;R、体积、做种数、发布时间、速度、磁盘与删种规则主动创建和清理任务。两者都依赖站点配置，但风险级别不同。</p></div></details>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/pt-sites.png"><img src="assets/screenshots/pt-sites.png" alt="dian115 PT 站点配置界面" loading="lazy"></button><figcaption><b>PT 站点配置</b><span>连接、RSS、搜索与账号数据</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-plugins" data-search-title="插件中心 文件秒传 多号云迁移 秘享空间 Telegram 频道监控 Emby 封面 通知 PT 刷流 癫影 PT站点统计 Emby媒体画像 CLASH AI字幕">
+            <header class="feature-head"><span class="feature-index">10</span><div class="feature-title"><h3>插件中心</h3><p>当前界面的 12 个插件逐项说明用途、首次配置和使用边界。</p></div><span class="feature-badge">入口：插件中心</span></header>
+            <div class="feature-body">
+              <div class="plugin-grid">
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-server"/></svg></span><h4>文件秒传 <small>v1.0.0</small></h4></header><p>把本地文件或目录上传到 115，优先使用 SHA1 秒传，失败时可回退普通上传。</p><ul class="plugin-notes"><li><b>配置：</b>本地源、115 目标目录、成功/失败后处理、限速、并发与记录保留。</li><li><b>注意：</b>目录监控可处理新增文件；失败目录不要放在监控目录内部，避免循环。</li></ul><footer><span class="tag">SHA1</span><span class="tag">目录监控</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-share"/></svg></span><h4>多号云迁移 <small>v1.1.0</small></h4></header><p>比较主账号与备用账号目录树，把目标账号缺失的文件按 SHA1 单向补齐。</p><ul class="plugin-notes"><li><b>配置：</b>源目录、备用 CK 池账号、目标目录，以及实时监控或定时同步。</li><li><b>注意：</b>先预览目录树差异；迁移只补缺失文件，不反向覆盖主账号内容。</li></ul><footer><span class="tag">多账号</span><span class="tag">单向同步</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-key"/></svg></span><h4>秘享空间</h4></header><p>把文件管理或媒体分享中选中的内容生成限时、限次短码，供其他用户领取。</p><ul class="plugin-notes"><li><b>配置：</b>主账号秘享接收目录、短码有效期、领取次数与内容快照。</li><li><b>注意：</b>领取后进入转存队列；目录、风控或账号异常会导致领取失败。</li></ul><footer><span class="tag">短码</span><span class="tag">限时限次</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-share"/></svg></span><h4>Telegram 频道监控 <small>v1.0.0</small></h4></header><p>监控 TG 频道中的 115 分享、磁链与 ED2K，支持采集、转存、离线下载和转发。</p><ul class="plugin-notes"><li><b>配置：</b>TG 客户端、监控频道、转发目标、独立转发 Bot Token 与白名单。</li><li><b>注意：</b>自动转发要求 Bot 在目标频道有权限；不要与通知 Bot Token 混用。</li></ul><footer><span class="tag">TG</span><span class="tag">资源采集</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-wand"/></svg></span><h4>Emby 封面生成 <small>v1.0.0</small></h4></header><p>为指定 Emby 媒体库生成统一风格封面，并把结果刷新或上传回 Emby。</p><ul class="plugin-notes"><li><b>配置：</b>媒体库、样式、字体、标题位置、分辨率角标、素材和自动刷新策略。</li><li><b>注意：</b>支持 AI 翻译英文标题、批量/定时生成与素材缓存清理。</li></ul><footer><span class="tag">Emby</span><span class="tag">封面</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-bell"/></svg></span><h4>通知插件 <small>v2.0.0</small></h4></header><p>把播放、入库、文件操作、任务、账号和系统告警统一发送到 Telegram。</p><ul class="plugin-notes"><li><b>配置：</b>Bot Token、白名单、事件类型、静默时段和公网通知图片地址。</li><li><b>注意：</b>保存后先测试连接与消息；静默时段只拦截主动通知，不影响命令回复。</li></ul><footer><span class="tag">Telegram</span><span class="tag">事件通知</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-globe"/></svg></span><h4>PT 刷流 <small>v1.0.0</small></h4></header><p>按站点最新种子自动添加刷流任务，并依据速度、空间与规则维护删种。</p><ul class="plugin-notes"><li><b>配置：</b>站点、下载器、保存路径、促销、H&amp;R、大小、做种范围与删种规则。</li><li><b>注意：</b>速度或活动任务达到上限会暂停新增；保留标签优先，订阅种子可排除。</li></ul><footer><span class="tag">PT</span><span class="tag">高风险自动化</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-database"/></svg></span><h4>癫影 <small>v1.0.0</small></h4></header><p>通过癫影 OpenAPI Key 完成签到、资源检索、上传分享、积分与 FFP 能力管理。</p><ul class="plugin-notes"><li><b>配置：</b>账号 Key、签到模式与时段、默认分享账号和解锁积分。</li><li><b>注意：</b>FFP 统计包含调用、命中、贡献和缓存；上传可使用分享码或 ED2K。</li></ul><footer><span class="tag">OpenAPI</span><span class="tag">FFP</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-dashboard"/></svg></span><h4>PT 站点统计 <small>v1.0.0</small></h4></header><p>集中查看各 PT 站点上传、下载、分享率、魔力、做种量与账号健康。</p><ul class="plugin-notes"><li><b>配置：</b>先在“站点配置”添加、认证并启用 PT 站点。</li><li><b>注意：</b>可刷新全部或单站并搜索账号；这是只读统计，不会创建下载或删种任务。</li></ul><footer><span class="tag">统计</span><span class="tag">只读</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-database"/></svg></span><h4>Emby 媒体画像 <small>v1.0.0</small></h4></header><p>从旧 Emby 拉取路径、容器、媒体流和章节，并匹配 115 SHA1 形成可复用 FFP。</p><ul class="plugin-notes"><li><b>配置：</b>旧 Emby 地址/API Key、路径替换与 dian115 的 115 / CD2 目录树。</li><li><b>注意：</b>旧库迁移时先建树不生成 STRM；拉取画像、接入 Madby、上报 FFP 后再切库。</li></ul><footer><span class="tag">旧库迁移</span><span class="tag">FFP</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-server"/></svg></span><h4>CLASH 监控 <small>v1.0.0</small></h4></header><p>监测代理域名访问健康，并联动 Clash / Mihomo Selector 测速与切换节点。</p><ul class="plugin-notes"><li><b>配置：</b>控制器地址和密钥、策略组、测试地址、阈值与候选节点。</li><li><b>注意：</b>先测试控制器和节点延迟；可查看切换事件、连接、每日用量和测试报告。</li></ul><footer><span class="tag">代理健康</span><span class="tag">自动切换</span></footer></article>
+                <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-bot"/></svg></span><h4>AI 字幕翻译 <small>v1.0.0</small></h4></header><p>把已有的非中文字幕源翻译为中文外挂 SRT，并显示任务进度、对照和日志。</p><ul class="plugin-notes"><li><b>配置：</b>字幕风格、AI 使用位置、字符上限、媒体库白名单与外挂/内封策略。</li><li><b>注意：</b>仅处理 MP4/MKV 且需已有文本字幕；PGS/DVD 图像字幕不会自动 OCR。</li></ul><footer><span class="tag">字幕</span><span class="tag">AI</span></footer></article>
+              </div>
+              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>使用插件前先检查依赖</strong><p>当前版本包含 12 个插件入口。插件并非全部“装好即用”，进入后应先完成账号、目录、Emby、Telegram、下载器或代理控制器等依赖检查。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/plugins.png"><img src="assets/screenshots/plugins.png" alt="dian115 插件中心界面" loading="lazy"></button><figcaption><b>插件中心</b><span>扩展能力的统一入口</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-satellite" data-search-title="卫星 发布树 文件树 STRM 子服务 API Key 心跳 请求日志">
+            <header class="feature-head"><span class="feature-index">11</span><div class="feature-title"><h3>卫星发布树</h3><p>把指定 STRM 规则的文件树安全发布给其他 dian115 子服务实例。</p></div><span class="feature-badge">入口：卫星任务</span></header>
+            <div class="feature-body">
+              <p>主实例先选择一条 STRM 规则发布文件树，再为每个子服务创建独立客户端。客户端使用 API Key 读取被授权的规则树，并通过心跳报告版本、状态与本地文件数量。</p>
+              <div class="feature-points"><div class="point"><b>发布范围</b><span>按 STRM 规则发布，不是把所有目录和账号数据暴露给子服务。</span></div><div class="point"><b>客户端控制</b><span>设置名称、允许规则、过期时间和备注；API Key 创建后应立即妥善保存。</span></div><div class="point"><b>审计</b><span>查看在线状态、最后心跳、请求次数，以及同步/分享类型、状态和来源 IP。</span></div></div>
+              <div class="callout danger"><svg><use href="#i-key"/></svg><div><strong>API Key 按客户端隔离</strong><p>不要让多个子服务共用一个 Key。某个客户端失陷或退役时，只需吊销对应凭据，不影响其他节点。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/satellite.png"><img src="assets/screenshots/satellite.png" alt="dian115 卫星任务界面" loading="lazy"></button><figcaption><b>卫星任务</b><span>发布树、子服务与请求审计</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-container" data-search-title="容器更新 DianCupLite Docker 镜像 检查 定时 更新 回滚 备份">
+            <header class="feature-head"><span class="feature-index">12</span><div class="feature-title"><h3>容器更新</h3><p>DianCupLite 在不使用特权模式的前提下管理本机其他容器。</p></div><span class="feature-badge">入口：容器更新</span></header>
+            <div class="feature-body">
+              <p>挂载 Docker Socket 后，DianCupLite 能读取容器和镜像摘要，检查远端更新，按队列执行手动或定时更新，同时提供运行状态与资源视图。</p>
+              <div class="feature-points"><div class="point"><b>检查与更新</b><span>按容器检查本地/远端摘要，标记可更新、已是最新或检查失败；更新过程显示阶段与百分比。</span></div><div class="point"><b>运维控制</b><span>查看 CPU、内存和镜像，执行启动、停止、重启；可为容器保存别名与图标。</span></div><div class="point"><b>镜像管理</b><span>浏览镜像、关联容器与大小，安全清理悬空镜像和 DianCupLite 备份镜像。</span></div></div>
+              <details class="details"><summary>定时策略与安全边界</summary><div class="details-content"><ul class="check-list"><li>支持 Cron 调度、是否包含停止容器、检查并发、停止超时与通知策略。</li><li>私有仓库、没有 RepoDigest 的本地镜像或网络异常可能只能显示检查失败，不会被盲目更新。</li><li>更新队列运行时，镜像删除与清理会暂时禁用，以免破坏可用的回滚点。</li><li>页面只需要 <code>/var/run/docker.sock</code>；不需要特权模式与宿主机根目录映射。</li></ul></div></details>
+              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>更新会造成短暂停机</strong><p>媒体扫描、数据库写入、做种和分享任务运行时，不要批量更新相关容器。先备份配置，再逐个验证关键服务。</p></div></div>
+              <figure class="shot"><button type="button" data-lightbox="assets/screenshots/container-update.png"><img src="assets/screenshots/container-update.png" alt="dian115 容器更新界面" loading="lazy"></button><figcaption><b>DianCupLite</b><span>容器更新、资源状态与镜像管理</span></figcaption></figure>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-cache" data-search-title="全局缓存 FFP-cache TMDB 115分享 TG监控 离线链接 SHA1 媒体画像">
+            <header class="feature-head"><span class="feature-index">13</span><div class="feature-title"><h3>全局缓存与 FFP 缓存</h3><p>减少重复外部请求，同时让同一 SHA1 的媒体信息跨功能复用。</p></div><span class="feature-badge">入口：全局缓存</span></header>
+            <div class="feature-body">
+              <div class="table-wrap"><table><thead><tr><th>缓存</th><th>保存内容</th><th>主要价值</th></tr></thead><tbody>
+                <tr><td>TMDB</td><td>媒体元数据与海报索引</td><td>加快探索、订阅与识别，减少重复请求。</td></tr>
+                <tr><td>115 分享</td><td>分享码、质量与有效性</td><td>避免反复解析相同分享，跟踪失效状态。</td></tr>
+                <tr><td>TG 监控分享</td><td>频道采集的分享链接</td><td>频道去重、资源状态和订阅复用。</td></tr>
+                <tr><td>离线链接</td><td>磁力与 ED2K 记录</td><td>避免重复提交与重复解析。</td></tr>
+                <tr><td>FFP-cache</td><td>以 SHA1 索引的容器、媒体流、章节与技术字段</td><td>整理、洗版、ED2K、媒体画像与远端上报复用。</td></tr>
+              </tbody></table></div>
+              <div class="subsection"><h3>FFP-cache 的工作方式</h3><ul class="check-list"><li>来源区分为本地上报、FFP 探测缓存与 Madby 读取缓存，可按来源筛选。</li><li>读取采用本地优先；远端命中会写回本地，后续同一 SHA1 可直接复用。</li><li>低完整度信息不会覆盖高完整度信息；页面显示命中次数、冲突次数与上报状态。</li><li>批量整理可预取 FFP 缓存，减少每个候选都单独执行 ffprobe 的成本。</li><li>删除缓存不会删除真实媒体；后续读取仍可重新探测，但待上传队列中的对应项会同步清理。</li></ul></div>
+              <div class="callout"><svg><use href="#i-info"/></svg><div><strong>缓存不是数据源</strong><p>当媒体路径、站点认证或分享内容已发生变化时，应刷新或清理对应缓存再验证。不要用“清空全部缓存”代替对错误配置的排查。</p></div></div>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-portal" data-search-title="门户 用户 邀请码 115账号池 工单 求片 积分 社区 播放缓存 审计">
+            <header class="feature-head"><span class="feature-index">14</span><div class="feature-title"><h3>门户功能</h3><p>为家庭、朋友或小型社区提供独立的用户入口与运营后台。</p></div><span class="feature-badge">入口：门户总控</span></header>
+            <div class="feature-body">
+              <p>门户把管理员和终端用户分开。管理员统一维护用户、共享/独享 115 账号、邀请码、求片、工单、数据健康与社区；用户通过门户完成自己的播放、请求和账户操作。</p>
+              <div class="grid-3"><article class="mini-card"><span class="icon-box"><svg><use href="#i-users"/></svg></span><strong>账号中心</strong><p>共享与独享模式、用户有效期、115 账号池、CK 检查、播放缓存和一次性邀请码。</p></article><article class="mini-card"><span class="icon-box"><svg><use href="#i-bell"/></svg></span><strong>服务中心</strong><p>求片申请、工单分类、状态流转、管理员回复与站内消息广播。</p></article><article class="mini-card"><span class="icon-box"><svg><use href="#i-dashboard"/></svg></span><strong>数据与社区</strong><p>用户分析、系统健康、审计日志、签到、积分、徽章、成就、榜单、评分、社区帖子与资源投稿。</p></article></div>
+              <details class="details"><summary>邀请码与账户模式</summary><div class="details-content"><p>管理员可生成共享或独享模式邀请码。当前实现的邀请码为固定 14 位、一码一用、4 天有效，到期或已使用后自动清理。共享模式复用池账号；独享模式应由用户绑定自己的 115 账户，二者在配额与风险隔离上不同。</p></div></details>
+              <div class="callout warning"><svg><use href="#i-shield"/></svg><div><strong>对外开放前先做安全隔离</strong><p>门户涉及用户账号、115 CK、播放缓存、工单和社区内容。应使用 HTTPS 反向代理、强密码、最小开放端口和定期备份；管理后台不要与公共门户共享弱口令。</p></div></div>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-music" data-search-title="音乐代理 Navidrome Subsonic 音乐播放器 CD2 目录树 歌词 播放队列 302">
+            <header class="feature-head"><span class="feature-index">15</span><div class="feature-title"><h3>音乐代理与音乐播放器</h3><p>把 115 音乐目录映射到 Navidrome / Subsonic，并在 dian115 内直接播放。</p></div><span class="feature-badge">入口：我的媒体 → NAVIDROME</span></header>
+            <div class="feature-body">
+              <div class="grid-2"><article class="card"><h4>音乐代理</h4><ul class="plain-list"><li>配置 Navidrome 后端地址、Subsonic 用户名/密码和独立代理端口。</li><li>选择主账号对应的 CD2 音乐源路径与本地软链接路径。</li><li>支持实时监听 115 生活事件、定时增量/全量同步。</li><li>支持 302 失败回退本地代理与删除时智能清理软链接、空目录。</li></ul></article><article class="card"><h4>音乐树与播放器</h4><ul class="plain-list"><li>构建全量目录树、增量同步、同步 Navidrome 歌曲 ID，并生成符号链接。</li><li>统计音乐总数、已匹配和未匹配歌曲，任务过程统一显示进度与日志。</li><li>悬浮播放器提供音乐库浏览、完整播放页、播放队列、进度与基础播放控制。</li><li>播放器由页面右侧的“点点”综合助手进入，音乐播放时可保持浮动控制。</li></ul></article></div>
+              <div class="callout"><svg><use href="#i-info"/></svg><div><strong>音乐树只使用主账号云盘</strong><p>选择 CD2 路径时必须与“账号配置 → 扩展设置”中的主账号云盘一致。云盘名称或路径错配会导致音乐条目无法映射到 115 文件。</p></div></div>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-ai" data-search-title="AI 助手 点点 管理模式 闲聊 工具调用 TG助手 模型 提供商 OpenAI Responses Chat Completions GitHub">
+            <header class="feature-head"><span class="feature-index">16</span><div class="feature-title"><h3>AI 助手</h3><p>既能解释系统状态，也能在授权范围内调用 dian115 管理工具。</p></div><span class="feature-badge">入口：点点 → AI 助手</span></header>
+            <div class="feature-body">
+              <p>AI 助手是综合助手的一部分，与“会话助手”和“音乐”共享浮动入口。AI 模式支持流式回复、推理过程、工具进度、Markdown、回复复制、停止生成、新会话与本地历史。</p>
+              <div class="feature-points"><div class="point"><b>管理模式</b><span>可读取系统状态并调用账号、订阅、任务、PT、整理、后台 API 等原生工具；危险动作需要明确确认。</span></div><div class="point"><b>闲聊模式</b><span>不以系统管理为首要目标，适合解释概念、整理思路和普通问答，减少不必要的工具调用。</span></div><div class="point"><b>TG 助手</b><span>网页助手与 Telegram 助手共用数据库中的提供商池，可按使用位置选择不同模型与允许工具。</span></div></div>
+              <details class="details" open><summary>模型与提供商配置</summary><div class="details-content"><ul class="check-list"><li>只支持 OpenAI 兼容协议，可在 Chat Completions 与 Responses 中二选一。</li><li>支持多个提供商、模型列表、上下文上限、温度、Top P、Tool Choice、并行工具调用和请求超时。</li><li>网页助手、TG 助手、媒体整理和 AI 字幕可分别指定 provider / model。</li><li>上下文达到限制后会按完整对话轮次整理旧消息，避免切断工具调用链。</li></ul></div></details>
+              <details class="details"><summary>GitHub 与仓库工具</summary><div class="details-content"><p>配置 Fine-grained PAT 后，AI 可在 <code>/dian115AI</code> 工作区拉取、检查、修改、暂存、提交和推送仓库，也可访问 GitHub 的 Issue、PR、Release 与 Actions。Token 仅提交给后端加密保存，不应回填到 AI 上下文、Git URL、命令参数或日志。</p></div></details>
+              <div class="callout danger"><svg><use href="#i-alert"/></svg><div><strong>管理模式具备真实操作能力</strong><p>使用工具调用稳定的高阶模型，并把 Tool Choice 保持为 auto。不要要求 AI 输出 Cookie、Token、密码、安全码或 API Key；后台工具会对敏感字段脱敏，并排除登录、凭据、上传下载流、系统重启等高风险通用接口。</p></div></div>
+            </div>
+          </article>
+
+          <article class="feature-card searchable" id="feature-more" data-search-title="更多功能 追剧日历 下载管理 任务队列 运行日志 网络测试 维护 排障">
+            <header class="feature-head"><span class="feature-index">17</span><div class="feature-title"><h3>更多常用能力</h3><p>除了上面的重点模块，日常使用还会频繁用到这些能力。</p></div><span class="feature-badge">更多常用入口</span></header>
+            <div class="feature-body">
+              <div class="grid-2">
+                <article class="card"><h4>追剧日历</h4><p>按日期查看订阅剧集的播出与更新，帮助判断“尚未播出、资源未找到、下载未完成或入库缺集”分别属于哪一环。</p></article>
+                <article class="card"><h4>下载管理</h4><p>集中维护 qBittorrent / Transmission 等下载器连接与任务。先测试 WebUI 地址、账号密码、默认下载器和保存路径，再让 PT 或订阅自动投递。</p></article>
+                <article class="card"><h4>任务队列</h4><p>查看整理、转存、分享、秒传、字幕、STRM 与插件任务的阶段、进度和失败原因。失败记录先看详情，不要立即批量清空。</p></article>
+                <article class="card"><h4>运行日志与网络测试</h4><p>按任务 ID、规则名、路径、账号和站点定位问题；外部服务异常时依次测试 HTTP 代理、FlareSolverr、Telegram、TMDB 与 115 连通性。</p></article>
+              </div>
+              <details class="details"><summary>常用入口速查</summary><div class="details-content"><div class="table-wrap"><table><thead><tr><th>页面</th><th>入口</th><th>主要用途</th></tr></thead><tbody>
+                <tr><td>追剧日历</td><td><code>/automation/calendar</code></td><td>查看订阅剧集播出和更新。</td></tr>
+                <tr><td>下载管理</td><td><code>/resources/downloads</code></td><td>下载器连接、任务与保存路径。</td></tr>
+                <tr><td>任务队列</td><td><code>/control/jobs</code></td><td>后台任务进度、详情与错误日志。</td></tr>
+                <tr><td>运行日志</td><td><code>/control/logs</code></td><td>实时日志与跨功能排障。</td></tr>
+                <tr><td>系统设置</td><td><code>/control/settings</code></td><td>CD2、代理、FlareSolverr、Webhook、AI 与安全。</td></tr>
+              </tbody></table></div></div></details>
+              <div class="callout"><svg><use href="#i-info"/></svg><div><strong>功能会随版本继续增加</strong><p>侧栏入口与具体能力会随版本更新。升级后先检查新增配置项和依赖，再恢复整理、订阅、刷流等批量任务。</p></div></div>
+            </div>
+          </article>
+        </section>
+
+        <section class="doc-section searchable" id="support" data-search-title="捐赠 199R 激活码 License Key 邮箱 succt Telegram">
+          <div class="section-heading">
+            <span class="section-number">04</span>
+            <div><h2>捐赠与激活码</h2><p>完成捐赠、接收 License Key，并激活 dian115。</p></div>
+          </div>
+          <div class="support-card">
             <div>
-              <p class="purchase-amount"><span>捐赠金额</span><strong>199R</strong></p>
-              <p>捐赠时请在备注中填写用于接收激活码的邮箱。激活码会按备注邮箱发送；如果备注缺失或邮箱写错，会影响发码和后续核对。</p>
-              <ul class="purchase-list">
-                <li>完成捐赠后，回到激活弹窗或激活页填写收到的 License Key。</li>
-                <li>如果长时间未接收到激活码，请通过 Telegram 联系 <a class="route" href="https://t.me/succt" target="_blank" rel="noopener">@succt</a>，并提供捐赠时间、备注邮箱和必要的核对信息。</li>
-                <li>建议加入 Telegram 群组获取公告、更新说明和使用交流。</li>
-              </ul>
-              <div class="contact-row">
-                <a class="contact-link" href="https://t.me/succt" target="_blank" rel="noopener">联系 @succt</a>
-                <a class="contact-link" href="https://t.me/dian115group" target="_blank" rel="noopener">加入 TG 群组</a>
+              <div class="eyebrow"><svg><use href="#i-heart"/></svg>SUPPORT THE PROJECT</div>
+              <h3>199R 捐赠 · 获取 License Key</h3>
+              <div class="donation-main">
+                <figure class="support-qr"><img src="assets/payment-qr.png" alt="DIAN-115 捐赠二维码"><figcaption>扫码捐赠后务必备注邮箱</figcaption></figure>
+                <div class="donation-copy">
+                  <p>捐赠金额为 <b>199R</b>。捐赠时请在备注中填写用于接收激活码的邮箱；激活码会按备注邮箱发送，遗漏备注或邮箱写错会影响发码和后续核对。</p>
+                  <ol class="compact-list">
+                    <li>扫码完成捐赠，并在付款备注中填写可正常收信的邮箱。</li>
+                    <li>收到 License Key 后，回到首次启动的激活弹窗或激活页填写。</li>
+                    <li>长时间未收到时联系 <b>@succt</b>，提供捐赠时间、备注邮箱及必要核对信息。</li>
+                  </ol>
+                </div>
               </div>
             </div>
-          </div>
-
-          <h3 class="mini-title">启动后检查</h3>
-          <div class="steps">
-            <div class="step">
-              <div>
-                <h3>启动服务</h3>
-                <p>执行 <code>docker compose up -d</code> 后先看容器日志，确认主服务没有反复重启。桥接网络下检查端口映射；host 网络下检查宿主机端口是否被其它服务占用。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>打开管理后台</h3>
-                <p>浏览器访问 <code>http://服务器IP:8095</code>。第一次进入会要求设置管理员密码；如果页面提示需要激活，按提示填写 License Key，成功后再继续配置。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>确认数据持久化</h3>
-                <p>重启容器后密码、激活状态、115 账号、设置项仍应存在。若重启后全部丢失，先检查 <code>/config</code> 是否正确挂载，不要继续配置大量账号。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>移动端或 APP 访问</h3>
-                <p>项目支持 APP 场景下配置服务地址。APP 首次启动会进入服务器配置页，填入后端地址并测试连接；Web 端直接访问服务地址即可。</p>
-              </div>
+            <div class="support-actions">
+              <div class="support-action"><svg><use href="#i-key"/></svg><span><b>激活 License Key</b><small>首次启动时在激活弹窗中填写</small></span></div>
+              <a class="support-action" href="https://t.me/succt" target="_blank" rel="noopener noreferrer"><svg><use href="#i-users"/></svg><span><b>联系 @succt</b><small>用于未收码或付款信息核对</small></span></a>
+              <a class="support-action" href="https://t.me/dian115group" target="_blank" rel="noopener noreferrer"><svg><use href="#i-share"/></svg><span><b>加入 Telegram 群组</b><small>公告、更新说明与使用交流</small></span></a>
             </div>
           </div>
+          <div class="callout warning"><svg><use href="#i-shield"/></svg><div><strong>付款信息有疑问时先核对</strong><p>二维码无法识别，或对金额、邮箱备注和激活码发放有疑问时，请先联系 @succt。不要使用群聊转发或二次编辑的收款图，并保留付款凭证。</p></div></div>
+          <div class="subsection"><h3>非资金支持同样重要</h3><div class="grid-3"><article class="mini-card"><strong>可复现的问题</strong><p>提供版本、操作步骤、预期与实际结果；日志先去除账号、密钥、分享码和公网地址。</p></article><article class="mini-card"><strong>清晰的功能建议</strong><p>说明用户场景、当前阻塞与期望结果，比只写“希望增加某功能”更容易评估。</p></article><article class="mini-card"><strong>分享使用经验</strong><p>记录有效的部署、迁移和排障方法，帮助其他用户避开路径、账号与批量任务中的常见问题。</p></article></div></div>
+        </section>
 
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>检查项</th>
-                  <th>在哪里看</th>
-                  <th>正常表现</th>
-                  <th>异常时先查</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>服务是否启动</td>
-                  <td><code>/</code> 或 <code>/api/version</code></td>
-                  <td>能打开登录页或返回版本信息。</td>
-                  <td>端口映射、容器日志、<code>PORT</code> 环境变量。</td>
-                </tr>
-                <tr>
-                  <td>管理员登录</td>
-                  <td>登录页、系统设置</td>
-                  <td>密码登录成功，开启 2FA 后需要验证码。</td>
-                  <td>数据库是否持久化、浏览器 Cookie、时间是否准确。</td>
-                </tr>
-                <tr>
-                  <td>激活状态</td>
-                  <td>顶部用户区或激活弹窗</td>
-                  <td>状态为可用，功能页面可正常访问。</td>
-                  <td>License Key、验证服务器网络、离线宽限期。</td>
-                </tr>
-                <tr>
-                  <td>网络连通</td>
-                  <td>顶部网络测试、系统设置代理</td>
-                  <td>115、TMDB、Telegram、GitHub 等测试按需连通。</td>
-                  <td>HTTP 代理、DNS、防火墙、FlareSolverr。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+        <footer class="doc-footer">DIAN115 · USER WIKI</footer>
+      </div>
+    </main>
 
-      <section class="doc-section" id="migration" data-search>
-        <div class="section-head">
-          <div class="label">03 Migration First</div>
-          <h2>旧工具 Emby 库迁移：Emby 媒体画像是第一步</h2>
-          <p>如果你已经用其它工具生成过 Emby 媒体库，这一节要放在所有配置细节之前读。Emby 媒体画像不是普通辅助插件，而是把旧工具生成的媒体库迁移到 DIAN-115 的关键桥梁。</p>
-        </div>
-        <div class="section-body">
-          <div class="callout good">
-            <strong>迁移目标：</strong>
-            先从旧 Emby 拉取媒体条目、文件路径和媒体画像，通过路径替换匹配 DIAN-115 新建的 115 目录树，再配合 Madby 插件和 FFP 能力，把旧库中的媒体识别成果接到本项目的 STRM、播放和资源画像体系里。
-          </div>
+    <aside class="right-rail" aria-label="章节目录">
+      <div class="toc-card">
+        <div class="toc-title">章节目录 <span id="readPercent">0%</span></div>
+        <div class="reading-progress" aria-hidden="true"><i id="progressBar"></i></div>
+        <nav class="toc-list" id="tocList"></nav>
+      </div>
+    </aside>
+  </div>
 
-          <h3 class="mini-title">为什么要先做这件事</h3>
-          <div class="grid three">
-            <div class="card">
-              <h3>保护旧库成果</h3>
-              <p>旧工具已经生成过媒体库、识别过媒体、积累过路径和画像。直接重建 STRM 可能导致旧库信息断层；先拉取画像，可以把旧路径关系转成 DIAN-115 可识别的数据。</p>
-            </div>
-            <div class="card">
-              <h3>避免覆盖旧 STRM</h3>
-              <p>迁移初期 STRM 规则只应该构建目录树，不要马上生成 STRM。等旧 Emby 数据拉取、路径替换、画像匹配都确认后，再开启生成。</p>
-            </div>
-            <div class="card">
-              <h3>接入 Madby 生态</h3>
-              <p>Madby 负责把 Emby 事件、播放、入库和 FFP 相关能力接入 DIAN-115。迁移完成后，Madby 与本项目 Webhook/FFP 接口配合，才能让新库持续保持可追踪。</p>
-            </div>
-          </div>
-
-          <h3 class="mini-title">迁移前必须确认</h3>
-          <ul>
-            <li>旧 Emby 仍然可访问，并且你有旧 Emby 的 API Key。</li>
-            <li>旧库中媒体文件路径能被转换到新环境中的 115 路径或 CD2 挂载路径。</li>
-            <li>新 DIAN-115 服务已经可以启动，数据目录 <code>/config</code> 已持久化。</li>
-            <li>已经备份旧 Emby 数据库、旧 STRM 输出目录、DIAN-115 的 <code>/config/dian115.db</code>。</li>
-            <li>暂时不要让新 Emby 大规模扫描新 STRM 输出目录，等迁移链路确认后再扫描。</li>
-          </ul>
-
-          <h3 class="mini-title">标准迁移顺序</h3>
-          <div class="steps">
-            <div class="step">
-              <div>
-                <h3>先配置最小基础能力</h3>
-                <p>只配置能支撑路径识别的必要项：管理员登录、115 账号、CD2 地址/API Token、CD2 挂载路径。其它订阅、PT、TG 等能力都可以后置。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>创建 STRM 规则但先不要生成 STRM</h3>
-                <p>入口：<span class="route">/automation/organizing</span> 的「STRM 规则」。选择 115 源路径和输出路径，先执行全量同步或构建目录树。此时关闭或暂不使用「生成 STRM」，避免覆盖旧工具已经生成的 STRM。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>打开 Emby 媒体画像插件拉取旧库</h3>
-                <p>入口：<span class="route">/resources/plugins/emby-media-lite</span>。填写旧 Emby 地址和旧 Emby API Key，配置路径替换规则，把旧 Emby 返回的媒体路径转换成 DIAN-115 目录树能匹配的 115 路径或 CD2 路径。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>核对路径替换与匹配结果</h3>
-                <p>路径替换是迁移成败的核心。旧路径、本地挂载路径、CD2 路径、115 路径必须能对应。匹配不到时不要继续生成 STRM，先修正替换规则或 CD2 挂载前缀。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>配置 Madby 插件与 DIAN-115</h3>
-                <p>在 Madby 侧填写 DIAN-115 地址和 OpenAPI Key；在 DIAN-115 的系统设置中选择 Madby 通知来源或保留原生 Webhook，避免两边重复推送。Madby 事件会进入本项目的事件处理、通知和 FFP 相关流程。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>上报画像并接入 FFP</h3>
-                <p>Emby 媒体画像插件可将未上报记录上报到癫影 SHA1 FFP。配合 Madby 和 emby-ffp-seed 类能力后，新库播放、入库、整理命中和 FFP 识别会逐步进入 DIAN-115 的统一统计与缓存。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>最后再生成新 STRM 并让新 Emby 扫描</h3>
-                <p>确认旧库画像已拉取、路径已匹配、Madby 已接入、FFP 上报策略清楚后，再回到 STRM 规则开启生成 STRM。建议使用全新 Emby 或干净媒体库扫描新 STRM 输出目录。</p>
-              </div>
-            </div>
-          </div>
-
-          <h3 class="mini-title">Madby 与 Emby 媒体画像怎么配合</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>组件</th>
-                  <th>负责什么</th>
-                  <th>迁移中怎么用</th>
-                  <th>迁移后怎么用</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Emby 媒体画像</td>
-                  <td>从旧 Emby 拉取媒体路径、媒体条目和本地记录，并按路径替换匹配 DIAN-115 目录树。</td>
-                  <td>用于把旧工具生成的库映射到新项目，确认旧路径与新 115/CD2 路径能对齐。</td>
-                  <td>可继续上报未上报记录，清理本地画像记录，辅助 FFP 和媒体识别。</td>
-                </tr>
-                <tr>
-                  <td>Madby 插件</td>
-                  <td>把 Emby 入库、播放等事件按 DIAN-115 OpenAPI 接入本项目。</td>
-                  <td>迁移阶段用于确认新旧 Emby 事件入口、OpenAPI Key 和通知来源不会冲突。</td>
-                  <td>作为持续事件入口，驱动播放通知、入库通知、自动分享、防抖和发布树同步。</td>
-                </tr>
-                <tr>
-                  <td>FFP / 癫影能力</td>
-                  <td>保存或查询 SHA1、媒体画像、种子来源和识别命中。</td>
-                  <td>迁移时承接旧库媒体文件的画像上报，减少新库重新识别成本。</td>
-                  <td>用于整理命中、Madby 命中、资源统计和后续分享/识别闭环。</td>
-                </tr>
-                <tr>
-                  <td>STRM 规则</td>
-                  <td>构建 115 目录树并生成 Emby 可扫描的 STRM 文件。</td>
-                  <td>先建树不生成，给媒体画像匹配路径；确认后再生成。</td>
-                  <td>负责后续增量、定时同步、智能清理和新媒体库的持续更新。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="callout danger">
-            <strong>迁移时最容易出错的点：</strong>
-            一边还没匹配旧库路径，一边已经打开新 STRM 生成和 Emby 扫描。这样会让旧库画像、路径映射、新 STRM、新 Emby 条目混在一起，后面很难判断到底是哪一层错了。
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="baseline" data-search>
-        <div class="section-head">
-          <div class="label">04 Baseline</div>
-          <h2>基础配置顺序</h2>
-          <p>下面是普通新装场景的配置顺序。若你在迁移其它工具生成的 Emby 库，先完成上一节的媒体画像迁移规划，再从这里补全配置。</p>
-        </div>
-        <div class="section-body">
-          <h3 class="mini-title">1. 安全与 API</h3>
-          <div class="grid two">
-            <div class="card">
-              <h3>管理员密码与两步验证</h3>
-              <p>入口：<span class="route">/control/settings</span> 的「安全与API」。首次设置密码后，建议管理员开启两步验证。关闭两步验证需要密码和验证码确认。</p>
-            </div>
-            <div class="card">
-              <h3>OpenAPI Key 与 Webhook</h3>
-              <p>OpenAPI Key 用于外部 API、Webhook 和部分插件调用。保存后可复制 Emby Webhook 推送地址；Webhook 可选择原生来源或 Madby 来源，并可自动同步发布树。</p>
-            </div>
-          </div>
-
-          <h3 class="mini-title">2. 115 账号</h3>
-          <p>入口：<span class="route">/resources/accounts</span>。这是项目最核心的基础能力，影响转存、分享、离线下载、秒传和回收站维护。</p>
-          <div class="grid three">
-            <div class="card">
-              <h3>添加与激活</h3>
-              <p>可以扫码获取 Cookie，也可以手动粘贴 Cookie。添加后设置活跃账号；多账号场景下开启自动切换并定期批量检查 Cookie。</p>
-            </div>
-            <div class="card">
-              <h3>扩展设置</h3>
-              <p>保存 115 安全码、分享目录和离线下载目录。安全码用于清空回收站，分享目录是转存或分享的默认目标，离线下载目录用于磁链/ED2K 等离线任务。</p>
-            </div>
-            <div class="card">
-              <h3>限流与健康</h3>
-              <p>根据账号情况设置 115 API QPS。遇到验证码时在账号页处理；分享页可续期、删除过期分享；回收站页可还原、删除或定期清理。</p>
-            </div>
-          </div>
-
-          <h3 class="mini-title">3. CloudDrive2</h3>
-          <p>入口：<span class="route">/control/settings</span> 的「基础设置」。填写 CD2 地址、API Token 和 CD2 挂载路径，保存后测试连接。</p>
-          <div class="callout warning">
-            <strong>路径要先想清楚：</strong>
-            整理规则和 STRM 规则都会依赖 CD2 挂载路径。源路径、目标路径、Emby 看到的路径、115 网盘路径之间必须能互相对应。路径不一致会导致目录树建了，但 STRM 不能播放或整理找不到文件。
-          </div>
-
-          <h3 class="mini-title">4. Emby / Navidrome</h3>
-          <div class="split-note">
-            <div class="note green">
-              <strong>Emby</strong>
-              在「我的媒体」里的媒体库配置中配置 Emby 地址、API Key、代理端口、云盘名称、本地直连和兜底策略。配置后可查看仪表板、内容排行、缺集、用户和媒体分享。
-            </div>
-            <div class="note">
-              <strong>Navidrome</strong>
-              如果需要音乐库代理，配置 Navidrome 服务、目录树同步、歌曲 ID 同步和符号链接生成。没有音乐需求可以后置。
-            </div>
-          </div>
-
-          <h3 class="mini-title">5. PT 站点与下载器</h3>
-          <p>入口：<span class="route">/resources/sites</span> 与 <span class="route">/resources/downloads</span>。先添加 PT 站点 Cookie、RSS、站点状态，再添加 qBittorrent 或 Transmission 下载器，测试连接后设为默认。随后在「媒体订阅」的 PT 设置里配置搜索、RSS、站点休眠、翻页、质量优先级和过滤规则。</p>
-
-          <h3 class="mini-title">6. Telegram</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>配置</th>
-                  <th>入口</th>
-                  <th>用途</th>
-                  <th>注意</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>通知 Bot</td>
-                  <td><span class="route">/resources/plugins/notifications</span></td>
-                  <td>系统通知、任务状态、播放、媒体库、文件操作、账号状态。</td>
-                  <td>填写 Bot Token 和白名单，可测试连接、发送测试、同步命令菜单。</td>
-                </tr>
-                <tr>
-                  <td>TG 频道监控</td>
-                  <td><span class="route">/resources/plugins/tg-channel</span></td>
-                  <td>连接 Telegram 客户端，监控频道资源，转存 115 链接或离线链接。</td>
-                  <td>监控转发 Bot 是独立 Token，需要加入目标频道并设置白名单。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3 class="mini-title">7. 代理、FlareSolverr、AI 与 FFP</h3>
-          <ul>
-            <li>HTTP 代理：系统设置里保存代理，或使用 <code>DIAN115_HTTP_PROXY</code> 环境变量。环境变量优先级更高。</li>
-            <li>FlareSolverr：用于 UIndex 等 Cloudflare 站点过盾。先按「部署方法与第一次启动」里的 Compose 启动，再在系统设置中填写服务地址并测试连接。</li>
-            <li>AI 模型：只支持 OpenAI 协议或 OpenAI 兼容代理，可配置多个提供商，并按聊天、Telegram、整理、字幕等使用位置分别选择模型。</li>
-            <li>FFP 工具：ffprobe / ffmpeg 会在运行时按需下载到配置目录；字幕、媒体画像、FFP 识别和部分封面能力会用到。</li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="doc-section" id="workflows" data-search>
-        <div class="section-head">
-          <div class="label">05 Workflows</div>
-          <h2>核心使用流程</h2>
-          <p>项目的核心价值在流程，不在单个页面。下面按真实使用路径说明。</p>
-        </div>
-        <div class="section-body">
-          <h3 class="mini-title">完整闭环：从发现到播放</h3>
-          <div class="steps">
-            <div class="step">
-              <div>
-                <h3>发现资源</h3>
-                <p>在「探索发现」使用探索、PT、TG 频道、海盗湾、UIndex、TGx、TheRARBG 等标签页搜索。TG 频道资源来自监控插件沉淀的消息；PT 资源依赖站点配置；UIndex 等站点可能依赖 FlareSolverr。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>订阅或直接转存</h3>
-                <p>电影、电视剧、演员可进入订阅体系。订阅会按 PT、TG、癫影、聚合策略持续搜索；也可以直接把 115 分享转存到目标目录，或把磁链/ED2K 交给离线下载。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>下载与落盘</h3>
-                <p>PT 资源进入下载器；115 分享进入网盘目录；磁链进入 115 离线目录。到「下载管理」看 PT 下载任务和下载器状态，到「文件管理」看本地目录和预览文件。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>整理入库</h3>
-                <p>「媒体整理」按规则扫描源路径，识别电影/剧集，应用命名模板、洗版、多版本、字幕同步和分类配置，生成规范目录。先看整理历史，确认无误后再扩大范围。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>生成 STRM</h3>
-                <p>「STRM 规则」从 115 源路径构建目录树，输出本地 STRM 文件，支持 CD2 路径模式或链接模式。全量同步先建树，再生成 STRM；实时监控会根据 115 生活事件增量同步。</p>
-              </div>
-            </div>
-            <div class="step">
-              <div>
-                <h3>Emby 播放与分享</h3>
-                <p>Emby 扫描 STRM 输出目录后，DIAN-115 通过代理、Webhook、Madby、媒体分享和通知把内容分发出去。媒体分享可发到 TG、上传到癫影，或在 115 链接风控时切换 ED2K 模式。</p>
-              </div>
-            </div>
-          </div>
-
-          <h3 class="mini-title">订阅流</h3>
-          <div class="grid two">
-            <div class="card">
-              <h3>电影与电视剧订阅</h3>
-              <p>入口：<span class="route">/automation/subscriptions</span>。可查看电影订阅、电视剧订阅、处理状态、进度和来源。PT 订阅可手动搜索，也可让 RSS 匹配新种子。</p>
-            </div>
-            <div class="card">
-              <h3>演员订阅</h3>
-              <p>在演员订阅中搜索演员，设置媒体类型、年份、类型包含/排除等条件。扫描后会把演员作品沉淀为可跟踪项目，适合长期补全某个演员的作品。</p>
-            </div>
-            <div class="card">
-              <h3>追剧日历</h3>
-              <p>入口：<span class="route">/automation/calendar</span>。按月份查看订阅剧集更新计划，适合判断哪些剧需要等待更新，哪些可以手动催搜索。</p>
-            </div>
-            <div class="card">
-              <h3>聚合订阅</h3>
-              <p>在订阅设置里可以控制订阅按钮默认行为，并维护全局质量优先级方案库。PT 和聚合可以使用相同或不同方案。</p>
-            </div>
-          </div>
-
-          <h3 class="mini-title">分享流</h3>
-          <div class="grid two">
-            <div class="card">
-              <h3>从我的媒体分享</h3>
-              <p>入口：<span class="route">/resources/media</span> 的「媒体分享」。选择媒体库、电影、剧集和具体版本后，可分享到 Telegram 或上传到癫影。</p>
-            </div>
-            <div class="card">
-              <h3>自动分享</h3>
-              <p>开启自动分享后，收到入库通知会等待防抖窗口，按队列间隔创建分享。可选择媒体库范围、TG 转发目标、癫影分享账号和 ED2K 兜底。</p>
-            </div>
-            <div class="card">
-              <h3>风控处理</h3>
-              <p>分享状态页会展示 115 分享限制和倒计时。风控中不要强行创建 115 明文分享，可使用 ED2K 模式继续分发。</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="organize" data-search>
-        <div class="section-head">
-          <div class="label">06 Organize</div>
-          <h2>媒体整理与 STRM 使用重点</h2>
-          <p>这是项目最容易配置错、也最有价值的部分。先小范围验证，再启用自动监控。</p>
-        </div>
-        <div class="section-body">
-          <h3 class="mini-title">整理规则怎么建</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>规则项</th>
-                  <th>用途</th>
-                  <th>建议</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>规则名称与启用</td>
-                  <td>区分电影、剧集、动画、纪录片、临时测试等规则。</td>
-                  <td>先建测试规则，确认无误后再启用正式规则。</td>
-                </tr>
-                <tr>
-                  <td>云盘名称、源路径、目标路径</td>
-                  <td>决定从哪里扫描、整理到哪里。CD2 路径会根据挂载前缀判断模式。</td>
-                  <td>CD2 路径出现时必须选择云盘；源路径和目标路径不要互相包含。</td>
-                </tr>
-                <tr>
-                  <td>整理方式</td>
-                  <td>本地到本地可选择更丰富的转移方式；CD2 相关路径通常以移动为主。</td>
-                  <td>跨文件系统、云盘挂载和权限不确定时先用小文件测试。</td>
-                </tr>
-                <tr>
-                  <td>整理策略与重复文件策略</td>
-                  <td>控制普通整理、评分洗版、多版本洗版、多版本共存等行为。</td>
-                  <td>洗版前先配置评分维度和多版本槽位，避免误删或误覆盖。</td>
-                </tr>
-                <tr>
-                  <td>前置过滤</td>
-                  <td>按分辨率、编码、音频、来源等属性过滤，不满足条件的文件不进入整理。</td>
-                  <td>过滤规则为空就是不过滤；开启“被排除时删源”要非常谨慎。</td>
-                </tr>
-                <tr>
-                  <td>AI 增强识别</td>
-                  <td>正则识别不到标题、TMDB 未命中或始终校正时调用 AI。</td>
-                  <td>默认只在无标题和 TMDB 未命中时使用；始终调用会明显增加费用。</td>
-                </tr>
-                <tr>
-                  <td>FFprobe、最小大小、排除格式</td>
-                  <td>读取媒体属性、跳过小文件或特定后缀。</td>
-                  <td>排除格式适合跳过 <code>.ts</code> 等不希望整理的文件。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3 class="mini-title">分类配置与命名模板</h3>
-          <ul>
-            <li>「分类配置」可以分别维护电影分类和电视剧分类，支持从项目内置模板导入、导出完整模板和编辑 JSON。</li>
-            <li>「子分类与 Emby 同步」决定整理路径和 Emby 媒体库是否按同一套全局层级生成。</li>
-            <li>「全局设置」维护电影命名模板、剧集命名模板、多版目录模板、整理并发、洗版评分规则和字段命名映射。</li>
-            <li>命名模板使用 <code>{变量}</code> 占位符和 <code>/</code> 分隔目录层级，修改模板后建议只跑一小批历史文件验证。</li>
-          </ul>
-
-          <h3 class="mini-title">整理历史怎么用</h3>
-          <div class="grid two">
-            <div class="card">
-              <h3>看结果</h3>
-              <p>历史列表展示成功、失败、跳过、洗版、整理模式、识别方式、规则名称和详情。失败时先看错误信息，再去日志页搜同一任务。</p>
-            </div>
-            <div class="card">
-              <h3>修复错误</h3>
-              <p>可以删除记录、重命名源文件、批量重命名、批量删除记录，也可以把失败记录提交给 AI 重试。删除历史记录本身不等于删除媒体文件。</p>
-            </div>
-          </div>
-
-          <h3 class="mini-title">STRM 规则怎么建</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>配置项</th>
-                  <th>说明</th>
-                  <th>常见选择</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>源路径</td>
-                  <td>选择 115 网盘源路径。CD2 配置正常时会显示对应 CD2 路径。</td>
-                  <td>选择已经整理好的 115 媒体目录。</td>
-                </tr>
-                <tr>
-                  <td>输出路径</td>
-                  <td>STRM 文件写入的本地目录，通常给 Emby 扫描。</td>
-                  <td>为电影、剧集、动画分不同输出目录。</td>
-                </tr>
-                <tr>
-                  <td>生成模式</td>
-                  <td>CD2 路径模式会写入 CD2 路径；链接模式会写入项目直链地址。</td>
-                  <td>有 CD2 时优先路径模式；无 CD2 或外部播放用链接模式。</td>
-                </tr>
-                <tr>
-                  <td>同步模式</td>
-                  <td>手动、实时监控、定时增量、定时全量。</td>
-                  <td>先全量建树，确认后再开实时监控或定时同步。</td>
-                </tr>
-                <tr>
-                  <td>文件后缀和排除目录</td>
-                  <td>限定哪些文件生成 STRM，并排除不需要的 115 子目录。</td>
-                  <td>只保留视频格式，排除花絮、样片、临时目录。</td>
-                </tr>
-                <tr>
-                  <td>元数据同步与智能清理</td>
-                  <td>同步海报、NFO、字幕等元数据，删除源文件时清理 STRM 和空目录。</td>
-                  <td>媒体库稳定后开启智能清理。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="callout danger">
-            <strong>迁移旧工具时：</strong>
-            先配置 115、CD2、癫影 OpenAPI、Emby FFP Seed、Madby 和媒体库路径，完整备份 Emby 数据。STRM 规则先只生成目录树，不要立刻打开生成 STRM，确认媒体画像迁移后再生成新 STRM。
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="modules" data-search>
-        <div class="section-head">
-          <div class="label">07 Modules</div>
-          <h2>功能模块使用说明</h2>
-          <p>按左侧导航理解每个页面的用途、常用动作和前置依赖。</p>
-        </div>
-        <div class="section-body">
-          <h3 class="mini-title">概览</h3>
-          <div class="card">
-            <h3><span class="route">/overview</span> 仪表盘</h3>
-            <p>查看系统状态、资源中心统计、115 状态、工作队列、最近项目、播放会话、AI 任务、同步图表等。日常巡检先看这里，异常再进任务队列和日志。</p>
-          </div>
-
-          <h3 class="mini-title">媒体自动化</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>入口</th>
-                  <th>模块</th>
-                  <th>主要用途</th>
-                  <th>前置依赖</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="route">/automation/discovery</span></td>
-                  <td>探索发现</td>
-                  <td>探索、PT、TG 频道、海盗湾、UIndex、TGx、TheRARBG 搜索，直接订阅、转存或离线。</td>
-                  <td>PT 站点、TG 监控、115、代理或 FlareSolverr。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/automation/calendar</span></td>
-                  <td>追剧日历</td>
-                  <td>查看订阅剧集的更新计划和每日更新详情。</td>
-                  <td>电视剧订阅、TMDB 数据。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/automation/subscriptions</span></td>
-                  <td>媒体订阅</td>
-                  <td>电影订阅、电视剧订阅、演员订阅、PT/TG/癫影/聚合订阅策略。</td>
-                  <td>115、PT 站点、下载器、TG 监控、癫影账号。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/automation/organizing</span></td>
-                  <td>媒体整理</td>
-                  <td>整理规则、整理历史、分类配置、识别测试、全局命名与洗版设置，另含 STRM 规则标签。</td>
-                  <td>CD2 挂载、源目录、目标目录、TMDB、可选 AI。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/automation/satellite</span></td>
-                  <td>卫星任务</td>
-                  <td>管理卫星订阅或远程协作任务，适合把部分采集/订阅动作交给独立节点。</td>
-                  <td>卫星配置和后端服务可达。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3 class="mini-title">资源与接入</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>入口</th>
-                  <th>模块</th>
-                  <th>主要用途</th>
-                  <th>日常动作</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><span class="route">/resources/media</span></td>
-                  <td>我的媒体</td>
-                  <td>媒体服务仪表板、内容排行、媒体分享、分享状态、ED2K 任务、缺集管理、Emby 用户、Navidrome、媒体库配置。</td>
-                  <td>查入库、分享到 TG/癫影、处理缺集、管理 Emby 用户。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/resources/files</span></td>
-                  <td>文件管理</td>
-                  <td>浏览本地目录、上传、下载、复制、移动、重命名、删除、预览图片和 STRM、识别媒体。</td>
-                  <td>验证整理结果、手动修正文件名、检查输出目录。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/resources/downloads</span></td>
-                  <td>下载管理</td>
-                  <td>查看 PT 下载任务，维护 qBittorrent 和 Transmission 下载器连接。</td>
-                  <td>测试下载器、设置默认下载器、查看下载失败原因。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/resources/accounts</span></td>
-                  <td>115 账号管理</td>
-                  <td>多账号 Cookie、扫码登录、活跃账号、自动签到、QPS、分享、回收站、扩展目录。</td>
-                  <td>批量检查 Cookie、处理验证码、续期分享、清理回收站。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/resources/sites</span></td>
-                  <td>PT 站点配置</td>
-                  <td>维护 PT 站点 Cookie、RSS、域名、可用状态。</td>
-                  <td>添加站点、刷新站点状态、排查搜索和 RSS。</td>
-                </tr>
-                <tr>
-                  <td><span class="route">/resources/plugins</span></td>
-                  <td>插件中心</td>
-                  <td>进入文件秒传、多号云迁移、TG 监控、Emby 封面、通知、PT 刷流、癫影、PT 统计、媒体画像、CLASH 监控与 AI 字幕翻译。</td>
-                  <td>按场景打开插件配置页。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3 class="mini-title">控制面板</h3>
-          <div class="grid two">
-            <div class="card">
-              <h3><span class="route">/control/jobs</span> 任务队列</h3>
-              <p>查看运行中、排队中、完成、失败、取消任务；可取消任务、删除历史、查看任务日志和定时调度。整理、STRM、订阅、字幕、插件任务都应在这里有迹可循。</p>
-            </div>
-            <div class="card">
-              <h3><span class="route">/control/container-update</span> 容器更新</h3>
-              <p>DianCupLite 集中检查远端镜像摘要，管理容器启停、重启、手动或 Cron 更新、镜像清理、更新记录与自更新回滚。</p>
-            </div>
-            <div class="card">
-              <h3><span class="route">/control/logs</span> 运行日志</h3>
-              <p>按系统、同步、代理、插件、任务等类型和日志级别筛选，支持 SSE 实时日志、暂停、继续和清空。排障时先用关键词搜任务名、路径、账号名。</p>
-            </div>
-            <div class="card">
-              <h3><span class="route">/control/cache</span> 缓存管理</h3>
-              <p>维护 TMDB 缓存、115 分享缓存、TG 监控分享缓存和离线链接缓存。缓存错乱、旧链接失效、重复请求过多时先从这里清理或导入导出。</p>
-            </div>
-            <div class="card">
-              <h3><span class="route">/control/settings</span> 系统设置</h3>
-              <p>统一配置 CD2、系统参数、HTTP 代理、FlareSolverr、安全、OpenAPI、词表、Webhook、AI 和页面背景。基础能力都从这里开始。</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="plugins" data-search>
-        <div class="section-head">
-          <div class="label">08 Plugins</div>
-          <h2>插件使用指南</h2>
-          <p>插件中心提供 11 个内置扩展，按需补充 115、PT、Emby、AI、通知和网络运维能力。</p>
-        </div>
-        <div class="section-body">
-          <div class="callout good">
-            <strong>重点插件：Emby 媒体画像。</strong>
-            如果你是从其它工具迁移旧 Emby 库，请先看「旧工具 Emby 库迁移」章节。这个插件负责拉取旧库路径和媒体画像，并与 Madby、FFP、STRM 规则共同完成迁移闭环。
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>插件</th>
-                  <th>什么时候用</th>
-                  <th>首次配置</th>
-                  <th>日常操作与注意</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>文件秒传（v1.0.0）</td>
-                  <td>把本地文件或目录快速上传到 115，优先 SHA1 秒传，失败时可普通上传。</td>
-                  <td>选择本地源、115 目标目录、成功/失败后处理、普通上传限速、并发和记录保留。</td>
-                  <td>目录监控可自动处理新增文件；失败目录不要放在监控目录内部，避免循环处理。</td>
-                </tr>
-                <tr>
-                  <td>多号云迁移（v1.1.0）</td>
-                  <td>比较主账号与备用账号目录树，把备用账号缺失的文件按 SHA1 单向秒传过去。</td>
-                  <td>选择源目录、备用 CK 池目标账号和目标目录，配置实时监控或定时同步。</td>
-                  <td>先预览目录树差异再执行；迁移只补缺失文件，不反向覆盖主账号内容。</td>
-                </tr>
-                <tr>
-                  <td>Telegram 频道监控（v1.0.0）</td>
-                  <td>监控 TG 频道里的 115 分享、磁链、ED2K 等资源，并转存或转发。</td>
-                  <td>连接 TG 客户端，添加监控频道和转发目标，配置独立的监控转发 Bot Token 与白名单。</td>
-                  <td>资源页可搜索、清空、转存到 115、离线下载；自动转发需要 Bot 在目标频道有权限。</td>
-                </tr>
-                <tr>
-                  <td>Emby 封面生成（v1.0.0）</td>
-                  <td>为 Emby 媒体库生成统一风格封面。</td>
-                  <td>选择封面风格、媒体库、字体、字号、标题位置、分辨率、素材来源和自动刷新策略。</td>
-                  <td>可 AI 翻译英文标题、批量生成、每天全量生成、入库后延迟刷新、清理素材缓存。</td>
-                </tr>
-                <tr>
-                  <td>通知插件（v2.0.0）</td>
-                  <td>把播放、入库、文件操作、任务、账号和系统告警统一发到 Telegram。</td>
-                  <td>填写 Bot Token、白名单，选择通知类型、静默时段和公网通知图片地址。</td>
-                  <td>保存后先测试连接，再发送测试消息；静默时段只拦截主动通知，命令回复不受影响。</td>
-                </tr>
-                <tr>
-                  <td>PT 刷流（v1.0.0）</td>
-                  <td>按站点最新种子自动刷流，维护上传量和分享率。</td>
-                  <td>选择刷流站点、下载器、保存路径、促销类型、H&R、大小、做种范围、删种规则。</td>
-                  <td>超过上传/下载速度或活动任务上限会暂停新增；保留标签优先级最高，订阅命中的种子可排除。</td>
-                </tr>
-                <tr>
-                  <td>癫影（v1.0.0）</td>
-                  <td>使用癫影 OpenAPI Key 签到、上传分享资源、配置分享积分和 FFP 资源能力。</td>
-                  <td>添加账号 Key，设置签到模式、签到时间段、默认分享账号和解锁积分。</td>
-                  <td>FFP 统计可查看调用、命中、贡献和站点缓存；上传到癫影可用分享码或 ED2K 模式。</td>
-                </tr>
-                <tr>
-                  <td>PT 站点统计（v1.0.0）</td>
-                  <td>集中查看 PT 站点上传、下载、分享率、魔力、做种和健康状态。</td>
-                  <td>先在 PT 站点配置中添加并启用站点。</td>
-                  <td>可刷新全部或单站，按站点、域名、用户搜索，快速发现分享率和做种异常。</td>
-                </tr>
-                <tr>
-                  <td>Emby 媒体画像（v1.0.0）</td>
-                  <td>从其它工具生成的旧 Emby 库迁移到本项目时使用，是迁移链路的核心插件。</td>
-                  <td>填写旧 Emby 地址和 API Key，配置路径替换，把旧库路径匹配到 DIAN-115 的 115/CD2 目录树。</td>
-                  <td>先建目录树不生成 STRM；拉取画像后配合 Madby 与 FFP 上报，最后再生成新 STRM。</td>
-                </tr>
-                <tr>
-                  <td>CLASH 监控（v1.0.0）</td>
-                  <td>监控代理域名访问健康，并联动 Clash / Mihomo Selector 自动切换节点。</td>
-                  <td>填写控制器地址和密钥，选择策略组、测试地址、健康阈值与候选节点。</td>
-                  <td>先测试控制器和节点延迟；可查看切换事件、连接与每日用量，并发送测试报告。</td>
-                </tr>
-                <tr>
-                  <td>AI 字幕翻译（v1.0.0）</td>
-                  <td>把已有非中文字幕翻译成中文外挂字幕。</td>
-                  <td>配置字幕风格、AI 使用位置、最大字符数、媒体库白名单、外挂/内封处理策略。</td>
-                  <td>只处理 MP4/MKV 且已有非中文字幕源；PGS/DVD 图像字幕不会 OCR；任务进度可看翻译对照和日志。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="callout warning">
-            <strong>插件间依赖：</strong>
-            Emby 媒体画像负责旧库迁移，Madby 负责 Emby 事件接入，癫影/FFP 负责画像与命中能力，通知插件负责消息，TG 频道监控负责资源采集和转发。不要把多个 Bot Token 混用。
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="portal" data-search>
-        <div class="section-head">
-          <div class="label">09 Portal</div>
-          <h2>门户简述</h2>
-          <p>门户是可选的用户入口，不是本 Wiki 的主线。只需要知道它用于把已配置好的媒体能力开放给普通用户。</p>
-        </div>
-        <div class="section-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>角色</th>
-                  <th>入口</th>
-                  <th>做什么</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>管理员</td>
-                  <td><span class="route">/control/portal</span></td>
-                  <td>开启门户、设置独立端口、维护 115 账号池、邀请码、门户用户、默认模板和功能开关。</td>
-                </tr>
-                <tr>
-                  <td>用户</td>
-                  <td><span class="route">/portal</span></td>
-                  <td>登录后查看媒体、账户状态、115 绑定、求片、工单、消息、签到积分等可选功能。</td>
-                </tr>
-                <tr>
-                  <td>使用建议</td>
-                  <td>门户配置</td>
-                  <td>先跑通 115、CD2、Emby、STRM、通知和分享，再开放门户；不要把门户作为初装第一目标。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="maintenance" data-search>
-        <div class="section-head">
-          <div class="label">10 Maintenance</div>
-          <h2>日常维护清单</h2>
-          <p>稳定运行靠巡检。账号、路径、队列、日志、缓存、备份都要有节奏地看。</p>
-        </div>
-        <div class="section-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>频率</th>
-                  <th>要做什么</th>
-                  <th>入口</th>
-                  <th>判断标准</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>每天</td>
-                  <td>看仪表盘、任务队列、运行日志、115 Cookie 状态、下载器状态。</td>
-                  <td><span class="route">/overview</span>、<span class="route">/control/jobs</span>、<span class="route">/control/logs</span></td>
-                  <td>无长时间卡住任务，无连续失败日志，Cookie 有效。</td>
-                </tr>
-                <tr>
-                  <td>每周</td>
-                  <td>批量检查 115 账号、清理过期分享、查看回收站、刷新 PT 站点统计。</td>
-                  <td><span class="route">/resources/accounts</span>、<span class="route">/resources/plugins/pt-site-stats</span></td>
-                  <td>账号可用，分享和回收站没有异常堆积。</td>
-                </tr>
-                <tr>
-                  <td>每次改规则</td>
-                  <td>先跑识别测试和小批量整理，查看历史和文件输出。</td>
-                  <td><span class="route">/automation/organizing</span>、<span class="route">/resources/files</span></td>
-                  <td>命名、分类、洗版、字幕、STRM 输出都符合预期。</td>
-                </tr>
-                <tr>
-                  <td>每次升级前</td>
-                  <td>备份配置目录和数据库，记录当前版本、关键环境变量和端口。</td>
-                  <td>宿主机文件系统</td>
-                  <td><code>/config/dian115.db</code> 和相关配置文件可恢复。</td>
-                </tr>
-                <tr>
-                  <td>网络异常时</td>
-                  <td>运行网络测试，检查代理、FlareSolverr、Telegram、TMDB、115。</td>
-                  <td>顶部网络测试、系统设置</td>
-                  <td>外部服务按业务需要可达，代理来源明确。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3 class="mini-title">备份建议</h3>
-          <ul>
-            <li>必须备份 <code>/config/dian115.db</code>，里面包含账号、设置、订阅、规则、用户数据和缓存索引等关键数据。</li>
-            <li>如果上传了背景图、封面自定义素材、FFP 工具或插件生成文件，也应一起备份配置目录下对应子目录。</li>
-            <li>升级前导出重要 PT 站点、下载器、整理规则、STRM 规则和订阅策略截图或 JSON，方便回滚核对。</li>
-          </ul>
-
-          <h3 class="mini-title">日志与缓存</h3>
-          <ul>
-            <li>日志页支持实时流，排查任务时先找任务 ID、规则名、路径、账号名、站点名。</li>
-            <li>任务队列里的失败记录不要立刻清空，先打开详情看进度、错误和任务日志。</li>
-            <li>缓存页的 TMDB、115 分享、TG 分享和离线链接缓存都可能影响搜索与分享结果。确认缓存过期或错误后再清理。</li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="doc-section" id="troubleshooting" data-search>
-        <div class="section-head">
-          <div class="label">11 FAQ</div>
-          <h2>常见问题与排障路径</h2>
-          <p>先按现象定位到依赖，再看日志和队列。不要一上来重装。</p>
-        </div>
-        <div class="section-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>现象</th>
-                  <th>先查</th>
-                  <th>处理建议</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>登录页反复要求设置密码</td>
-                  <td><code>/config</code> 挂载、数据库权限</td>
-                  <td>确认容器重启后 <code>dian115.db</code> 没有被重建，宿主机目录可写。</td>
-                </tr>
-                <tr>
-                  <td>激活状态不可用或被踢下线</td>
-                  <td>Guard 状态、验证服务器网络、License Key</td>
-                  <td>在激活页重试或更换密钥；被踢下线通常需要手动重启容器恢复会话。</td>
-                </tr>
-                <tr>
-                  <td>115 转存、分享、离线失败</td>
-                  <td>活跃账号、Cookie、验证码、QPS、安全码、目标目录</td>
-                  <td>批量检查 Cookie，处理验证码，降低 QPS，确认分享目录和离线下载目录有效。</td>
-                </tr>
-                <tr>
-                  <td>CD2 连接成功但整理找不到路径</td>
-                  <td>CD2 挂载路径、云盘名称、源路径/目标路径是否一致</td>
-                  <td>用文件管理和 CD2 本身确认宿主机看到的路径，再小范围重跑整理。</td>
-                </tr>
-                <tr>
-                  <td>PT 搜索没有结果</td>
-                  <td>站点 Cookie、站点状态、关键词、代理、FlareSolverr、站点休眠</td>
-                  <td>先测试单站点，检查站点是否需要过盾；再看 PT 日志和站点返回。</td>
-                </tr>
-                <tr>
-                  <td>下载任务不开始</td>
-                  <td>下载器 WebUI 地址、账号密码、默认下载器、保存路径</td>
-                  <td>在下载器配置里测试连接，确认 qBittorrent / Transmission 可从 DIAN-115 访问。</td>
-                </tr>
-                <tr>
-                  <td>整理大量跳过</td>
-                  <td>最小文件大小、排除格式、前置过滤、媒体类型识别、TMDB</td>
-                  <td>打开整理历史看跳过原因，用识别测试单独跑一个文件名。</td>
-                </tr>
-                <tr>
-                  <td>洗版结果不符合预期</td>
-                  <td>洗版评分规则、多版本槽位、字段命名映射</td>
-                  <td>先关闭删源选项，用少量样本调试评分维度和槽位匹配条件。</td>
-                </tr>
-                <tr>
-                  <td>STRM 生成失败或播放失败</td>
-                  <td>目录树是否构建、生成开关、输出路径权限、链接模式服务地址</td>
-                  <td>先全量同步，再生成 STRM；确认 Emby 能读输出目录，链接模式服务地址外部可达。</td>
-                </tr>
-                <tr>
-                  <td>Emby 入库通知没有触发</td>
-                  <td>Webhook URL、OpenAPI Key、通知来源 native/Madby</td>
-                  <td>用系统设置里的 Webhook 地址测试；确认 Emby 或 Madby 插件配置的是同一个后端地址。</td>
-                </tr>
-                <tr>
-                  <td>Telegram 没收到通知</td>
-                  <td>Bot Token、白名单、Chat ID、静默时段、网络</td>
-                  <td>在通知插件里测试连接和发送测试；频道转发要看 TG 监控转发 Bot，而不是通知 Bot。</td>
-                </tr>
-                <tr>
-                  <td>AI 字幕很慢或费用高</td>
-                  <td>模型、最大字幕字符数、媒体库白名单、是否内封提取</td>
-                  <td>使用便宜快速模型，缩小媒体库范围；默认只处理外挂字幕，必要时再开内封提取。</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="routes" data-search>
-        <div class="section-head">
-          <div class="label">12 Routes</div>
-          <h2>入口速查表</h2>
-          <p>不知道去哪里时，先查这张表。</p>
-        </div>
-        <div class="section-body">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>想做的事</th>
-                  <th>入口</th>
-                  <th>页面名称</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>看系统总览</td><td><span class="route">/overview</span></td><td>仪表盘</td></tr>
-                <tr><td>找资源</td><td><span class="route">/automation/discovery</span></td><td>探索发现</td></tr>
-                <tr><td>看追剧更新</td><td><span class="route">/automation/calendar</span></td><td>追剧日历</td></tr>
-                <tr><td>管理电影、剧集、演员订阅</td><td><span class="route">/automation/subscriptions</span></td><td>媒体订阅</td></tr>
-                <tr><td>整理文件、配置 STRM</td><td><span class="route">/automation/organizing</span></td><td>媒体整理</td></tr>
-                <tr><td>管理卫星任务</td><td><span class="route">/automation/satellite</span></td><td>卫星任务</td></tr>
-                <tr><td>看媒体库、分享、缺集、Emby 用户</td><td><span class="route">/resources/media</span></td><td>我的媒体</td></tr>
-                <tr><td>浏览本地文件</td><td><span class="route">/resources/files</span></td><td>文件管理</td></tr>
-                <tr><td>维护下载器和下载任务</td><td><span class="route">/resources/downloads</span></td><td>下载管理</td></tr>
-                <tr><td>维护 115 账号</td><td><span class="route">/resources/accounts</span></td><td>115 账号管理</td></tr>
-                <tr><td>配置 PT 站点</td><td><span class="route">/resources/sites</span></td><td>站点配置</td></tr>
-                <tr><td>打开插件</td><td><span class="route">/resources/plugins</span></td><td>插件中心</td></tr>
-                <tr><td>看后台任务</td><td><span class="route">/control/jobs</span></td><td>任务队列</td></tr>
-                <tr><td>更新与管理容器</td><td><span class="route">/control/container-update</span></td><td>容器更新</td></tr>
-                <tr><td>查日志</td><td><span class="route">/control/logs</span></td><td>运行日志</td></tr>
-                <tr><td>清缓存</td><td><span class="route">/control/cache</span></td><td>缓存管理</td></tr>
-                <tr><td>运营门户</td><td><span class="route">/control/portal</span></td><td>门户管理</td></tr>
-                <tr><td>系统配置</td><td><span class="route">/control/settings</span></td><td>系统设置</td></tr>
-                <tr><td>用户门户</td><td><span class="route">/portal</span></td><td>DIAN-115 用户门户</td></tr>
-              </tbody>
-            </table>
-          </div>
-
-          <h3 class="mini-title">插件入口</h3>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>插件</th>
-                  <th>入口</th>
-                  <th>用途</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td>文件秒传</td><td><span class="route">/resources/plugins/rapid-upload</span></td><td>手动秒传、目录监控、上传记录。</td></tr>
-                <tr><td>多号云迁移</td><td><span class="route">/resources/plugins/account-migration</span></td><td>多账号目录树比较、差异预览与单向秒传。</td></tr>
-                <tr><td>Telegram 频道监控</td><td><span class="route">/resources/plugins/tg-channel-monitor</span></td><td>TG 客户端、频道资源、转发 Bot。</td></tr>
-                <tr><td>Emby 封面生成</td><td><span class="route">/resources/plugins/emby-cover</span></td><td>封面生成、参数、标题、清理。</td></tr>
-                <tr><td>通知插件</td><td><span class="route">/resources/plugins/notify</span></td><td>Telegram 通知、通知类型、静默时段、图片。</td></tr>
-                <tr><td>PT 刷流</td><td><span class="route">/resources/plugins/pt-brush</span></td><td>刷流配置、任务、日志。</td></tr>
-                <tr><td>癫影插件</td><td><span class="route">/resources/plugins/dianying</span></td><td>癫影账号、签到、分享积分、FFP 统计。</td></tr>
-                <tr><td>PT 站点统计</td><td><span class="route">/resources/plugins/pt-site-stats</span></td><td>上传、下载、分享率、做种统计。</td></tr>
-                <tr><td>Emby 媒体画像</td><td><span class="route">/resources/plugins/emby-media-lite</span></td><td>旧库迁移、Emby 拉取、上报与清理。</td></tr>
-                <tr><td>CLASH 监控</td><td><span class="route">/resources/plugins/clash-monitor</span></td><td>代理健康、节点测速、自动切换与用量统计。</td></tr>
-                <tr><td>AI 字幕翻译</td><td><span class="route">/resources/plugins/ai-subtitle</span></td><td>字幕策略、选媒体翻译、任务进度、词表。</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <section class="doc-section" id="appendix" data-search>
-        <div class="section-head">
-          <div class="label">13 Appendix</div>
-          <h2>附录：运行速查</h2>
-          <p>这里补充日常维护时容易忘的运行细节，部署步骤以前面的「部署方法与第一次启动」为准。</p>
-        </div>
-        <div class="section-body">
-          <div class="grid two">
-            <div class="card">
-              <h3>服务入口</h3>
-              <p>主入口默认 <code>8095</code>，可通过 <code>http://服务器IP:8095</code> 访问。反代时把管理后台和 API 都转发到这个端口，Emby / Navidrome 代理端口按各自配置单独处理。</p>
-            </div>
-            <div class="card">
-              <h3>数据位置与备份</h3>
-              <p>数据库默认 <code>/config/dian115.db</code>。备份时优先备份整个 <code>/config</code>，再备份 STRM 输出目录和关键媒体路径映射说明。</p>
-            </div>
-            <div class="card">
-              <h3>常见环境变量</h3>
-              <p><code>PORT</code> 控制主服务端口，<code>DEBUG=true</code> 开启调试日志，<code>LOG_LEVEL</code> 控制日志级别，<code>DIAN115_HTTP_PROXY</code> 设置全局代理并优先于页面设置。</p>
-            </div>
-            <div class="card">
-              <h3>镜像更新</h3>
-              <p>普通部署使用发布镜像即可。更新前先备份 <code>/config</code>，再执行 <code>docker compose pull</code> 和 <code>docker compose up -d</code> 重新创建容器。</p>
-            </div>
-          </div>
-
-          <div class="callout warning">
-            <strong>Git 注意：</strong>
-            当前项目的 <code>.gitignore</code> 后面有 <code>*.html</code> 规则，所以 <code>static/wiki.html</code> 在工作区会被忽略。要纳入版本控制，需要调整忽略规则或使用强制添加。
-          </div>
-        </div>
-      </section>
-    </article>
-  </main>
-
-  <footer class="footer">
-    <div class="footer-inner">
-      <span>DIAN-115 Wiki</span>
-      <span>从部署、迁移、配置、自动化到维护的完整使用索引。</span>
-    </div>
-  </footer>
-
-  <script>
-    (function () {
-      const root = document.documentElement;
-      const savedTheme = localStorage.getItem("dian115-wiki-theme");
-      if (savedTheme === "dark" || savedTheme === "light") {
-        root.dataset.theme = savedTheme;
-      }
-
-      const themeToggle = document.getElementById("themeToggle");
-      themeToggle.addEventListener("click", function () {
-        const next = root.dataset.theme === "dark" ? "light" : "dark";
-        root.dataset.theme = next;
-        localStorage.setItem("dian115-wiki-theme", next);
-      });
-
-      const sections = Array.from(document.querySelectorAll(".doc-section"));
-      const tocLinks = Array.from(document.querySelectorAll(".toc nav a"));
-      const search = document.getElementById("wikiSearch");
-      const searchCount = document.getElementById("searchCount");
-
-      const sectionIndex = sections.map(function (section) {
-        return {
-          node: section,
-          text: section.textContent.toLowerCase()
-        };
-      });
-
-      search.addEventListener("input", function () {
-        const term = search.value.trim().toLowerCase();
-        let visible = 0;
-        sectionIndex.forEach(function (item) {
-          const matched = !term || item.text.indexOf(term) !== -1;
-          item.node.classList.toggle("is-hidden", !matched);
-          if (matched) visible += 1;
-        });
-        searchCount.textContent = term ? "匹配 " + visible + " 个章节" : "输入关键词过滤章节";
-      });
-
-      const observer = new IntersectionObserver(function (entries) {
-        const visible = entries
-          .filter(function (entry) { return entry.isIntersecting; })
-          .sort(function (a, b) { return b.intersectionRatio - a.intersectionRatio; })[0];
-        if (!visible) return;
-        const id = visible.target.id;
-        tocLinks.forEach(function (link) {
-          link.classList.toggle("active", link.getAttribute("href") === "#" + id);
-        });
-      }, { rootMargin: "-90px 0px -65% 0px", threshold: [0.1, 0.35, 0.6] });
-
-      sections.forEach(function (section) {
-        observer.observe(section);
-      });
-    })();
-  </script>
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="截图预览">
+    <button class="lightbox-close" type="button" aria-label="关闭预览">×</button>
+    <img id="lightboxImage" src="" alt="放大的界面截图">
+  </div>
+  <button class="back-top" id="backTop" type="button" aria-label="返回顶部"><svg><use href="#i-up"/></svg></button>
+  <script src="assets/wiki.js"></script>
 </body>
 </html>
