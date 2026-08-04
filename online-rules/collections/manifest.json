@@ -3,12 +3,12 @@
   "readme_url": "https://github.com/madbrolab/dian115/blob/main/online-rules/collections/README.md",
   "vocabularies": [
     {
-      "id": "movie-community",
-      "name": "CollectionRender 电影分组词表",
-      "description": "保留固定来源中的系列名称，仅发布无归属冲突且通过 TMDB 电影 ID 存在性校验的社区目录分组；不是 TMDB 官方 Collection。",
-      "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/collections/movie-community.yaml",
-      "media_types": ["movie"],
-      "tags": ["电影", "来源保真", "社区分组"]
+      "id": "custom-example",
+      "name": "自定义合集补充示例",
+      "description": "只保留少量电视剧补充分组用于演示 YAML 格式；电影官方合集由 TMDB 动态提供。",
+      "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/collections/custom-example.yaml",
+      "media_types": ["tv"],
+      "tags": ["只读", "示例", "自定义补充"]
     }
   ]
 }

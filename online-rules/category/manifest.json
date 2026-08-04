@@ -13,26 +13,18 @@
     {
       "id": "compact",
       "name": "精简一级分类",
-      "description": "类型目录下仅使用一级静态分类，并优先使用合集词表，适合控制媒体库数量。",
+      "description": "类型目录下仅使用一级静态分类，适合控制媒体库数量。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/compact.yaml",
       "media_types": ["movie", "tv"],
-      "tags": ["精简", "合集"]
-    },
-    {
-      "id": "collections",
-      "name": "标准分类 + 合集词表",
-      "description": "在标准分类前加入电影和电视剧合集词表规则；每种媒体类型只增加一个静态合集目录。",
-      "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/collections.yaml",
-      "media_types": ["movie", "tv"],
-      "tags": ["标准", "合集"]
+      "tags": ["精简"]
     },
     {
       "id": "decade",
-      "name": "标准分类 + 合集 + 年代",
-      "description": "在合集优先的标准分类后追加年代子目录；只修改电影和电视剧的年代子分类开关，其余全局设置保持本地值。",
+      "name": "标准分类 + 年代",
+      "description": "在标准分类后追加年代子目录；只修改电影和电视剧的年代子分类开关，其余全局设置保持本地值。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/decade.yaml",
       "media_types": ["movie", "tv"],
-      "tags": ["详细", "合集", "年代"]
+      "tags": ["详细", "年代"]
     }
   ]
 }

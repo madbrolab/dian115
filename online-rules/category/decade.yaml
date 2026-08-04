@@ -9,8 +9,6 @@ sub_classify:
     levels: [year_decade]
 
 movie:
-  "合集":
-    classify_by: collection_vocabulary
   "特摄剧/特摄电影":
     genre_ids: "-16"
     ?include_keywords: "tokusatsu,ultraman,kaiju"
@@ -83,8 +81,6 @@ movie:
   "电影/其他地区电影": {}
 
 tv:
-  "合集":
-    classify_by: collection_vocabulary
   "特摄剧/特摄剧集":
     ?include_keywords: "tokusatsu,ultraman"
     ?keywords: "奥特曼,特摄,特攝,铠甲勇士,金甲战士,超神战队,巨神战击队,布袋戏,苦海女神龙,霹雳神州,霹雳英雄,霹雳震寰宇,霹雳天命,云州大儒侠史艳文,Power Rangers,超凡战队,恐龙战队,VR Troopers,Beetleborgs,BIMA,神鹰勇士,Cicak-Man,Shaktimaan,Darna"

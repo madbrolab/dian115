@@ -1,8 +1,5 @@
 # 精简模板：类型目录下只增加一级静态分类目录。
-# 合集词表命中时，“合集名称”是媒体库内部动态子目录。
 movie:
-  "合集":
-    classify_by: collection_vocabulary
   "动画":
     genre_ids: "16"
   "纪录片":
@@ -20,8 +17,6 @@ movie:
   "其他电影": {}
 
 tv:
-  "合集":
-    classify_by: collection_vocabulary
   "儿童节目":
     genre_ids: "10762"
   "动漫":
