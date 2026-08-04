@@ -4,11 +4,11 @@
   "vocabularies": [
     {
       "id": "movie-community",
-      "name": "社区电影合集词表",
-      "description": "从公开路径映射中清洗并通过 TMDB 电影导出表验证；只包含电影，不猜测电视剧归属。",
+      "name": "CollectionRender 电影分组词表",
+      "description": "保留固定来源中的系列名称，仅发布无归属冲突且通过 TMDB 电影 ID 存在性校验的社区目录分组；不是 TMDB 官方 Collection。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/collections/movie-community.yaml",
       "media_types": ["movie"],
-      "tags": ["电影", "社区维护"]
+      "tags": ["电影", "来源保真", "社区分组"]
     }
   ]
 }
