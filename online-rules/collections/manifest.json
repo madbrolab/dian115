@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "readme_url": "https://github.com/madbrolab/dian115/blob/main/online-rules/collections/README.md",
+  "vocabularies": [
+    {
+      "id": "movie-community",
+      "name": "社区电影合集词表",
+      "description": "从公开路径映射中清洗并通过 TMDB 电影导出表验证；只包含电影，不猜测电视剧归属。",
+      "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/collections/movie-community.yaml",
+      "media_types": ["movie"],
+      "tags": ["电影", "社区维护"]
+    }
+  ]
+}

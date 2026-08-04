@@ -1,0 +1,158 @@
+# Generated from the built-in dian115 category template.
+# Explicit tmdb_id rules always have the highest runtime priority.
+movie:
+  "合集":
+    classify_by: collection_vocabulary
+  "特摄剧/特摄电影":
+    genre_ids: "-16"
+    ?include_keywords: "tokusatsu,ultraman,kaiju"
+    ?keywords: "奥特曼,特摄,特攝,铠甲勇士,金甲战士,超神战队,巨神战击队,ower Rangers,超凡战队,恐龙战队,VR Troopers,Beetleborgs,BIMA,神鹰勇士,Cicak-Man,Shaktimaan,Darna"
+  "纪录片/纪录片电影/华语纪录片电影":
+    genre_ids: "99,-10402,-16"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "纪录片/纪录片电影/外语纪录片电影":
+    genre_ids: "99,-10402,-16"
+  "演唱会/华语歌手演唱会":
+    genre_ids: "10402,-16"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+    keywords: "演唱会,巡演,演出,交响乐,奇妙夜,歌剧,喜乐会,音乐会,音乐剧,音乐·会,摇滚,MV精选集,特别节目,美丽的呼声听证会,Live,郭富城,日本武道馆,Concert,Tour,Performance,Show,Stage,现场,現場,巡迴,巡回,音乐节,音樂節,歌会,湾区升明月,音乐集,演奏,音乐秀,音乐盛宴,音乐厅"
+  "演唱会/欧美歌手演唱会":
+    genre_ids: "10402,-16"
+    ?original_language: "en,es,fr,pt,de,it,nl,ru,pl,sv,da,no,fi,cs,hu,ro,sk,hr,sl,bg,el,lt,lv,et,is,mt,eu,ca,gl,cy,tr,zu,ga,fo,yi"
+    ?origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,RU,CA,AU,NZ,NO,DK,FI,GR,TR,IE,IS,CH,BE,LU,MT,ZA,MX"
+    keywords: "演唱会,巡演,演出,交响乐,奇妙夜,歌剧,喜乐会,音乐会,音乐·会,音乐剧,特别节目,摇滚,MV精选集,Live,日本武道馆,Concert,Tour,Performance,Show,Stage,现场,現場,巡迴,巡回,音乐节,音樂節,歌会,音乐集,演奏,音乐秀,音乐盛宴,音乐厅"
+  "演唱会/日韩歌手演唱会":
+    genre_ids: "10402,-16"
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+    keywords: "Hatsune miku,演唱会,巡演,演出,交响乐,奇妙夜,歌剧,少女时代,初音未来,魔法未来,喜乐会,音乐会,音乐剧,特别节目,摇滚,MV精选集,Live,日本武道馆,Concert,米津玄师,Tour,Performance,Show,Stage,现场,現場,巡迴,巡回,音乐节,音樂節,歌会,音乐集,演奏,音乐秀,音乐盛宴,音乐厅"
+  "演唱会/其他演唱会":
+    genre_ids: "10402,-16"
+    keywords: "演唱会,巡演,演出,交响乐,奇妙夜,歌剧,喜乐会,音乐会,音乐·会,音乐剧,特别节目,摇滚,MV精选集,Live,日本武道馆,Concert,Tour,Performance,Show,Stage,现场,現場,巡迴,巡回,音乐节,音樂節,歌会,音乐集,演奏,音乐秀,音乐盛宴,音乐厅"
+  "动漫/动画电影/港台动画电影":
+    genre_ids: "16"
+    origin_country: "HK,TW,MO"
+  "动漫/动画电影/国产动画电影":
+    genre_ids: "16"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "动漫/动画电影/日本动画电影":
+    genre_ids: "16"
+    ?original_language: "ja"
+    ?origin_country: "JP"
+  "动漫/动画电影/韩国动画电影":
+    genre_ids: "16"
+    ?original_language: "ko"
+    ?origin_country: "KR"
+  "动漫/动画电影/欧美动画电影":
+    genre_ids: "16"
+    ?original_language: "en,es,fr,pt,de,it,nl,ru,pl,sv,da,no,fi,cs,hu,ro,sk,hr,sl,bg,el,lt,lv,et,is,mt,eu,ca,gl,cy,tr,zu,ga,fo,yi"
+    ?origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,RU,CA,AU,NZ,NO,DK,FI,GR,TR,IE,IS,CH,BE,LU,MT,ZA,MX"
+  "动漫/动画电影/其他动画电影":
+    genre_ids: "16"
+  "晚会":
+    include_keywords: "中央广播电视总台春节联欢晚会,中央广播电视总台元宵晚会,中央广播电视总台中秋晚会"
+  "电影/华语电影/港台地区电影":
+    original_language: "zh,cn"
+    origin_country: "HK,TW,MO"
+  "电影/华语电影/大陆地区电影":
+    original_language: "zh,cn,bo,za"
+    origin_country: "CN,HK,TW,MO"
+  "电影/日本电影":
+    ?original_language: "ja"
+    ?origin_country: "JP"
+  "电影/韩国电影":
+    ?original_language: "ko"
+    ?origin_country: "KR"
+  "电影/欧美电影":
+    original_language: "en,es,fr,pt,de,it,nl,ru,pl,sv,da,no,fi,cs,hu,ro,sk,hr,sl,bg,el,lt,lv,et,is,mt,eu,ca,gl,cy,tr,zu,ga,fo,yi"
+    origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,RU,CA,AU,NZ,NO,DK,FI,GR,TR,IE,IS,CH,BE,LU,MT,ZA,MX"
+  "电影/东南亚电影":
+    ?original_language: "id,th,ms,hi,tl,vi,gu,kn,kok,mr,pa,sa,ta,te,ur,si,ne,lo,mm,my,kh,bd"
+    ?origin_country: "TH,VN,MY,PH,IN,LA,MM,SG,ID,KP,BD,KH,LK,NP"
+  "电影/其他地区电影": {}
+
+tv:
+  "合集":
+    classify_by: collection_vocabulary
+  "特摄剧/特摄剧集":
+    ?include_keywords: "tokusatsu,ultraman"
+    ?keywords: "奥特曼,特摄,特攝,铠甲勇士,金甲战士,超神战队,巨神战击队,布袋戏,苦海女神龙,霹雳神州,霹雳英雄,霹雳震寰宇,霹雳天命,云州大儒侠史艳文,Power Rangers,超凡战队,恐龙战队,VR Troopers,Beetleborgs,BIMA,神鹰勇士,Cicak-Man,Shaktimaan,Darna"
+  "纪录片/纪录片剧集/华语纪录片":
+    genre_ids: "99,-10402,-16"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "纪录片/纪录片剧集/外语纪录片":
+    genre_ids: "99,-10402,-16"
+  "动漫/儿童动漫/国产儿童动漫":
+    genre_ids: "+16,10762"
+    ?keywords: "喜羊羊与灰太狼"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "动漫/儿童动漫/日本儿童动漫":
+    genre_ids: "+16,10762"
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "动漫/儿童动漫/欧美儿童动漫":
+    genre_ids: "+16,10762"
+    ?original_language: "en,es,fr,pt,de,it,nl,ru,pl,sv,da,no,fi,cs,hu,ro,sk,hr,sl,bg,el,lt,lv,et,is,mt,eu,ca,gl,cy,tr,zu,ga,fo,yi"
+    ?origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,RU,CA,AU,NZ,NO,DK,FI,GR,TR,IE,IS,CH,BE,LU,MT,ZA,MX"
+  "动漫/儿童动漫/其他儿童动漫":
+    genre_ids: "+16,10762"
+  "动漫/国产动漫":
+    genre_ids: "16"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "动漫/日本动漫":
+    genre_ids: "16"
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "动漫/欧美动漫":
+    genre_ids: "16"
+    ?original_language: "en,es,fr,pt,de,it,nl,ru,pl,sv,da,no,fi,cs,hu,ro,sk,hr,sl,bg,el,lt,lv,et,is,mt,eu,ca,gl,cy,tr,zu,ga,fo,yi"
+    ?origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,RU,CA,AU,NZ,NO,DK,FI,GR,TR,IE,IS,CH,BE,LU,MT,ZA,MX"
+  "动漫/其他动漫":
+    genre_ids: "16"
+  "综艺/港台综艺":
+    genre_ids: "10764,10767"
+    origin_country: "TW,HK,MO"
+  "综艺/国产综艺":
+    genre_ids: "10764,10767"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "综艺/日本综艺":
+    genre_ids: "10764,10767"
+    ?original_language: "ja"
+    ?origin_country: "JP"
+  "综艺/韩国综艺":
+    genre_ids: "10764,10767"
+    ?original_language: "ko"
+    ?origin_country: "KR"
+  "综艺/欧美综艺":
+    genre_ids: "10764,10767"
+    ?original_language: "en,es,fr,pt,de,it,nl,ru,pl,sv,da,no,fi,cs,hu,ro,sk,hr,sl,bg,el,lt,lv,et,is,mt,eu,ca,gl,cy,tr,zu,ga,fo,yi"
+    ?origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,RU,CA,AU,NZ,NO,DK,FI,GR,TR,IE,IS,CH,BE,LU,MT,ZA,MX"
+  "综艺/其他综艺":
+    genre_ids: "10764,10767"
+  "剧集/儿童剧集":
+    genre_ids: "10762"
+  "剧集/港台剧集":
+    origin_country: "HK,TW,MO"
+  "剧集/国产剧集":
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "剧集/日本剧集":
+    ?original_language: "ja"
+    ?origin_country: "JP"
+  "剧集/韩国剧集":
+    ?original_language: "ko"
+    ?origin_country: "KR"
+  "剧集/欧美剧集":
+    ?original_language: "en,es,fr,pt,de,it,nl,ru,pl,sv,da,no,fi,cs,hu,ro,sk,hr,sl,bg,el,lt,lv,et,is,mt,eu,ca,gl,cy,tr,zu,ga,fo,yi"
+    ?origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,RU,CA,AU,NZ,NO,DK,FI,GR,TR,IE,IS,CH,BE,LU,MT,ZA,MX"
+  "剧集/东南亚剧集":
+    ?original_language: "id,th,ms,hi,tl,vi,gu,kn,kok,mr,pa,sa,ta,te,ur,si,ne,lo,mm,my,kh,bd"
+    ?origin_country: "TH,VN,MY,PH,IN,LA,MM,SG,ID,KP,BD,KH,LK,NP"
+  "剧集/其他剧集": {}

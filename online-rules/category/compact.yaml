@@ -1,0 +1,41 @@
+# 精简模板：类型目录下只增加一级静态分类目录。
+# 合集词表命中时，“合集名称”是媒体库内部动态子目录。
+movie:
+  "合集":
+    classify_by: collection_vocabulary
+  "动画":
+    genre_ids: "16"
+  "纪录片":
+    genre_ids: "99,-16"
+  "音乐演出":
+    genre_ids: "10402,-16"
+  "华语电影":
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "日韩电影":
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "欧美电影":
+    origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,CA,AU,NZ"
+  "其他电影": {}
+
+tv:
+  "合集":
+    classify_by: collection_vocabulary
+  "儿童节目":
+    genre_ids: "10762"
+  "动漫":
+    genre_ids: "16"
+  "纪录片":
+    genre_ids: "99,-16"
+  "综艺":
+    genre_ids: "10764,10767"
+  "华语剧集":
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO,SG"
+  "日韩剧集":
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "欧美剧集":
+    origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,CA,AU,NZ"
+  "其他剧集": {}
