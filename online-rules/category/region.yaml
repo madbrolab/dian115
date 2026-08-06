@@ -1,0 +1,30 @@
+# 地区优先模板：仅依据 TMDB 制片国家/地区划分，避免语言与制片地区交叉误判。
+movie:
+  "华语地区电影":
+    origin_country: "CN,HK,TW,MO"
+  "日本电影":
+    origin_country: "JP"
+  "韩国电影":
+    origin_country: "KR"
+  "东南亚电影":
+    origin_country: "TH,VN,MY,PH,LA,MM,SG,ID,BN,KH,TL"
+  "南亚电影":
+    origin_country: "IN,PK,BD,LK,NP,BT,MV"
+  "欧美及大洋洲电影":
+    origin_country: "US,CA,MX,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
+  "其他地区电影": {}
+
+tv:
+  "华语地区剧集":
+    origin_country: "CN,HK,TW,MO"
+  "日本剧集":
+    origin_country: "JP"
+  "韩国剧集":
+    origin_country: "KR"
+  "东南亚剧集":
+    origin_country: "TH,VN,MY,PH,LA,MM,SG,ID,BN,KH,TL"
+  "南亚剧集":
+    origin_country: "IN,PK,BD,LK,NP,BT,MV"
+  "欧美及大洋洲剧集":
+    origin_country: "US,CA,MX,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
+  "其他地区剧集": {}

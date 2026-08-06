@@ -1,0 +1,33 @@
+# 亲子模板：先隔离高分级与分级缺失内容，再划分家庭内容。
+# 内容分级依赖 TMDB 数据，只适合作为辅助整理，不能替代人工家长控制。
+movie:
+  "需家长确认/成人限制级":
+    content_rating: "ADULT"
+  "需家长确认/成熟内容":
+    content_rating: "MATURE"
+  "需家长确认/分级缺失":
+    content_rating: "UNRATED"
+  "家庭专区/儿童动画":
+    genre_ids: "+16,10751"
+  "家庭专区/家庭电影":
+    genre_ids: "10751"
+  "普通内容/青少年内容":
+    content_rating: "TEEN"
+  "普通内容/其他电影": {}
+
+tv:
+  "需家长确认/成人限制级":
+    content_rating: "ADULT"
+  "需家长确认/成熟内容":
+    content_rating: "MATURE"
+  "需家长确认/分级缺失":
+    content_rating: "UNRATED"
+  "家庭专区/儿童节目":
+    genre_ids: "10762"
+  "家庭专区/家庭动漫":
+    genre_ids: "+16,10751"
+  "家庭专区/家庭剧集":
+    genre_ids: "10751"
+  "普通内容/青少年内容":
+    content_rating: "TEEN"
+  "普通内容/其他剧集": {}

@@ -1,0 +1,26 @@
+# 精简静态分类后追加 TMDB 评分段动态目录。
+sub_classify:
+  movie:
+    enabled: true
+    levels: [rating_tier]
+  tv:
+    enabled: true
+    levels: [rating_tier]
+
+movie:
+  "动画":
+    genre_ids: "16"
+  "纪录片":
+    genre_ids: "99,-16"
+  "音乐演出":
+    genre_ids: "10402,-16"
+  "剧情电影": {}
+
+tv:
+  "动漫":
+    genre_ids: "16"
+  "纪录片":
+    genre_ids: "99,-16"
+  "综艺":
+    genre_ids: "10764,10767"
+  "剧情剧集": {}

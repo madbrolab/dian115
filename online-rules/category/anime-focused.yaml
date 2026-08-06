@@ -1,0 +1,46 @@
+# 动漫优先模板：细分动画产地，真人影视保持少量兜底目录。
+movie:
+  "动画电影/国产动画":
+    genre_ids: "16"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "动画电影/日本动画":
+    genre_ids: "16"
+    ?original_language: "ja"
+    ?origin_country: "JP"
+  "动画电影/韩国动画":
+    genre_ids: "16"
+    ?original_language: "ko"
+    ?origin_country: "KR"
+  "动画电影/欧美动画":
+    genre_ids: "16"
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,CH,AT,SE,NO,DK,FI,IS,PL,CZ,AU,NZ"
+  "动画电影/其他动画":
+    genre_ids: "16"
+  "真人电影/纪录片":
+    genre_ids: "99"
+  "真人电影/其他电影": {}
+
+tv:
+  "动漫/国产动漫":
+    genre_ids: "16"
+    ?original_language: "zh,cn"
+    ?origin_country: "CN,HK,TW,MO"
+  "动漫/日本动漫":
+    genre_ids: "16"
+    ?original_language: "ja"
+    ?origin_country: "JP"
+  "动漫/韩国动漫":
+    genre_ids: "16"
+    ?original_language: "ko"
+    ?origin_country: "KR"
+  "动漫/欧美动漫":
+    genre_ids: "16"
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,CH,AT,SE,NO,DK,FI,IS,PL,CZ,AU,NZ"
+  "动漫/其他动漫":
+    genre_ids: "16"
+  "真人节目/儿童节目":
+    genre_ids: "10762,-16"
+  "真人节目/综艺":
+    genre_ids: "10764,10767"
+  "真人节目/其他剧集": {}
