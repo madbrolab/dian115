@@ -89,6 +89,7 @@
           <a class="nav-link" href="#feature-subscription"><svg><use href="#i-bell"/></svg>订阅</a>
           <a class="nav-link" href="#feature-organize"><svg><use href="#i-wand"/></svg>媒体整理</a>
           <a class="nav-link" href="#feature-strm"><svg><use href="#i-code"/></svg>STRM 规则</a>
+          <a class="nav-link" href="#feature-virtual-library"><svg><use href="#i-folder"/></svg>虚拟影库</a>
           <a class="nav-link" href="#feature-sharing"><svg><use href="#i-share"/></svg>媒体分享</a>
           <a class="nav-link" href="#feature-files"><svg><use href="#i-folder"/></svg>文件管理</a>
           <a class="nav-link" href="#feature-accounts"><svg><use href="#i-key"/></svg>账号池配置</a>
@@ -470,8 +471,34 @@ docker compose logs --tail=200 dian115</code></pre>
             </div>
           </article>
 
+          <article class="feature-card searchable" id="feature-virtual-library" data-search-title="虚拟影库 外部 115 分享 ED2K P1 虚拟文件 跨实例 代理播放 pickcode SHA1 FFP 导入 换址">
+            <header class="feature-head"><span class="feature-index">06</span><div class="feature-title"><h3>虚拟影库</h3><p>把别人提供的 115 分享、ED2K 列表或已有虚拟文件转换为跨实例可用的轻量媒体入口。</p></div><span class="feature-badge">入口：虚拟影库</span></header>
+            <div class="feature-body">
+              <p>虚拟影库面向“拿到外部资源描述，但不希望提前占用网盘空间”的场景。系统先展开来源并只保留视频文件，再写入带有短加密标记的虚拟文件；生成阶段只解析描述，不创建自己的分享，不转存 115 文件，也不创建 ED2K 离线任务。</p>
+              <div class="feature-points">
+                <div class="point"><b>外部来源解析</b><span>支持别人提供的 115 分享链接、ED2K 文本或列表，以及其他 DIAN115 实例生成的 P1 虚拟文件；非视频内容会在预览阶段过滤。</span></div>
+                <div class="point"><b>跨实例虚拟文件</b><span>虚拟文件记录代理地址和加密标记，可导入多个 <code>.strm</code>、ZIP 包或目录，并在迁移实例时批量更换代理地址。</span></div>
+                <div class="point"><b>播放时处理</b><span>虚拟地址只能交给 DIAN115 代理端口识别。真正播放时才转存临时文件、获取直链并删除临时文件，门户用户会在自己的网盘上下文中完成这一过程。</span></div>
+              </div>
+              <div class="flow" aria-label="虚拟影库推荐执行顺序">
+                <div class="flow-item"><b>解析来源</b><small>115 / ED2K / P1</small></div>
+                <div class="flow-item"><b>仅选视频</b><small>过滤非视频</small></div>
+                <div class="flow-item"><b>写入虚拟文件</b><small>零转存、零离线</small></div>
+                <div class="flow-item"><b>媒体库扫描</b><small>建立媒体条目</small></div>
+                <div class="flow-item"><b>代理播放</b><small>按需获取直链</small></div>
+              </div>
+              <details class="details" open><summary>缓存、媒体信息与任务记录</summary><div class="details-content"><ul class="check-list">
+                <li>发现来源自带 SHA1 时优先查询 SHA1 → FFP 缓存；未命中不会在生成阶段转存、离线或强制探测。</li>
+                <li>Emby / Madby 可从虚拟文件标记中取得 SHA1，命中 FFP 后注入媒体信息；无法确认文件身份时中断探测，避免误操作。</li>
+                <li>媒体 ID 与 pickcode 等播放参数写入永久缓存，直链仍按现有过期策略刷新，减少重复转存与查询。</li>
+                <li>代理基址、输出目录和导入目录保存在数据库；生成、导入和批量换址均形成可展开、删除或清理的持久任务记录。</li>
+              </ul></div></details>
+              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>生成虚拟文件不等于提前获取播放地址</strong><p>不要用浏览器直接打开虚拟文件中的标记地址，也不要把管理后台、原始 Emby 或 CD2 端口写成代理基址。播放端必须通过 DIAN115 代理端口，转存、直链获取与临时文件清理只会在播放阶段发生。</p></div></div>
+            </div>
+          </article>
+
           <article class="feature-card searchable" id="feature-sharing" data-search-title="媒体分享 Emby TG 癫影 115 链接 ED2K 自动分享 季度 单集 多版本">
-            <header class="feature-head"><span class="feature-index">06</span><div class="feature-title"><h3>媒体分享</h3><p>从 Emby 媒体库精确选择版本、季度或单集，并分享到不同目标。</p></div><span class="feature-badge">入口：我的媒体 → 媒体分享</span></header>
+            <header class="feature-head"><span class="feature-index">07</span><div class="feature-title"><h3>媒体分享</h3><p>从 Emby 媒体库精确选择版本、季度或单集，并分享到不同目标。</p></div><span class="feature-badge">入口：我的媒体 → 媒体分享</span></header>
             <div class="feature-body">
               <p>媒体分享读取 Emby 已入库条目，同时依赖 dian115 文件树中的 115 文件身份。它能按电影版本、剧集季度与单集选择文件，避免“整库打包式分享”。</p>
               <div class="feature-points">
@@ -491,7 +518,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-files" data-search-title="文件管理 上传 下载 预览 移动 复制 重命名 删除 识别 整理 秘享">
-            <header class="feature-head"><span class="feature-index">07</span><div class="feature-title"><h3>文件管理</h3><p>管理容器可见的本地与挂载目录，并直接触发识别、整理和秘享。</p></div><span class="feature-badge">入口：文件管理</span></header>
+            <header class="feature-head"><span class="feature-index">08</span><div class="feature-title"><h3>文件管理</h3><p>管理容器可见的本地与挂载目录，并直接触发识别、整理和秘享。</p></div><span class="feature-badge">入口：文件管理</span></header>
             <div class="feature-body">
               <p>文件管理器只操作容器已经挂载并允许访问的路径。它提供面包屑、网格/列表浏览和批量选择，适合处理待整理目录与少量人工修正。</p>
               <div class="feature-points"><div class="point"><b>日常文件操作</b><span>上传、下载、预览、新建文件夹、重命名、移动、复制、复制路径与删除。</span></div><div class="point"><b>媒体操作</b><span>对文件或目录执行识别；系统按当前路径选择同模式的已启用整理规则。</span></div><div class="point"><b>分享操作</b><span>启用秘享空间后，可从当前选中项生成内容快照和秘享短码。</span></div></div>
@@ -501,7 +528,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-accounts" data-search-title="账号池配置 115 主账号 备用 CK QPS 自动切换 转存 离线 回收站 我的分享">
-            <header class="feature-head"><span class="feature-index">08</span><div class="feature-title"><h3>账号池配置</h3><p>把主账号、备用 CK、目录策略与账号运维分开管理。</p></div><span class="feature-badge">入口：账号配置</span></header>
+            <header class="feature-head"><span class="feature-index">09</span><div class="feature-title"><h3>账号池配置</h3><p>把主账号、备用 CK、目录策略与账号运维分开管理。</p></div><span class="feature-badge">入口：账号配置</span></header>
             <div class="feature-body">
               <div class="grid-2"><article class="card"><h4>主账号池</h4><p>主账号可扫码添加、检查、刷新、编辑和激活；活跃账号供全局 115 客户端使用。可设置自动切换与 API QPS 上限，并查看 Cookie、VIP、空间与签到状态。</p></article><article class="card"><h4>备用 CK 池</h4><p>这是独立备用池：不会成为活跃账号，不参与主账号自动切换、签到、目录设置、批量检查或全局客户端；只有明确支持备用池的功能才会轮询取用。</p></article></div>
               <ul class="check-list"><li>为主账号选择真实对应的 CD2 云盘，避免跨账号目录与文件身份错配。</li><li>分别设置转存、离线下载、秘享接收目录；可添加多个备用目录供风控或容量场景切换。</li><li>按 TG、癫影、PT 等渠道设置默认目录；PT 秒传只使用转存目录，不会回退到离线目录。</li><li>“我的分享”可查看、取消或清理过期记录；“回收站”支持安全码与定期清理设置。</li></ul>
@@ -510,7 +537,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-pt" data-search-title="PT 站点 认证 Cookie RSS 搜索 下载器 刷流 统计">
-            <header class="feature-head"><span class="feature-index">09</span><div class="feature-title"><h3>PT 站点相关</h3><p>站点连接、搜索、RSS、下载与刷流是四层能力，需逐层验证。</p></div><span class="feature-badge">入口：站点配置</span></header>
+            <header class="feature-head"><span class="feature-index">10</span><div class="feature-title"><h3>PT 站点相关</h3><p>站点连接、搜索、RSS、下载与刷流是四层能力，需逐层验证。</p></div><span class="feature-badge">入口：站点配置</span></header>
             <div class="feature-body">
               <div class="feature-points"><div class="point"><b>站点配置</b><span>维护站点类型、域名与认证信息，单独控制启用、代理、超时、搜索和 RSS。</span></div><div class="point"><b>账户视图</b><span>刷新上传、下载、分享率、等级、魔力与做种等数据，快速判断账号健康。</span></div><div class="point"><b>任务执行</b><span>搜索结果进入订阅策略或手动下载，真正落地由已配置的 qBittorrent / Transmission 下载器完成。</span></div></div>
               <div class="callout"><svg><use href="#i-info"/></svg><div><strong>推荐的 PT 排障顺序</strong><p>先验证站点认证与搜索，再验证下载器连接与保存路径，之后开启 RSS，最后才启用 PT 刷流。刷流插件会自动添加和删种，不应作为连接测试工具。</p></div></div>
@@ -520,7 +547,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-plugins" data-search-title="插件中心 文件秒传 多号云迁移 秘享空间 Telegram 频道监控 Emby 封面 通知 PT 刷流 癫影 PT站点统计 Emby媒体画像 CLASH AI字幕">
-            <header class="feature-head"><span class="feature-index">10</span><div class="feature-title"><h3>插件中心</h3><p>当前界面的 12 个插件逐项说明用途、首次配置和使用边界。</p></div><span class="feature-badge">入口：插件中心</span></header>
+            <header class="feature-head"><span class="feature-index">11</span><div class="feature-title"><h3>插件中心</h3><p>当前界面的 12 个插件逐项说明用途、首次配置和使用边界。</p></div><span class="feature-badge">入口：插件中心</span></header>
             <div class="feature-body">
               <div class="plugin-grid">
                 <article class="plugin-card"><header><span class="icon-box"><svg><use href="#i-server"/></svg></span><h4>文件秒传 <small>v1.0.0</small></h4></header><p>把本地文件或目录上传到 115，优先使用 SHA1 秒传，失败时可回退普通上传。</p><ul class="plugin-notes"><li><b>配置：</b>本地源、115 目标目录、成功/失败后处理、限速、并发与记录保留。</li><li><b>注意：</b>目录监控可处理新增文件；失败目录不要放在监控目录内部，避免循环。</li></ul><footer><span class="tag">SHA1</span><span class="tag">目录监控</span></footer></article>
@@ -542,7 +569,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-satellite" data-search-title="卫星 发布树 文件树 STRM 子服务 API Key 心跳 请求日志">
-            <header class="feature-head"><span class="feature-index">11</span><div class="feature-title"><h3>卫星发布树</h3><p>把指定 STRM 规则的文件树安全发布给其他 dian115 子服务实例。</p></div><span class="feature-badge">入口：卫星任务</span></header>
+            <header class="feature-head"><span class="feature-index">12</span><div class="feature-title"><h3>卫星发布树</h3><p>把指定 STRM 规则的文件树安全发布给其他 dian115 子服务实例。</p></div><span class="feature-badge">入口：卫星任务</span></header>
             <div class="feature-body">
               <p>主实例先选择一条 STRM 规则发布文件树，再为每个子服务创建独立客户端。客户端使用 API Key 读取被授权的规则树，并通过心跳报告版本、状态与本地文件数量。</p>
               <div class="feature-points"><div class="point"><b>发布范围</b><span>按 STRM 规则发布，不是把所有目录和账号数据暴露给子服务。</span></div><div class="point"><b>客户端控制</b><span>设置名称、允许规则、过期时间和备注；API Key 创建后应立即妥善保存。</span></div><div class="point"><b>审计</b><span>查看在线状态、最后心跳、请求次数，以及同步/分享类型、状态和来源 IP。</span></div></div>
@@ -552,7 +579,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-container" data-search-title="容器更新 DianCupLite Docker 镜像 检查 定时 更新 回滚 备份">
-            <header class="feature-head"><span class="feature-index">12</span><div class="feature-title"><h3>容器更新</h3><p>DianCupLite 在不使用特权模式的前提下管理本机其他容器。</p></div><span class="feature-badge">入口：容器更新</span></header>
+            <header class="feature-head"><span class="feature-index">13</span><div class="feature-title"><h3>容器更新</h3><p>DianCupLite 在不使用特权模式的前提下管理本机其他容器。</p></div><span class="feature-badge">入口：容器更新</span></header>
             <div class="feature-body">
               <p>挂载 Docker Socket 后，DianCupLite 能读取容器和镜像摘要，检查远端更新，按队列执行手动或定时更新，同时提供运行状态与资源视图。</p>
               <div class="feature-points"><div class="point"><b>检查与更新</b><span>按容器检查本地/远端摘要，标记可更新、已是最新或检查失败；更新过程显示阶段与百分比。</span></div><div class="point"><b>运维控制</b><span>查看 CPU、内存和镜像，执行启动、停止、重启；可为容器保存别名与图标。</span></div><div class="point"><b>镜像管理</b><span>浏览镜像、关联容器与大小，安全清理悬空镜像和 DianCupLite 备份镜像。</span></div></div>
@@ -563,7 +590,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-cache" data-search-title="全局缓存 FFP-cache TMDB 115分享 TG监控 离线链接 SHA1 媒体画像">
-            <header class="feature-head"><span class="feature-index">13</span><div class="feature-title"><h3>全局缓存与 FFP 缓存</h3><p>减少重复外部请求，同时让同一 SHA1 的媒体信息跨功能复用。</p></div><span class="feature-badge">入口：全局缓存</span></header>
+            <header class="feature-head"><span class="feature-index">14</span><div class="feature-title"><h3>全局缓存与 FFP 缓存</h3><p>减少重复外部请求，同时让同一 SHA1 的媒体信息跨功能复用。</p></div><span class="feature-badge">入口：全局缓存</span></header>
             <div class="feature-body">
               <div class="table-wrap"><table><thead><tr><th>缓存</th><th>保存内容</th><th>主要价值</th></tr></thead><tbody>
                 <tr><td>TMDB</td><td>媒体元数据与海报索引</td><td>加快探索、订阅与识别，减少重复请求。</td></tr>
@@ -578,7 +605,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-portal" data-search-title="门户 用户 邀请码 115账号池 工单 求片 积分 社区 播放缓存 审计">
-            <header class="feature-head"><span class="feature-index">14</span><div class="feature-title"><h3>门户功能</h3><p>为家庭、朋友或小型社区提供独立的用户入口与运营后台。</p></div><span class="feature-badge">入口：门户总控</span></header>
+            <header class="feature-head"><span class="feature-index">15</span><div class="feature-title"><h3>门户功能</h3><p>为家庭、朋友或小型社区提供独立的用户入口与运营后台。</p></div><span class="feature-badge">入口：门户总控</span></header>
             <div class="feature-body">
               <p>门户把管理员和终端用户分开。管理员统一维护用户、共享/独享 115 账号、邀请码、求片、工单、数据健康与社区；用户通过门户完成自己的播放、请求和账户操作。</p>
               <div class="grid-3"><article class="mini-card"><span class="icon-box"><svg><use href="#i-users"/></svg></span><strong>账号中心</strong><p>共享与独享模式、用户有效期、115 账号池、CK 检查、播放缓存和一次性邀请码。</p></article><article class="mini-card"><span class="icon-box"><svg><use href="#i-bell"/></svg></span><strong>服务中心</strong><p>求片申请、工单分类、状态流转、管理员回复与站内消息广播。</p></article><article class="mini-card"><span class="icon-box"><svg><use href="#i-dashboard"/></svg></span><strong>数据与社区</strong><p>用户分析、系统健康、审计日志、签到、积分、徽章、成就、榜单、评分、社区帖子与资源投稿。</p></article></div>
@@ -588,7 +615,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-music" data-search-title="音乐代理 Navidrome Subsonic 音乐播放器 CD2 目录树 歌词 播放队列 302">
-            <header class="feature-head"><span class="feature-index">15</span><div class="feature-title"><h3>音乐代理与音乐播放器</h3><p>把 115 音乐目录映射到 Navidrome / Subsonic，并在 dian115 内直接播放。</p></div><span class="feature-badge">入口：我的媒体 → NAVIDROME</span></header>
+            <header class="feature-head"><span class="feature-index">16</span><div class="feature-title"><h3>音乐代理与音乐播放器</h3><p>把 115 音乐目录映射到 Navidrome / Subsonic，并在 dian115 内直接播放。</p></div><span class="feature-badge">入口：我的媒体 → NAVIDROME</span></header>
             <div class="feature-body">
               <div class="grid-2"><article class="card"><h4>音乐代理</h4><ul class="plain-list"><li>配置 Navidrome 后端地址、Subsonic 用户名/密码和独立代理端口。</li><li>选择主账号对应的 CD2 音乐源路径与本地软链接路径。</li><li>支持实时监听 115 生活事件、定时增量/全量同步。</li><li>支持 302 失败回退本地代理与删除时智能清理软链接、空目录。</li></ul></article><article class="card"><h4>音乐树与播放器</h4><ul class="plain-list"><li>构建全量目录树、增量同步、同步 Navidrome 歌曲 ID，并生成符号链接。</li><li>统计音乐总数、已匹配和未匹配歌曲，任务过程统一显示进度与日志。</li><li>悬浮播放器提供音乐库浏览、完整播放页、播放队列、进度与基础播放控制。</li><li>播放器由页面右侧的“点点”综合助手进入，音乐播放时可保持浮动控制。</li></ul></article></div>
               <div class="callout"><svg><use href="#i-info"/></svg><div><strong>音乐树只使用主账号云盘</strong><p>选择 CD2 路径时必须与“账号配置 → 扩展设置”中的主账号云盘一致。云盘名称或路径错配会导致音乐条目无法映射到 115 文件。</p></div></div>
@@ -596,7 +623,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-ai" data-search-title="AI 助手 点点 管理模式 闲聊 工具调用 TG助手 模型 提供商 OpenAI Responses Chat Completions GitHub">
-            <header class="feature-head"><span class="feature-index">16</span><div class="feature-title"><h3>AI 助手</h3><p>既能解释系统状态，也能在授权范围内调用 dian115 管理工具。</p></div><span class="feature-badge">入口：点点 → AI 助手</span></header>
+            <header class="feature-head"><span class="feature-index">17</span><div class="feature-title"><h3>AI 助手</h3><p>既能解释系统状态，也能在授权范围内调用 dian115 管理工具。</p></div><span class="feature-badge">入口：点点 → AI 助手</span></header>
             <div class="feature-body">
               <p>AI 助手是综合助手的一部分，与“会话助手”和“音乐”共享浮动入口。AI 模式支持流式回复、推理过程、工具进度、Markdown、回复复制、停止生成、新会话与本地历史。</p>
               <div class="feature-points"><div class="point"><b>管理模式</b><span>可读取系统状态并调用账号、订阅、任务、PT、整理、后台 API 等原生工具；危险动作需要明确确认。</span></div><div class="point"><b>闲聊模式</b><span>不以系统管理为首要目标，适合解释概念、整理思路和普通问答，减少不必要的工具调用。</span></div><div class="point"><b>TG 助手</b><span>网页助手与 Telegram 助手共用数据库中的提供商池，可按使用位置选择不同模型与允许工具。</span></div></div>
@@ -607,7 +634,7 @@ docker compose logs --tail=200 dian115</code></pre>
           </article>
 
           <article class="feature-card searchable" id="feature-more" data-search-title="更多功能 追剧日历 下载管理 任务队列 运行日志 网络测试 维护 排障">
-            <header class="feature-head"><span class="feature-index">17</span><div class="feature-title"><h3>更多常用能力</h3><p>除了上面的重点模块，日常使用还会频繁用到这些能力。</p></div><span class="feature-badge">更多常用入口</span></header>
+            <header class="feature-head"><span class="feature-index">18</span><div class="feature-title"><h3>更多常用能力</h3><p>除了上面的重点模块，日常使用还会频繁用到这些能力。</p></div><span class="feature-badge">更多常用入口</span></header>
             <div class="feature-body">
               <div class="grid-2">
                 <article class="card"><h4>追剧日历</h4><p>按日期查看订阅剧集的播出与更新，帮助判断“尚未播出、资源未找到、下载未完成或入库缺集”分别属于哪一环。</p></article>
