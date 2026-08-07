@@ -478,22 +478,22 @@ docker compose logs --tail=200 dian115</code></pre>
               <div class="feature-points">
                 <div class="point"><b>外部来源解析</b><span>支持别人提供的 115 分享链接、ED2K 文本或列表，以及其他 DIAN115 实例生成的 P1 虚拟文件；非视频内容会在预览阶段过滤。</span></div>
                 <div class="point"><b>跨实例虚拟文件</b><span>虚拟文件记录代理地址和加密标记，可导入多个 <code>.strm</code>、ZIP 包或目录，并在迁移实例时批量更换代理地址。</span></div>
-                <div class="point"><b>播放时处理</b><span>虚拟地址只能交给 DIAN115 代理端口识别。真正播放时才转存临时文件、获取直链并删除临时文件，门户用户会在自己的网盘上下文中完成这一过程。</span></div>
+                <div class="point"><b>播放时处理</b><span>虚拟地址只能交给 DIAN115 代理端口识别。播放请求先尝试免转存获取分享直链；免转存失败时才回退到转存链路，完成后获取直链并按现有缓存与清理策略处理。</span></div>
               </div>
               <div class="flow" aria-label="虚拟影库推荐执行顺序">
                 <div class="flow-item"><b>解析来源</b><small>115 / ED2K / P1</small></div>
                 <div class="flow-item"><b>仅选视频</b><small>过滤非视频</small></div>
                 <div class="flow-item"><b>写入虚拟文件</b><small>零转存、零离线</small></div>
                 <div class="flow-item"><b>媒体库扫描</b><small>建立媒体条目</small></div>
-                <div class="flow-item"><b>代理播放</b><small>按需获取直链</small></div>
+                <div class="flow-item"><b>代理播放</b><small>免转存优先，失败回退转存</small></div>
               </div>
               <details class="details" open><summary>缓存、媒体信息与任务记录</summary><div class="details-content"><ul class="check-list">
                 <li>发现来源自带 SHA1 时优先查询 SHA1 → FFP 缓存；未命中不会在生成阶段转存、离线或强制探测。</li>
                 <li>Emby / Madby 可从虚拟文件标记中取得 SHA1，命中 FFP 后注入媒体信息；无法确认文件身份时中断探测，避免误操作。</li>
-                <li>媒体 ID 与 pickcode 等播放参数写入永久缓存，直链仍按现有过期策略刷新，减少重复转存与查询。</li>
+                <li>媒体 ID 与 pickcode 等播放参数写入永久映射缓存，直链仍按现有过期策略刷新；免转存成功时不产生临时文件，只有回退转存后才执行清理。</li>
                 <li>代理基址、输出目录和导入目录保存在数据库；生成、导入和批量换址均形成可展开、删除或清理的持久任务记录。</li>
               </ul></div></details>
-              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>生成虚拟文件不等于提前获取播放地址</strong><p>不要用浏览器直接打开虚拟文件中的标记地址，也不要把管理后台、原始 Emby 或 CD2 端口写成代理基址。播放端必须通过 DIAN115 代理端口，转存、直链获取与临时文件清理只会在播放阶段发生。</p></div></div>
+              <div class="callout warning"><svg><use href="#i-alert"/></svg><div><strong>生成虚拟文件不等于提前获取播放地址</strong><p>不要用浏览器直接打开虚拟文件中的标记地址，也不要把管理后台、原始 Emby 或 CD2 端口写成代理基址。播放端必须通过 DIAN115 代理端口：先免转存直链，失败后才转存；转存完成后再获取直链并清理临时文件。</p></div></div>
             </div>
           </article>
 
