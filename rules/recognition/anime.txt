@@ -1,4 +1,4 @@
-# 自定义识别词 - 动漫
+# 自定义识别词 - 动漫（终物语季集修正版）
 # 不含 TMDB 强绑；保留动漫标题、季集映射及集数偏移。
 # 来源：rules.txt
 
@@ -413,10 +413,13 @@ Zoku Owarimonogatari 04 => 物语系列 S00E45
 Zoku Owarimonogatari 05 => 物语系列 S00E46
 Zoku Owarimonogatari 06 => 物语系列 S00E47
 Owarimonogatari S2 => 物语系列 S00E && S00E <> BD >> EP+34
-Owarimonogatari 01 => 物语系列 S04E01 part1
-Owarimonogatari 02 => 物语系列 S04E01 part2
+# 已有标准 S04Exx：只统一标题，保留原季集号；必须先于裸编号兼容规则执行
+(?i)(?<!Zoku[ ._-])Owarimonogatari[ ._-]+S04E(\d{1,3}) => 物语系列 S04E\1
+Owarimonogatari 01 => 物语系列 S04E01.CD1
+Owarimonogatari 02 => 物语系列 S04E01.CD2
 Owarimonogatari 10 => 物语系列 S04E09
-Owarimonogatari => 物语系列 S04E && S04E <> BD >> EP-1
+# 仅兼容标题后直接跟裸集号的旧命名，禁止再次偏移已经标准化的 S04Exx
+(?i)(?<!Zoku[ ._-])Owarimonogatari(?=[ ._-]+\d{2}(?:\D|$)) => 物语系列 S04E && S04E <> BD >> EP-1
 Koyomimonogatari => 物语系列 S00E && S00E <> BD >> EP+21
 Kizumonogatari 01 => 伤物语1：铁血篇
 Kizumonogatari 02 => 伤物语2：热血篇
