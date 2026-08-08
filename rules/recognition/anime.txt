@@ -1,4 +1,4 @@
-# 自定义识别词 - 动漫（终物语季集修正版）
+# 自定义识别词 - 动漫
 # 不含 TMDB 强绑；保留动漫标题、季集映射及集数偏移。
 # 来源：rules.txt
 
@@ -92,10 +92,6 @@ VTuber.nanda.ga => VTuber.nandaga
 曾經、魔法少女和邪惡相互為敵。 => 魔法少女与邪恶曾经敌对。
 曾经、魔法少女和邪恶相互为敌。 => 魔法少女与邪恶曾经敌对。
 
-#物语系列 (2009)
-物語系列 第外季＆第怪季 => 物语系列 (2009).S05
-物语系列 第外季＆第怪季 => 物语系列 (2009).S05
-
 #天行九歌
 Tian.Xing.Jiu.Ge => 天行九歌
 
@@ -183,9 +179,6 @@ Swallowed.Star.S05 => Swallowed.Star.S01
 Log Horizon 2 => 记录的地平线 S02
 Log Horizon - Entaku Houkai => 记录的地平线 S03
 Log Horizon Entaku Houkai => 记录的地平线 S03
-物語系列 第外季＆第怪季 - 06.5 => 物語系列 - S00E48
-物语系列 外传季&怪物季 - 06.5 => 物语系列 - S00E48
-
 #RE:从零开始的异世界生活
 #ANI
 Re：從零開始的異世界生活 第三季 => Re：从零开始的异世界生活 && Re：从零开始的异世界生活 -  <> [1080P] >>  EP+50
@@ -390,40 +383,6 @@ Seikon no Qwaser II \[(\d{2}).*\] => 圣痕炼金士 S02E\1
 (?<!II.*)(?<=Seikon no Qwaser.*)SP(?=(0[1-9]|1[0-6])) => S00E
 (?<=Seikon no Qwaser.*)\[OVA\] => S00E17
 Seikon no Qwaser II \[SP => 圣痕炼金士 S00E && S00E <> Ma10p >> EP+18
-
-#物语系列
-Bakemonogatari (0[1-9]|1[0-2]) => 物语系列 S01E\1
-Bakemonogatari (?=(1[3-5])) => 物语系列 S00E0 && S00E0 <> BD >> EP-11
-Nisemonogatari => 物语系列 S02E
-Nekomonogatari \(Kuro\) => 物语系列 S00E && S00E <> BD >> EP+5
-Nekomonogatari \(Shiro\) Recap 01 => 物语系列 S00E10
-Nekomonogatari \(Shiro\) => 物语系列 S03E
-Kabukimonogatari Recap 02 => 物语系列 S00E11
-Kabukimonogatari => 物语系列 S03E && S03E <> BD >> EP+5
-Otorimonogatari Recap 03 => 物语系列 S00E12
-Otorimonogatari => 物语系列 S03E && S03E <> BD >> EP+9
-Onimonogatari => 物语系列 S03E && S03E <> BD >> EP+13
-Koimonogatari => 物语系列 S03E && S03E <> BD >> EP+17
-Hanamonogatari => 物语系列 S00E && S00E <> BD >> EP+12
-Tsukimonogatari => 物语系列 S00E && S00E <> BD >> EP+17
-Zoku Owarimonogatari 01 => 物语系列 S00E42
-Zoku Owarimonogatari 02 => 物语系列 S00E43
-Zoku Owarimonogatari 03 => 物语系列 S00E44
-Zoku Owarimonogatari 04 => 物语系列 S00E45
-Zoku Owarimonogatari 05 => 物语系列 S00E46
-Zoku Owarimonogatari 06 => 物语系列 S00E47
-Owarimonogatari S2 => 物语系列 S00E && S00E <> BD >> EP+34
-# 已有标准 S04Exx：只统一标题，保留原季集号；必须先于裸编号兼容规则执行
-(?i)(?<!Zoku[ ._-])Owarimonogatari[ ._-]+S04E(\d{1,3}) => 物语系列 S04E\1
-Owarimonogatari 01 => 物语系列 S04E01.CD1
-Owarimonogatari 02 => 物语系列 S04E01.CD2
-Owarimonogatari 10 => 物语系列 S04E09
-# 仅兼容标题后直接跟裸集号的旧命名，禁止再次偏移已经标准化的 S04Exx
-(?i)(?<!Zoku[ ._-])Owarimonogatari(?=[ ._-]+\d{2}(?:\D|$)) => 物语系列 S04E && S04E <> BD >> EP-1
-Koyomimonogatari => 物语系列 S00E && S00E <> BD >> EP+21
-Kizumonogatari 01 => 伤物语1：铁血篇
-Kizumonogatari 02 => 伤物语2：热血篇
-Kizumonogatari 03 => 伤物语3：冷血篇
 
 #死神 千年血战篇
 死神 千年血战篇 => 死神 S02
