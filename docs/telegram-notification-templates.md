@@ -65,11 +65,13 @@
 
 ## 自动画质点评
 
-`quality_comment` 会根据真实质量字段自动生成一句简短评价，识别优先级为 **Dolby Vision / DoVi / DV -> HDR / HLG -> 4K / 2160P / UHD**。普通画质为空，建议放在条件块中：
+`quality_comment` 会根据真实质量字段生成一句简短评价，识别优先级为 **Dolby Vision / DoVi / DV -> HDR / HLG -> 4K / 2160P / UHD -> 1080P / Full HD / FHD / 1920x1080**。一条通知只使用最高优先级命中的一档，建议放在条件块中：
 
 `{% if quality_comment %}{{ tg_quote_start }}✨ {{ quality_comment }}{{ tg_quote_end }}{% endif %}`
 
 当前支持该变量的事件：`playback_start`、`playback_stop`、`media_library_add`、`media_library_update`、`media_library_delete`、`library_organize_success`、`library_organize_skip`、`media_auto_share`。
+
+这 8 个事件在模板设计器中各自拥有独立的 Dolby Vision、HDR、4K、1080P 点评文案。系统提供默认值，用户可逐条修改；清空某一档并保存后，该事件命中这一档时不再显示点评。恢复点评默认只影响当前事件，不会覆盖其他事件。
 
 ## 图片策略
 
@@ -291,7 +293,7 @@ Emby 客户端开始播放媒体。所属大类：`playback`（播放通知）�
 | `frame_rate` | 帧率 | 视频帧率 | `23.976fps` |
 | `container` | 封装格式 | MKV、MP4 等媒体封装格式 | `MKV` |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 <a id="playback_stop"></a>
 
@@ -422,7 +424,7 @@ Emby 播放会话停止并报告最终进度。所属大类：`playback`（播�
 | `frame_rate` | 帧率 | 视频帧率 | `23.976fps` |
 | `container` | 封装格式 | MKV、MP4 等媒体封装格式 | `MKV` |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 <a id="media_library_add"></a>
 
@@ -560,7 +562,7 @@ Emby 新增媒体；同剧集短窗口内聚合。所属大类：`media_library`
 | `release_group` | 制作组 | 资源发布组 | `FRDS` |
 | `web_source` | 平台来源 | Netflix、Disney+ 等平台 | `Netflix` |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 #### 聚合
 
@@ -710,7 +712,7 @@ Emby 媒体元数据或文件发生更新；同作品短窗口内聚合。所属
 | `release_group` | 制作组 | 资源发布组 | `FRDS` |
 | `web_source` | 平台来源 | Netflix、Disney+ 等平台 | `Netflix` |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 #### 聚合
 
@@ -859,7 +861,7 @@ Emby 媒体项目从库中删除。所属大类：`media_library`（入库通知
 | `release_group` | 制作组 | 资源发布组 | `FRDS` |
 | `web_source` | 平台来源 | Netflix、Disney+ 等平台 | `Netflix` |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 <a id="emby_user_authenticated"></a>
 
@@ -1528,7 +1530,7 @@ Emby 用户访问策略已更新。所属大类：`emby_security`（Emby 账户�
 | `release_group` | 制作组 | 资源发布组 | `FRDS` |
 | `web_source` | 平台来源 | Netflix、Disney+ 等平台 | `Netflix` |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 <a id="library_organize_skip"></a>
 
@@ -1672,7 +1674,7 @@ Emby 用户访问策略已更新。所属大类：`emby_security`（Emby 账户�
 | `release_group` | 制作组 | 资源发布组 | `FRDS` |
 | `web_source` | 平台来源 | Netflix、Disney+ 等平台 | `Netflix` |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 <a id="library_organize_fail"></a>
 
@@ -2633,7 +2635,7 @@ ED2K 生成、上报或发送任务结果。所属大类：`file_transfer`（文
 | 变量 | 含义 | 使用说明 | 示例值 / 写法 |
 | --- | --- | --- | --- |
 | `quality` | 质量摘要 | 自动拼接分辨率、片源、编码、HDR 等 | `2160P / WEB-DL / H.265 / Dolby Vision` |
-| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K 优先级自动生成的简短画质评价；普通画质时为空 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，适合高素质显示设备。` |
+| `quality_comment` | 画质点评 | 按 Dolby Vision、HDR、4K、1080P 优先级生成；四档文案可在当前模板中独立修改或清空关闭 | `Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。` |
 
 #### 文件操作
 
@@ -3605,7 +3607,7 @@ Clash/Mihomo 每日请求、切换和流量汇总。所属大类：`proxy_health
 
 ### 为什么没有画质点评？
 
-只有上文列出的 8 个事件支持 `quality_comment`，并且需要质量数据能识别到 Dolby Vision、HDR/HLG 或 4K/UHD/2160P。普通画质按设计不显示点评。
+只有上文列出的 8 个事件支持 `quality_comment`，并且需要质量数据能识别到 Dolby Vision、HDR/HLG、4K/UHD/2160P 或 1080P/Full HD/FHD/1920x1080。若对应档位文案已在当前事件模板中清空，该档按设计不显示点评。
 
 ### 为什么导入后没有立即生效？
 
