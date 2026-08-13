@@ -30,6 +30,11 @@
 
 [https://madbrolab.github.io/dian115/](https://madbrolab.github.io/dian115/)
 
+Telegram 通知模板的 39 个独立事件变量、默认模板与富文本用法：
+
+- [仓库 Markdown 手册](docs/telegram-notification-templates.md)
+- [GitHub Pages 在线手册](https://madbrolab.github.io/dian115/notification-templates.html)
+
 Wiki 按真实使用顺序整理：部署、旧 Emby 库迁移、115/CD2/Emby/Madby/FFP 配置、资源发现、订阅、下载、整理、STRM、入库、分享和排障维护。
 
 ## 项目截图
