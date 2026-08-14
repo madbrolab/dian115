@@ -1,18 +1,23 @@
 # Dian115 Telegram 通知模板参考包
 
-这里提供 5 套可以直接导入 Dian115 的 Telegram 通知模板。每套模板都覆盖当前 39 个独立通知事件，保留事件自身的变量契约，不使用“通用模板”拼接不同事件的数据。
+这里提供 10 套可以直接导入 Dian115 的 Telegram 通知模板。每套模板都覆盖当前 39 个独立通知事件，保留事件自身的变量契约，不使用通用业务模板，也不添加事件契约之外的身份字段。
 
-## 五套风格
+## 十套风格
 
-| 文件 | 风格 | 适合场景 |
-| --- | --- | --- |
-| `notify-templates-formal-report.json` | 正式运维报告 | 管理员频道、审计留档、家庭服务器值班 |
-| `notify-templates-cinema-premiere.json` | 影院首映 | 电影/剧集为主的媒体频道，强调观影氛围 |
-| `notify-templates-cyber-terminal.json` | 赛博终端 | 自动化任务、下载、容器和代理监控频道 |
-| `notify-templates-weird-lab.json` | 实验室玩梗 | 想要有点古怪、有趣，但仍需完整信息的频道 |
-| `notify-templates-minimal-editorial.json` | 极简编辑 | 只保留重点字段、追求低噪音和留白的频道 |
+| 文件 | 风格 | 富文本组合 | 适合场景 |
+| --- | --- | --- | --- |
+| `notify-templates-formal-report.json` | 正式运维报告 | 下划线 + 粗体 + 引用 | 管理员频道、审计留档 |
+| `notify-templates-cinema-premiere.json` | 影院首映 | 斜体 + 粗体 + 引用 | 电影/剧集媒体频道 |
+| `notify-templates-cyber-terminal.json` | 赛博终端 | 代码块 + 行内代码 + 粗体 | 自动化任务、技术监控 |
+| `notify-templates-weird-lab.json` | 实验室玩梗 | 剧透 + 引用 + 可折叠引用 | 有趣但不丢信息的频道 |
+| `notify-templates-minimal-editorial.json` | 极简编辑 | 粗体 + 斜体 + 引用 | 低噪音、留白排版 |
+| `notify-templates-noir-casefile.json` | 黑色侦探档案 | 斜体 + 粗体 + 可折叠引用 | 深色主题、悬疑频道 |
+| `notify-templates-retro-arcade.json` | 复古街机 | 粗体 + 行内代码 + 剧透 | 游戏化、任务流频道 |
+| `notify-templates-neon-dashboard.json` | 霓虹仪表盘 | 下划线 + 粗体 + 代码块 + 引用 | 高密度监控频道 |
+| `notify-templates-classical-scroll.json` | 古典札记 | 斜体 + 粗体 + 引用 | 中文文化、收藏频道 |
+| `notify-templates-cozy-lounge.json` | 家庭影院 | 粗体 + 斜体 + 引用 | 家庭媒体库、客厅 Emby |
 
-每套包都包含相同的 39 个 key，因此可以整包导入，也可以在导入预览中只勾选需要的事件。五套包的差别只在标题、排版和文案气质；事件可用变量、富文本安全规则、图片策略保持一致。
+每套包都包含相同的 39 个 key，因此可以整包导入，也可以在导入预览中只勾选需要的事件。风格差异不仅是换 emoji：每套都使用不同的标题层级、富文本块、分隔符和收尾语。模板正文仍保留媒体、质量、路径、状态、账号和任务等真实可用变量。
 
 ## 导入方式
 
@@ -21,7 +26,7 @@
 3. 在预览中检查模板名称、标题和正文，只勾选要导入的通知类型。
 4. 确认导入后，按需继续在设计器中调整文案、变量和富文本格式。
 
-导入包的格式标识为 `dian115-notify-template-package`，版本为 `1`。`customized: true` 表示导入该条完整自定义内容；`image_mode: "auto"` 表示沿用站内图片策略，不把默认图片地址写进可分享的模板文件。
+导入包的格式标识为 `dian115-notify-template-package`，版本为 `1`。每条模板使用 `customized: true` 和 `image_mode: "auto"`，不携带默认图片地址。
 
 ## 图片策略
 
@@ -39,13 +44,14 @@
 {% if season_episode %} · {{ season_episode }}{% endif %}
 ```
 
-常见写法：
+可选字段应把整行放进条件中：
 
 ```text
-{{ title or '未命名资源' }}
 {% if overview %}{{ tg_expandable_quote_start }}{{ overview }}{{ tg_expandable_quote_end }}{% endif %}
 {% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}{% endif %}
 ```
+
+不要在模板中添加当前事件变量列表以外的业务变量；导入器会按事件契约拒绝未知变量。
 
 ### Telegram 富文本变量
 
@@ -60,21 +66,17 @@
 | 引用、可折叠引用 | `tg_quote_start` / `tg_quote_end`、`tg_expandable_quote_start` / `tg_expandable_quote_end` |
 | 换行、空行 | `tg_newline`、`tg_blankline` |
 
+块级变量只能放在正文，不能放进标题；开始/结束变量必须按顺序配对。长路径、简介和错误详情优先使用 `tg_pre_*` 或 `tg_expandable_quote_*`，分享码可使用 `tg_spoiler_*`。
+
 ### 媒体链接
 
-有 TMDB/IMDb 身份的事件提供 `tmdb_link` 和 `imdb_link`。它们已经是“文字超链”，例如直接写 `{{ tmdb_link }}` 会显示为可点击的「TMDB」文字；不要改用 `tmdb_url` 或 `imdb_url`，以免把长地址显示给用户。
+有 TMDB/IMDb 身份的事件提供 `tmdb_link` 和 `imdb_link`。它们已经是文字超链，例如直接写 `{{ tmdb_link }}` 会显示为可点击的「TMDB」文字；不要改用 `tmdb_url` 或 `imdb_url`，以免把长地址显示给用户。剧集链接指向整部剧，而不是季图或集图。
 
 ### 画质点评
 
-支持画质点评的事件（播放开始、播放结束、入库新增/更新/删除、整理完成、整理跳过、媒体自动分享）都附带四档可编辑文案：`dolby_vision`、`hdr`、`4k`、`1080p`。模板正文通过 `{{ quality_comment }}` 显示匹配当前媒体的点评。例如默认文案可以改成更技术化、影评化或幽默的版本。
+支持画质点评的事件（播放开始、播放结束、入库新增/更新/删除、整理完成、整理跳过、媒体自动分享）都附带四档可编辑文案：`dolby_vision`、`hdr`、`4k`、`1080p`。模板正文通过 `{{ quality_comment }}` 显示匹配当前媒体的点评，默认文案可以在设计器中修改或清空。
 
 ## 覆盖的通知事件
 
-播放：`playback_start`、`playback_stop` ；媒体库：`media_library_add`、`media_library_update`、`media_library_delete` ；Emby 账户安全：`emby_user_authenticated`、`emby_user_authentication_failed`、`emby_user_locked_out`、`emby_user_created`、`emby_user_deleted`、`emby_user_password_changed`、`emby_user_policy_updated` ；文件整理：`library_organize_success`、`library_organize_skip`、`library_organize_fail`、`library_quality_scan`、`library_missing_scan`、`strm_generate` ；文件操作：`share_receive`、`offline_download`、`tg_auto_transfer`、`tg_auto_offline`、`tg_video_download`、`account_migration`、`ed2k_task`、`media_auto_share` ；账号状态：`account_cookie_invalid`、`account_switched`、`account_checkin`、`dianying_checkin` ；容器：`container_update_check`、`container_update_result`、`container_update_test`、`dian115_self_update` ；代理：`proxy_health_daily_report`、`proxy_health_test_report` ；订阅：`subscribe_added`、`subscribe_landed`、`subscribe_partial`。
-
-## 自定义建议
-
-- 先复制一套最接近频道气质的包，再只改动标题和正文，保留条件判断，避免空字段留下孤行。
-- 长路径、简介和错误详情优先放进 `tg_pre_*` 或 `tg_expandable_quote_*`，Telegram 会保持可读性，Dian115 仍会按消息上限统一截断，不拆成多条消息。
-- 一条通知只使用该事件设计器显示的变量。导入器会拒绝未知变量、未闭合的富文本标签和未通过图片预览校验的自定义图片。
+播放：`playback_start`、`playback_stop`；媒体库：`media_library_add`、`media_library_update`、`media_library_delete`；Emby 账户安全：`emby_user_authenticated`、`emby_user_authentication_failed`、`emby_user_locked_out`、`emby_user_created`、`emby_user_deleted`、`emby_user_password_changed`、`emby_user_policy_updated`；文件整理：`library_organize_success`、`library_organize_skip`、`library_organize_fail`、`library_quality_scan`、`library_missing_scan`、`strm_generate`；文件操作：`share_receive`、`offline_download`、`tg_auto_transfer`、`tg_auto_offline`、`tg_video_download`、`account_migration`、`ed2k_task`、`media_auto_share`；账号状态：`account_cookie_invalid`、`account_switched`、`account_checkin`、`dianying_checkin`；容器：`container_update_check`、`container_update_result`、`container_update_test`、`dian115_self_update`；代理：`proxy_health_daily_report`、`proxy_health_test_report`；订阅：`subscribe_added`、`subscribe_landed`、`subscribe_partial`。
 
