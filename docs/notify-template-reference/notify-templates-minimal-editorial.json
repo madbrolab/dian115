@@ -1,0 +1,495 @@
+{
+  "format": "dian115-notify-template-package",
+  "version": 1,
+  "exported_at": "2026-08-15T00:00:00+08:00",
+  "templates": [
+    {
+      "key": "playback_start",
+      "name": "开始播放",
+      "parent_type": "playback",
+      "template": {
+        "title": "· ▶️ 正在播放｜{{ show_name or title }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}播放终端{{ tg_bold_end }}\n👤 {{ user_name or '未知用户' }} · {{ client or '未知客户端' }}\n📺 {{ device_name or '未知设备' }}{% if ip %} · {{ ip }}{% endif %}\n🖥️ {{ emby_instance_name or server_name }}\n\n{{ tg_bold_start }}媒体规格{{ tg_bold_end }}\n{% if quality %}🎞️ {{ quality }}\n{% endif %}{% if audio_codec or audio_channels_label %}🔊 {{ audio_codec }}{% if audio_channels_label %} · {{ audio_channels_label }}{% endif %}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ {{ quality_comment }}{{ tg_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "playback_stop",
+      "name": "停止播放",
+      "parent_type": "playback",
+      "template": {
+        "title": "· ⏹️ 播放结束｜{{ show_name or title }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}观看结果{{ tg_bold_end }}\n{% if percentage %}🏁 最终进度 · {{ percentage }}%\n{% endif %}👤 {{ user_name or '未知用户' }} · {{ device_name or '未知设备' }}\n📱 {{ client or '未知客户端' }}\n🖥️ {{ emby_instance_name or server_name }}\n\n{% if quality %}🎞️ {{ quality }}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ {{ quality_comment }}{{ tg_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "media_library_add",
+      "name": "资源入库",
+      "parent_type": "media_library",
+      "template": {
+        "title": "· 📥 新资源入库｜{{ show_name or title }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}媒体概览{{ tg_bold_end }}\n{% if media_type or year %}🎬 {{ media_type }}{% if year %} · {{ year }}{% endif %}{% if rating %} · ⭐ {{ rating }}{% endif %}\n{% endif %}{% if genres %}🏷️ {{ genres }}\n{% endif %}{% if season_episode %}📺 季集 · {{ season_episode }}\n{% endif %}\n{{ tg_bold_start }}入库规格{{ tg_bold_end }}\n{% if file_count or total_size %}📦 {% if file_count %}{{ file_count }} 个文件{% endif %}{% if file_count and total_size %} · {% endif %}{% if total_size %}{{ total_size }}{% endif %}\n{% endif %}{% if quality %}🎞️ {{ quality }}\n{% endif %}{% if web_source or release_group %}🏭 {{ web_source }}{% if web_source and release_group %} · {% endif %}{{ release_group }}\n{% endif %}🗂️ {{ library_name or '媒体库' }} · {{ emby_instance_name or server_name }}\n{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ {{ quality_comment }}{{ tg_quote_end }}\n{% endif %}🕐 {{ time_range or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "media_library_update",
+      "name": "媒体更新",
+      "parent_type": "media_library",
+      "template": {
+        "title": "· 🔄 媒体资料更新｜{{ show_name or title }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}更新内容{{ tg_bold_end }}\n{% if media_type or year %}🎬 {{ media_type }}{% if year %} · {{ year }}{% endif %}{% if rating %} · ⭐ {{ rating }}{% endif %}\n{% endif %}{% if season_episode %}📺 季集 · {{ season_episode }}\n{% endif %}{% if quality %}🎞️ {{ quality }}\n{% endif %}{% if web_source or release_group %}🏭 {{ web_source }}{% if web_source and release_group %} · {% endif %}{{ release_group }}\n{% endif %}\n{{ tg_bold_start }}归属{{ tg_bold_end }}\n🗂️ {{ library_name or '媒体库' }} · {{ emby_instance_name or server_name }}\n{% if item_id %}🆔 Item · {{ tg_code_start }}{{ item_id }}{{ tg_code_end }}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ {{ quality_comment }}{{ tg_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "media_library_delete",
+      "name": "媒体删除",
+      "parent_type": "media_library",
+      "template": {
+        "title": "· 🗑️ 媒体已移除｜{{ show_name or title }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}移除对象{{ tg_bold_end }}\n{% if media_type or year %}🎬 {{ media_type }}{% if year %} · {{ year }}{% endif %}{% if rating %} · ⭐ {{ rating }}{% endif %}\n{% endif %}{% if season_episode %}📺 季集 · {{ season_episode }}\n{% endif %}{% if quality %}🎞️ 原规格 · {{ quality }}\n{% endif %}\n{{ tg_bold_start }}原归属{{ tg_bold_end }}\n🗂️ {{ library_name or '媒体库' }} · {{ emby_instance_name or server_name }}\n{% if item_id %}🆔 Item · {{ tg_code_start }}{{ item_id }}{{ tg_code_end }}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ 已移除资源原为：{{ quality_comment }}{{ tg_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "emby_user_authenticated",
+      "name": "用户登录成功",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "· 🔓 登录成功｜{{ user_name or '未知用户' }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}会话信息{{ tg_bold_end }}\n👤 用户 · {{ user_name or '未知用户' }}\n{% if device_name %}📱 设备 · {{ device_name }}\n{% endif %}🖥️ 实例 · {{ emby_instance_name or server_name }}\n{% if user_id %}🆔 用户 ID · {{ tg_code_start }}{{ user_id }}{{ tg_code_end }}\n{% endif %}{% if description %}{{ tg_quote_start }}{{ description }}{{ tg_quote_end }}\n{% endif %}🕐 {{ occurred_at or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "emby_user_authentication_failed",
+      "name": "用户登录失败",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "· 🔒 登录失败｜{{ user_name or '未知用户' }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}安全告警{{ tg_bold_end }}\n👤 用户 · {{ user_name or '未知用户' }}\n{% if device_name %}📱 设备 · {{ device_name }}\n{% endif %}🖥️ 实例 · {{ emby_instance_name or server_name }}\n{% if severity %}🚨 级别 · {{ severity }}\n{% endif %}{% if user_id %}🆔 用户 ID · {{ tg_code_start }}{{ user_id }}{{ tg_code_end }}\n{% endif %}{% if description %}{{ tg_quote_start }}{{ description }}{{ tg_quote_end }}\n{% endif %}🕐 {{ occurred_at or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "emby_user_locked_out",
+      "name": "用户被锁定",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "· 🚫 用户锁定｜{{ user_name or '未知用户' }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}账户保护{{ tg_bold_end }}\n👤 被锁用户 · {{ user_name or '未知用户' }}\n🖥️ 实例 · {{ emby_instance_name or server_name }}\n{% if severity %}🚨 级别 · {{ severity }}\n{% endif %}{% if user_id %}🆔 用户 ID · {{ tg_code_start }}{{ user_id }}{{ tg_code_end }}\n{% endif %}{% if description %}{{ tg_quote_start }}{{ description }}{{ tg_quote_end }}\n{% endif %}🕐 {{ occurred_at or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "emby_user_created",
+      "name": "用户已创建",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "· 👤 用户创建｜{{ user_name or '未命名用户' }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}新账户{{ tg_bold_end }}\n👤 用户 · {{ user_name or '未命名用户' }}\n{% if device_name %}📱 操作端 · {{ device_name }}\n{% endif %}🖥️ 实例 · {{ emby_instance_name or server_name }}\n{% if user_id %}🆔 用户 ID · {{ tg_code_start }}{{ user_id }}{{ tg_code_end }}\n{% endif %}{% if description %}{{ tg_quote_start }}{{ description }}{{ tg_quote_end }}\n{% endif %}🕐 {{ occurred_at or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "emby_user_deleted",
+      "name": "用户已删除",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "· 👤 用户删除｜{{ user_name or '未知用户' }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}账户变更{{ tg_bold_end }}\n👤 已删除 · {{ user_name or '未知用户' }}\n🖥️ 实例 · {{ emby_instance_name or server_name }}\n{% if severity %}⚠️ 级别 · {{ severity }}\n{% endif %}{% if user_id %}🆔 用户 ID · {{ tg_code_start }}{{ user_id }}{{ tg_code_end }}\n{% endif %}{% if description %}{{ tg_quote_start }}{{ description }}{{ tg_quote_end }}\n{% endif %}🕐 {{ occurred_at or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "emby_user_password_changed",
+      "name": "用户密码更改",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "· 🔑 密码更改｜{{ user_name or '未知用户' }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}凭据变更{{ tg_bold_end }}\n👤 用户 · {{ user_name or '未知用户' }}\n{% if device_name %}📱 操作端 · {{ device_name }}\n{% endif %}🖥️ 实例 · {{ emby_instance_name or server_name }}\n{% if user_id %}🆔 用户 ID · {{ tg_code_start }}{{ user_id }}{{ tg_code_end }}\n{% endif %}{% if description %}{{ tg_quote_start }}{{ description }}{{ tg_quote_end }}\n{% endif %}🕐 {{ occurred_at or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "emby_user_policy_updated",
+      "name": "用户策略更新",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "· 🛡️ 策略更新｜{{ user_name or '未知用户' }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}权限策略{{ tg_bold_end }}\n👤 用户 · {{ user_name or '未知用户' }}\n🖥️ 实例 · {{ emby_instance_name or server_name }}\n{% if severity %}⚠️ 级别 · {{ severity }}\n{% endif %}{% if user_id %}🆔 用户 ID · {{ tg_code_start }}{{ user_id }}{{ tg_code_end }}\n{% endif %}{% if description %}{{ tg_expandable_quote_start }}{{ description }}{{ tg_expandable_quote_end }}\n{% endif %}🕐 {{ occurred_at or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "library_organize_success",
+      "name": "整理完成",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "· ✨ 整理完成｜{{ show_name or title }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}整理结果{{ tg_bold_end }}\n{% if season_episode %}📺 季集 · {{ season_episode }}\n{% endif %}{% if file_count or total_size %}📦 {% if file_count %}{{ file_count }} 个文件{% endif %}{% if file_count and total_size %} · {% endif %}{% if total_size %}{{ total_size }}{% endif %}\n{% endif %}{% if quality %}🎞️ {{ quality }}\n{% endif %}{% if web_source or release_group %}🏭 {{ web_source }}{% if web_source and release_group %} · {% endif %}{{ release_group }}\n{% endif %}{% if is_wash %}♻️ {{ wash_status or '洗版完成' }}{% if wash_reason %} · {{ wash_reason }}{% endif %}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if target_path %}{{ tg_expandable_quote_start }}📁 目标路径\n{{ target_path }}{{ tg_expandable_quote_end }}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ {{ quality_comment }}{{ tg_quote_end }}\n{% endif %}🕐 {{ time_range or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "library_organize_skip",
+      "name": "整理跳过",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "· ⏭️ 整理跳过｜{{ show_name or title }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}跳过判定{{ tg_bold_end }}\n{% if skip_reason %}💡 {{ skip_reason }}{% elif wash_reason %}💡 {{ wash_reason }}{% elif error_message %}💡 {{ error_message }}{% else %}💡 未提供原因{% endif %}\n{% if season_episode %}📺 季集 · {{ season_episode }}\n{% endif %}{% if quality %}🎞️ 待整理规格 · {{ quality }}\n{% endif %}{% if wash_status %}♻️ {{ wash_status }}{% if wash_reason %} · {{ wash_reason }}{% endif %}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if source_path %}{{ tg_expandable_quote_start }}📥 来源路径\n{{ source_path }}{{ tg_expandable_quote_end }}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ 待整理资源画质：{{ quality_comment }}{{ tg_quote_end }}\n{% endif %}🕐 {{ time_range or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "library_organize_fail",
+      "name": "整理失败",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "· 🚨 整理失败{% if failure_count %}｜{{ failure_count }} 项{% elif title %}｜{{ title }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}失败概览{{ tg_bold_end }}\n⚙️ {{ action_text or '整理任务' }}{% if wash_status %} · {{ wash_status }}{% endif %}\n{% if failure_count %}📊 失败项目 · {{ failure_count }}\n{% endif %}{% if detail_msg %}📝 {{ detail_msg }}\n{% endif %}{% if failure_details %}{{ tg_expandable_quote_start }}{{ failure_details }}{{ tg_expandable_quote_end }}\n{% elif error_message %}{{ tg_expandable_quote_start }}{{ error_message }}{{ tg_expandable_quote_end }}\n{% else %}{{ tg_expandable_quote_start }}{{ message_text }}{{ tg_expandable_quote_end }}\n{% endif %}{% if source_path %}📥 来源 · {{ tg_code_start }}{{ source_path }}{{ tg_code_end }}\n{% endif %}{% if target_path %}📁 目标 · {{ tg_code_start }}{{ target_path }}{{ tg_code_end }}\n{% endif %}🕐 {{ time_range or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "library_quality_scan",
+      "name": "质量扫描",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "· 🎞️ 质量扫描｜{{ status_text }} · {{ problem_count }} 项异常",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}扫描统计{{ tg_bold_end }}\n📚 检查总数 · {{ total_count }}\n✅ 正常项目 · {{ normal_count }}\n{% if problem_count %}⚠️ 问题项目 · {{ problem_count }}{% else %}🎉 未发现质量问题{% endif %}\n{% if task_type %}🔍 扫描类型 · {{ task_type }}\n{% endif %}{% if elapsed %}⏱️ 耗时 · {{ elapsed }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "library_missing_scan",
+      "name": "缺集扫描",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "· 🧩 缺集扫描｜{{ status_text }} · {{ problem_count }} 部待补",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}完整度统计{{ tg_bold_end }}\n📚 检查剧集 · {{ total_count }}\n✅ 完整剧集 · {{ normal_count }}\n{% if problem_count %}🧩 待补剧集 · {{ problem_count }}{% else %}🎉 所有剧集均完整{% endif %}\n{% if result_details %}{{ tg_expandable_quote_start }}{{ result_details }}{{ tg_expandable_quote_end }}\n{% endif %}{% if elapsed %}⏱️ 耗时 · {{ elapsed }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "strm_generate",
+      "name": "STRM 生成",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "· 📺 STRM 生成完成{% if file_count %}｜{{ file_count }} 个{% endif %}{% if show_name %} · {{ show_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}生成概览{{ tg_bold_end }}\n{% if show_name %}🎬 作品 · {{ show_name }}\n{% endif %}{% if season_episode %}📺 季集 · {{ season_episode }}\n{% endif %}📊 STRM 数量 · {{ file_count }}\n{% if file_name %}📄 示例文件 · {{ file_name }}\n{% endif %}{% if strm_tree or strm_path %}{{ tg_expandable_quote_start }}📁 完整路径\n{% if strm_tree %}{{ strm_tree }}{% else %}{{ strm_path }}{% endif %}{{ tg_expandable_quote_end }}\n{% endif %}🕐 {{ time_range or now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "share_receive",
+      "name": "分享转存",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· 📥 分享转存{{ status_text }}{% if file_name %}｜{{ file_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}转存统计{{ tg_bold_end }}\n✅ 成功 · {{ success_count }}　❌ 失败 · {{ failed_count }}\n{% if transfer_source %}📡 来源 · {{ transfer_source }}\n{% endif %}{% if file_name %}📄 文件 · {{ file_name }}\n{% endif %}{% if target_path %}{{ tg_quote_start }}📁 {{ target_path }}{{ tg_quote_end }}\n{% endif %}{% if share_code %}🔐 分享码 · {{ tg_spoiler_start }}{{ share_code }}{{ tg_spoiler_end }}\n{% endif %}{% if error_message %}{{ tg_expandable_quote_start }}⚠️ {{ error_message }}{{ tg_expandable_quote_end }}\n{% endif %}{% if elapsed %}⏱️ {{ elapsed }} · {% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "offline_download",
+      "name": "离线下载",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· ☁️ 离线下载{{ status_text }}{% if url_count %}｜{{ url_count }} 个链接{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}离线统计{{ tg_bold_end }}\n🔗 识别链接 · {{ url_count }}\n✅ 成功 · {{ success_count }}　❌ 失败 · {{ failed_count }}\n{% if transfer_source %}📡 来源 · {{ transfer_source }}\n{% endif %}{% if target_path %}{{ tg_quote_start }}📁 {{ target_path }}{{ tg_quote_end }}\n{% endif %}{% if error_message %}{{ tg_expandable_quote_start }}⚠️ {{ error_message }}{{ tg_expandable_quote_end }}\n{% endif %}{% if elapsed %}⏱️ {{ elapsed }} · {% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "tg_auto_transfer",
+      "name": "TG 自动转存",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· 📲 TG 自动转存{{ status_text }}{% if file_name %}｜{{ file_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}频道任务{{ tg_bold_end }}\n{% if source_name %}📣 来源频道 · {{ source_name }}\n{% endif %}{% if file_name %}📄 资源 · {{ file_name }}\n{% endif %}✅ 成功 · {{ success_count }}　❌ 失败 · {{ failed_count }}\n{% if target_path %}{{ tg_quote_start }}📁 {{ target_path }}{{ tg_quote_end }}\n{% endif %}{% if error_message %}{{ tg_expandable_quote_start }}⚠️ {{ error_message }}{{ tg_expandable_quote_end }}\n{% endif %}{% if elapsed %}⏱️ {{ elapsed }} · {% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "tg_auto_offline",
+      "name": "TG 自动离线",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· 🧲 TG 自动离线{{ status_text }}{% if source_name %}｜{{ source_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}频道离线任务{{ tg_bold_end }}\n{% if source_name %}📣 来源频道 · {{ source_name }}\n{% endif %}🔗 识别链接 · {{ url_count }}\n✅ 成功 · {{ success_count }}　❌ 失败 · {{ failed_count }}\n{% if target_path %}{{ tg_quote_start }}📁 {{ target_path }}{{ tg_quote_end }}\n{% endif %}{% if error_message %}{{ tg_expandable_quote_start }}⚠️ {{ error_message }}{{ tg_expandable_quote_end }}\n{% endif %}{% if elapsed %}⏱️ {{ elapsed }} · {% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "tg_video_download",
+      "name": "TG 视频下载",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· 🎬 TG 视频下载{{ status_text }}{% if file_name %}｜{{ file_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}视频任务{{ tg_bold_end }}\n{% if source_name %}📣 来源频道 · {{ source_name }}\n{% endif %}{% if file_name %}🎬 文件 · {{ file_name }}\n{% endif %}{% if total_size %}💾 大小 · {{ total_size }}\n{% endif %}✅ 成功 · {{ success_count }}　❌ 失败 · {{ failed_count }}\n{% if target_path %}{{ tg_expandable_quote_start }}📁 保存位置\n{{ target_path }}{{ tg_expandable_quote_end }}\n{% endif %}{% if error_message %}{{ tg_expandable_quote_start }}⚠️ {{ error_message }}{{ tg_expandable_quote_end }}\n{% endif %}{% if elapsed %}⏱️ {{ elapsed }} · {% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "account_migration",
+      "name": "多号云迁移",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· 🔁 多号云迁移{{ status_text }}{% if file_name %}｜{{ file_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}迁移统计{{ tg_bold_end }}\n{% if scanned_count %}🔎 扫描 · {{ scanned_count }} 项\n{% endif %}✅ 成功 · {{ success_count }}　❌ 失败 · {{ failed_count }}{% if skipped_count %}　⏭️ 跳过 · {{ skipped_count }}{% endif %}\n{% if total_size %}⚡ 秒传数据 · {{ total_size }}\n{% endif %}{% if transfer_source %}📡 任务来源 · {{ transfer_source }}\n{% endif %}{% if target_path %}{{ tg_quote_start }}🎯 {{ target_path }}{{ tg_quote_end }}\n{% endif %}{% if error_message %}{{ tg_expandable_quote_start }}⚠️ {{ error_message }}{{ tg_expandable_quote_end }}\n{% endif %}{% if elapsed %}⏱️ {{ elapsed }} · {% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "ed2k_task",
+      "name": "ED2K 任务",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· 🔗 ED2K 任务{{ status_text }}{% if title %}｜{{ title }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}链接任务{{ tg_bold_end }}\n{% if media_type %}🎬 类型 · {{ media_type }}\n{% endif %}{% if file_count or total_size %}📦 {% if file_count %}{{ file_count }} 个文件{% endif %}{% if file_count and total_size %} · {% endif %}{% if total_size %}{{ total_size }}{% endif %}\n{% endif %}✅ 成功 · {{ success_count }}　❌ 失败 · {{ failed_count }}\n{% if transfer_source %}📡 来源 · {{ transfer_source }}\n{% endif %}{% if details %}{{ tg_quote_start }}{{ details }}{{ tg_quote_end }}\n{% endif %}{% if error_message %}{{ tg_expandable_quote_start }}⚠️ {{ error_message }}{{ tg_expandable_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "media_auto_share",
+      "name": "媒体自动分享",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "· 🚀 媒体自动分享{{ status_text }}｜{{ title }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}分享资源{{ tg_bold_end }}\n{% if media_type or year %}🎬 {{ media_type }}{% if year %} · {{ year }}{% endif %}\n{% endif %}{% if file_count or total_size %}📦 {% if file_count %}{{ file_count }} 个文件{% endif %}{% if file_count and total_size %} · {% endif %}{% if total_size %}{{ total_size }}{% endif %}\n{% endif %}{% if quality %}🎞️ {{ quality }}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if target_path %}{{ tg_quote_start }}📁 {{ target_path }}{{ tg_quote_end }}\n{% endif %}{% if share_code %}🔐 分享码 · {{ tg_spoiler_start }}{{ share_code }}{{ tg_spoiler_end }}\n{% endif %}{% if quality_comment %}{{ tg_quote_start }}✨ {{ quality_comment }}{{ tg_quote_end }}\n{% endif %}{% if error_message %}⚠️ {{ error_message }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 动态画面：逐场景优化明暗与色彩，明暗过渡更细腻。",
+          "hdr": "HDR 高动态画面：拓展高光与暗部层次，让光影和色彩更有张力。",
+          "4k": "4K 超高清画面：细节密度更高，在大屏观看时更显清晰从容。",
+          "1080p": "1080P 全高清画面：清晰度与传输体积更均衡，适合多数观看设备。"
+        }
+      }
+    },
+    {
+      "key": "account_cookie_invalid",
+      "name": "Cookie 失效",
+      "parent_type": "account_status",
+      "template": {
+        "title": "· 🔑 Cookie 失效{% if account_name %}｜{{ account_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}账号异常{{ tg_bold_end }}\n👤 账号 · {{ account_name or '未知账号' }}\n🚨 状态 · {{ status_text or '失效' }}\n{% if status_message %}{{ tg_quote_start }}{{ status_message }}{{ tg_quote_end }}\n{% elif error_message %}{{ tg_quote_start }}{{ error_message }}{{ tg_quote_end }}\n{% endif %}{% if details %}🛠️ 建议 · {{ details }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "account_switched",
+      "name": "账号切换",
+      "parent_type": "account_status",
+      "template": {
+        "title": "· 🔄 账号切换{% if account_name %}｜{{ account_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}切换详情{{ tg_bold_end }}\n👤 当前账号 · {{ account_name or '未知账号' }}\n{% if operation_type %}⚙️ 切换方式 · {{ operation_type }}\n{% endif %}{% if status_message %}{{ tg_quote_start }}{{ status_message }}{{ tg_quote_end }}\n{% endif %}{% if details %}📝 {{ details }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "account_checkin",
+      "name": "115 签到",
+      "parent_type": "account_status",
+      "template": {
+        "title": "· {{ status_emoji or '✅' }} 115 签到{% if account_name %}｜{{ account_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}签到收获{{ tg_bold_end }}\n👤 账号 · {{ account_name or '未知账号' }}\n{% if points %}🎁 本次积分 · {{ points }}\n{% endif %}{% if total_points %}🏆 当前总积分 · {{ total_points }}\n{% endif %}{% if checkin_count or checkin_points %}📊 本机累计{% if checkin_count %} · {{ checkin_count }} 次{% endif %}{% if checkin_points %} · {{ checkin_points }} 积分{% endif %}\n{% endif %}{% if status_message %}{{ tg_quote_start }}{{ status_message }}{{ tg_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "dianying_checkin",
+      "name": "癫影签到",
+      "parent_type": "account_status",
+      "template": {
+        "title": "· 🎞️ 癫影签到{{ status_text }}{% if account_name %}｜{{ account_name }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}今日收获{{ tg_bold_end }}\n👤 账号 · {{ account_name or '未知账号' }}\n{% if points %}🎁 本次积分 · {{ points }}\n{% endif %}{% if total_points %}🏆 当前总积分 · {{ total_points }}\n{% endif %}{% if checkin_count %}📅 累计签到 · {{ checkin_count }} 次\n{% endif %}{% if details %}🎲 签到类型 · {{ details }}\n{% endif %}{% if status_message %}{{ tg_quote_start }}{{ status_message }}{{ tg_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "container_update_check",
+      "name": "容器更新检查",
+      "parent_type": "container_update",
+      "template": {
+        "title": "· 🔎 容器更新检查｜可更新 {{ available_count }} 个",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}版本巡检{{ tg_bold_end }}\n📦 容器总数 · {{ container_count }}\n🆕 可更新 · {{ available_count }}　✅ 已最新 · {{ current_count }}\n{% if check_error_count %}⚠️ 检查失败 · {{ check_error_count }}\n{% endif %}{% if details %}{{ tg_expandable_quote_start }}{{ details }}{{ tg_expandable_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "container_update_result",
+      "name": "容器更新结果",
+      "parent_type": "container_update",
+      "template": {
+        "title": "· 🐳 容器更新结果｜成功 {{ success_count }} · 失败 {{ failed_count }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}执行统计{{ tg_bold_end }}\n📦 处理容器 · {{ container_count }}\n✅ 更新成功 · {{ success_count }}　❌ 更新失败 · {{ failed_count }}\n{% if trigger %}⚙️ 触发方式 · {{ trigger }}\n{% endif %}{% if details %}{{ tg_expandable_quote_start }}{{ details }}{{ tg_expandable_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "container_update_test",
+      "name": "容器通知测试",
+      "parent_type": "container_update",
+      "template": {
+        "title": "· 🧪 容器通知测试",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}通道诊断{{ tg_bold_end }}\n✅ Telegram 连接正常\n📨 消息渲染正常\n🖼️ 默认图片策略正常\n{{ tg_quote_start }}{{ test_message or '容器更新消息推送通道工作正常' }}{{ tg_quote_end }}\n🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "dian115_self_update",
+      "name": "Dian115 自更新",
+      "parent_type": "container_update",
+      "template": {
+        "title": "· {% if update_success %}✅ Dian115 更新成功{% else %}❌ Dian115 更新失败{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}构建信息{{ tg_bold_end }}\n{% if current_version %}📦 当前版本 · {{ current_version }}\n{% endif %}{% if build_channel %}🏷️ 发布通道 · {{ build_channel }}\n{% endif %}{% if build_commit %}🔖 构建提交 · {{ tg_code_start }}{{ build_commit }}{{ tg_code_end }}\n{% endif %}{% if update_success %}{{ tg_quote_start }}✅ {{ details or '更新已经完成，服务已切换至新版本。' }}{{ tg_quote_end }}{% elif error_message %}{{ tg_expandable_quote_start }}❌ {{ error_message }}{{ tg_expandable_quote_end }}{% endif %}\n🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "proxy_health_daily_report",
+      "name": "Clash 监控日报",
+      "parent_type": "proxy_health",
+      "template": {
+        "title": "· 🌐 Clash 网络日报｜{{ day }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}网络概览{{ tg_bold_end }}\n📡 请求总数 · {{ request_count }}\n✅ 成功率 · {{ success_rate }}　❌ 失败 · {{ failure_count }}\n🔀 节点切换 · {{ switch_count }} 次\n　自动 {{ auto_switch_count }} · 手动 {{ manual_switch_count }}\n📶 上传 {{ upload_bytes }} B · 下载 {{ download_bytes }} B\n🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "proxy_health_test_report",
+      "name": "Clash 测试报告",
+      "parent_type": "proxy_health",
+      "template": {
+        "title": "· 🧪 Clash 测试报告｜{{ day }}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}链路诊断{{ tg_bold_end }}\n✅ 通知通道可用\n📡 样本请求 · {{ request_count }}\n📈 成功率 · {{ success_rate }}　❌ 失败 · {{ failure_count }}\n🔀 自动切换 {{ auto_switch_count }} · 手动切换 {{ manual_switch_count }}\n📶 上传 {{ upload_bytes }} B · 下载 {{ download_bytes }} B\n🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "subscribe_added",
+      "name": "添加订阅",
+      "parent_type": "subscribe",
+      "template": {
+        "title": "· 📌 新增订阅｜{{ title_year }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}订阅目标{{ tg_bold_end }}\n🎬 {{ media_type }}{% if year %} · {{ year }}{% endif %}{% if rating %} · ⭐ {{ rating }}{% endif %}\n{% if season_episode %}📺 范围 · {{ season_episode }}\n{% endif %}{% if needed_episodes %}🎯 待补 · {{ needed_episodes }}\n{% endif %}{% if genres %}🏷️ {{ genres }}\n{% endif %}{% if channel %}📡 匹配渠道 · {{ channel }}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{% if overview %}{{ tg_expandable_quote_start }}{{ overview }}{{ tg_expandable_quote_end }}\n{% endif %}🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "subscribe_landed",
+      "name": "订阅完成",
+      "parent_type": "subscribe",
+      "template": {
+        "title": "· 🎉 订阅完整落地｜{{ title_year }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}订阅落地{{ tg_bold_end }}\n🎬 {{ media_type }}{% if year %} · {{ year }}{% endif %}{% if rating %} · ⭐ {{ rating }}{% endif %}\n{% if season_episode %}📺 完成范围 · {{ season_episode }}\n{% endif %}{% if landed_via %}📡 入库来源 · {{ landed_via }}\n{% endif %}{% if landed_tag %}🎞️ 命中规格 · {{ landed_tag }}\n{% endif %}{% if genres %}🏷️ {{ genres }}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{{ tg_quote_start }}🎉 订阅需求已经完整落地。{{ tg_quote_end }}\n🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    },
+    {
+      "key": "subscribe_partial",
+      "name": "订阅部分完成",
+      "parent_type": "subscribe",
+      "template": {
+        "title": "· 📈 订阅进度更新｜{{ title_year }}{% if season_episode %} · {{ season_episode }}{% endif %}",
+        "text": "{{ tg_bold_start }}Dian115 / brief{{ tg_bold_end }}\n{{ tg_bold_start }}订阅进展{{ tg_bold_end }}\n🎬 {{ media_type }}{% if year %} · {{ year }}{% endif %}{% if rating %} · ⭐ {{ rating }}{% endif %}\n{% if season_episode %}📺 订阅范围 · {{ season_episode }}\n{% endif %}{% if covered_episodes %}✅ 已覆盖 · {{ covered_episodes }}\n{% endif %}{% if needed_episodes %}🎯 仍待补 · {{ needed_episodes }}\n{% endif %}{% if landed_via %}📡 本次来源 · {{ landed_via }}{% if landed_tag %} · {{ landed_tag }}{% endif %}\n{% endif %}{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}\n{% endif %}{{ tg_quote_start }}⏳ 已取得部分资源，订阅将继续追踪剩余内容。{{ tg_quote_end }}\n🕐 {{ now }}\n— end of brief",
+        "customized": true,
+        "image_mode": "auto"
+      }
+    }
+  ],
+  "package_name": "minimal-editorial",
+  "package_description": "极简编辑排版风格，保留关键字段并减少视觉噪音。"
+}
+
