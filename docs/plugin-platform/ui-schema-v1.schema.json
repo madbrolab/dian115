@@ -1,0 +1,692 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dian115.example/schemas/plugin-ui-v1.json",
+  "title": "DIAN115 Declarative Plugin UI v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "navigation",
+    "views"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "navigation": {
+      "$ref": "#/$defs/navigation"
+    },
+    "views": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": {
+        "$ref": "#/$defs/view"
+      }
+    }
+  },
+  "$defs": {
+    "navigation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 48,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "badge_source": {
+          "$ref": "#/$defs/source"
+        }
+      }
+    },
+    "view": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "sections"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "items": {
+            "$ref": "#/$defs/section"
+          }
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        }
+      }
+    },
+    "section": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/statusSection"
+        },
+        {
+          "$ref": "#/$defs/formSection"
+        },
+        {
+          "$ref": "#/$defs/tableSection"
+        },
+        {
+          "$ref": "#/$defs/logSection"
+        },
+        {
+          "$ref": "#/$defs/progressSection"
+        },
+        {
+          "$ref": "#/$defs/actionsSection"
+        }
+      ]
+    },
+    "sectionBaseProperties": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "statusSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "source",
+        "fields"
+      ],
+      "properties": {
+        "type": {
+          "const": "status"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 24,
+          "items": {
+            "$ref": "#/$defs/displayField"
+          }
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "formSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "id",
+        "submit_action",
+        "fields"
+      ],
+      "properties": {
+        "type": {
+          "const": "form"
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "submit_action": {
+          "$ref": "#/$defs/id"
+        },
+        "submit_label": {
+          "$ref": "#/$defs/label"
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 40,
+          "items": {
+            "$ref": "#/$defs/formField"
+          }
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "tableSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "source",
+        "columns"
+      ],
+      "properties": {
+        "type": {
+          "const": "table"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "row_key": {
+          "$ref": "#/$defs/id"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "$ref": "#/$defs/displayField"
+          }
+        },
+        "row_actions": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/action"
+          }
+        },
+        "page_size": {
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 200,
+          "default": 50
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "logSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "source"
+      ],
+      "properties": {
+        "type": {
+          "const": "log"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "max_rows": {
+          "type": "integer",
+          "minimum": 10,
+          "maximum": 1000,
+          "default": 200
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "progressSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "source"
+      ],
+      "properties": {
+        "type": {
+          "const": "progress"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "cancel_action": {
+          "$ref": "#/$defs/id"
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "actionsSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "actions"
+      ],
+      "properties": {
+        "type": {
+          "const": "actions"
+        },
+        "title": {
+          "$ref": "#/$defs/label"
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/action"
+          }
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "displayField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "label"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/source"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "text",
+            "number",
+            "boolean",
+            "datetime",
+            "bytes",
+            "duration",
+            "status",
+            "percent"
+          ],
+          "default": "text"
+        }
+      }
+    },
+    "formField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "label",
+        "control"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "control": {
+          "type": "string",
+          "enum": [
+            "text",
+            "textarea",
+            "number",
+            "switch",
+            "select",
+            "multiselect",
+            "secret-ref",
+            "file-picker",
+            "directory-picker"
+          ]
+        },
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "min_length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "max_length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 200,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/option"
+          }
+        },
+        "root_filter": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+          }
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "control": { "enum": ["text", "textarea"] } }
+          },
+          "then": {
+            "properties": {
+              "min": false,
+              "max": false,
+              "step": false,
+              "options": false,
+              "root_filter": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "control": { "const": "number" } }
+          },
+          "then": {
+            "properties": {
+              "min_length": false,
+              "max_length": false,
+              "options": false,
+              "root_filter": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "control": { "enum": ["switch", "secret-ref"] } }
+          },
+          "then": {
+            "properties": {
+              "min": false,
+              "max": false,
+              "step": false,
+              "min_length": false,
+              "max_length": false,
+              "options": false,
+              "root_filter": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "control": { "enum": ["select", "multiselect"] } }
+          },
+          "then": {
+            "required": ["options"],
+            "properties": {
+              "options": true,
+              "min": false,
+              "max": false,
+              "step": false,
+              "min_length": false,
+              "max_length": false,
+              "root_filter": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "control": { "enum": ["file-picker", "directory-picker"] } }
+          },
+          "then": {
+            "properties": {
+              "min": false,
+              "max": false,
+              "step": false,
+              "min_length": false,
+              "max_length": false,
+              "options": false
+            }
+          }
+        }
+      ]
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "value"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "value": {
+          "oneOf": [
+            {
+              "type": "string",
+              "maxLength": 200
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "label": {
+          "$ref": "#/$defs/label"
+        },
+        "icon": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 48,
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "style": {
+          "type": "string",
+          "enum": [
+            "primary",
+            "secondary",
+            "danger"
+          ],
+          "default": "secondary"
+        },
+        "confirm": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "title",
+            "message"
+          ],
+          "properties": {
+            "title": {
+              "$ref": "#/$defs/label"
+            },
+            "message": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            }
+          }
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "operator",
+        "value"
+      ],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "operator": {
+          "type": "string",
+          "enum": [
+            "eq",
+            "neq",
+            "in",
+            "not_in",
+            "truthy",
+            "falsy"
+          ]
+        },
+        "value": {}
+      }
+    },
+    "capabilityList": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "network.http",
+          "network.proxy",
+          "files.local.read",
+          "files.local.write",
+          "files.cloud.read",
+          "files.cloud.write",
+          "transfer.115.read",
+          "transfer.115.create",
+          "transfer.115.cancel",
+          "subscriptions.read",
+          "subscriptions.create",
+          "subscriptions.update",
+          "subscriptions.cancel",
+          "events.subscribe",
+          "scheduler.register",
+          "storage.kv",
+          "secrets.use"
+        ]
+      }
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$"
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    }
+  }
+}

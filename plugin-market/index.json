@@ -1,0 +1,10 @@
+{
+  "$schema": "./index.schema.json",
+  "schema_version": 1,
+  "repository": {
+    "id": "madbrolab.dian115",
+    "name": "DIAN115 官方市场",
+    "homepage": "https://github.com/madbrolab/dian115"
+  },
+  "plugins": []
+}

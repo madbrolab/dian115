@@ -1,0 +1,132 @@
+{
+  "$schema": "https://dian115.example/schemas/plugin-ui-v1.json",
+  "schema_version": 1,
+  "navigation": {
+    "title": "Remote Auto Transfer",
+    "icon": "cloud-download",
+    "badge_source": "state.pending_count"
+  },
+  "views": [
+    {
+      "id": "main",
+      "title": "运行状态",
+      "sections": [
+        {
+          "type": "status",
+          "title": "概览",
+          "source": "state.runtime",
+          "fields": [
+            {
+              "key": "healthy",
+              "label": "服务状态",
+              "format": "boolean"
+            },
+            {
+              "key": "processed_today",
+              "label": "今日处理",
+              "format": "number"
+            },
+            {
+              "key": "last_poll_at",
+              "label": "最近检查",
+              "format": "datetime"
+            }
+          ]
+        },
+        {
+          "type": "form",
+          "id": "settings",
+          "title": "规则设置",
+          "source": "state.settings",
+          "submit_action": "save_settings",
+          "submit_label": "保存",
+          "fields": [
+            {
+              "key": "enabled",
+              "label": "启用自动处理",
+              "control": "switch"
+            },
+            {
+              "key": "interval_minutes",
+              "label": "检查周期",
+              "control": "number",
+              "min": 5,
+              "max": 1440,
+              "step": 5
+            },
+            {
+              "key": "rules_api_credential",
+              "label": "规则服务凭据",
+              "control": "secret-ref",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": "progress",
+          "title": "当前任务",
+          "source": "state.active_task",
+          "cancel_action": "cancel_active_task",
+          "requires_capabilities": [
+            "transfer.115.cancel"
+          ],
+          "visible_when": {
+            "source": "state.active_task.running",
+            "operator": "truthy",
+            "value": true
+          }
+        },
+        {
+          "type": "actions",
+          "actions": [
+            {
+              "id": "test_connection",
+              "label": "测试连接",
+              "icon": "plug",
+              "style": "secondary",
+              "requires_capabilities": [
+                "network.http"
+              ]
+            },
+            {
+              "id": "run_now",
+              "label": "立即检查",
+              "icon": "refresh-cw",
+              "style": "primary"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "最近任务",
+          "source": "state.recent_transfers",
+          "row_key": "job_ref",
+          "page_size": 20,
+          "columns": [
+            {
+              "key": "created_at",
+              "label": "创建时间",
+              "format": "datetime"
+            },
+            {
+              "key": "label",
+              "label": "规则",
+              "format": "text"
+            },
+            {
+              "key": "status",
+              "label": "状态",
+              "format": "status"
+            }
+          ]
+        },
+        {
+          "type": "log",
+          "title": "插件日志",
+          "source": "state.logs",
+          "max_rows": 200
+        }
+      ]
+    }
+  ]
+}

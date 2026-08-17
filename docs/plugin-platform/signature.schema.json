@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dian115.example/schemas/plugin-signature-v1.json",
+  "title": "DIAN115 Plugin Signature v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "algorithm",
+    "canonicalization",
+    "domain",
+    "key_id",
+    "public_key",
+    "signature"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "algorithm": {
+      "const": "Ed25519"
+    },
+    "canonicalization": {
+      "const": "RFC8785-JCS"
+    },
+    "domain": {
+      "const": "DIAN115-PLUGIN-PACKAGE-V1"
+    },
+    "key_id": {
+      "type": "string",
+      "pattern": "^ed25519:[A-Za-z0-9_-]{43}$"
+    },
+    "public_key": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{43}$",
+      "description": "Raw 32-byte Ed25519 public key encoded as unpadded base64url."
+    },
+    "signature": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{86}$",
+      "description": "Raw 64-byte Ed25519 signature encoded as unpadded base64url."
+    }
+  }
+}

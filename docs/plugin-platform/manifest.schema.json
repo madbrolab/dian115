@@ -1,0 +1,458 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dian115.example/schemas/plugin-manifest-v1.json",
+  "title": "DIAN115 Plugin Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "version",
+    "description",
+    "default_locale",
+    "publisher",
+    "compatibility",
+    "runtime",
+    "permissions"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)*$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "default_locale": {
+      "type": "string",
+      "description": "Language of package-authored manifest and UI text in v1.",
+      "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"
+    },
+    "publisher": {
+      "$ref": "#/$defs/publisher"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "runtime": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/wasmRuntime"
+        },
+        {
+          "$ref": "#/$defs/remoteRuntime"
+        }
+      ]
+    },
+    "permissions": {
+      "$ref": "#/$defs/permissions"
+    },
+    "ui": {
+      "$ref": "#/$defs/ui"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 128,
+        "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+      }
+    },
+    "jobs": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/job"
+      }
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 500
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "maxLength": 500
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 12,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 24
+      }
+    }
+  },
+  "$defs": {
+    "publisher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "key_id"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 160,
+          "pattern": "^ed25519:[A-Za-z0-9_-]+$"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "maxLength": 500
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dian115",
+        "plugin_api"
+      ],
+      "properties": {
+        "dian115": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "plugin_api": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        }
+      }
+    },
+    "wasmRuntime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "entry",
+        "abi"
+      ],
+      "properties": {
+        "kind": {
+          "const": "wasm"
+        },
+        "entry": {
+          "$ref": "#/$defs/packagePath"
+        },
+        "abi": {
+          "const": "dian115:plugin@1"
+        },
+        "memory_mb": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 64,
+          "default": 32
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 30000,
+          "default": 10000
+        },
+        "background_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 300000,
+          "default": 300000
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2,
+          "default": 1
+        }
+      }
+    },
+    "remoteRuntime": {
+      "type": "object",
+      "description": "Callback paths must be pairwise distinct; the installer enforces this semantic rule.",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "protocol",
+        "health_path",
+        "event_path",
+        "action_path",
+        "state_path",
+        "job_path"
+      ],
+      "properties": {
+        "kind": {
+          "const": "remote"
+        },
+        "protocol": {
+          "const": "dian115-http-plugin@1"
+        },
+        "health_path": {
+          "$ref": "#/$defs/callbackPath"
+        },
+        "event_path": {
+          "$ref": "#/$defs/callbackPath"
+        },
+        "action_path": {
+          "$ref": "#/$defs/callbackPath"
+        },
+        "state_path": {
+          "$ref": "#/$defs/callbackPath"
+        },
+        "job_path": {
+          "$ref": "#/$defs/callbackPath"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 30000,
+          "default": 10000
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "description": "All declared capability categories are shown together and accepted or rejected as one installation consent. Per-host, per-root, quota and per-operation grants are intentionally not part of manifest v1.",
+      "additionalProperties": false,
+      "required": [
+        "capabilities"
+      ],
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/capabilityRequest"
+          }
+        },
+        "account_access": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "main",
+              "backup_pool",
+              "backup_select"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["capability"],
+                  "properties": {
+                    "capability": {
+                      "const": "accounts.115.use"
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["capabilities"]
+          },
+          "then": {
+            "required": ["account_access"]
+          },
+          "else": {
+            "not": {
+              "required": ["account_access"]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["capability"],
+                  "properties": {
+                    "capability": {
+                      "enum": [
+                        "files.cloud.read",
+                        "files.cloud.write",
+                        "transfer.115.read",
+                        "transfer.115.create",
+                        "transfer.115.cancel"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["capabilities"]
+          },
+          "then": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["capability"],
+                  "properties": {
+                    "capability": {
+                      "const": "accounts.115.use"
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["capabilities", "account_access"]
+          }
+        }
+      ]
+    },
+    "capabilityRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability",
+        "reason"
+      ],
+      "properties": {
+        "capability": {
+          "type": "string",
+          "enum": [
+            "network.http",
+            "network.proxy",
+            "files.local.read",
+            "files.local.write",
+            "files.cloud.read",
+            "files.cloud.write",
+            "transfer.115.read",
+            "transfer.115.create",
+            "transfer.115.cancel",
+            "accounts.115.use",
+            "subscriptions.read",
+            "subscriptions.create",
+            "subscriptions.update",
+            "subscriptions.cancel",
+            "events.subscribe",
+            "scheduler.register",
+            "storage.kv",
+            "secrets.use"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema"
+      ],
+      "properties": {
+        "schema": {
+          "$ref": "#/$defs/packagePath"
+        },
+        "icon": {
+          "$ref": "#/$defs/packagePath"
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "handler"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+        },
+        "handler": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_.-]+$"
+        },
+        "default_schedule": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100,
+          "pattern": "^(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?)(?:,(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?))* (?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?))* (?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?)(?:,(?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?))* (?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?))* (?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?)(?:,(?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?))*$",
+          "description": "DIAN115 cron v1: five numeric fields (minute hour day-of-month month day-of-week), with wildcard, list, ascending range, and step syntax."
+        },
+        "allow_overlap": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "packagePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)[A-Za-z0-9](?:[A-Za-z0-9._/-]*[A-Za-z0-9._-])?$"
+    },
+    "callbackPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)[A-Za-z0-9](?:[A-Za-z0-9._/-]*[A-Za-z0-9._-])?$"
+    }
+  }
+}

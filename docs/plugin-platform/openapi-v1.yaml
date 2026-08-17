@@ -1,0 +1,3218 @@
+openapi: 3.1.0
+info:
+  title: DIAN115 Plugin Platform API
+  version: 1.0.0-design
+  license:
+    name: Terms to be defined before public SDK release
+    identifier: LicenseRef-DIAN115
+  description: |
+    Target Host API contract for user-installed plugins, plus the implemented
+    plugin-center management API. Host routes are isolated from administrator
+    routes and accept only installation-scoped plugin tokens or a host-bound
+    WASM identity. Management routes override the server and security scheme.
+servers:
+  - url: /plugin-api/v1
+security:
+  - PluginBearer: []
+tags:
+  - name: Auth
+    description: Remote plugin credential exchange.
+  - name: Capabilities
+    description: Capability categories disclosed and accepted for the authenticated installation.
+  - name: Accounts
+    description: Opaque 115 account selection without exposing Cookies or database IDs.
+  - name: Network
+    description: SSRF-resistant outbound HTTP requests and system proxy policy.
+  - name: Files
+    description: Opaque-reference file access within roots exposed by the Host API.
+  - name: Transfers
+    description: Controlled 115 share receive and offline download workflows.
+  - name: Subscriptions
+    description: Stable facade over PT and aggregate subscription workflows.
+  - name: Jobs
+    description: Persistent asynchronous operation status and cancellation.
+  - name: Storage
+    description: Installation-scoped versioned key-value storage.
+  - name: Plugin Center
+    description: Implemented administrator API for repositories, catalog, installations and operations.
+
+paths:
+  /auth/token:
+    post:
+      tags: [Auth]
+      summary: Exchange remote plugin credentials for a short-lived token
+      operationId: createPluginToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /capabilities:
+    get:
+      tags: [Capabilities]
+      summary: List the capability disclosure accepted for this installation
+      operationId: listCapabilities
+      responses:
+        '200':
+          description: Accepted capability categories and 115 account access modes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CapabilityListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /accounts/115:
+    get:
+      tags: [Accounts]
+      summary: List 115 account selector modes available to this installation
+      description: |
+        The response contains only safe display metadata and installation-scoped
+        opaque account references. Cookies, device credentials, database IDs and
+        raw 115 CIDs are never returned.
+      operationId: list115AccountOptions
+      x-dian115-capability: accounts.115.use
+      responses:
+        '200':
+          description: Available selector modes and optional backup-account summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account115OptionsResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /accounts/115/selections:
+    post:
+      tags: [Accounts]
+      summary: Create a short-lived 115 account selection
+      description: |
+        main resolves the active main account, backup_pool atomically acquires an
+        enabled backup account, and backup_ref resolves an opaque reference returned
+        by GET /accounts/115. The runtime selector must be covered by the manifest's
+        accepted account_access disclosure.
+      operationId: create115AccountSelection
+      x-dian115-capability: accounts.115.use
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountSelectionRequest'
+      responses:
+        '201':
+          description: Account selection created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountSelectionResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /network/requests:
+    post:
+      tags: [Network]
+      summary: Perform one outbound HTTP request through the Network Broker
+      operationId: createNetworkRequest
+      x-dian115-capability: network.http
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkRequest'
+      responses:
+        '200':
+          description: Filtered upstream response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        '502':
+          $ref: '#/components/responses/Problem'
+        '504':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/roots:
+    get:
+      tags: [Files]
+      summary: List virtual roots exposed by the Host API
+      operationId: listFileRoots
+      x-dian115-capability-any-of:
+        - files.local.read
+        - files.local.write
+        - files.cloud.read
+        - files.cloud.write
+      parameters:
+        - $ref: '#/components/parameters/OptionalAccountSelectionRefQuery'
+      responses:
+        '200':
+          description: Host-exposed roots available for the declared capability categories
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileRootListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/entries:
+    get:
+      tags: [Files]
+      summary: List entries under a root or directory reference
+      operationId: listFileEntries
+      x-dian115-capability-any-of:
+        - files.local.read
+        - files.local.write
+        - files.cloud.read
+        - files.cloud.write
+      parameters:
+        - name: root_id
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/RootId'
+        - name: parent_ref
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/EntryRef'
+          description: Omit to list the root entry.
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Entry page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileEntryListResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/entries/{entry_ref}:
+    parameters:
+      - $ref: '#/components/parameters/EntryRefPath'
+    get:
+      tags: [Files]
+      summary: Read safe metadata for an entry reference
+      operationId: getFileEntry
+      x-dian115-capability-any-of:
+        - files.local.read
+        - files.local.write
+        - files.cloud.read
+        - files.cloud.write
+      responses:
+        '200':
+          description: Entry metadata
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileEntryResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    patch:
+      tags: [Files]
+      summary: Rename an entry using optimistic concurrency
+      operationId: renameFileEntry
+      x-dian115-capability-any-of:
+        - files.local.write
+        - files.cloud.write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RenameEntryRequest'
+      responses:
+        '200':
+          description: Entry renamed
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileEntryResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '412':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/entries/{entry_ref}/content:
+    get:
+      tags: [Files]
+      summary: Read bounded content for a file entry
+      operationId: readFileEntryContent
+      x-dian115-capability-any-of:
+        - files.local.read
+        - files.cloud.read
+      parameters:
+        - $ref: '#/components/parameters/EntryRefPath'
+        - name: Range
+          in: header
+          required: false
+          schema:
+            type: string
+            maxLength: 80
+          description: A single bytes range; multi-range requests are rejected.
+      responses:
+        '200':
+          description: Complete content
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '206':
+          description: Partial content
+          headers:
+            X-Request-ID:
+              $ref: '#/components/headers/RequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+            Content-Range:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        '416':
+          $ref: '#/components/responses/RangeNotSatisfiable'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/directories:
+    post:
+      tags: [Files]
+      summary: Create a child directory under an opaque parent reference
+      operationId: createFileDirectory
+      x-dian115-capability-any-of:
+        - files.local.write
+        - files.cloud.write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDirectoryRequest'
+      responses:
+        '201':
+          description: Directory created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileEntryResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/operations:
+    post:
+      tags: [Files]
+      summary: Queue a same-backend copy or move operation
+      operationId: createFileOperation
+      x-dian115-capability-any-of:
+        - files.local.write
+        - files.cloud.write
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileOperationRequest'
+      responses:
+        '202':
+          description: Job persisted and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /transfers/115/targets:
+    get:
+      tags: [Transfers]
+      summary: List opaque 115 target references
+      operationId: list115TransferTargets
+      x-dian115-capability-any-of: [transfer.115.read, transfer.115.create]
+      parameters:
+        - name: operation
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/TransferOperation'
+        - $ref: '#/components/parameters/AccountSelectionRefQuery'
+      responses:
+        '200':
+          description: Host-exposed targets bound to the selected account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferTargetListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /transfers/115/share-previews:
+    post:
+      tags: [Transfers]
+      summary: Create a short-lived preview for an official 115 share URL
+      operationId: create115SharePreview
+      x-dian115-capability-any-of: [transfer.115.read, transfer.115.create]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SharePreviewRequest'
+      responses:
+        '201':
+          description: Preview created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharePreviewResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        '502':
+          $ref: '#/components/responses/Problem'
+        '504':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /transfers/115/share-previews/{preview_ref}/items:
+    get:
+      tags: [Transfers]
+      summary: List opaque selectable items in a share preview
+      operationId: list115SharePreviewItems
+      x-dian115-capability-any-of: [transfer.115.read, transfer.115.create]
+      parameters:
+        - $ref: '#/components/parameters/PreviewRefPath'
+        - name: parent_ref
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/ShareItemRef'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Preview item page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareItemListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '410':
+          $ref: '#/components/responses/Problem'
+        '502':
+          $ref: '#/components/responses/Problem'
+        '504':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /transfers/115/share-receives:
+    post:
+      tags: [Transfers]
+      summary: Persist and queue a selected 115 share receive job
+      operationId: create115ShareReceive
+      x-dian115-capability: transfer.115.create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareReceiveRequest'
+      responses:
+        '202':
+          description: Job persisted before any 115 side effect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '410':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /transfers/115/offline-downloads:
+    post:
+      tags: [Transfers]
+      summary: Persist and queue one single-attempt offline download job
+      operationId: create115OfflineDownload
+      x-dian115-capability: transfer.115.create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfflineDownloadRequest'
+      responses:
+        '202':
+          description: Job persisted before any 115 side effect
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /transfers/115/offline-tasks:
+    get:
+      tags: [Transfers]
+      summary: List safe 115 offline task summaries
+      operationId: list115OfflineTasks
+      x-dian115-capability: transfer.115.read
+      parameters:
+        - $ref: '#/components/parameters/AccountSelectionRefQuery'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Offline task page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfflineTaskListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '502':
+          $ref: '#/components/responses/Problem'
+        '504':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /transfers/115/offline-quota:
+    get:
+      tags: [Transfers]
+      summary: Read safe offline quota information
+      operationId: get115OfflineQuota
+      x-dian115-capability: transfer.115.read
+      parameters:
+        - $ref: '#/components/parameters/AccountSelectionRefQuery'
+      responses:
+        '200':
+          description: Offline quota
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfflineQuotaResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '502':
+          $ref: '#/components/responses/Problem'
+        '504':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /subscription-profiles:
+    get:
+      tags: [Subscriptions]
+      summary: List opaque subscription configuration profiles
+      operationId: listSubscriptionProfiles
+      x-dian115-capability-any-of: [subscriptions.read, subscriptions.create]
+      responses:
+        '200':
+          description: Profiles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionProfileListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /subscriptions:
+    get:
+      tags: [Subscriptions]
+      summary: List subscriptions visible to this installation
+      operationId: listSubscriptions
+      x-dian115-capability-any-of: [subscriptions.read, subscriptions.update, subscriptions.cancel]
+      parameters:
+        - name: engine
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/SubscriptionEngine'
+        - name: media_type
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/MediaType'
+        - name: state
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/SubscriptionState'
+        - name: created_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [this_installation, other, any]
+            default: any
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Subscription page
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Subscriptions]
+      summary: Persist and create a subscription through the owning workflow
+      operationId: createSubscription
+      x-dian115-capability: subscriptions.create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreateRequest'
+      responses:
+        '202':
+          description: Creation job persisted and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '429':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /subscriptions/{subscription_ref}:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionRefPath'
+    get:
+      tags: [Subscriptions]
+      summary: Get one visible subscription
+      operationId: getSubscription
+      x-dian115-capability-any-of: [subscriptions.read, subscriptions.update, subscriptions.cancel]
+      responses:
+        '200':
+          description: Subscription
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [Subscriptions]
+      summary: Physically delete a subscription record through its owning workflow
+      description: |
+        This does not revoke downloader or 115 work already accepted. Once the
+        subscriptions.cancel capability was accepted at installation, the request
+        queues directly without a per-operation approval step.
+      operationId: deleteSubscription
+      x-dian115-capability: subscriptions.cancel
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: Deletion job queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /subscriptions/{subscription_ref}/episodes:
+    patch:
+      tags: [Subscriptions]
+      summary: Update aggregate-TV episode scope with optimistic concurrency
+      description: Plugin API v1 does not provide a generic PT or upgrade PATCH.
+      operationId: updateSubscriptionEpisodes
+      x-dian115-capability: subscriptions.update
+      parameters:
+        - $ref: '#/components/parameters/SubscriptionRefPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EpisodeUpdateRequest'
+      responses:
+        '200':
+          description: Subscription updated
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '412':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /subscriptions/{subscription_ref}/search:
+    post:
+      tags: [Subscriptions]
+      summary: Queue a manual search for a subscription
+      operationId: searchSubscription
+      x-dian115-capability: subscriptions.update
+      parameters:
+        - $ref: '#/components/parameters/SubscriptionRefPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '202':
+          description: Search job persisted and queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobAcceptedResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /jobs/{job_ref}:
+    get:
+      tags: [Jobs]
+      summary: Get a persistent job owned by this installation
+      operationId: getPluginJob
+      parameters:
+        - $ref: '#/components/parameters/JobRefPath'
+      responses:
+        '200':
+          description: Job state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /jobs/{job_ref}/cancel:
+    post:
+      tags: [Jobs]
+      summary: Cancel a queued or otherwise cancellable job
+      description: |
+        Only a job owned by this installation can be cancelled. Authorization is
+        derived from the job kind and its originating capability; a transfer job
+        additionally requires transfer.115.cancel. Cancellation never guarantees
+        reversal of an upstream side effect.
+      operationId: cancelPluginJob
+      x-dian115-capability-derived-from-job-kind: true
+      parameters:
+        - $ref: '#/components/parameters/JobRefPath'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Current job state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /storage/{key}:
+    parameters:
+      - $ref: '#/components/parameters/StorageKeyPath'
+    get:
+      tags: [Storage]
+      summary: Read installation-scoped KV data
+      operationId: getStorageValue
+      x-dian115-capability: storage.kv
+      responses:
+        '200':
+          description: Stored value
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      tags: [Storage]
+      summary: Create or replace installation-scoped KV data
+      operationId: putStorageValue
+      x-dian115-capability: storage.kv
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/OptionalIfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [value]
+              properties:
+                value: {}
+      responses:
+        '200':
+          description: Value stored
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '412':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [Storage]
+      summary: Delete installation-scoped KV data
+      operationId: deleteStorageValue
+      x-dian115-capability: storage.kv
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      responses:
+        '200':
+          description: Value removed or already absent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmptyResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /api/plugin-center/v1/repositories:
+    servers:
+      - url: /
+    get:
+      tags: [Plugin Center]
+      summary: List official and custom plugin repositories
+      operationId: listPluginRepositories
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Repository list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRepositoryListResponse'
+        '401':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+    post:
+      tags: [Plugin Center]
+      summary: Add and immediately queue refresh of a GitHub repository or HTTPS index
+      operationId: createPluginRepository
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginRepositoryCreateRequest'
+      responses:
+        '202':
+          description: Repository created and refresh queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRepositoryQueuedResponse'
+        '201':
+          description: Repository created but refresh could not be queued; warning is present
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRepositoryQueuedResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/repositories/{repository_id}:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/RepositoryIdPath'
+    delete:
+      tags: [Plugin Center]
+      summary: Delete a custom repository
+      description: The automatically seeded madbrolab/dian115 official repository cannot be deleted.
+      operationId: deletePluginRepository
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Repository deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagementSuccessResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/repositories/{repository_id}/refresh:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/RepositoryIdPath'
+    post:
+      tags: [Plugin Center]
+      summary: Queue refresh of one repository index
+      operationId: refreshPluginRepository
+      security:
+        - AdminBearer: []
+      responses:
+        '202':
+          description: Refresh queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginOperationResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/catalog:
+    servers:
+      - url: /
+    get:
+      tags: [Plugin Center]
+      summary: List the aggregated catalog snapshot
+      description: The current MVP returns the full sorted list; search and pagination are client-side.
+      operationId: listPluginCatalog
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Aggregated catalog entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginCatalogResponse'
+        '401':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations:
+    servers:
+      - url: /
+    get:
+      tags: [Plugin Center]
+      summary: List plugin installation records
+      operationId: listPluginInstallations
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Installation records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginInstallationListResponse'
+        '401':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+    post:
+      tags: [Plugin Center]
+      summary: Queue install or update after all-or-nothing capability consent
+      description: |
+        permissions_accepted must be true and consent_digest must exactly match
+        the current catalog entry. A mismatch returns 409 so the UI can reopen the
+        disclosure instead of installing changed repository content.
+      operationId: installPlugin
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginInstallRequest'
+      responses:
+        '202':
+          description: Installation queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginOperationResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    delete:
+      tags: [Plugin Center]
+      summary: Delete an installation record and its installed package directory
+      operationId: uninstallPlugin
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Installation removed; warning is non-empty if package cleanup failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginUninstallResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/enable:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    post:
+      tags: [Plugin Center]
+      summary: Mark an installation enabled
+      description: The current MVP updates installation state; third-party runtime startup is not implemented.
+      operationId: enablePluginInstallation
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Updated installation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginInstallationResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/disable:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    post:
+      tags: [Plugin Center]
+      summary: Mark an installation disabled
+      description: The current MVP updates installation state; runtime token revocation starts with the Host runtime phase.
+      operationId: disablePluginInstallation
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Updated installation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginInstallationResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/account-options:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    get:
+      tags: [Plugin Center]
+      summary: List safe main, backup-pool and opaque backup-account options
+      operationId: listPluginInstallationAccountOptions
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Account options allowed by the accepted account_access disclosure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginAccountOptionListResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/operations:
+    servers:
+      - url: /
+    get:
+      tags: [Plugin Center]
+      summary: List recent persistent plugin-center operations
+      operationId: listPluginOperations
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Recent operations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginOperationListResponse'
+        '401':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/operations/{operation_id}:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/OperationIdPath'
+    get:
+      tags: [Plugin Center]
+      summary: Get one plugin-center operation and its decoded result when present
+      operationId: getPluginOperation
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Operation state and optional result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginOperationDetailResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+components:
+  securitySchemes:
+    PluginBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Short-lived token scoped to one plugin installation and capability revision.
+    AdminBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Existing DIAN115 administrator token used by the same-origin management UI.
+
+  headers:
+    ETag:
+      description: Quoted opaque revision token for optimistic concurrency.
+      schema:
+        $ref: '#/components/schemas/EntityTag'
+    RequestId:
+      description: Host-generated request identifier.
+      schema:
+        type: string
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 128
+        pattern: '^[A-Za-z0-9._:-]+$'
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/EntityTag'
+      description: Quoted opaque entity-tag previously returned in ETag.
+    OptionalIfMatch:
+      name: If-Match
+      in: header
+      required: false
+      schema:
+        $ref: '#/components/schemas/EntityTag'
+      description: Optional quoted opaque entity-tag previously returned in ETag.
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+        maxLength: 500
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    AccountSelectionRefQuery:
+      name: account_selection_ref
+      in: query
+      required: true
+      schema:
+        $ref: '#/components/schemas/AccountSelectionRef'
+      description: Required 115 account context created by POST /accounts/115/selections.
+    OptionalAccountSelectionRefQuery:
+      name: account_selection_ref
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AccountSelectionRef'
+      description: Required when listing cloud roots; omitted when only local roots are needed.
+    EntryRefPath:
+      name: entry_ref
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/EntryRef'
+    PreviewRefPath:
+      name: preview_ref
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/PreviewRef'
+    SubscriptionRefPath:
+      name: subscription_ref
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/SubscriptionRef'
+    JobRefPath:
+      name: job_ref
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/JobRef'
+    StorageKeyPath:
+      name: key
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 160
+        pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$'
+    RepositoryIdPath:
+      name: repository_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    InstallationIdPath:
+      name: installation_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    OperationIdPath:
+      name: operation_id
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 128
+
+  responses:
+    Problem:
+      description: Request failed
+      headers:
+        X-Request-ID:
+          schema:
+            type: string
+        Retry-After:
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    RangeNotSatisfiable:
+      description: The requested byte range is invalid or outside the current representation.
+      headers:
+        X-Request-ID:
+          $ref: '#/components/headers/RequestId'
+        Content-Range:
+          description: Unsatisfied range with the current complete length.
+          schema:
+            type: string
+            pattern: '^bytes \*/[0-9]+$'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/RangeNotSatisfiableProblem'
+    ManagementError:
+      description: Plugin-center management request failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ManagementError'
+
+  schemas:
+    ManagementLocalTime:
+      type: string
+      pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$'
+      description: Shanghai local time returned by the existing administrator API.
+
+    ManagementError:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: string
+
+    ManagementSuccessResponse:
+      type: object
+      additionalProperties: false
+      required: [success]
+      properties:
+        success:
+          type: boolean
+
+    PluginCapabilityDisclosure:
+      type: object
+      additionalProperties: false
+      required: [capability, reason]
+      properties:
+        capability:
+          $ref: '#/components/schemas/CapabilityName'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 240
+
+    ConsentDigest:
+      type: string
+      pattern: '^[0-9a-f]{64}$'
+      description: |
+        SHA-256 snapshot digest returned by the current catalog response. The
+        install request must echo it unchanged together with permissions_accepted=true.
+
+    PluginRepository:
+      type: object
+      additionalProperties: false
+      required: [id, name, repository_url, index_url, official, enabled, created_at, updated_at]
+      properties:
+        id: { type: integer, minimum: 1 }
+        name: { type: string, minLength: 1, maxLength: 120 }
+        repository_url: { type: string, format: uri }
+        index_url: { type: string, format: uri }
+        official: { type: boolean }
+        enabled: { type: boolean }
+        etag: { type: string }
+        last_modified: { type: string }
+        last_refresh_error: { type: string }
+        last_refreshed_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+        created_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+        updated_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+
+    PluginRepositoryCreateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string, maxLength: 120 }
+        url: { type: string, minLength: 1 }
+        repository_url: { type: string, minLength: 1 }
+        index_url: { type: string, minLength: 1 }
+      anyOf:
+        - required: [url]
+        - required: [repository_url]
+        - required: [index_url]
+      description: url is preferred; repository_url and index_url are accepted compatibility aliases.
+
+    PluginRepositoryListResponse:
+      type: object
+      additionalProperties: false
+      required: [repositories]
+      properties:
+        repositories:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginRepository'
+
+    PluginMarketEntry:
+      type: object
+      additionalProperties: true
+      required: [id, name, version, package_url, sha256, capabilities, consent_digest]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        version: { type: string }
+        description: { type: string }
+        author: { type: string }
+        homepage: { type: string, format: uri }
+        icon_url: { type: string, format: uri }
+        package_url: { type: string, format: uri }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        capabilities:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PluginCapabilityDisclosure'
+        account_access:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AccountAccessMode'
+        consent_digest:
+          $ref: '#/components/schemas/ConsentDigest'
+        tags:
+          type: array
+          items: { type: string }
+        repository_id: { type: integer, minimum: 1 }
+        repository_name: { type: string }
+        repository_official: { type: boolean }
+        installed_version: { type: string }
+        installed_enabled: { type: boolean }
+
+    PluginCatalogResponse:
+      type: object
+      additionalProperties: false
+      required: [plugins]
+      properties:
+        plugins:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginMarketEntry'
+
+    PluginInstallation:
+      type: object
+      additionalProperties: false
+      required:
+        [id, plugin_id, name, version, package_url, package_sha256, capabilities,
+         consent_digest, permissions_accepted_at, enabled, status, created_at, updated_at]
+      properties:
+        id: { type: integer, minimum: 1 }
+        plugin_id: { type: string }
+        name: { type: string }
+        version: { type: string }
+        description: { type: string }
+        author: { type: string }
+        homepage: { type: string, format: uri }
+        icon_url: { type: string, format: uri }
+        repository_id: { type: integer, minimum: 1 }
+        repository_name: { type: string }
+        package_url: { type: string, format: uri }
+        package_sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        capabilities:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/PluginCapabilityDisclosure'
+        account_access:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AccountAccessMode'
+        consent_digest:
+          $ref: '#/components/schemas/ConsentDigest'
+        permissions_accepted_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+        enabled: { type: boolean }
+        status: { type: string, enum: [installed] }
+        last_error: { type: string }
+        created_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+        updated_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+
+    PluginInstallationListResponse:
+      type: object
+      additionalProperties: false
+      required: [installations]
+      properties:
+        installations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginInstallation'
+
+    PluginInstallationResponse:
+      type: object
+      additionalProperties: false
+      required: [installation]
+      properties:
+        installation:
+          $ref: '#/components/schemas/PluginInstallation'
+
+    PluginInstallRequest:
+      type: object
+      additionalProperties: false
+      required: [repository_id, plugin_id, version, permissions_accepted, consent_digest]
+      properties:
+        repository_id: { type: integer, minimum: 1 }
+        plugin_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: '^(?!.*\.\.)[a-z0-9](?:[a-z0-9.-]{0,126}[a-z0-9])?$'
+        version:
+          type: string
+          pattern: '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$'
+        permissions_accepted: { const: true }
+        consent_digest:
+          $ref: '#/components/schemas/ConsentDigest'
+        enable:
+          type: boolean
+          default: true
+
+    PluginOperation:
+      type: object
+      additionalProperties: false
+      required: [id, kind, status, progress, created_at]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [repository_refresh, plugin_install] }
+        repository_id: { type: integer, minimum: 1 }
+        plugin_id: { type: string }
+        installation_id: { type: integer, minimum: 1 }
+        status: { type: string, enum: [queued, running, succeeded, failed] }
+        progress: { type: integer, minimum: 0, maximum: 100 }
+        message: { type: string }
+        error: { type: string }
+        created_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+        started_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+        finished_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+
+    PluginOperationResponse:
+      type: object
+      additionalProperties: false
+      required: [operation]
+      properties:
+        operation:
+          $ref: '#/components/schemas/PluginOperation'
+
+    PluginRepositoryQueuedResponse:
+      type: object
+      additionalProperties: false
+      required: [repository]
+      properties:
+        repository:
+          $ref: '#/components/schemas/PluginRepository'
+        operation:
+          $ref: '#/components/schemas/PluginOperation'
+        warning: { type: string }
+
+    PluginOperationListResponse:
+      type: object
+      additionalProperties: false
+      required: [operations]
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginOperation'
+
+    PluginOperationDetailResponse:
+      type: object
+      additionalProperties: false
+      required: [operation]
+      properties:
+        operation:
+          $ref: '#/components/schemas/PluginOperation'
+        result: {}
+
+    PluginUninstallResponse:
+      type: object
+      additionalProperties: false
+      required: [success, warning]
+      properties:
+        success: { type: boolean }
+        warning: { type: string }
+
+    PluginAccountOption:
+      type: object
+      additionalProperties: false
+      required: [mode, name]
+      properties:
+        mode: { type: string, enum: [main, backup_pool, backup_ref] }
+        account_ref: { type: string, pattern: '^a115_[A-Za-z0-9_-]+$' }
+        name: { type: string }
+        user_name: { type: string }
+        is_vip: { type: boolean }
+        cloud_name: { type: string }
+
+    PluginAccountOptionListResponse:
+      type: object
+      additionalProperties: false
+      required: [options]
+      properties:
+        options:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginAccountOption'
+
+    ResponseMeta:
+      type: object
+      additionalProperties: false
+      required: [request_id, idempotent_replay]
+      properties:
+        request_id:
+          type: string
+        idempotent_replay:
+          type: boolean
+
+    RevisionToken:
+      type: string
+      minLength: 1
+      maxLength: 160
+      pattern: '^[!#-~]+$'
+      description: Raw opaque revision value used in JSON payloads.
+
+    EntityTag:
+      type: string
+      minLength: 3
+      maxLength: 162
+      pattern: '^"[!#-~]{1,160}"$'
+      description: Strong quoted entity-tag containing one raw RevisionToken value.
+
+    EmptyResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    TokenRequest:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_secret]
+      properties:
+        client_id:
+          type: string
+          minLength: 8
+          maxLength: 128
+        client_secret:
+          type: string
+          minLength: 24
+          maxLength: 256
+
+    TokenResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [access_token, token_type, expires_in, capability_revision]
+          properties:
+            access_token:
+              type: string
+            token_type:
+              const: Bearer
+            expires_in:
+              type: integer
+              minimum: 60
+              maximum: 3600
+            capability_revision:
+              type: integer
+              minimum: 1
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    CapabilityName:
+      type: string
+      enum:
+        - network.http
+        - network.proxy
+        - files.local.read
+        - files.local.write
+        - files.cloud.read
+        - files.cloud.write
+        - transfer.115.read
+        - transfer.115.create
+        - transfer.115.cancel
+        - subscriptions.read
+        - subscriptions.create
+        - subscriptions.update
+        - subscriptions.cancel
+        - events.subscribe
+        - scheduler.register
+        - storage.kv
+        - secrets.use
+        - accounts.115.use
+
+    AccountAccessMode:
+      type: string
+      enum: [main, backup_pool, backup_select]
+      description: |
+        Installation disclosure for 115 account usage. backup_select is the
+        consent value that allows the runtime backup_ref selector.
+
+    CapabilityDeclaration:
+      type: object
+      additionalProperties: false
+      required: [capability, reason]
+      properties:
+        capability:
+          $ref: '#/components/schemas/CapabilityName'
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 240
+          description: Author-provided text shown during the all-or-nothing installation consent.
+
+    CapabilityListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [capability_revision, items, account_access]
+          properties:
+            capability_revision:
+              type: integer
+              minimum: 1
+              description: |
+                Increments after installation or disclosure-changing update so
+                stale tokens and WASM invocations can be rejected. It is not a
+                fine-grained authorization revision.
+            items:
+              type: array
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/CapabilityDeclaration'
+            account_access:
+              type: array
+              maxItems: 3
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/AccountAccessMode'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+    AccountSelectorMode:
+      type: string
+      enum: [main, backup_pool, backup_ref]
+
+    AccountRef:
+      type: string
+      maxLength: 64
+      pattern: '^a115_[A-Za-z0-9_-]+$'
+      description: Installation-scoped opaque reference for one backup account.
+
+    AccountSelectionRef:
+      type: string
+      pattern: '^asel_[A-Za-z0-9]+$'
+      description: Short-lived opaque reference bound to one resolved 115 account.
+
+    BackupAccountSummary:
+      type: object
+      additionalProperties: false
+      required: [account_ref, name, available]
+      properties:
+        account_ref:
+          $ref: '#/components/schemas/AccountRef'
+        name:
+          type: string
+          maxLength: 120
+        available:
+          type: boolean
+
+    Account115OptionsResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [available_modes, backup_accounts]
+          properties:
+            available_modes:
+              type: array
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/AccountSelectorMode'
+            backup_accounts:
+              type: array
+              description: Populated only when account_access contains backup_select.
+              items:
+                $ref: '#/components/schemas/BackupAccountSummary'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    AccountSelector:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [mode]
+          properties:
+            mode: { const: main }
+        - type: object
+          additionalProperties: false
+          required: [mode]
+          properties:
+            mode: { const: backup_pool }
+        - type: object
+          additionalProperties: false
+          required: [mode, account_ref]
+          properties:
+            mode: { const: backup_ref }
+            account_ref:
+              $ref: '#/components/schemas/AccountRef'
+
+    AccountSelectionRequest:
+      type: object
+      additionalProperties: false
+      required: [selector]
+      properties:
+        selector:
+          $ref: '#/components/schemas/AccountSelector'
+
+    AccountSelection:
+      type: object
+      additionalProperties: false
+      required: [account_selection_ref, requested_mode, display_name, expires_at]
+      properties:
+        account_selection_ref:
+          $ref: '#/components/schemas/AccountSelectionRef'
+        requested_mode:
+          $ref: '#/components/schemas/AccountSelectorMode'
+        display_name:
+          type: string
+          maxLength: 120
+        expires_at:
+          type: string
+          format: date-time
+
+    AccountSelectionResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/AccountSelection'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    OutboundRequestHeaders:
+      type: object
+      maxProperties: 64
+      description: |
+        Caller-supplied HTTP headers. Names must use lowercase ASCII token form so
+        the denylist is unambiguous; credential and connection/framing headers are
+        rejected rather than normalized. The host may apply a stricter policy.
+      propertyNames:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: '^[!#$%&''*+.^_`|~0-9a-z-]+$'
+        not:
+          enum:
+            - host
+            - cookie
+            - authorization
+            - proxy-authorization
+            - connection
+            - keep-alive
+            - proxy-connection
+            - transfer-encoding
+            - te
+            - trailer
+            - upgrade
+            - content-length
+            - expect
+      additionalProperties:
+        type: string
+        maxLength: 8192
+        pattern: '^[^\r\n]*$'
+
+    EncodedBody:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [encoding, data]
+          properties:
+            encoding:
+              const: utf8
+            data:
+              type: string
+              maxLength: 2097152
+        - type: object
+          additionalProperties: false
+          required: [encoding, data]
+          properties:
+            encoding:
+              const: json
+            data: {}
+        - type: object
+          additionalProperties: false
+          required: [encoding, data]
+          properties:
+            encoding:
+              const: base64
+            data:
+              type: string
+              contentEncoding: base64
+              contentMediaType: application/octet-stream
+              maxLength: 2796204
+      description: Serialized decoded data is subject to endpoint and system-level byte limits.
+
+    NetworkRequest:
+      type: object
+      additionalProperties: false
+      required: [method, url]
+      properties:
+        method:
+          type: string
+          enum: [GET, HEAD, POST, PUT, PATCH, DELETE]
+        url:
+          type: string
+          format: uri
+          minLength: 9
+          maxLength: 4096
+          pattern: '^https://(?![^/?#]*@)[^/?#]+(?:[/?][^#]*)?$'
+          description: Absolute lowercase-https URL without userinfo or fragment; every redirect is revalidated.
+        headers:
+          $ref: '#/components/schemas/OutboundRequestHeaders'
+        body:
+          $ref: '#/components/schemas/EncodedBody'
+          x-dian115-max-decoded-bytes: 1048576
+        credential_ref:
+          $ref: '#/components/schemas/CredentialRef'
+          description: |
+            Optional installation-scoped credential binding. Using it also requires
+            secrets.use. The host verifies the user-configured destination, method,
+            canonical path prefix and injection rule for that credential binding.
+        timeout_ms:
+          type: integer
+          minimum: 100
+          maximum: 30000
+          default: 10000
+        max_response_bytes:
+          type: integer
+          minimum: 1
+          maximum: 2097152
+          default: 262144
+        redirects:
+          type: integer
+          minimum: 0
+          maximum: 3
+          default: 3
+        proxy_mode:
+          type: string
+          enum: [system, direct, required]
+          default: system
+          description: required needs network.proxy; direct remains subject to the system network policy.
+
+    NetworkResult:
+      type: object
+      additionalProperties: false
+      required: [status, final_url, headers, body, truncated, duration_ms, proxy_used]
+      properties:
+        status:
+          type: integer
+          minimum: 100
+          maximum: 599
+        final_url:
+          type: string
+          format: uri
+          description: Sanitized final URL; protected query values and userinfo are removed.
+        headers:
+          type: object
+          description: Filtered response headers; credential-bearing and redirect headers are omitted.
+          additionalProperties:
+            type: array
+            items:
+              type: string
+        body:
+          $ref: '#/components/schemas/EncodedBody'
+          description: Bounded body. Exact reflected credential bytes cause credential_reflected instead.
+        truncated:
+          type: boolean
+        duration_ms:
+          type: integer
+          minimum: 0
+        proxy_used:
+          type: boolean
+
+    NetworkResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/NetworkResult'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    RootId:
+      type: string
+      pattern: '^root_[A-Za-z0-9]+$'
+    EntryRef:
+      type: string
+      pattern: '^fe_[A-Za-z0-9]+$'
+    TargetRef:
+      type: string
+      pattern: '^trg_[A-Za-z0-9]+$'
+    PreviewRef:
+      type: string
+      pattern: '^spv_[A-Za-z0-9]+$'
+    ShareItemRef:
+      type: string
+      pattern: '^si_[A-Za-z0-9]+$'
+    JobRef:
+      type: string
+      pattern: '^job_[A-Za-z0-9]+$'
+    SubscriptionRef:
+      type: string
+      pattern: '^sub_[A-Za-z0-9]+$'
+    CredentialRef:
+      type: string
+      pattern: '^cred_[A-Za-z0-9]+$'
+
+    FileRoot:
+      type: object
+      additionalProperties: false
+      required: [root_id, alias, root_entry_ref, name, backend, capabilities]
+      properties:
+        root_id:
+          $ref: '#/components/schemas/RootId'
+        alias:
+          type: string
+          maxLength: 80
+          description: Stable Host API label; it is not a per-plugin authorization boundary.
+        root_entry_ref:
+          $ref: '#/components/schemas/EntryRef'
+        name:
+          type: string
+          maxLength: 100
+        backend:
+          type: string
+          enum: [local, cd2]
+        capabilities:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [files.local.read, files.local.write, files.cloud.read, files.cloud.write]
+        account_selection_ref:
+          anyOf:
+            - $ref: '#/components/schemas/AccountSelectionRef'
+            - type: 'null'
+          description: Present for a cloud root and absent or null for a local root.
+        quota_bytes:
+          type: [integer, 'null']
+          minimum: 0
+        used_bytes:
+          type: [integer, 'null']
+          minimum: 0
+
+    FileEntry:
+      type: object
+      additionalProperties: false
+      required: [entry_ref, root_id, name, display_path, kind, size, modified_at, revision]
+      properties:
+        entry_ref:
+          $ref: '#/components/schemas/EntryRef'
+        root_id:
+          $ref: '#/components/schemas/RootId'
+        parent_ref:
+          anyOf:
+            - $ref: '#/components/schemas/EntryRef'
+            - type: 'null'
+        name:
+          type: string
+          maxLength: 255
+        display_path:
+          type: string
+          maxLength: 2048
+          description: Display only; never accepted as an authorization input.
+        kind:
+          type: string
+          enum: [file, directory]
+        size:
+          type: integer
+          minimum: 0
+        modified_at:
+          type: [string, 'null']
+          format: date-time
+          description: Null when the backend does not provide a trustworthy timestamp.
+        revision:
+          $ref: '#/components/schemas/RevisionToken'
+          description: Opaque CAS token independent of whether modified_at is available.
+        content_type:
+          type: [string, 'null']
+
+    FileRootListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileRoot'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    FileEntryListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [root_id, items]
+          properties:
+            root_id:
+              $ref: '#/components/schemas/RootId'
+            parent_ref:
+              anyOf:
+                - $ref: '#/components/schemas/EntryRef'
+                - type: 'null'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileEntry'
+            next_cursor:
+              type: [string, 'null']
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    FileEntryResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/FileEntry'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    CreateDirectoryRequest:
+      type: object
+      additionalProperties: false
+      required: [parent_ref, name]
+      properties:
+        parent_ref:
+          $ref: '#/components/schemas/EntryRef'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+
+    RenameEntryRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+
+    FileOperationRequest:
+      type: object
+      additionalProperties: false
+      required: [operation, source_refs, destination_parent_ref]
+      properties:
+        operation:
+          type: string
+          enum: [copy, move]
+        source_refs:
+          type: array
+          minItems: 1
+          maxItems: 1000
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/EntryRef'
+        destination_parent_ref:
+          $ref: '#/components/schemas/EntryRef'
+        conflict_policy:
+          type: string
+          enum: [fail, rename]
+          default: fail
+
+    TransferOperation:
+      type: string
+      enum: [share_receive, offline_download]
+
+    TransferTarget:
+      type: object
+      additionalProperties: false
+      required: [target_ref, alias, name, operation, account_selection_ref]
+      properties:
+        target_ref:
+          $ref: '#/components/schemas/TargetRef'
+        alias:
+          type: string
+          maxLength: 80
+        name:
+          type: string
+          maxLength: 120
+        operation:
+          $ref: '#/components/schemas/TransferOperation'
+        account_selection_ref:
+          $ref: '#/components/schemas/AccountSelectionRef'
+
+    TransferTargetListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/TransferTarget'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    SharePreviewRequest:
+      type: object
+      additionalProperties: false
+      required: [share_url, account_selection_ref]
+      properties:
+        share_url:
+          type: string
+          format: uri
+          maxLength: 4096
+          description: Must use an allowlisted official 115 share host.
+        receive_code:
+          type: string
+          maxLength: 32
+        account_selection_ref:
+          $ref: '#/components/schemas/AccountSelectionRef'
+
+    SharePreview:
+      type: object
+      additionalProperties: false
+      required: [preview_ref, expires_at, title, item_count, account_selection_ref]
+      properties:
+        preview_ref:
+          $ref: '#/components/schemas/PreviewRef'
+        expires_at:
+          type: string
+          format: date-time
+        title:
+          type: string
+          maxLength: 500
+        item_count:
+          type: integer
+          minimum: 0
+        account_selection_ref:
+          $ref: '#/components/schemas/AccountSelectionRef'
+
+    SharePreviewResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/SharePreview'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    ShareItem:
+      type: object
+      additionalProperties: false
+      required: [item_ref, name, kind, size]
+      properties:
+        item_ref:
+          $ref: '#/components/schemas/ShareItemRef'
+        parent_ref:
+          anyOf:
+            - $ref: '#/components/schemas/ShareItemRef'
+            - type: 'null'
+        name:
+          type: string
+          maxLength: 500
+        kind:
+          type: string
+          enum: [file, directory]
+        size:
+          type: integer
+          minimum: 0
+
+    ShareItemListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/ShareItem'
+            next_cursor:
+              type: [string, 'null']
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    ShareReceiveRequest:
+      type: object
+      additionalProperties: false
+      required: [preview_ref, selection, target_ref]
+      properties:
+        preview_ref:
+          $ref: '#/components/schemas/PreviewRef'
+        selection:
+          type: object
+          additionalProperties: false
+          required: [item_refs]
+          properties:
+            item_refs:
+              type: array
+              minItems: 1
+              maxItems: 1000
+              uniqueItems: true
+              items:
+                $ref: '#/components/schemas/ShareItemRef'
+        target_ref:
+          $ref: '#/components/schemas/TargetRef'
+        metadata:
+          $ref: '#/components/schemas/RequestMetadata'
+
+    OfflineDownloadRequest:
+      type: object
+      additionalProperties: false
+      required: [urls, target_ref]
+      properties:
+        urls:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            type: string
+            minLength: 1
+            maxLength: 8192
+        target_ref:
+          $ref: '#/components/schemas/TargetRef'
+        metadata:
+          $ref: '#/components/schemas/RequestMetadata'
+
+    RequestMetadata:
+      type: object
+      maxProperties: 16
+      additionalProperties:
+        type: string
+        maxLength: 500
+
+    OfflineTask:
+      type: object
+      additionalProperties: false
+      required: [offline_task_ref, name, status, created_at]
+      properties:
+        offline_task_ref:
+          type: string
+          pattern: '^ot_[A-Za-z0-9]+$'
+        name:
+          type: string
+          maxLength: 500
+        status:
+          type: string
+          enum: [queued, downloading, succeeded, failed, indeterminate]
+          description: Host-normalized status; backend-specific constants are never exposed.
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        created_at:
+          type: string
+          format: date-time
+
+    OfflineTaskListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [account_selection_ref, items]
+          properties:
+            account_selection_ref:
+              $ref: '#/components/schemas/AccountSelectionRef'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OfflineTask'
+            next_cursor:
+              type: [string, 'null']
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    OfflineQuotaResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [account_selection_ref, available, total, used]
+          properties:
+            account_selection_ref:
+              $ref: '#/components/schemas/AccountSelectionRef'
+            available:
+              type: integer
+              minimum: 0
+            total:
+              type: integer
+              minimum: 0
+            used:
+              type: integer
+              minimum: 0
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    JobAccepted:
+      type: object
+      additionalProperties: false
+      required: [job_ref, status]
+      properties:
+        job_ref:
+          $ref: '#/components/schemas/JobRef'
+        status:
+          const: queued
+
+    JobAcceptedResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/JobAccepted'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    ProblemCode:
+      type: string
+      enum:
+        - invalid_request
+        - unauthorized
+        - token_expired
+        - token_stale
+        - capability_denied
+        - idempotency_key_required
+        - idempotency_conflict
+        - rate_limited
+        - quota_exceeded
+        - credential_reflected
+        - resource_not_found
+        - conflict
+        - precondition_failed
+        - preview_expired
+        - range_not_satisfiable
+        - upstream_unavailable
+        - submission_uncertain
+        - account_context_mismatch
+        - account_selection_expired
+        - account_unavailable
+        - internal_error
+
+    OperationErrorCode:
+      description: |
+        Stable core error code, or a namespaced extension code. Clients must handle
+        unknown extension values without branching on the human-readable message.
+      oneOf:
+        - $ref: '#/components/schemas/ProblemCode'
+        - type: string
+          minLength: 7
+          maxLength: 80
+          pattern: '^ext\.[a-z0-9]+(?:[._-][a-z0-9]+)+$'
+
+    JobError:
+      type: object
+      additionalProperties: false
+      required: [code, message, retryable]
+      properties:
+        code:
+          $ref: '#/components/schemas/OperationErrorCode'
+        message:
+          type: string
+          maxLength: 2000
+        retryable:
+          type: boolean
+
+    Job:
+      type: object
+      additionalProperties: false
+      required: [job_ref, kind, status, progress, cancellable, created_at]
+      properties:
+        job_ref:
+          $ref: '#/components/schemas/JobRef'
+        kind:
+          type: string
+          maxLength: 100
+        status:
+          type: string
+          enum: [queued, running, succeeded, partial, failed, cancelled, attention_required]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        result:
+          anyOf:
+            - $ref: '#/components/schemas/JobResult'
+            - type: 'null'
+        error:
+          anyOf:
+            - $ref: '#/components/schemas/JobError'
+            - type: 'null'
+        cancellable:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: [string, 'null']
+          format: date-time
+        finished_at:
+          type: [string, 'null']
+          format: date-time
+
+    JobResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/Job'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    JobResult:
+      oneOf:
+        - $ref: '#/components/schemas/FileOperationJobResult'
+        - $ref: '#/components/schemas/ShareReceiveJobResult'
+        - $ref: '#/components/schemas/OfflineDownloadJobResult'
+        - $ref: '#/components/schemas/SubscriptionJobResult'
+
+    FileOperationJobResult:
+      type: object
+      additionalProperties: false
+      required: [type, operation, completed_count, failed_count, items]
+      description: completed_count and failed_count must match the item statuses.
+      properties:
+        type:
+          const: file_operation
+        operation:
+          type: string
+          enum: [copy, move]
+        completed_count:
+          type: integer
+          minimum: 0
+        failed_count:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: '#/components/schemas/FileOperationItemResult'
+
+    FileOperationItemResult:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [source_ref, status, destination_ref]
+          properties:
+            source_ref:
+              $ref: '#/components/schemas/EntryRef'
+            status:
+              const: succeeded
+            destination_ref:
+              $ref: '#/components/schemas/EntryRef'
+        - type: object
+          additionalProperties: false
+          required: [source_ref, status, error_code]
+          properties:
+            source_ref:
+              $ref: '#/components/schemas/EntryRef'
+            status:
+              const: failed
+            error_code:
+              $ref: '#/components/schemas/OperationErrorCode'
+
+    ShareReceiveJobResult:
+      type: object
+      additionalProperties: false
+      required: [type, target_ref, accepted_count]
+      properties:
+        type:
+          const: share_receive
+        target_ref:
+          $ref: '#/components/schemas/TargetRef'
+        accepted_count:
+          type: integer
+          minimum: 0
+
+    OfflineDownloadJobResult:
+      type: object
+      additionalProperties: false
+      required: [type, target_ref, submitted_count]
+      properties:
+        type:
+          const: offline_download
+        target_ref:
+          $ref: '#/components/schemas/TargetRef'
+        submitted_count:
+          type: integer
+          minimum: 0
+
+    SubscriptionJobResult:
+      type: object
+      additionalProperties: false
+      required: [type, subscription_ref]
+      properties:
+        type:
+          type: string
+          enum: [subscription_created, subscription_deleted, subscription_search_submitted]
+        subscription_ref:
+          $ref: '#/components/schemas/SubscriptionRef'
+        initial_search_submitted:
+          type: boolean
+
+    SubscriptionEngine:
+      type: string
+      enum: [pt, aggregate]
+    SubscriptionState:
+      type: string
+      enum: [pending, searching, transferring, waiting, verifying, partial, needs_attention, failed, expired]
+      description: |
+        Public union of active PT and aggregate states. Legacy landed/cancelled rows
+        are not returned as live subscriptions; completion or deletion is represented
+        by the corresponding job/event and subsequent GET returns 404.
+    MediaType:
+      type: string
+      enum: [movie, tv]
+
+    MediaInput:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [tmdb_id, media_type]
+          properties:
+            tmdb_id:
+              type: integer
+              minimum: 1
+            media_type:
+              const: movie
+            season:
+              type: integer
+              const: 0
+              default: 0
+        - type: object
+          additionalProperties: false
+          required: [tmdb_id, media_type]
+          properties:
+            tmdb_id:
+              type: integer
+              minimum: 1
+            media_type:
+              const: tv
+            season:
+              type: integer
+              minimum: 0
+              default: 1
+
+    MediaSummary:
+      type: object
+      additionalProperties: false
+      required: [tmdb_id, media_type, season, title]
+      properties:
+        tmdb_id:
+          type: integer
+        media_type:
+          $ref: '#/components/schemas/MediaType'
+        season:
+          type: integer
+          minimum: 0
+        title:
+          type: string
+          maxLength: 500
+        year:
+          type: string
+          maxLength: 16
+        poster_path:
+          type: string
+          maxLength: 500
+
+    AggregateSubscriptionOptions:
+      type: object
+      additionalProperties: false
+      required: [enabled_sources, profile_ref]
+      properties:
+        enabled_sources:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items:
+            type: string
+            enum: [dianying, pt, tg]
+        total_episodes:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        needed_episodes:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: '^(?:all|[0-9]+(?:-[0-9]+)?(?:\s*,\s*[0-9]+(?:-[0-9]+)?)*)$'
+          description: Compact episode set; semantic expansion is capped at 10000.
+        profile_ref:
+          type: string
+          pattern: '^sprof_[A-Za-z0-9]+$'
+
+    PTSubscriptionOptions:
+      type: object
+      additionalProperties: false
+      required: [profile_ref]
+      properties:
+        profile_ref:
+          type: string
+          pattern: '^sprof_[A-Za-z0-9]+$'
+        needed_episodes:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: '^(?:all|[0-9]+(?:-[0-9]+)?(?:\s*,\s*[0-9]+(?:-[0-9]+)?)*)$'
+          description: Compact episode set; semantic expansion is capped at 10000.
+
+    SubscriptionCreateRequest:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [engine, media, options]
+          properties:
+            engine:
+              const: aggregate
+            media:
+              $ref: '#/components/schemas/MediaInput'
+            options:
+              $ref: '#/components/schemas/AggregateSubscriptionOptions'
+            metadata:
+              $ref: '#/components/schemas/RequestMetadata'
+        - type: object
+          additionalProperties: false
+          required: [engine, media, options]
+          properties:
+            engine:
+              const: pt
+            media:
+              $ref: '#/components/schemas/MediaInput'
+            options:
+              $ref: '#/components/schemas/PTSubscriptionOptions'
+            metadata:
+              $ref: '#/components/schemas/RequestMetadata'
+
+    EpisodeUpdateRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        total_episodes:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        needed_episodes:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: '^(?:all|[0-9]+(?:-[0-9]+)?(?:\s*,\s*[0-9]+(?:-[0-9]+)?)*)$'
+          description: Compact episode set; semantic expansion is capped at 10000.
+
+    SubscriptionProfile:
+      type: object
+      additionalProperties: false
+      required: [profile_ref, alias, engine, name]
+      properties:
+        profile_ref:
+          type: string
+          pattern: '^sprof_[A-Za-z0-9]+$'
+        alias:
+          type: string
+          maxLength: 80
+          description: Stable Host API label for a user-configured subscription profile.
+        engine:
+          $ref: '#/components/schemas/SubscriptionEngine'
+        name:
+          type: string
+          maxLength: 120
+        media_types:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/MediaType'
+
+    SubscriptionProfileListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/SubscriptionProfile'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    CreatedBySummary:
+      type: object
+      additionalProperties: false
+      required: [source, this_installation]
+      properties:
+        source:
+          type: string
+          enum: [plugin, user, system]
+        this_installation:
+          type: boolean
+        display_name:
+          type: string
+          maxLength: 120
+
+    Subscription:
+      type: object
+      additionalProperties: false
+      required: [subscription_ref, engine, state, revision, created_by, media, created_at, updated_at]
+      properties:
+        subscription_ref:
+          $ref: '#/components/schemas/SubscriptionRef'
+        engine:
+          $ref: '#/components/schemas/SubscriptionEngine'
+        state:
+          $ref: '#/components/schemas/SubscriptionState'
+        revision:
+          $ref: '#/components/schemas/RevisionToken'
+        created_by:
+          $ref: '#/components/schemas/CreatedBySummary'
+        media:
+          $ref: '#/components/schemas/MediaSummary'
+        total_episodes:
+          type: integer
+          minimum: 0
+        needed_episodes:
+          type: string
+        covered_episodes:
+          type: string
+        last_error:
+          type: string
+          maxLength: 2000
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    SubscriptionResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/Subscription'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    SubscriptionListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Subscription'
+            next_cursor:
+              type: [string, 'null']
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    StorageValue:
+      type: object
+      additionalProperties: false
+      required: [key, value, revision, updated_at]
+      properties:
+        key:
+          type: string
+        value: {}
+        revision:
+          $ref: '#/components/schemas/RevisionToken'
+        updated_at:
+          type: string
+          format: date-time
+
+    StorageResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/StorageValue'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, detail, request_id, retryable]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          $ref: '#/components/schemas/ProblemCode'
+        detail:
+          type: string
+        request_id:
+          type: string
+        retryable:
+          type: boolean
+        retry_after_ms:
+          type: integer
+          minimum: 0
+        details:
+          type: object
+          additionalProperties: true
+
+    RangeNotSatisfiableProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          properties:
+            status: { const: 416 }
+            code: { const: range_not_satisfiable }

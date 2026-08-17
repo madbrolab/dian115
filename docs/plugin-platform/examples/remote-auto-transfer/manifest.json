@@ -1,0 +1,100 @@
+{
+  "$schema": "https://dian115.example/schemas/plugin-manifest-v1.json",
+  "schema_version": 1,
+  "id": "dev.example.remote-auto-transfer",
+  "name": "Remote Auto Transfer",
+  "version": "1.0.0",
+  "description": "从规则服务读取任务，并通过用户在安装时同意的 DIAN115 能力创建 115 转存任务。",
+  "default_locale": "zh-CN",
+  "publisher": {
+    "name": "Example Studio",
+    "key_id": "ed25519:If4x36FUomFia_hUBG_SJxt77UtqvkWqWId-9H-XIbk",
+    "url": "https://example.com/plugins/remote-auto-transfer"
+  },
+  "compatibility": {
+    "dian115": ">=3.9.0 <4.0.0",
+    "plugin_api": "^1.0"
+  },
+  "runtime": {
+    "kind": "remote",
+    "protocol": "dian115-http-plugin@1",
+    "health_path": "/healthz",
+    "event_path": "/v1/events",
+    "action_path": "/v1/actions",
+    "state_path": "/v1/state",
+    "job_path": "/v1/jobs",
+    "timeout_ms": 10000
+  },
+  "ui": {
+    "schema": "ui.schema.json"
+  },
+  "permissions": {
+    "capabilities": [
+      {
+        "capability": "network.http",
+        "reason": "连接用户配置的规则服务并读取自动转存规则。"
+      },
+      {
+        "capability": "network.proxy",
+        "reason": "在用户配置需要时通过 DIAN115 系统代理访问规则服务。"
+      },
+      {
+        "capability": "transfer.115.create",
+        "reason": "把规则命中的 115 分享保存到所选账号的目录。"
+      },
+      {
+        "capability": "transfer.115.read",
+        "reason": "读取转存预览、目录和任务状态。"
+      },
+      {
+        "capability": "transfer.115.cancel",
+        "reason": "取消尚未提交到 115 的宿主任务。"
+      },
+      {
+        "capability": "accounts.115.use",
+        "reason": "允许用户选择主账号、备用号池或一个指定备用账号执行 115 操作。"
+      },
+      {
+        "capability": "events.subscribe",
+        "reason": "接收转存完成和失败事件。"
+      },
+      {
+        "capability": "storage.kv",
+        "reason": "保存规则游标和事件去重记录。"
+      },
+      {
+        "capability": "scheduler.register",
+        "reason": "按插件配置的周期检查规则服务。"
+      },
+      {
+        "capability": "secrets.use",
+        "reason": "使用用户保存的规则服务凭据。"
+      }
+    ],
+    "account_access": [
+      "main",
+      "backup_pool",
+      "backup_select"
+    ]
+  },
+  "events": [
+    "transfer.completed",
+    "transfer.failed"
+  ],
+  "jobs": [
+    {
+      "id": "poll-rules",
+      "handler": "poll_rules",
+      "default_schedule": "*/15 * * * *",
+      "allow_overlap": false
+    }
+  ],
+  "homepage": "https://example.com/plugins/remote-auto-transfer",
+  "repository": "https://github.com/example/remote-auto-transfer",
+  "license": "MIT",
+  "tags": [
+    "115",
+    "transfer",
+    "automation"
+  ]
+}

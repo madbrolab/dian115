@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/madbrolab/dian115/main/plugin-market/index.schema.json",
+  "title": "DIAN115 Plugin Market Index v1",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schema_version", "repository", "plugins"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "homepage": { "type": "string", "format": "uri", "pattern": "^https://" }
+      }
+    },
+    "plugins": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/plugin" }
+    }
+  },
+  "$defs": {
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["capability", "reason"],
+      "properties": {
+        "capability": { "$ref": "#/$defs/capabilityString" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
+      }
+    },
+    "capabilityString": {
+      "type": "string",
+      "enum": [
+        "network.http",
+        "network.proxy",
+        "files.local.read",
+        "files.local.write",
+        "files.cloud.read",
+        "files.cloud.write",
+        "transfer.115.read",
+        "transfer.115.create",
+        "transfer.115.cancel",
+        "subscriptions.read",
+        "subscriptions.create",
+        "subscriptions.update",
+        "subscriptions.cancel",
+        "events.subscribe",
+        "scheduler.register",
+        "storage.kv",
+        "secrets.use",
+        "accounts.115.use"
+      ]
+    },
+    "plugin": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["id", "name", "version", "package_url", "sha256", "capabilities"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(?!.*\\.\\.)[a-z0-9](?:[a-z0-9.-]{0,126}[a-z0-9])?$"
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "version": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+        },
+        "description": { "type": "string", "maxLength": 2000 },
+        "author": { "type": "string", "maxLength": 120 },
+        "homepage": { "type": "string", "format": "uri", "pattern": "^https://" },
+        "icon_url": {
+          "oneOf": [
+            { "type": "string", "format": "uri", "pattern": "^https://" },
+            {
+              "type": "string",
+              "format": "uri-reference",
+              "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!//).+"
+            }
+          ]
+        },
+        "package_url": {
+          "oneOf": [
+            { "type": "string", "format": "uri", "pattern": "^https://" },
+            {
+              "type": "string",
+              "format": "uri-reference",
+              "pattern": "^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!//).+"
+            }
+          ]
+        },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "capabilities": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/capability" }
+        },
+        "account_access": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["main", "backup_pool", "backup_select"] }
+        },
+        "tags": {
+          "type": "array",
+          "maxItems": 20,
+          "items": { "type": "string", "maxLength": 40 }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["capability"],
+                  "properties": { "capability": { "const": "accounts.115.use" } }
+                }
+              }
+            },
+            "required": ["capabilities"]
+          },
+          "then": { "required": ["account_access"] },
+          "else": { "not": { "required": ["account_access"] } }
+        },
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["capability"],
+                  "properties": {
+                    "capability": {
+                      "enum": [
+                        "files.cloud.read",
+                        "files.cloud.write",
+                        "transfer.115.read",
+                        "transfer.115.create",
+                        "transfer.115.cancel"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["capabilities"]
+          },
+          "then": {
+            "required": ["account_access"],
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["capability"],
+                  "properties": { "capability": { "const": "accounts.115.use" } }
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
