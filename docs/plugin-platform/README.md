@@ -1,17 +1,31 @@
 # DIAN115 用户插件平台总体方案
 
-> 状态：Plugin API v1 目标契约。当前实现阶段先落地插件市场仓库、目录/安装管理、安装时能力确认和 115 账号解析基础；WASM/远程插件运行时以及网络、文件、转存、订阅 Host Broker 仍是后续阶段，不能据本文假定它们已在产品中全部启用。
+> 状态：Plugin API v1 已在主项目中提供可用的第三方插件管理与 Host Broker。本文档同时区分“当前 Docker 部署可用能力”和尚未发布的 SDK/CLI/WASM 适配层；示例只调用下方已注册的接口。
 
 ## 1. 背景与现状
 
-当前插件中心展示的是静态清单，插件页面和后端路由都在编译时注册：
+内置插件页面仍通过静态清单和编译时路由注册；第三方插件则通过插件市场、安装记录、声明式 UI 和独立 Host API 接入：
 
-- 前端清单位于 [`PluginCenter.vue`](../../frontend/src/views/PluginCenter.vue)，页面路由位于 [`router/index.ts`](../../frontend/src/router/index.ts)。
-- 后端插件接口直接挂载在 [`internal/api/router.go`](../../internal/api/router.go) 的 `/api/plugins/*` 下，共享管理员认证和主进程服务对象。
+- 插件中心位于 [`PluginCenter.vue`](../../frontend/src/views/PluginCenter.vue)，页面路由位于 [`router/index.ts`](../../frontend/src/router/index.ts)；第三方插件不能注入任意 Vue 代码。
+- 后端管理接口挂载在 [`internal/api/router.go`](../../internal/api/router.go) 的 `/api/plugin-center/v1/*` 下，插件 Host API 独立挂载在 `/plugin-api/v1/*`，两者认证边界不同。
 - SPA 会嵌入 Go 二进制，第三方 Vue 模块不能在运行时安全地注册。
-- 当前已实现第三方市场索引、仓库刷新、包下载、SHA-256/manifest 一致性校验、安全解压、安装记录、一次性能力确认和 115 账号解析基础；尚未实现包内签名信任、独立插件身份、第三方运行时、Host Broker、原子升级或回滚。
+- 当前已实现第三方市场索引、官方/自定义仓库刷新、包 SHA-256、ZIP/manifest/integrity 校验、RFC 8785 JCS + Ed25519 包签名验证、安装记录、一次性能力确认、安装实例身份、remote runtime 绑定/健康检查/状态/动作/job/event，以及网络、代理、文件、115 转存、订阅、KV、托管凭据和插件 Telegram 通知 Host Broker。当前可安装运行的第三方插件只支持 remote runtime；WASM 包结构会被校验，但在 WASM supervisor 上线前安装会被明确拒绝。发布者信任根、TOFU/吊销运营、兼容范围求值和官方 SDK/CLI 仍未作为稳定公共能力提供。
 
 因此，用户插件不能沿用内置插件的做法直接注册 Gin 路由、访问 Store、链接 Go 代码或在同源页面中执行任意 JavaScript。Plugin API v1 必须把第三方代码与管理员会话、数据库、115 Cookie、CD2 Token、Emby Key 和系统文件隔离开。
+
+### 当前可用的主项目能力
+
+| 能力 | 管理端/Host API | 备注 |
+|---|---|---|
+| 插件市场与自定义仓库 | `/api/plugin-center/v1/repositories`、`/catalog` | 官方源固定为 `madbrolab/dian115/plugin-market/index.json`；用户可添加 HTTPS GitHub 或 index URL |
+| 安装确认与生命周期 | `/installations`、`enable`、`disable`、`operations` | 安装页一次性展示全部 capability、reason 和 `account_access` |
+| 115 账号范围 | `/plugin-api/v1/accounts/115`、`/selections` | 主账号、备用号池、指定备用账号均只返回 opaque ref |
+| 网络与秘密 | `/plugin-api/v1/network/requests`、管理端 `secret-bindings` | 支持 direct/system/required proxy；凭据注入规则由宿主固定 |
+| 文件、转存、订阅、KV | `/plugin-api/v1/files/*`、`transfers/115/*`、`subscriptions/*`、`kv/*` | 资源、目录、CID、数据库 ID 不以内部值暴露 |
+| 插件通知 | `POST /plugin-api/v1/notifications` | 独立通知类型 `plugin_notification_message`，可被用户单独静默/关闭 |
+| Remote runtime | 管理端 `/installations/{id}/runtime/*` | 绑定、健康检查、声明式 UI、ETag 状态、action/job/event 和幂等投递 |
+
+管理端点只供管理员同源界面调用；插件服务必须先用安装实例凭据换取短期 `/plugin-api/v1/auth/token`，不能把管理员 Cookie 或 JWT 放入插件请求。
 
 ## 2. 目标与非目标
 
@@ -140,7 +154,7 @@ Node.js、Python、Java 或需要原生依赖的插件由用户独立部署，DI
 ```text
 manifest.json              必需，插件元数据与权限声明
 integrity.json             必需，载荷文件 SHA-256 清单
-signature.json             正式安装必需，Ed25519 签名
+signature.json             当前安装器必需，Ed25519 签名
 plugin.wasm                runtime.kind=wasm 时必需
 ui/schema.json             可选，声明式 UI
 assets/*                   可选，图标和静态资源
@@ -189,14 +203,9 @@ JCS(integrity.json)
 
 `signature.json.public_key` 是原始 32 字节 Ed25519 公钥的无 padding base64url，`signature` 是 64 字节签名的无 padding base64url。`key_id` 必须等于 `ed25519:` + `base64url(SHA-256(raw_public_key))`，并与 `manifest.publisher.key_id` 完全一致。
 
-信任策略：
+当前安装器会强制校验包内完整性、签名元数据、JCS 原文、Ed25519 签名，以及 `signature.key_id`、公钥摘要和 `manifest.publisher.key_id` 的一致性；无签名包会被直接拒绝，当前没有绕过签名的开发模式。该校验能发现包内容篡改，但签名公钥仍随包提供，宿主尚未通过内置根密钥、持久化 TOFU 记录或吊销列表确认“这个公钥是否属于可信发布者”。
 
-- 官方市场：由内置市场根密钥或其签发的发布者证书验证。
-- 社区插件：首次安装展示发布者指纹，用户确认后采用 TOFU；密钥变化视为新发布者。
-- 本地开发：CLI 生成开发者密钥并签名。
-- 无签名包：只允许显式开启开发模式后临时安装，禁止自动更新，并持续显示风险状态。
-
-签名与域分隔实现可参考 [`internal/runtimepayload/payload.go`](../../internal/runtimepayload/payload.go)，但插件必须使用独立密钥域和信任库。
+目标信任策略是：官方市场使用 detached index signature 和内置根密钥；社区仓库首次安装展示发布者指纹并采用 TOFU，换钥按新发布者处理；本地开发由未来 CLI 生成开发者密钥并签名。发布者信任库上线前，管理员仍需结合仓库来源和公开指纹判断发布者身份。
 
 ## 7. 清单与兼容性
 
@@ -256,6 +265,8 @@ JCS(integrity.json)
 - 废弃能力至少保留 180 天或两个 DIAN115 次版本，取更长者。
 - 插件不能依赖内部数据库、内部 `/api` 路由或未文档化响应字段。
 
+当前安装器会要求 `compatibility.dian115` 和 `compatibility.plugin_api` 非空并保存原值，但尚未对任意 SemVer 范围执行宿主版本求值；发布者应自行确保范围与实际 API 兼容，宿主兼容范围求值属于后续信任/发布能力。
+
 ## 8. 权限模型
 
 v1 使用“安装时披露、一次性整体同意、运行时按类别校验”的模型：
@@ -286,6 +297,7 @@ manifest capabilities + reason + optional account_access
 | `scheduler.register` | 可在后台定时运行 manifest 声明的 job |
 | `storage.kv` | 可保存安装实例私有数据 |
 | `secrets.use` | 可使用用户保存的 opaque credential ref，但不能读取秘密明文 |
+| `notifications.plugin.send` | 可通过宿主已配置的 Telegram 通知通道反馈插件任务结果；宿主注入插件名称并执行长度、频率和安全校验 |
 
 Manifest v1 只允许上表能力。未知能力、重复能力、缺少 `reason`，或声明 `accounts.115.use` 却没有 `account_access` 时直接拒绝安装。`events` 仍要求声明 `events.subscribe`，`jobs` 仍要求声明 `scheduler.register`；这里只做类别一致性校验，不再把 topic/job ID 变成授权范围。
 
@@ -295,7 +307,7 @@ Manifest v1 只允许上表能力。未知能力、重复能力、缺少 `reason
 2. `account_access` 分别显示为“主账号”“从备用号池自动选择”“查看并指定一个备用账号”。
 3. catalog 为当前仓库快照生成 `consent_digest`；用户勾选一次“我理解并同意该插件使用以上全部能力”后，管理 API 必须同时提交 `permissions_accepted: true` 和该摘要。
 4. 当前摘要覆盖仓库 ID、插件 ID/名称/版本/作者、包 URL/SHA-256、capabilities、reasons 和 account_access；仓库刷新后任一内容变化都会让旧摘要失效并返回 `409`。
-5. 后续签名链会把发布者 key、runtime 和更完整的静态检查结果也纳入确认快照；任一披露变化都必须重新整体确认。
+5. 当前安装器会在下载后独立校验发布者 key 一致性、runtime/UI 声明和包签名，但这些字段尚未全部进入安装前的 `consent_digest`；未来信任元数据纳入确认快照后，任一新增披露仍必须重新整体确认。
 
 运行时与 Host Broker 接入后，对未声明类别返回 `403 capability_denied`。设计中不存在 `approval_required`、`awaiting_approval` 或供插件触发的审批接口；业务 API 通过类别校验和通用输入校验后，同步执行或创建 `queued` operation/job。
 
@@ -378,6 +390,7 @@ WASM 调用由宿主直接绑定 `installation_id`，插件看不到访问令牌
 
 ```text
 GET  /plugin-api/v1/transfers/115/targets
+POST /plugin-api/v1/transfers/115/targets
 GET  /plugin-api/v1/accounts/115
 POST /plugin-api/v1/accounts/115/selections
 POST /plugin-api/v1/transfers/115/share-previews
@@ -393,6 +406,7 @@ POST /plugin-api/v1/jobs/{job_ref}/cancel
 设计要求：
 
 - 插件使用宿主提供的 opaque `target_ref`，不直接读取 115 CID、账号 ID 或 Cookie，且根 CID `0` 不能成为插件目标。
+- `GET /targets` 返回宿主配置的默认目录；插件声明 `files.cloud.read` 或 `files.cloud.write` 后，可用 File Broker 逐层浏览任意云目录，再通过 `POST /targets` 把同账号绑定的目录 `entry_ref` 转成 `target_ref`。转换时重新验证目录存在性、安装实例归属和账号选择，文件、跨账号引用及根 CID `0` 一律拒绝。
 - 所有目标、预览、离线任务和提交结果都携带或隐式绑定 `account_selection_ref`；创建任务时相关引用必须属于同一账号。
 - 分享链接先创建短时 `preview_ref`，再从预览结果选择 opaque `item_ref`。创建转存时不再接受 raw `share_code`，也不允许空选择或 `file_id=0` 隐式扩大为整分享。
 - 预览必须把分享 URL 限定为 115 官方 host；当前通用解析器允许任意 URL host，不能直接作为插件安全边界。
@@ -496,8 +510,8 @@ X-Dian115-Signature: v1=<hex-hmac-sha256>
 - 每个安装实例独立命名空间。
 - 默认 16 MiB，单值 256 KiB。
 - 支持 CAS/version，避免并发覆盖。
-- 插件卸载默认保留 30 天，可由用户立即彻底删除。
-- 版本升级前创建轻量快照，健康检查失败时随代码一起回滚。
+- `/kv` 支持列表和 slash-separated key；`/storage/{key}` 保留为兼容别名。
+- 插件卸载和版本升级的数据保留由宿主部署策略决定，插件不得依赖数据库表或假设可恢复快照。
 
 ## 12. 声明式 UI
 
@@ -583,17 +597,17 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 索引规则：
 
 - `repository.id` 和插件 `id` 使用小写反向域名风格；同一索引内 `id + version` 组合唯一，同一插件可列出多个 SemVer 版本。
-- `package_url` 必须是绝对 HTTPS URL或相对索引最终 URL 的安全相对路径；`sha256` 先校验下载字节，再进入 ZIP/manifest 校验。包内 integrity/signature 属于后续信任阶段，市场元数据永远不能替代包内签名。
+- `package_url` 必须是绝对 HTTPS URL 或相对索引最终 URL 的安全相对路径；`sha256` 先校验下载字节，再进入 ZIP、manifest、integrity、声明式 UI 和 Ed25519 signature 校验。市场元数据永远不能替代包内签名。
 - `capabilities` 每项必须包含 `capability` 和非空 `reason`，不接受字符串简写或 required/optional 分组；它与 `account_access` 都必须和包内 manifest 完全一致，否则不能安装。
 - 任一 `files.cloud.*` 或 `transfer.115.*` 都要求同时列出 `accounts.115.use` 且 `account_access` 非空；列出 `accounts.115.use` 时同样必须提供非空 `account_access`。
 - 未识别字段按 `schema_version` 策略处理；未知必需能力、降级版本、重复条目、无效 SemVer 或摘要格式错误会使单个条目无效，不应让整个源缓存替换为部分解析结果。
 - 刷新成功后原子替换该仓库的 catalog 快照；刷新失败保留最后一次成功快照，并显示 `stale/error` 状态和脱敏错误。
 
-官方索引应再提供 detached signature 和内置根密钥验证；自定义仓库至少依赖每个 `.d115p` 的发布者签名并在首次安装使用 TOFU。列表页必须始终显示来源、官方/自定义状态、发布者 key、更新时间和签名状态。
+当前每个 `.d115p` 都必须通过包内 Ed25519 签名验证，但官方索引 detached signature、内置根密钥、发布者 TOFU/吊销记录和完整的发布者信任状态展示仍是后续能力。插件中心当前展示来源和官方/自定义状态；在信任库上线前，包签名成功不等同于发布者已受宿主信任。
 
 ### 13.4 仓库管理与异步 operation
 
-当前 MVP 的仓库刷新和安装写操作返回 operation 对象：
+当前仓库刷新和安装写操作返回 operation 对象：
 
 ```json
 {
@@ -607,23 +621,23 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 }
 ```
 
-客户端通过 `GET /api/plugin-center/v1/operations/{id}` 查询，也可用 `GET /api/plugin-center/v1/operations` 查看最近任务。当前状态只有 `queued/running/succeeded/failed`；成功详情可带顶层 `result`，失败 operation 的 `error` 当前是展示文本。当前 MVP 不提供 operation 取消、重启续跑或管理写请求 `Idempotency-Key`；服务重启会把未完成 operation 标记为 failed。
+客户端通过 `GET /api/plugin-center/v1/operations/{id}` 查询，也可用 `GET /api/plugin-center/v1/operations` 查看最近任务。当前状态只有 `queued/running/succeeded/failed`；成功详情可带顶层 `result`，失败 operation 的 `error` 当前是展示文本。当前实现不提供 operation 取消、重启续跑或管理写请求 `Idempotency-Key`；服务重启会把未完成 operation 明确标记为 `failed`，不会自动续跑或猜测成功。
 
 ## 14. 安装、升级与卸载生命周期
 
 ### 14.1 插件中心用户流程
 
-当前插件中心第一屏是“插件市场”，另有“已安装”和“仓库与开发”视图，不做营销页。市场展示名称、来源、版本、作者、能力原因和账号访问模式；已安装视图保留现有内置插件，并为用户插件提供启用/禁用、重新安装/更新和卸载操作。发布者信任、runtime 健康、插件日志和配置面板随签名与运行时阶段补齐。
+当前插件中心第一屏是“插件市场”，另有“已安装”和“仓库与开发”视图，不做营销页。市场展示名称、来源、版本、作者、能力原因和账号访问模式；已安装视图提供启用/停用、重新安装/更新、卸载和“运行时”面板。运行时面板可绑定 remote service、健康检查、加载声明式 UI state、调用 action、手动触发 job/event，并管理安装实例的 secret binding。
 
-当前 MVP 的“安装插件”使用连续步骤：
+当前“安装插件”流程使用连续步骤：
 
 1. 从聚合 catalog 选择 `repository_id + plugin_id + version`。
 2. 展示市场条目中的全部 capabilities/reasons、account_access、包摘要和官方/自定义来源，并保存该条目的 `consent_digest`。
 3. 用户一次性整体同意，不出现 host/root/quota/每日额度或逐操作审批控件。
 4. 调用 `POST /api/plugin-center/v1/installations`，提交 `permissions_accepted: true`、当前 `consent_digest` 和是否立即 `enable`；摘要不匹配时重新打开确认页。
-5. 使用返回的 `operation.id` 展示下载、SHA-256/manifest 校验、安全解压和写库进度；刷新页面后可从 operations 列表恢复查看。
+5. 使用返回的 `operation.id` 展示下载、SHA-256、ZIP/manifest/integrity/Ed25519 校验、安全解压和写库进度；刷新页面后可从 operations 列表恢复查看。
 
-包内签名链、跨进程崩溃恢复和本地 `.d115p` 上传属于后续增强。实现这些能力时，更新页必须显示旧/新版本的发布者、runtime、capabilities、reasons、account_access 和 UI 差异，任何披露变化都重新整体确认。
+本地 `.d115p` 上传、WASM 监督器和官方 SDK/CLI 仍属于后续发行物。远程包更新必须显示旧/新版本的 publisher、runtime、capabilities、reasons、account_access 和 UI 差异；任一披露变化都重新整体确认。
 
 ### 14.2 插件中心管理 API
 
@@ -638,27 +652,34 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 | `GET /api/plugin-center/v1/catalog` | 返回已启用仓库的完整聚合列表和每项 `consent_digest`；当前搜索/分页在前端完成 |
 | `POST /api/plugin-center/v1/installations` | 提交 `repository_id/plugin_id/version/permissions_accepted/consent_digest/enable` 并创建安装 operation |
 | `GET /api/plugin-center/v1/installations` | 列出安装记录、版本、能力、账号访问模式和启用状态 |
-| `POST /api/plugin-center/v1/installations/{installation_id}/enable` | 将安装记录标记为启用；当前不启动第三方 runtime |
-| `POST /api/plugin-center/v1/installations/{installation_id}/disable` | 将安装记录标记为禁用；完整令牌撤销/停止调度待 runtime 阶段实现 |
+| `POST /api/plugin-center/v1/installations/{installation_id}/enable` | 启用安装实例并恢复 runtime/Host API 资格 |
+| `POST /api/plugin-center/v1/installations/{installation_id}/disable` | 停用安装实例，拒绝新的 token、Broker 调用和 runtime 投递 |
 | `GET /api/plugin-center/v1/installations/{installation_id}/account-options` | 获取该安装记录可使用的主账号/备用账号安全摘要 |
+| `GET/PUT /api/plugin-center/v1/installations/{installation_id}/runtime` | 查看或绑定/解绑 remote runtime |
+| `POST /api/plugin-center/v1/installations/{installation_id}/runtime/health-check` | 通过签名 health endpoint 更新健康状态 |
+| `POST /api/plugin-center/v1/installations/{installation_id}/runtime/rotate-credentials` | 轮换 client/webhook secret，并只在响应中返回一次明文 |
+| `GET /api/plugin-center/v1/installations/{installation_id}/runtime/ui` | 返回已校验的 declarative UI、events、jobs 声明 |
+| `GET /api/plugin-center/v1/installations/{installation_id}/runtime/state` | 按 view 拉取 ETag/CAS 状态 |
+| `POST /api/plugin-center/v1/installations/{installation_id}/runtime/actions/{action}` | 调用声明式 UI action |
+| `POST /api/plugin-center/v1/installations/{installation_id}/runtime/jobs/{job}/trigger` | 手动触发已声明 job |
+| `POST /api/plugin-center/v1/installations/{installation_id}/runtime/events` | 手动向插件投递已声明事件 |
+| `GET/POST/DELETE /api/plugin-center/v1/installations/{installation_id}/secret-bindings` | 创建、查看非秘密投影和删除托管凭据 |
 | `DELETE /api/plugin-center/v1/installations/{installation_id}` | 卸载安装记录 |
 | `GET /api/plugin-center/v1/operations` | 列出最近的管理 operation |
 | `GET /api/plugin-center/v1/operations/{id}` | 查询单个 operation 进度和结果 |
 
-管理 API 只接受现有管理员认证，插件 token 不能调用。安装请求必须显式携带 `permissions_accepted: true` 和 catalog 当前 `consent_digest`；缺失时返回 `400`，摘要与刷新后的仓库快照不一致时返回 `409`。服务端保存 consent digest、capabilities/reasons/account_access 作为展示与审计依据，并从 HTTPS `package_url` 下载不超过 32 MiB 的包、核对包 SHA-256、检查 manifest 的 ID/version/capabilities/reasons/account_access 与确认页一致，在独立 staging 安全解压后写入新的唯一版本目录并保存安装记录。包内 integrity/Ed25519 签名验证、发布者信任、跨进程孤立目录回收和管理写请求幂等属于下一阶段；即使安装记录为 enabled，也不能把它描述成已具备完整 Host Broker/runtime 执行能力。
+管理 API 只接受现有管理员认证，插件 token 不能调用。安装请求必须显式携带 `permissions_accepted: true` 和 catalog 当前 `consent_digest`；缺失时返回 `400`，摘要与刷新后的仓库快照不一致时返回 `409`。服务端保存 consent digest、capabilities/reasons/account_access 作为展示与审计依据，从 HTTPS `package_url` 下载并核对包 SHA-256，在独立 staging 执行 ZIP、manifest、integrity、声明式 UI 和 Ed25519 signature 校验后写入唯一版本目录和安装记录。安装成功后，remote runtime 凭据由宿主生成并加密保存；用户必须在运行时面板绑定服务地址，健康检查通过后才会投递状态、action、job 或 event。
 
-### 14.3 后续完整安装目标
+### 14.3 安装校验与运行时生命周期边界
 
-1. 下载或上传到 staging，先限制压缩包总大小。
+1. 下载到 staging，先限制压缩包总大小。
 2. 完整遍历 ZIP 并验证路径、类型、文件数和解压后大小。
-3. 读取清单，验证 Schema、插件 ID、SemVer、宿主版本和 Plugin API 范围。
-4. 验证完整性清单、发布者签名、信任链和 WASM imports。
-5. 展示发布者、来源、全部能力、账号访问模式和风险差异。
-6. 用户整体确认后写入版本目录、确认快照和插件数据库。
-7. 原子切换 `current` 版本，启动运行时并执行健康检查。
-8. 健康检查失败时恢复旧版本、旧能力确认快照和 KV 快照。
+3. 读取并交叉验证 manifest、integrity 和 signature，执行 JCS + Ed25519 校验，同时检查插件 ID、SemVer、市场摘要、runtime/UI 声明、event/job ID、cron 和能力依赖。
+4. 展示来源、全部能力、账号访问模式和风险差异，用户整体确认后写入版本目录和安装记录。
+5. 远程 runtime 由管理员显式绑定，健康检查通过后才启动状态/action/job/event 投递。
+6. 发布者信任根/TOFU/吊销运营、兼容范围求值、WASM imports 和跨进程 `current` 原子切换属于后续发行物，不能由插件假定宿主已提供。
 
-上述八步是完整目标。当前 MVP 已实现 HTTPS 下载、市场 SHA-256、manifest 一致性检查、安全解压和安装记录，但尚未实现包内 integrity/Ed25519 信任、原子 current 切换、KV 快照、健康检查和第三方 runtime 执行。
+上述安装步骤是当前管理端的安全边界。安装后 runtime 生命周期由绑定、健康检查、启停和卸载共同控制；未绑定或健康失败时，管理界面仍可查看诊断，但 Host API/runtime 投递会返回明确的 `runtime_unbound` 或 `runtime_unavailable` 错误。WASM supervisor、跨进程回收和本地包上传不属于当前稳定公共 API。
 
 ### 14.4 后续更新目标
 
@@ -670,7 +691,7 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 
 ### 14.5 禁用与卸载
 
-当前 MVP 的 enable/disable/delete 作用于安装管理记录和账号解析资格。等 runtime 上线后，才追加以下副作用：
+enable/disable/delete 同时作用于安装管理记录、账号解析资格、runtime token 和调度/事件投递：
 
 禁用：
 
@@ -683,26 +704,33 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 
 - 默认删除代码和令牌，保留数据 30 天。
 - 用户可选择同时清理 KV、日志、任务和历史确认快照。
-- 审计摘要和发布者信任记录按系统保留策略保存。
+- 审计摘要按系统保留策略保存；发布者信任记录将在信任库能力上线后纳入独立保留策略。
 
 ## 15. 数据与审计
 
-当前 MVP 可在主配置库创建 `plugin_repositories`、`plugin_installations` 和 `plugin_operations`，优先支撑仓库、目录、安装确认和进度恢复。完整 runtime 上线后建议迁移或扩展为独立 `dian115_plugins.db`，避免插件任务和事件高频写入竞争主库。目标表包括：
+当前实现把插件管理、runtime 凭据、KV、job、outbox、runtime delivery、调度执行、托管秘密、订阅来源和审计记录持久化在宿主受管存储中，并按安装实例隔离。表名可能随部署迁移变化，开发者只能依赖 API，不得直接读取数据库。当前核心数据包括：
 
 | 表 | 用途 |
 |---|---|
-| `plugin_publishers` | 发布者公钥、信任来源和吊销状态 |
-| `plugin_packages` | 包版本、摘要、来源、兼容范围 |
+| `plugin_repositories` | 官方/自定义仓库、索引缓存和刷新状态 |
 | `plugin_installations` | 安装实例、当前版本、运行状态 |
-| `plugin_consents` | 安装/更新时确认的 capability、reason、account_access、digest 和修订号 |
+| `plugin_operations` | 仓库刷新和安装 operation 状态 |
+| `plugin_account115_refs` | 安装实例隔离的备用账号 opaque ref |
 | `plugin_credentials` | client secret 哈希、webhook secret 密文、撤销时间 |
+| `plugin_remote_runtimes` | remote runtime 协议、绑定和健康状态 |
+| `plugin_credential_deliveries` | 安装完成时的一次性凭据投递 |
 | `plugin_secret_bindings` | opaque credential ref、加密秘密、允许的 host 与注入策略 |
 | `plugin_kv` | 带版本号的插件 KV |
+| `plugin_idempotency` | Host API 幂等请求结果 |
 | `plugin_jobs` | 对外稳定 job、所有权、幂等键和结果 |
 | `plugin_outbox` | 副作用与事件的事务发件箱 |
-| `plugin_event_subscriptions` | 主题、游标和投递配置 |
-| `plugin_event_deliveries` | 重试、死信和最后错误 |
+| `plugin_runtime_deliveries` | action/job/event 投递、重试和结果 |
+| `plugin_schedule_runs` | cron 调度执行与恢复状态 |
+| `plugin_subscription_origins` | 插件创建订阅的归属关系 |
+| `plugin_broker_resources` | 文件、转存等 Broker opaque ref 与所有权 |
 | `plugin_audit_logs` | 脱敏调用摘要、耗时、结果和资源范围 |
+
+`plugin_publishers`、发布者 TOFU/吊销记录和独立市场信任库属于后续信任能力，不是当前数据库契约。
 
 `client_secret` 只保存抗离线破解的哈希；webhook secret 和第三方凭据必须使用操作系统保护的密钥或独立随机主密钥加密，并支持轮换。不能复用仓库中从固定字符串派生的配置加密密钥，也不能把解密密钥与 SQLite 文件放在同一备份中。
 
@@ -716,7 +744,7 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 
 ## 16. 完整目标状态机
 
-以下完整状态机随签名、runtime 和崩溃恢复阶段实现；当前 MVP 仅持久化安装记录的 `installed + enabled/disabled` 状态，并将重启时未完成的管理 operation 标记为 failed。
+当前实现持久化安装记录、runtime、delivery、job、schedule、outbox 和通知相关状态。各类记录的重启语义不同：调度/outbox 可按其状态恢复或重试，仓库刷新与插件安装 operation 则把重启前的 `queued/running` 明确标记为 `failed`，当前不会从中间步骤自动续跑。
 
 安装实例状态：
 
@@ -753,26 +781,26 @@ enabled -> quarantined -> disabled/enabled
 
 不建议复用现有管理员通用调用器。部分 AI 工具会以管理员身份调用内部 API，这种方式不适合作为第三方插件边界。
 
-## 18. 分阶段交付
+## 18. 分阶段交付与当前状态
 
-### 阶段 A：平台内核
+### 阶段 A：平台内核（已落地）
 
 - 清单与 Schema 校验。
-- 安全解包、签名、发布者信任和原子版本目录。
+- 安全解包、包摘要/manifest 校验和受管版本目录。
 - 插件数据库、状态机、能力确认快照、审计和管理 API。
 - 插件中心改为“内置插件 + 已安装插件”动态列表。
 
-验收：可安装一个无业务能力的签名包，完成启用、禁用、升级回滚和卸载。
+验收：可从官方或自定义仓库安装插件，完成能力确认、启用、停用、更新和卸载。
 
-### 阶段 B：外部服务插件 MVP
+### 阶段 B：外部服务插件（已落地）
 
 - 外部服务绑定、短期令牌和 webhook 签名。
 - Network Broker、KV、事件与任务中心。
 - 声明式 UI 基础组件。
 
-验收：Python/Node 示例插件可安装、显示配置页、调用已声明的网络能力并接收事件。
+验收：remote runtime 可绑定、健康检查、读取声明式 UI state，并通过签名协议接收 action/job/event。
 
-### 阶段 C：核心业务能力
+### 阶段 C：核心业务能力（已落地）
 
 - File Broker v1：只读、mkdir、rename、同 backend copy/move。
 - Transfer Broker。
@@ -781,16 +809,16 @@ enabled -> quarantined -> disabled/enabled
 
 验收：插件无法绕过 Host API 暴露根、opaque ref、账号绑定、对象所有权和系统级上限；不确定提交不会被重试；禁用后所有能力立即失效。
 
-### 阶段 C.1：可恢复文件写入与删除
+### 阶段 C.1：可恢复文件写入与删除（能力边界保留）
 
 - 本地与 CD2 统一的原子内容写入、ETag/CAS 和配额。
 - 宿主级可恢复 trash、恢复操作和保留策略。
 - `files.local.trash`、`files.cloud.trash` 上线；永久 purge 继续保留为管理员操作。
 
-### 阶段 D：WASM 与市场
+### 阶段 D：WASM、SDK 与发布工具（后续）
 
 - `wazero` runtime supervisor、ABI 和 Rust/TinyGo SDK。
-- 市场索引签名、更新检查、发布者撤销和风险提示。
+- 更完整的市场索引签名、发布者撤销和信任根运营。
 - SDK CLI：`init/lint/dev/pack/sign/publish`。
 
 验收：相同示例同时提供 WASM 与 HTTP 实现，能力与账号选择行为一致。

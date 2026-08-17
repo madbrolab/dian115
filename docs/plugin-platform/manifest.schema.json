@@ -384,7 +384,8 @@
             "events.subscribe",
             "scheduler.register",
             "storage.kv",
-            "secrets.use"
+            "secrets.use",
+            "notifications.plugin.send"
           ]
         },
         "reason": {

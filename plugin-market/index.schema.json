@@ -53,7 +53,8 @@
         "scheduler.register",
         "storage.kv",
         "secrets.use",
-        "accounts.115.use"
+        "accounts.115.use",
+        "notifications.plugin.send"
       ]
     },
     "plugin": {

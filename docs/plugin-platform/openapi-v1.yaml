@@ -1,12 +1,12 @@
 openapi: 3.1.0
 info:
   title: DIAN115 Plugin Platform API
-  version: 1.0.0-design
+  version: 1.0.0
   license:
     name: Terms to be defined before public SDK release
     identifier: LicenseRef-DIAN115
   description: |
-    Target Host API contract for user-installed plugins, plus the implemented
+    Host API contract for user-installed plugins, plus the implemented
     plugin-center management API. Host routes are isolated from administrator
     routes and accept only installation-scoped plugin tokens or a host-bound
     WASM identity. Management routes override the server and security scheme.
@@ -33,6 +33,8 @@ tags:
     description: Persistent asynchronous operation status and cancellation.
   - name: Storage
     description: Installation-scoped versioned key-value storage.
+  - name: Notifications
+    description: Plugin-owned task result notifications delivered through configured host channels.
   - name: Plugin Center
     description: Implemented administrator API for repositories, catalog, installations and operations.
 
@@ -78,6 +80,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/CapabilityListResponse'
         '401':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /notifications:
+    post:
+      tags: [Notifications]
+      summary: Send a plugin task result notification
+      description: |
+        Queues a notification through the host's configured notification
+        channels. The plugin display name is taken from the installed manifest;
+        it cannot be supplied or overridden by the request. The host validates
+        severity, length, HTML safety, per-plugin frequency and optional
+        dedupe_key. A disabled channel or quiet period is reported as an
+        explicit suppression rather than requiring an unbounded retry loop.
+      operationId: sendPluginNotification
+      x-dian115-capability: notifications.plugin.send
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginNotificationRequest'
+      responses:
+        '202':
+          description: Notification accepted for delivery
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginNotificationResponse'
+        '200':
+          description: Notification was deduplicated or explicitly suppressed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginNotificationResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '429':
           $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
@@ -481,6 +530,42 @@ paths:
         '401':
           $ref: '#/components/responses/Problem'
         '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Transfers]
+      summary: Convert a browsed cloud directory entry into an opaque 115 transfer target
+      description: |
+        The entry_ref must identify a current cloud directory returned by the File
+        Broker for the same installation and a still-live account selection. This
+        allows a plugin to browse beyond configured default targets without ever
+        receiving the underlying 115 CID. Cloud root CID 0 and file entries are rejected.
+      operationId: create115TransferTargetFromEntry
+      x-dian115-capability: transfer.115.create
+      x-dian115-capability-any-of: [files.cloud.read, files.cloud.write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferTargetCreateRequest'
+      responses:
+        '201':
+          description: Transfer target created from the selected cloud directory
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferTargetResponse'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
           $ref: '#/components/responses/Problem'
         default:
           $ref: '#/components/responses/Problem'
@@ -1050,6 +1135,139 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /kv:
+    get:
+      tags: [Storage]
+      summary: List installation-scoped KV entries
+      operationId: listKVValues
+      x-dian115-capability: storage.kv
+      parameters:
+        - name: prefix
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 160
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 160
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 100
+      responses:
+        '200':
+          description: KV entries and an optional cursor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KVListResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /kv/{key}:
+    parameters:
+      - $ref: '#/components/parameters/KVKeyPath'
+    get:
+      tags: [Storage]
+      summary: Read a KV entry using the canonical `/kv` alias
+      operationId: getKVValue
+      x-dian115-capability: storage.kv
+      responses:
+        '200':
+          description: Stored value
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KVEntryResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      tags: [Storage]
+      summary: Create or replace a KV entry using the canonical `/kv` alias
+      operationId: putKVValue
+      x-dian115-capability: storage.kv
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/OptionalIfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [value]
+              properties:
+                value: {}
+      responses:
+        '200':
+          description: Value stored
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KVEntryResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '412':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [Storage]
+      summary: Delete a KV entry using the canonical `/kv` alias
+      operationId: deleteKVValue
+      x-dian115-capability: storage.kv
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/IfMatch'
+      responses:
+        '200':
+          description: Entry deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KVDeleteResponse'
+        '401':
+          $ref: '#/components/responses/Problem'
+        '403':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '412':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
   /api/plugin-center/v1/repositories:
     servers:
       - url: /
@@ -1155,7 +1373,7 @@ paths:
     get:
       tags: [Plugin Center]
       summary: List the aggregated catalog snapshot
-      description: The current MVP returns the full sorted list; search and pagination are client-side.
+      description: Returns the full sorted catalog snapshot; search and pagination are client-side.
       operationId: listPluginCatalog
       security:
         - AdminBearer: []
@@ -1254,7 +1472,7 @@ paths:
     post:
       tags: [Plugin Center]
       summary: Mark an installation enabled
-      description: The current MVP updates installation state; third-party runtime startup is not implemented.
+      description: Enables Host API authentication, runtime delivery eligibility, and declared schedules while invalidating previously issued tokens through a capability revision bump.
       operationId: enablePluginInstallation
       security:
         - AdminBearer: []
@@ -1278,7 +1496,7 @@ paths:
     post:
       tags: [Plugin Center]
       summary: Mark an installation disabled
-      description: The current MVP updates installation state; runtime token revocation starts with the Host runtime phase.
+      description: Disables new Host API and runtime delivery access, revokes previously issued tokens through a capability revision bump, and reconciles declared schedules.
       operationId: disablePluginInstallation
       security:
         - AdminBearer: []
@@ -1312,6 +1530,410 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PluginAccountOptionListResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    get:
+      tags: [Plugin Center]
+      summary: Get the administrator-visible remote runtime binding
+      operationId: getPluginRuntime
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Runtime binding without secret material
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+    put:
+      tags: [Plugin Center]
+      summary: Bind or unbind a remote plugin runtime
+      operationId: bindPluginRuntime
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginRuntimeBindRequest'
+      responses:
+        '200':
+          description: Updated runtime binding
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/bind:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    post:
+      tags: [Plugin Center]
+      summary: Compatibility alias for binding a remote runtime
+      operationId: bindPluginRuntimeAlias
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginRuntimeBindRequest'
+      responses:
+        '200':
+          description: Updated runtime binding
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/rotate-credentials:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    post:
+      tags: [Plugin Center]
+      summary: Rotate one remote runtime credential bundle
+      description: Plaintext client and webhook secrets are returned only in this response and are not persisted as plaintext.
+      operationId: rotatePluginRuntimeCredentials
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: New one-time credentials and the public runtime projection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeCredentialsResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/health-check:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    post:
+      tags: [Plugin Center]
+      summary: Perform a signed remote runtime health check
+      operationId: healthCheckPluginRuntime
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Health result and updated runtime projection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeHealthResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        '502':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/ui:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    get:
+      tags: [Plugin Center]
+      summary: Read the validated declarative UI and callback declarations
+      description: The response contains package-declared UI metadata, event topics and scheduled jobs. It never includes runtime secrets or installation paths.
+      operationId: getPluginRuntimeUI
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Declarative UI and callback declarations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeUIResponse'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/state:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    get:
+      tags: [Plugin Center]
+      summary: Load one declarative UI state view from a bound runtime
+      operationId: getPluginRuntimeState
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: view
+          in: query
+          required: false
+          schema:
+            type: string
+            pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$'
+            default: main
+        - name: If-None-Match
+          in: header
+          required: false
+          schema:
+            type: string
+            pattern: '^"[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*"$'
+      responses:
+        '200':
+          description: State envelope returned by the remote runtime
+          headers:
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeStateEnvelope'
+        '304':
+          description: State is unchanged for the supplied ETag
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        '502':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/actions/{action}:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+      - name: action
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$'
+    post:
+      tags: [Plugin Center]
+      summary: Invoke one action declared by the installed UI schema
+      operationId: invokePluginRuntimeAction
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginRuntimeActionRequest'
+      responses:
+        '200':
+          description: Action result, including replay information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeCallbackResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        '502':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/jobs/{job}/trigger:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+      - name: job
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$'
+    post:
+      tags: [Plugin Center]
+      summary: Manually trigger one manifest-declared scheduled job
+      operationId: triggerPluginRuntimeJob
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginRuntimeJobTriggerRequest'
+      responses:
+        '200':
+          description: Job callback result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeCallbackResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        '502':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/runtime/events:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    post:
+      tags: [Plugin Center]
+      summary: Deliver one manifest-declared event to a remote runtime
+      operationId: sendPluginRuntimeEvent
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginRuntimeEventRequest'
+      responses:
+        '200':
+          description: Event callback result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginRuntimeCallbackResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        '502':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/secret-bindings:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    get:
+      tags: [Plugin Center]
+      summary: List non-secret projections of installation-scoped credential bindings
+      operationId: listPluginSecretBindings
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Credential binding projections; plaintext values are never returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginSecretBindingListResponse'
+        '403':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+    post:
+      tags: [Plugin Center]
+      summary: Create an encrypted installation-scoped credential binding
+      operationId: createPluginSecretBinding
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginSecretBindingCreateRequest'
+      responses:
+        '201':
+          description: Created binding projection
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginSecretBindingResponse'
+        '400':
+          $ref: '#/components/responses/ManagementError'
+        '403':
+          $ref: '#/components/responses/ManagementError'
+        '404':
+          $ref: '#/components/responses/ManagementError'
+        '409':
+          $ref: '#/components/responses/ManagementError'
+        default:
+          $ref: '#/components/responses/ManagementError'
+
+  /api/plugin-center/v1/installations/{installation_id}/secret-bindings/{credential_ref}:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+      - name: credential_ref
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: '^cred_[A-Za-z0-9_-]+$'
+    delete:
+      tags: [Plugin Center]
+      summary: Delete an installation-scoped credential binding
+      operationId: deletePluginSecretBinding
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Binding deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ManagementSuccessResponse'
+        '403':
+          $ref: '#/components/responses/ManagementError'
         '404':
           $ref: '#/components/responses/ManagementError'
         default:
@@ -1488,6 +2110,17 @@ components:
         minLength: 1
         maxLength: 160
         pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$'
+    KVKeyPath:
+      name: key
+      in: path
+      required: true
+      allowReserved: true
+      description: Installation-scoped KV key. The Host API accepts portable slash-separated keys; `..`, leading/trailing slash and control characters are rejected.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 160
+        pattern: '^(?!.*\.\.)[^/?#\x00-\x20]+$'
     RepositoryIdPath:
       name: repository_id
       in: path
@@ -1815,6 +2448,9 @@ components:
         operation:
           $ref: '#/components/schemas/PluginOperation'
         result: {}
+        credentials:
+          description: One-time plaintext remote runtime credentials returned only on the first successful read of an install operation.
+          $ref: '#/components/schemas/PluginRuntimeCredentials'
 
     PluginUninstallResponse:
       type: object
@@ -1845,6 +2481,299 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PluginAccountOption'
+
+    PluginRuntime:
+      type: object
+      additionalProperties: false
+      required: [installation_id, runtime_kind, protocol, health_path, event_path, action_path, state_path, job_path, timeout_ms, bound, health_status]
+      properties:
+        installation_id: { type: integer, minimum: 1 }
+        runtime_kind: { type: string, const: remote }
+        protocol: { type: string, const: dian115-http-plugin@1 }
+        base_url: { type: string, format: uri }
+        health_path: { type: string, pattern: '^/[^?#]*$' }
+        event_path: { type: string, pattern: '^/[^?#]*$' }
+        action_path: { type: string, pattern: '^/[^?#]*$' }
+        state_path: { type: string, pattern: '^/[^?#]*$' }
+        job_path: { type: string, pattern: '^/[^?#]*$' }
+        timeout_ms: { type: integer, minimum: 100, maximum: 30000 }
+        client_id: { type: string }
+        capability_revision: { type: integer, minimum: 1 }
+        bound: { type: boolean }
+        health_status: { type: string, enum: [healthy, unhealthy, unknown, unbound] }
+        health_error: { type: string }
+        bound_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+        health_checked_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+        credentials_rotated_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+        created_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+        updated_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+
+    PluginRuntimeResponse:
+      type: object
+      additionalProperties: false
+      required: [runtime]
+      properties:
+        runtime:
+          $ref: '#/components/schemas/PluginRuntime'
+
+    PluginRuntimeBindRequest:
+      type: object
+      additionalProperties: false
+      required: [base_url]
+      properties:
+        base_url:
+          type: string
+          description: HTTPS absolute URL; HTTP is accepted only for localhost or loopback development runtimes. Empty string unbinds.
+
+    PluginRuntimeCredentials:
+      type: object
+      additionalProperties: false
+      required: [client_id, client_secret, webhook_secret, capability_revision]
+      properties:
+        client_id: { type: string }
+        client_secret: { type: string }
+        webhook_secret: { type: string }
+        capability_revision: { type: integer, minimum: 1 }
+
+    PluginRuntimeCredentialsResponse:
+      type: object
+      additionalProperties: false
+      required: [runtime, credentials]
+      properties:
+        runtime:
+          $ref: '#/components/schemas/PluginRuntime'
+        credentials:
+          $ref: '#/components/schemas/PluginRuntimeCredentials'
+
+    PluginRuntimeHealthResponse:
+      type: object
+      additionalProperties: false
+      required: [runtime, health]
+      properties:
+        runtime:
+          $ref: '#/components/schemas/PluginRuntime'
+        health:
+          type: object
+          additionalProperties: false
+          required: [status]
+          properties:
+            status: { type: string, const: ok }
+            protocol: { type: string }
+            version: { type: string }
+
+    PluginRuntimeJobDeclaration:
+      type: object
+      additionalProperties: false
+      required: [id, handler]
+      properties:
+        id: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        handler: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        default_schedule: { type: string, maxLength: 120 }
+        allow_overlap: { type: boolean }
+
+    PluginUIAction:
+      type: object
+      additionalProperties: true
+      required: [id, label]
+      properties:
+        id: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        label: { type: string, minLength: 1, maxLength: 100 }
+        icon: { type: string }
+        style: { type: string, enum: [primary, secondary, danger] }
+        confirm: { type: object }
+        requires_capabilities:
+          type: array
+          items: { $ref: '#/components/schemas/CapabilityName' }
+
+    PluginUISection:
+      type: object
+      additionalProperties: true
+      required: [type]
+      properties:
+        type: { type: string, enum: [status, form, table, log, progress, actions] }
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        source: { type: string }
+        fields: { type: array, items: { type: object } }
+        actions: { type: array, items: { $ref: '#/components/schemas/PluginUIAction' } }
+        row_actions: { type: array, items: { $ref: '#/components/schemas/PluginUIAction' } }
+        requires_capabilities:
+          type: array
+          items: { $ref: '#/components/schemas/CapabilityName' }
+
+    PluginUIView:
+      type: object
+      additionalProperties: true
+      required: [id, title, sections]
+      properties:
+        id: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string }
+        sections: { type: array, items: { $ref: '#/components/schemas/PluginUISection' } }
+
+    PluginUISchema:
+      type: object
+      additionalProperties: true
+      required: [schema_version, views]
+      properties:
+        schema_version: { type: integer, const: 1 }
+        navigation: { type: object }
+        views: { type: array, items: { $ref: '#/components/schemas/PluginUIView' } }
+
+    PluginRuntimeUIResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        ui:
+          anyOf:
+            - $ref: '#/components/schemas/PluginUISchema'
+            - type: 'null'
+        events:
+          type: array
+          uniqueItems: true
+          items: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        jobs:
+          type: array
+          items: { $ref: '#/components/schemas/PluginRuntimeJobDeclaration' }
+        runtime:
+          $ref: '#/components/schemas/PluginRuntime'
+
+    PluginRuntimeStateEnvelope:
+      type: object
+      additionalProperties: false
+      required: [state_version, state]
+      properties:
+        state_version: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        state:
+          type: object
+          additionalProperties: true
+
+    PluginRuntimeActionRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        invocation_id: { type: string, pattern: '^inv_[A-Za-z0-9_-]+$' }
+        input: { type: object, additionalProperties: true }
+        context:
+          type: object
+          additionalProperties: false
+          properties:
+            locale: { type: string, maxLength: 32 }
+            timezone: { type: string, maxLength: 80 }
+
+    PluginRuntimeJobTriggerRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        invocation_id: { type: string, pattern: '^inv_[A-Za-z0-9_-]+$' }
+        scheduled_for: { type: string, format: date-time }
+        trigger: { type: string, enum: [manual, schedule] }
+        attempt: { type: integer, minimum: 1, maximum: 32 }
+
+    PluginRuntimeEventRequest:
+      type: object
+      additionalProperties: false
+      required: [topic]
+      properties:
+        event_id: { type: string, pattern: '^evt_[A-Za-z0-9_-]+$' }
+        topic: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        occurred_at: { type: string, format: date-time }
+        data: { type: object, additionalProperties: true }
+
+    PluginRuntimeCallbackResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        invocation_id: { type: string, pattern: '^inv_[A-Za-z0-9_-]+$' }
+        event_id: { type: string, pattern: '^evt_[A-Za-z0-9_-]+$' }
+        replayed: { type: boolean }
+        result: { type: object, additionalProperties: true }
+
+    PluginSecretBinding:
+      type: object
+      additionalProperties: false
+      required: [credential_ref, host, method, path_prefix, location, name, enabled]
+      properties:
+        credential_ref: { type: string, pattern: '^cred_[A-Za-z0-9_-]+$' }
+        label: { type: string, maxLength: 120 }
+        host: { type: string, maxLength: 253 }
+        method: { type: string, enum: ['*', GET, HEAD, POST, PUT, PATCH, DELETE] }
+        path_prefix: { type: string, pattern: '^/(?!.*\.\.)(?!.*//)(?!.*[?#])(?!.*\\)(?!.*[\u0000-\u0020]).{0,255}$' }
+        location: { type: string, enum: [header, query, body] }
+        name: { type: string, maxLength: 120 }
+        enabled: { type: boolean }
+        created_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+        updated_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+
+    PluginSecretBindingCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [host, location, name, secret]
+      properties:
+        label: { type: string, maxLength: 120 }
+        host: { type: string, maxLength: 253 }
+        method: { type: string, enum: ['*', GET, HEAD, POST, PUT, PATCH, DELETE], default: '*' }
+        path_prefix: { type: string, pattern: '^/(?!.*\.\.)(?!.*//)(?!.*\\)(?!.*[\u0000-\u0020]).{0,255}$', default: / }
+        location: { type: string, enum: [header, query, body] }
+        name: { type: string, maxLength: 120 }
+        prefix: { type: string, maxLength: 256 }
+        suffix: { type: string, maxLength: 256 }
+        secret: { type: string, minLength: 8, maxLength: 4096, writeOnly: true }
+
+    PluginSecretBindingResponse:
+      type: object
+      additionalProperties: false
+      required: [binding]
+      properties:
+        binding:
+          $ref: '#/components/schemas/PluginSecretBinding'
+
+    PluginSecretBindingListResponse:
+      type: object
+      additionalProperties: false
+      required: [bindings]
+      properties:
+        bindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginSecretBinding'
+
+    KVListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/StorageValue'
+            next_cursor:
+              type: [string, 'null']
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    KVEntryResponse:
+      $ref: '#/components/schemas/StorageResponse'
+
+    KVDeleteResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [deleted, key]
+          properties:
+            deleted: { type: boolean }
+            key: { type: string }
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
 
     ResponseMeta:
       type: object
@@ -1940,6 +2869,7 @@ components:
         - storage.kv
         - secrets.use
         - accounts.115.use
+        - notifications.plugin.send
 
     AccountAccessMode:
       type: string
@@ -1989,6 +2919,59 @@ components:
               uniqueItems: true
               items:
                 $ref: '#/components/schemas/AccountAccessMode'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    PluginNotificationRequest:
+      type: object
+      additionalProperties: false
+      required: [level, title, body]
+      properties:
+        level:
+          type: string
+          enum: [info, success, warning, error]
+          description: Host-rendered severity of the plugin result.
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        body:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        job_ref:
+          type: string
+          maxLength: 128
+          description: Optional opaque Host API job reference.
+        dedupe_key:
+          type: string
+          maxLength: 200
+          description: Optional installation-scoped replay key retained for ten minutes.
+
+    PluginNotificationResult:
+      type: object
+      additionalProperties: false
+      required: [event, accepted]
+      properties:
+        event:
+          type: string
+          const: plugin_notification_message
+        accepted:
+          type: boolean
+        deduplicated:
+          type: boolean
+        suppressed:
+          type: boolean
+        suppression_reason:
+          type: string
+
+    PluginNotificationResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/PluginNotificationResult'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
     AccountSelectorMode:
@@ -2462,6 +3445,26 @@ components:
           $ref: '#/components/schemas/TransferOperation'
         account_selection_ref:
           $ref: '#/components/schemas/AccountSelectionRef'
+
+    TransferTargetCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [operation, entry_ref]
+      properties:
+        operation:
+          $ref: '#/components/schemas/TransferOperation'
+        entry_ref:
+          $ref: '#/components/schemas/EntryRef'
+
+    TransferTargetResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/TransferTarget'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
 
     TransferTargetListResponse:
       type: object
