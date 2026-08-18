@@ -42,6 +42,7 @@
         "files.local.write",
         "files.cloud.read",
         "files.cloud.write",
+        "files.watch",
         "transfer.115.read",
         "transfer.115.create",
         "transfer.115.cancel",
@@ -129,7 +130,10 @@
             },
             "required": ["capabilities"]
           },
-          "then": { "required": ["account_access"] },
+          "then": {
+            "required": ["account_access"],
+            "properties": { "account_access": { "type": "array" } }
+          },
           "else": { "not": { "required": ["account_access"] } }
         },
         {
@@ -143,8 +147,6 @@
                   "properties": {
                     "capability": {
                       "enum": [
-                        "files.cloud.read",
-                        "files.cloud.write",
                         "transfer.115.read",
                         "transfer.115.create",
                         "transfer.115.cancel"
@@ -159,6 +161,7 @@
           "then": {
             "required": ["account_access"],
             "properties": {
+              "account_access": { "type": "array" },
               "capabilities": {
                 "type": "array",
                 "contains": {

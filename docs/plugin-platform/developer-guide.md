@@ -48,7 +48,8 @@ my-plugin/
 - 每个 capability 必须说明 `reason`；安装页会原样展示，避免使用模糊的“正常运行所需”。
 - 所有 capability 在安装/更新时一次性整体同意，不存在 required/optional、host/root/quota 或逐操作审批。
 - 使用 `accounts.115.use` 时必须提供非空 `permissions.account_access`。
-- 声明任一 `files.cloud.*` 或 `transfer.115.*` 时必须同时声明 `accounts.115.use` 和非空 `account_access`。
+- 声明任一 `transfer.115.*` 时必须同时声明 `accounts.115.use` 和非空 `account_access`。仅访问 CD2 挂载根的插件可以只声明 `files.cloud.*`；需要浏览 115 账号根时再声明账号能力并创建账号选择。
+- 声明 `files.watch` 时必须同时声明 `events.subscribe` 和至少一项 `files.local.read` 或 `files.cloud.read`。
 - 插件 ID、发布者密钥和 runtime kind 不能在普通升级中更改。
 - JSON Schema 负责结构校验，宿主和 CLI 还会校验重复 capability、账号依赖、events/jobs 与能力类别的一致性；未知能力会失败。
 
@@ -120,7 +121,7 @@ my-plugin/
 
 安装确认是全有或全无：用户不能只批准某个 host、目录、账号或单次操作。当前运行时只检查 endpoint 的 `x-dian115-capability` 是否在已确认的 manifest 中，以及 selector 是否属于 `account_access`。Host API 仍执行对所有插件一致的输入校验、SSRF 阻断、opaque ref 归属、账号绑定、幂等、并发和响应大小上限。
 
-安装器会做跨文件和跨能力校验：UI 的 `requires_capabilities` 必须已出现在同一 manifest；有 `events` 时必须声明 `events.subscribe`；有 `jobs` 时必须声明 `scheduler.register`；任一 `files.cloud.*` 或 `transfer.115.*` 必须同时声明 `accounts.115.use` 和非空 `account_access`；`jobs[].id` 必须全局唯一；WASM 入口必须存在并通过包校验。更新 capability、reason、account_access、runtime 或 UI 声明时，旧 `consent_digest` 不可复用。
+安装器会做跨文件和跨能力校验：UI 的 `requires_capabilities` 必须已出现在同一 manifest；有 `events` 时必须声明 `events.subscribe`；有 `jobs` 时必须声明 `scheduler.register`；`files.watch` 必须同时声明 `events.subscribe` 和至少一项 `files.local.read`/`files.cloud.read`；任一 `transfer.115.*` 必须同时声明 `accounts.115.use` 和非空 `account_access`；`jobs[].id` 必须全局唯一；WASM 入口必须存在并通过包校验。更新 capability、reason、account_access、runtime 或 UI 声明时，旧 `consent_digest` 不可复用。
 
 插件可通过宿主 ABI 的 `capabilities` 操作获取当前已确认的能力快照和 `capability_revision`。更新、禁用或卸载会立即停止模块并拒绝新的 Host API 调用。
 
@@ -179,6 +180,10 @@ WASM 模块由宿主自动绑定安装实例身份，不需要 token、base URL�
 不要把账号 Cookie、令牌、秘密或完整本地路径写入插件日志、KV 或通知内容。
 
 下文为便于查阅，继续用 `METHOD /plugin-api/v1/...` 表示 Host API 操作。对本地插件而言，这不是一次网络请求：SDK 会把 method、path、headers 和 body 编码进 `dian115.host_call`，由宿主在进程内执行同一套校验和 Broker 逻辑。
+
+### 5.1.1 插件日志
+
+插件可以使用 WASM 导入 `dian115.log(ptr, len)`，或调用 `POST /plugin-api/v1/logs` 写入 `{level,message,fields}`。日志始终隔离到当前安装实例；宿主会清理控制字符并脱敏常见凭据字段。不要提交 Cookie、token、密码、分享链接或完整本地路径。单条消息和 fields 对象各限制 8 KiB，每个安装最多保留 5000 条或 4 MiB，默认保留 14 天；超限时从最旧记录开始裁剪。管理员可通过 `/api/plugin-center/v1/installations/{installation_id}/logs` 查询或清空。
 
 ### 5.2 幂等
 
@@ -356,7 +361,7 @@ GET /plugin-api/v1/files/roots
 }
 ```
 
-`root_id` 和 `root_entry_ref` 都是安装实例作用域内的 opaque ID。列表只包含 Host API 配置允许暴露的根，不做每插件 root 绑定；不要按 name 或列表顺序猜测，也不要缓存或推断宿主绝对路径、CD2 path 或 CID。云端根还会绑定一个 `account_selection_ref`，不能与其他账号的 entry ref 混用。
+`root_id` 和 `root_entry_ref` 都是安装实例作用域内的 opaque ID。列表只包含 Host API 配置允许暴露的根，不做每插件 root 绑定；不要按 name 或列表顺序猜测，也不要缓存或推断宿主绝对路径、CD2 path 或 CID。只有 115 账号根会绑定 `account_selection_ref`，不能与其他账号的 entry ref 混用；CD2 挂载根不绑定 115 账号选择。
 
 ### 7.2 列目录
 
@@ -451,10 +456,41 @@ Content-Type: application/json
 }
 ```
 
-- v1 只支持同 backend copy/move，默认冲突策略为 `fail`，可选 `rename`，不提供默认覆盖。
+- 本地根内的路径会按实际路径识别 `cd2_mount_prefix`：源和目标都在该前缀下时，list/mkdir/rename/copy/move 由宿主通过 CD2 gRPC 执行；任一端不在前缀下时，整次 copy/move 使用两端已暴露的容器挂载路径。插件不能取得 CD2 路径或凭据。
+- CD2 文件内容读取在 v1 不开放；插件可列出和管理目录及文件条目，但不能借此取得 CD2 下载地址或 Token。
+- 115 账号目录的 `backend` 为 `115`，CD2 挂载目录的 `backend` 为 `cd2`；两者不可混用。115 copy/move 仍要求同一账号选择和同一云端根。本地/CD2 挂载路径可跨已暴露 root 操作，但宿主会逐端复核根和读写权限。
 - CD2 move 必须使用显式 conflict policy；本地 move 必须在执行时复核并安全预留同名目标，不能直接依赖平台相关的 rename 覆盖行为。
 - 本地根检查 `files.local.read/write`，CD2 根检查 `files.cloud.read/write`；只按类别判断，不再检查 manifest root alias。
 - v1 暂不开放删除。宿主完成可恢复 trash 后才会增加 `files.local.trash`/`files.cloud.trash`；永久 purge 不属于 Plugin API v1。
+
+### 7.6 目录监控与后台轮询
+
+目录监控使用 `files.watch`，并且 manifest 必须同时声明 `events.subscribe` 以及目标后端所需的读取能力。监控由 DIAN115 主进程持久化和执行，插件不启动进程、容器或独立服务。
+
+1. 先通过 File Broker 浏览目录，得到本安装实例范围内的 opaque `directory_ref`；不能提交宿主绝对路径、CD2 内部路径、CID 或凭据。
+2. 在 manifest `events` 声明一个事件主题，例如 `files.changed`；主题必须使用小写字母、数字、点、下划线或连字符，且不超过 80 个字符。
+3. 调用 `POST /plugin-api/v1/files/watches` 创建监控。CD2 挂载路径由宿主通过 CloudDrive2 gRPC 的 `GetSubFiles` 轮询；普通本地路径使用文件系统监听，并保留轮询校验；115 账号目录使用所绑定账号的目录 API 轮询。
+
+```http
+POST /plugin-api/v1/files/watches
+Content-Type: application/json
+
+{
+  "directory_ref": "fe_01KWATCH...",
+  "event_topic": "files.changed",
+  "interval_seconds": 30,
+  "recursive": true
+}
+```
+
+创建结果返回安装实例私有的 `watch_ref`。变更以已声明的 runtime event 交付，事件 `payload.data` 含 `watch_ref`、`root_id`、`directory_ref`、`backend`、`occurred_at` 和按相对显示名列出的 `added`、`removed`、`modified`；变更过多时 `truncated=true`，极端批量变化可能只保留 `added_count`、`removed_count`、`modified_count`。插件应重新调用 File Broker 获取完整目录，按外层 `invocation_id`（与 `payload.id` 相同）去重，并把目录重新浏览作为截断或交付恢复后的状态校准方式。宿主限制为每插件最多 32 个监控、每个快照最多 4096 项、最多 16 层递归、5 秒至 24 小时轮询周期和 256 KiB 事件大小；超限或后端暂不可用会记入该监控的 `last_error`，不会将路径或凭据泄露给插件。
+
+监控会在插件启用后恢复，并在禁用、卸载、删除监控或主程序关闭时停止。115 目录监控保留创建时已绑定的账号上下文，短期 `account_selection_ref` 过期不会改变既有监控的账号；账号本身不可用时监控记录错误并等待后续轮询。
+
+```http
+GET    /plugin-api/v1/files/watches
+DELETE /plugin-api/v1/files/watches/fw_01KWATCH...
+```
 
 ## 8. 115 转存与离线
 
@@ -813,18 +849,21 @@ Content-Type: application/json
 
 ```json
 {
-  "event_id": "evt_01K...",
-  "topic": "transfer.completed",
-  "occurred_at": "2026-08-17T02:20:04Z",
-  "installation_id": "pli_01K...",
-  "data": {
-    "job_ref": "job_01K...",
-    "status": "succeeded"
+  "op": "event",
+  "invocation_id": "evt_01K...",
+  "payload": {
+    "id": "evt_01K...",
+    "topic": "transfer.completed",
+    "occurred_at": "2026-08-17T02:20:04Z",
+    "data": {
+      "job_ref": "job_01K...",
+      "status": "succeeded"
+    }
   }
 }
 ```
 
-事件至少投递一次。处理流程应先用 `event_id` 去重，再执行副作用。
+`invocation_id` 与 `payload.id` 是同一个安装实例作用域内的事件 ID。处理流程应先用该 ID 去重，再执行副作用；本地 ABI 不向插件暴露安装记录 ID。
 
 ### 10.2 WASM 事件入口
 
@@ -840,7 +879,7 @@ async fn on_event(event: dian115::Event) -> Result<(), dian115::Error> {
 }
 ```
 
-底层事件仍是至少一次语义。插件应使用安装实例 KV 按 `event_id` 去重，返回成功后宿主记录 delivery；发生 trap、超时或可重试错误时，宿主按同一事件 ID 重试。SDK 同时应提供 `on_job(job_id, invocation)`、`on_action(action_id, input)` 和 `load_ui_state(view_id)` 高层入口。
+底层事件使用持久化 delivery ID。插件应使用安装实例 KV 按 `invocation_id` 去重，返回成功后宿主记录 delivery；同一事件重试时 `invocation_id` 与 `payload.id` 保持不变。SDK 同时应提供 `on_job(job_id, invocation)`、`on_action(action_id, input)` 和 `load_ui_state(view_id)` 高层入口。
 
 ## 11. 声明式 UI
 
@@ -956,7 +995,7 @@ DIAN115 从安装目录加载 manifest 指定的 WASM 入口。插件没有服�
 }
 ```
 
-宿主只会调用 manifest 或 UI Schema 已声明的 ID。插件必须按 `invocation_id`/`event_id` 去重；同一 ID 的重试必须返回与第一次相容的结果。
+宿主只会调用 manifest 或 UI Schema 已声明的 ID。插件必须按外层 `invocation_id` 去重；事件信封中的 `payload.id` 与它相同。同一 ID 的重试必须返回与第一次相容的结果。
 
 ### 12.2 响应信封
 
@@ -1111,7 +1150,7 @@ releases/
 2. `sha256` 是完整 `.d115p` 下载字节的摘要，不是 `manifest.json` 或 `integrity.json` 的摘要。
 3. 索引中的每项 capability 必须是包含 `capability` 和 1-240 字符 `reason` 的对象；不接受字符串简写或 required/optional 分组。
 4. 索引中的 `id/version/capabilities/reasons/account_access` 必须与包内 manifest 完全一致。
-5. 任一 `files.cloud.*` 或 `transfer.115.*` 必须同时列出 `accounts.115.use` 和非空 `account_access`；市场校验和安装器都会拒绝不一致条目。
+5. 任一 `transfer.115.*` 必须同时列出 `accounts.115.use` 和非空 `account_access`；市场校验和安装器都会拒绝不一致条目。CD2-only 插件声明 `files.cloud.*` 时不需要虚假申请 115 账号权限；若插件还要浏览 115 账号根，则应显式声明并使用账号选择接口。
 6. 当前安装器强制验证 HTTPS 下载、完整包 SHA-256、ZIP 安全性、manifest/integrity 完整覆盖、RFC 8785 JCS、Ed25519 signature、publisher key 一致性，以及 runtime/UI/event/job/cron 与 capability 声明；发布者信任根、TOFU/吊销和兼容范围求值仍未作为稳定能力提供。包签名通过只证明内容由包内公钥签署，不等同于该发布者已被宿主信任。
 7. GitHub 仓库主页固定解析 `main/plugin-market/index.json`；非 `main` 分支应让用户直接添加对应的 HTTPS Raw `index.json` 地址。正式发布建议用 CI 原子更新索引。
 
@@ -1168,12 +1207,12 @@ releases/
 
 - 只声明实际会调用的能力，并为每项提供用户能理解的具体 reason。
 - 所有写调用使用稳定幂等键。
-- 事件按 `event_id` 去重，handler 可重复执行。
+- 事件按外层 `invocation_id`（与 `payload.id` 相同）去重，handler 可重复执行。
 - `429/5xx` 使用有上限的指数退避和 jitter。
 - 不把 token、secret、分享码、接收码、离线链接或用户文件内容写入日志。
 - 不在本地缓存宿主绝对路径、CID、Cookie、display path 或内部数据库 ID；业务操作只使用 opaque ref。
 - 正确处理 invocation 失效、插件禁用、宿主重启和 job `attention_required`。
-- 本地 ABI 事件按 `event_id` 去重并处理重放。
+- 本地 ABI 事件按 `invocation_id` 去重并处理重放。
 - 文件重命名使用 revision 条件；v1 不假设内容写入或删除能力存在。
 - 升级 migration 可重复、可失败回滚。
 - UI 文本适合移动端，不依赖自定义 JavaScript。

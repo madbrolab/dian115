@@ -846,6 +846,7 @@
           "files.local.write",
           "files.cloud.read",
           "files.cloud.write",
+          "files.watch",
           "accounts.115.use",
           "transfer.115.read",
           "transfer.115.create",

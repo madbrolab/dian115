@@ -105,6 +105,35 @@ paths:
         default:
           $ref: '#/components/responses/Problem'
 
+  /logs:
+    post:
+      tags: [Runtime]
+      summary: Append an installation-scoped plugin log record
+      description: |
+        Logging is available to every authenticated plugin installation and
+        does not require a capability declaration. Message and serialized
+        fields are each limited to 8 KiB after host sanitization. Records are
+        isolated per installation and pruned to 5000 entries, 4 MiB and a
+        14-day retention window.
+      operationId: appendPluginLog
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginLogAppendRequest'
+      responses:
+        '202':
+          description: Log accepted and persisted in the current installation namespace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginLogAppendResponse'
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        default: { $ref: '#/components/responses/Problem' }
+
   /accounts/115:
     get:
       tags: [Accounts]
@@ -221,7 +250,15 @@ paths:
         - $ref: '#/components/parameters/OptionalAccountSelectionRefQuery'
       responses:
         '200':
-          description: Host-exposed roots available for the declared capability categories
+          description: |
+            Host-exposed roots available for the declared file capability
+            categories. A `local` root is a configured container-visible mount
+            and is returned without an account selection. A `cd2` root is a
+            configured path under the CD2 mount prefix; all enumeration and
+            mutations for that root use the CloudDrive2 gRPC broker and it also
+            has no account selection. A `115` root is created only when a valid
+            account_selection_ref is supplied and the installation declares
+            accounts.115.use plus the corresponding files.cloud capability.
           content:
             application/json:
               schema:
@@ -445,7 +482,13 @@ paths:
   /files/operations:
     post:
       tags: [Files]
-      summary: Queue a same-backend copy or move operation
+      summary: Queue a copy or move operation
+      description: |
+        Pure CD2 source and destination references are executed through the
+        CloudDrive2 gRPC broker. If either endpoint is a non-CD2 local path,
+        the complete operation uses the container-visible local mount paths.
+        The `115` backend remains limited to copy/move within the same selected
+        115 account and root.
       operationId: createFileOperation
       x-dian115-capability-any-of:
         - files.local.write
@@ -478,6 +521,62 @@ paths:
           $ref: '#/components/responses/Problem'
         '413':
           $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/watches:
+    get:
+      tags: [Files]
+      summary: List this installation's durable directory watches
+      operationId: listFileWatches
+      x-dian115-capability: files.watch
+      responses:
+        '200':
+          description: Installation-scoped watch definitions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileWatchListResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Files]
+      summary: Create a durable directory watch from an opaque directory entry reference
+      description: The directory_ref must be an existing opaque File Broker root or directory reference owned by this installation. Host paths and CD2 credentials are never accepted or exposed.
+      operationId: createFileWatch
+      x-dian115-capability: files.watch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FileWatchCreateRequest'
+      responses:
+        '201':
+          description: Watch created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FileWatchResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+
+  /files/watches/{watch_ref}:
+    delete:
+      tags: [Files]
+      summary: Delete one installation-scoped directory watch
+      operationId: deleteFileWatch
+      x-dian115-capability: files.watch
+      parameters:
+        - name: watch_ref
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^fw_[A-Za-z0-9_-]+$'
+      responses:
+        '200':
+          description: Watch deleted
         default:
           $ref: '#/components/responses/Problem'
 
@@ -1747,6 +1846,59 @@ paths:
         default:
           $ref: '#/components/responses/ManagementError'
 
+  /api/plugin-center/v1/installations/{installation_id}/logs:
+    servers:
+      - url: /
+    parameters:
+      - $ref: '#/components/parameters/InstallationIdPath'
+    get:
+      tags: [Plugin Center]
+      summary: List logs owned by one plugin installation
+      operationId: listPluginLogs
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: level
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [debug, info, warning, error]
+        - name: before_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64, minimum: 1 }
+        - name: limit
+          in: query
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
+      responses:
+        '200':
+          description: Installation-scoped bounded logs and usage
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PluginLogListResponse' }
+        '404': { $ref: '#/components/responses/ManagementError' }
+        default: { $ref: '#/components/responses/ManagementError' }
+    delete:
+      tags: [Plugin Center]
+      summary: Delete all logs owned by one plugin installation
+      operationId: clearPluginLogs
+      security:
+        - AdminBearer: []
+      responses:
+        '200':
+          description: Number of deleted records
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties:
+                  deleted: { type: integer, minimum: 0 }
+        '404': { $ref: '#/components/responses/ManagementError' }
+        default: { $ref: '#/components/responses/ManagementError' }
+
   /api/plugin-center/v1/installations/{installation_id}/secret-bindings:
     servers:
       - url: /
@@ -1964,7 +2116,7 @@ components:
       required: false
       schema:
         $ref: '#/components/schemas/AccountSelectionRef'
-      description: Required when listing cloud roots; omitted when only local roots are needed.
+      description: Required only when listing 115 account roots; omit for local and CD2 mount roots.
     EntryRefPath:
       name: entry_ref
       in: path
@@ -2257,6 +2409,80 @@ components:
         installation:
           $ref: '#/components/schemas/PluginInstallation'
 
+    PluginLog:
+      type: object
+      additionalProperties: false
+      required: [id, level, message, source, size_bytes, created_at]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        level: { type: string, enum: [debug, info, warning, error] }
+        message: { type: string, maxLength: 8192 }
+        fields: { type: object, additionalProperties: true }
+        source: { type: string, enum: [wasm, host_api] }
+        size_bytes: { type: integer, minimum: 1 }
+        created_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+
+    PluginLogAppendRequest:
+      type: object
+      additionalProperties: false
+      required: [message]
+      properties:
+        level:
+          type: string
+          enum: [debug, info, warning, error]
+          default: info
+        message:
+          type: string
+          minLength: 1
+          description: UTF-8 text limited to 8192 bytes after host sanitization.
+        fields:
+          type: object
+          additionalProperties: true
+          description: Optional JSON object limited to 8192 serialized bytes after host redaction.
+
+    PluginLogAppendResult:
+      type: object
+      additionalProperties: false
+      required: [log, usage]
+      properties:
+        log:
+          $ref: '#/components/schemas/PluginLog'
+        usage:
+          $ref: '#/components/schemas/PluginLogUsage'
+
+    PluginLogAppendResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/PluginLogAppendResult'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    PluginLogUsage:
+      type: object
+      additionalProperties: false
+      required: [entries, bytes, max_entries, max_bytes, retention_days]
+      properties:
+        entries: { type: integer, minimum: 0 }
+        bytes: { type: integer, minimum: 0 }
+        max_entries: { type: integer, minimum: 1 }
+        max_bytes: { type: integer, minimum: 1 }
+        retention_days: { type: integer, minimum: 1 }
+
+    PluginLogListResponse:
+      type: object
+      additionalProperties: false
+      required: [logs, next_before_id, usage]
+      properties:
+        logs:
+          type: array
+          items: { $ref: '#/components/schemas/PluginLog' }
+        next_before_id: { type: integer, format: int64, minimum: 0 }
+        usage: { $ref: '#/components/schemas/PluginLogUsage' }
+
     PluginInstallRequest:
       type: object
       additionalProperties: false
@@ -2416,7 +2642,10 @@ components:
           properties:
             op: { type: string, enum: [health, state, action, job, event] }
             invocation_id: { type: string }
-            payload: { type: object, additionalProperties: true }
+            payload:
+              type: object
+              additionalProperties: true
+              description: For op=event, contains id (equal to invocation_id), topic, occurred_at and data.
         host_request:
           type: object
           additionalProperties: false
@@ -3020,6 +3249,7 @@ components:
         - files.local.write
         - files.cloud.read
         - files.cloud.write
+        - files.watch
         - transfer.115.read
         - transfer.115.create
         - transfer.115.cancel
@@ -3422,6 +3652,11 @@ components:
       type: object
       additionalProperties: false
       required: [root_id, alias, root_entry_ref, name, backend, capabilities]
+      description: |
+        `backend=local` identifies a configured local mount and uses the local
+        filesystem. `backend=cd2` identifies a configured CD2 mount prefix and
+        uses CloudDrive2 gRPC. `backend=115` identifies a dynamic root bound to
+        the short-lived account_selection_ref returned by the Accounts API.
       properties:
         root_id:
           $ref: '#/components/schemas/RootId'
@@ -3436,7 +3671,10 @@ components:
           maxLength: 100
         backend:
           type: string
-          enum: [local, cd2]
+          enum: [local, cd2, '115']
+          description: |
+            local = container-visible local mount; cd2 = CD2 mount path routed
+            through CloudDrive2 gRPC; 115 = selected 115 account cloud root.
         capabilities:
           type: array
           uniqueItems: true
@@ -3447,13 +3685,55 @@ components:
           anyOf:
             - $ref: '#/components/schemas/AccountSelectionRef'
             - type: 'null'
-          description: Present for a cloud root and absent or null for a local root.
+          description: Required and non-null for backend=115; always null for backend=local or backend=cd2.
         quota_bytes:
           type: [integer, 'null']
           minimum: 0
         used_bytes:
           type: [integer, 'null']
           minimum: 0
+      allOf:
+        - if:
+            properties:
+              backend:
+                const: '115'
+            required: [backend]
+          then:
+            required: [account_selection_ref]
+            properties:
+              account_selection_ref:
+                $ref: '#/components/schemas/AccountSelectionRef'
+              capabilities:
+                items:
+                  enum: [files.cloud.read, files.cloud.write]
+        - if:
+            properties:
+              backend:
+                const: local
+            required: [backend]
+          then:
+            required: [account_selection_ref]
+            properties:
+              account_selection_ref:
+                const: null
+              capabilities:
+                items:
+                  enum:
+                    - files.local.read
+                    - files.local.write
+        - if:
+            properties:
+              backend:
+                const: cd2
+            required: [backend]
+          then:
+            required: [account_selection_ref]
+            properties:
+              account_selection_ref:
+                const: null
+              capabilities:
+                items:
+                  enum: [files.cloud.read, files.cloud.write]
 
     FileEntry:
       type: object
@@ -3540,6 +3820,93 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/FileEntry'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    FileWatch:
+      type: object
+      additionalProperties: false
+      required: [watch_ref, root_id, directory_ref, event_topic, interval_seconds, recursive, state, created_at, updated_at]
+      properties:
+        watch_ref:
+          type: string
+          pattern: '^fw_[A-Za-z0-9_-]+$'
+        root_id:
+          $ref: '#/components/schemas/RootId'
+        directory_ref:
+          $ref: '#/components/schemas/EntryRef'
+        event_topic:
+          type: string
+          minLength: 3
+          maxLength: 80
+          pattern: '^[a-z0-9]+(?:[._-][a-z0-9]+)*$'
+          description: Must exactly match one topic declared in manifest.events.
+        interval_seconds:
+          type: integer
+          minimum: 5
+          maximum: 86400
+        recursive:
+          type: boolean
+        state:
+          type: string
+          enum: [active, paused, cancelled]
+        last_error:
+          type: string
+          maxLength: 1000
+        last_polled_at:
+          type: [string, 'null']
+          format: date-time
+        created_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+        updated_at:
+          $ref: '#/components/schemas/ManagementLocalTime'
+
+    FileWatchCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [directory_ref, event_topic]
+      properties:
+        directory_ref:
+          $ref: '#/components/schemas/EntryRef'
+        event_topic:
+          type: string
+          minLength: 3
+          maxLength: 80
+          pattern: '^[a-z0-9]+(?:[._-][a-z0-9]+)*$'
+          description: Must exactly match one topic declared in manifest.events.
+        interval_seconds:
+          type: integer
+          minimum: 5
+          maximum: 86400
+          default: 30
+        recursive:
+          type: boolean
+          default: false
+
+    FileWatchResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/FileWatch'
+        meta:
+          $ref: '#/components/schemas/ResponseMeta'
+
+    FileWatchListResponse:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [items]
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/FileWatch'
         meta:
           $ref: '#/components/schemas/ResponseMeta'
 

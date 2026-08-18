@@ -72,7 +72,7 @@
       "items": {
         "type": "string",
         "minLength": 3,
-        "maxLength": 128,
+        "maxLength": 80,
         "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
       }
     },
@@ -255,7 +255,10 @@
             "required": ["capabilities"]
           },
           "then": {
-            "required": ["account_access"]
+            "required": ["account_access"],
+            "properties": {
+              "account_access": { "type": "array" }
+            }
           },
           "else": {
             "not": {
@@ -274,8 +277,6 @@
                   "properties": {
                     "capability": {
                       "enum": [
-                        "files.cloud.read",
-                        "files.cloud.write",
                         "transfer.115.read",
                         "transfer.115.create",
                         "transfer.115.cancel"
@@ -289,6 +290,7 @@
           },
           "then": {
             "properties": {
+              "account_access": { "type": "array" },
               "capabilities": {
                 "type": "array",
                 "contains": {
@@ -303,6 +305,59 @@
               }
             },
             "required": ["capabilities", "account_access"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "contains": {
+                  "type": "object",
+                  "required": ["capability"],
+                  "properties": {
+                    "capability": {
+                      "const": "files.watch"
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["capabilities"]
+          },
+          "then": {
+            "properties": {
+              "capabilities": {
+                "type": "array",
+                "allOf": [
+                  {
+                    "contains": {
+                      "type": "object",
+                      "required": ["capability"],
+                      "properties": {
+                        "capability": {
+                          "const": "events.subscribe"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "contains": {
+                      "type": "object",
+                      "required": ["capability"],
+                      "properties": {
+                        "capability": {
+                          "enum": [
+                            "files.local.read",
+                            "files.cloud.read"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
           }
         }
       ]
@@ -324,6 +379,7 @@
             "files.local.write",
             "files.cloud.read",
             "files.cloud.write",
+            "files.watch",
             "transfer.115.read",
             "transfer.115.create",
             "transfer.115.cancel",
