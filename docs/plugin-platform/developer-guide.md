@@ -853,14 +853,28 @@ UI 文件使用 [`ui-schema-v1.schema.json`](ui-schema-v1.schema.json)。示例�
     "title": "自动转存助手",
     "icon": "cloud-download"
   },
+  "appearance": {
+    "theme": "cyan",
+    "density": "comfortable",
+    "surface": "soft"
+  },
   "views": [
     {
       "id": "main",
       "title": "运行状态",
+      "description": "查看任务状态并执行常用操作。",
+      "layout": {
+        "type": "grid",
+        "columns": 2,
+        "gap": "normal",
+        "header": "hero",
+        "max_width": "wide"
+      },
       "sections": [
         {
           "type": "status",
           "source": "state.runtime",
+          "presentation": {"variant": "metric", "span": 1, "tone": "info", "icon": "activity"},
           "fields": [
             {"key": "healthy", "label": "服务状态", "format": "boolean"},
             {"key": "processed_today", "label": "今日处理", "format": "number"}
@@ -870,6 +884,7 @@ UI 文件使用 [`ui-schema-v1.schema.json`](ui-schema-v1.schema.json)。示例�
           "type": "form",
           "id": "settings",
           "submit_action": "save_settings",
+          "presentation": {"variant": "card", "span": 2},
           "fields": [
             {"key": "enabled", "label": "启用自动处理", "control": "switch"},
             {"key": "interval_minutes", "label": "检查周期", "control": "number", "min": 5, "max": 1440}
@@ -877,6 +892,7 @@ UI 文件使用 [`ui-schema-v1.schema.json`](ui-schema-v1.schema.json)。示例�
         },
         {
           "type": "actions",
+          "presentation": {"variant": "toolbar", "span": "full"},
           "actions": [
             {"id": "test_connection", "label": "测试连接", "icon": "plug", "style": "secondary"}
           ]
@@ -889,13 +905,36 @@ UI 文件使用 [`ui-schema-v1.schema.json`](ui-schema-v1.schema.json)。示例�
 
 UI action 只调用插件自己的 action handler。handler 若要访问网络、文件、转存或订阅，仍需调用对应能力 API。
 
+安装成功后，用户从插件中心进入插件页面；宿主使用与内置插件相同的页面容器、面包屑、主题和移动端断点。插件只声明 `appearance`、`views[].layout` 和 `sections[].presentation`，由宿主映射到受控组件。插件不能改变主项目路由、注册 Vue 组件、加载 CSS/JavaScript、打开独立业务弹窗或要求用户查看原始 JSON。
+
+`appearance.theme` 是语义强调色预设，不是任意颜色值；`system` 完全继承宿主主题，其余预设也会随宿主的 light/dark/red 外壳调整对比度。`layout.header=none` 适合工具型页面，`layout.header=compact` 适合高密度操作页；移动端会自动收紧页头并把网格 section 排成单列。
+
+`presentation.variant` 必须匹配 section 类型：`status` 支持 `plain/card/metric`，`form` 支持 `plain/card`，`table` 支持 `plain/card/table/cards/picker`，`log` 支持 `plain/card/console`，`progress` 支持 `plain/card/bar`，`actions` 支持 `plain/card/toolbar/stack`。其他组合会在安装时被拒绝。
+
+`table` 的 picker 选中状态使用显式绑定，不能依赖字段名称或显示文本：
+
+```json
+{
+  "type": "table",
+  "source": "state.accounts",
+  "row_key": "account_ref",
+  "selected_source": "state.selection.account_ref",
+  "selected_row_key": "account_ref",
+  "presentation": {"variant": "picker"},
+  "columns": [{"key": "name", "label": "账号"}],
+  "row_actions": [{"id": "select_account", "label": "选择", "style": "primary"}]
+}
+```
+
+`selected_source` 和 `selected_row_key` 必须成对出现。前者指向 state 中的当前选中标量，后者指定每行参与精确比较的字段。账号和目录应使用 opaque ref，不要使用可能重复的名称、路径或列表序号。
+
 Action 的 `confirm` 只控制宿主界面的普通命令提示框，不改变安装时已确认的 capability。异步能力调用通过校验后返回 `202 queued`，不会进入逐操作审批状态。
 
 不要在 UI state 中返回 secret、token、绝对路径、115 CID 或其他插件数据。
 
 插件 UI 的字面字符串使用 manifest 的 `default_locale`。v1 不定义运行时翻译资源或语言切换，宿主只负责自身导航、错误和安装确认等文案的国际化。表单也不接受插件提供的正则表达式；`select/multiselect` 必须提供非空且 value 不重复的 `options`，数值与长度边界必须满足 `min <= max`，不适用于当前 control 的字段会被安装器拒绝。
 
-UI 语义校验还要求 `views[].id` 在整个 UI 文件内唯一；同一 view 内 section/form ID 和 action ID 不重复；同一 form 的 `fields[].key`、同一 table 的 column key 和同一 option 列表的 value 不重复。渲染器不能采用“后一个覆盖前一个”的方式容忍冲突。
+UI 语义校验还要求 `views[].id` 在整个 UI 文件内唯一；同一 view 内 section/form ID 不重复，action ID 全局不重复；同一 form 的 `fields[].key`、同一 table 的 column key 和同一 option 列表的 value 不重复。不同 section 可以使用相同的 field key。渲染器不能采用“后一个覆盖前一个”的方式容忍作用域内冲突。
 
 ## 12. 本地运行时协议
 
@@ -960,7 +999,7 @@ DIAN115 从安装目录加载 manifest 指定的 WASM 入口。插件没有服�
 
 1. 编译生成兼容 `dian115:plugin@1` 的 `.wasm`。
 2. 将 WASM、manifest、UI 和资源打入 `.d115p`，生成 integrity 并用发布者 Ed25519 密钥签名。
-3. 把包发布到官方或自定义市场，或使用主项目提供的本地安装入口。
+3. 把包发布到官方市场或用户可添加的自定义市场；产品不提供本地 `.d115p` 文件导入入口。
 4. 用户在插件中心查看全部能力和账号范围并一次性同意；宿主校验、解包并在本地加载模块。
 5. 在插件中心直接打开声明式 UI，触发 action/job/event，查看健康状态和脱敏审计；没有 base URL、凭据复制或外部容器配置步骤。
 6. 需要第三方 API 凭据时，用户在“托管凭据”页创建 secret binding；模块只收到 `credential_ref`，通过 Network Broker 使用。

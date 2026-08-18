@@ -20,6 +20,9 @@
     "navigation": {
       "$ref": "#/$defs/navigation"
     },
+    "appearance": {
+      "$ref": "#/$defs/appearance"
+    },
     "views": {
       "type": "array",
       "minItems": 1,
@@ -48,8 +51,160 @@
         },
         "badge_source": {
           "$ref": "#/$defs/source"
+        },
+        "requires_capabilities": {
+          "$ref": "#/$defs/capabilityList"
         }
       }
+    },
+    "appearance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "theme": {
+          "type": "string",
+          "enum": ["system", "blue", "green", "amber", "red", "violet", "cyan", "neutral"],
+          "default": "system"
+        },
+        "density": {
+          "type": "string",
+          "enum": ["comfortable", "compact"],
+          "default": "comfortable"
+        },
+        "surface": {
+          "type": "string",
+          "enum": ["plain", "soft", "glass"],
+          "default": "soft"
+        }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["stack", "grid"],
+          "default": "stack"
+        },
+        "columns": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4,
+          "default": 2
+        },
+        "gap": {
+          "type": "string",
+          "enum": ["compact", "normal", "spacious"],
+          "default": "normal"
+        },
+        "header": {
+          "type": "string",
+          "enum": ["hero", "compact", "none"],
+          "default": "hero"
+        },
+        "max_width": {
+          "type": "string",
+          "enum": ["full", "wide", "narrow"],
+          "default": "wide"
+        }
+      }
+    },
+    "statusPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": ["plain", "card", "metric"],
+          "default": "plain"
+        },
+        "span": { "$ref": "#/$defs/presentationSpan" },
+        "tone": { "$ref": "#/$defs/presentationTone" },
+        "icon": { "$ref": "#/$defs/icon" }
+      }
+    },
+    "formPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": ["plain", "card"],
+          "default": "plain"
+        },
+        "span": { "$ref": "#/$defs/presentationSpan" },
+        "tone": { "$ref": "#/$defs/presentationTone" },
+        "icon": { "$ref": "#/$defs/icon" }
+      }
+    },
+    "tablePresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": ["plain", "card", "table", "cards", "picker"],
+          "default": "plain"
+        },
+        "span": { "$ref": "#/$defs/presentationSpan" },
+        "tone": { "$ref": "#/$defs/presentationTone" },
+        "icon": { "$ref": "#/$defs/icon" }
+      }
+    },
+    "logPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": ["plain", "card", "console"],
+          "default": "plain"
+        },
+        "span": { "$ref": "#/$defs/presentationSpan" },
+        "tone": { "$ref": "#/$defs/presentationTone" },
+        "icon": { "$ref": "#/$defs/icon" }
+      }
+    },
+    "progressPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": ["plain", "card", "bar"],
+          "default": "plain"
+        },
+        "span": { "$ref": "#/$defs/presentationSpan" },
+        "tone": { "$ref": "#/$defs/presentationTone" },
+        "icon": { "$ref": "#/$defs/icon" }
+      }
+    },
+    "actionsPresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "variant": {
+          "type": "string",
+          "enum": ["plain", "card", "toolbar", "stack"],
+          "default": "plain"
+        },
+        "span": { "$ref": "#/$defs/presentationSpan" },
+        "tone": { "$ref": "#/$defs/presentationTone" },
+        "icon": { "$ref": "#/$defs/icon" }
+      }
+    },
+    "presentationSpan": {
+      "oneOf": [
+        { "const": "full" },
+        { "type": "integer", "minimum": 1, "maximum": 4 }
+      ],
+      "default": "full"
+    },
+    "presentationTone": {
+      "type": "string",
+      "enum": ["default", "primary", "info", "success", "warning", "danger"],
+      "default": "default"
     },
     "view": {
       "type": "object",
@@ -65,6 +220,13 @@
         },
         "title": {
           "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "layout": {
+          "$ref": "#/$defs/layout"
         },
         "sections": {
           "type": "array",
@@ -131,12 +293,18 @@
         "type": {
           "const": "status"
         },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "title": {
           "$ref": "#/$defs/label"
         },
         "description": {
           "type": "string",
           "maxLength": 300
+        },
+        "presentation": {
+          "$ref": "#/$defs/statusPresentation"
         },
         "source": {
           "$ref": "#/$defs/source"
@@ -180,6 +348,9 @@
           "type": "string",
           "maxLength": 300
         },
+        "presentation": {
+          "$ref": "#/$defs/formPresentation"
+        },
         "source": {
           "$ref": "#/$defs/source"
         },
@@ -217,6 +388,9 @@
         "type": {
           "const": "table"
         },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "title": {
           "$ref": "#/$defs/label"
         },
@@ -224,11 +398,20 @@
           "type": "string",
           "maxLength": 300
         },
+        "presentation": {
+          "$ref": "#/$defs/tablePresentation"
+        },
         "source": {
           "$ref": "#/$defs/source"
         },
         "row_key": {
           "$ref": "#/$defs/id"
+        },
+        "selected_source": {
+          "$ref": "#/$defs/source"
+        },
+        "selected_row_key": {
+          "$ref": "#/$defs/source"
         },
         "columns": {
           "type": "array",
@@ -257,6 +440,10 @@
         "visible_when": {
           "$ref": "#/$defs/condition"
         }
+      },
+      "dependentRequired": {
+        "selected_source": ["selected_row_key"],
+        "selected_row_key": ["selected_source"]
       }
     },
     "logSection": {
@@ -270,8 +457,18 @@
         "type": {
           "const": "log"
         },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "title": {
           "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "presentation": {
+          "$ref": "#/$defs/logPresentation"
         },
         "source": {
           "$ref": "#/$defs/source"
@@ -301,8 +498,18 @@
         "type": {
           "const": "progress"
         },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "title": {
           "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "presentation": {
+          "$ref": "#/$defs/progressPresentation"
         },
         "source": {
           "$ref": "#/$defs/source"
@@ -329,8 +536,18 @@
         "type": {
           "const": "actions"
         },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
         "title": {
           "$ref": "#/$defs/label"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 300
+        },
+        "presentation": {
+          "$ref": "#/$defs/actionsPresentation"
         },
         "actions": {
           "type": "array",
@@ -375,6 +592,9 @@
             "percent"
           ],
           "default": "text"
+        },
+        "visible_when": {
+          "$ref": "#/$defs/condition"
         }
       }
     },
@@ -406,9 +626,7 @@
             "switch",
             "select",
             "multiselect",
-            "secret-ref",
-            "file-picker",
-            "directory-picker"
+            "secret-ref"
           ]
         },
         "required": {
@@ -444,16 +662,6 @@
             "$ref": "#/$defs/option"
           }
         },
-        "root_filter": {
-          "type": "array",
-          "uniqueItems": true,
-          "maxItems": 32,
-          "items": {
-            "type": "string",
-            "maxLength": 80,
-            "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
-          }
-        },
         "visible_when": {
           "$ref": "#/$defs/condition"
         }
@@ -468,8 +676,7 @@
               "min": false,
               "max": false,
               "step": false,
-              "options": false,
-              "root_filter": false
+              "options": false
             }
           }
         },
@@ -481,8 +688,7 @@
             "properties": {
               "min_length": false,
               "max_length": false,
-              "options": false,
-              "root_filter": false
+              "options": false
             }
           }
         },
@@ -497,8 +703,7 @@
               "step": false,
               "min_length": false,
               "max_length": false,
-              "options": false,
-              "root_filter": false
+              "options": false
             }
           }
         },
@@ -514,23 +719,7 @@
               "max": false,
               "step": false,
               "min_length": false,
-              "max_length": false,
-              "root_filter": false
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": { "control": { "enum": ["file-picker", "directory-picker"] } }
-          },
-          "then": {
-            "properties": {
-              "min": false,
-              "max": false,
-              "step": false,
-              "min_length": false,
-              "max_length": false,
-              "options": false
+              "max_length": false
             }
           }
         }
@@ -657,6 +846,7 @@
           "files.local.write",
           "files.cloud.read",
           "files.cloud.write",
+          "accounts.115.use",
           "transfer.115.read",
           "transfer.115.create",
           "transfer.115.cancel",
@@ -683,6 +873,12 @@
       "minLength": 1,
       "maxLength": 160,
       "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$"
+    },
+    "icon": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 48,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
     },
     "label": {
       "type": "string",

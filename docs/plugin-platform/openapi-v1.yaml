@@ -2464,54 +2464,362 @@ components:
         default_schedule: { type: string, maxLength: 120 }
         allow_overlap: { type: boolean }
 
+    PluginUICondition:
+      type: object
+      additionalProperties: false
+      required: [source, operator, value]
+      properties:
+        source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        operator: { type: string, enum: [eq, neq, in, not_in, truthy, falsy] }
+        value: {}
+
+    PluginUICapabilityList:
+      type: array
+      maxItems: 16
+      uniqueItems: true
+      items: { $ref: '#/components/schemas/CapabilityName' }
+
+    PluginUIDisplayField:
+      type: object
+      additionalProperties: false
+      required: [key, label]
+      properties:
+        key: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        label: { type: string, minLength: 1, maxLength: 100 }
+        format: { type: string, enum: [text, number, boolean, datetime, bytes, duration, status, percent], default: text }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+
+    PluginUIOption:
+      type: object
+      additionalProperties: false
+      required: [label, value]
+      properties:
+        label: { type: string, minLength: 1, maxLength: 100 }
+        value:
+          oneOf:
+            - type: string
+              maxLength: 200
+            - type: number
+            - type: boolean
+
+    PluginUIFormField:
+      type: object
+      additionalProperties: false
+      required: [key, label, control]
+      properties:
+        key: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        label: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 240 }
+        control: { type: string, enum: [text, textarea, number, switch, select, multiselect, secret-ref] }
+        required: { type: boolean, default: false }
+        min: { type: number }
+        max: { type: number }
+        step: { type: number, exclusiveMinimum: 0 }
+        min_length: { type: integer, minimum: 0, maximum: 100000 }
+        max_length: { type: integer, minimum: 1, maximum: 100000 }
+        options:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items: { $ref: '#/components/schemas/PluginUIOption' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+
+    PluginUIConfirm:
+      type: object
+      additionalProperties: false
+      required: [title, message]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        message: { type: string, minLength: 1, maxLength: 500 }
+
     PluginUIAction:
       type: object
-      additionalProperties: true
+      additionalProperties: false
       required: [id, label]
       properties:
-        id: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
         label: { type: string, minLength: 1, maxLength: 100 }
-        icon: { type: string }
-        style: { type: string, enum: [primary, secondary, danger] }
-        confirm: { type: object }
-        requires_capabilities:
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        style: { type: string, enum: [primary, secondary, danger], default: secondary }
+        confirm: { $ref: '#/components/schemas/PluginUIConfirm' }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+
+    PluginUIAppearance:
+      type: object
+      additionalProperties: false
+      properties:
+        theme: { type: string, enum: [system, blue, green, amber, red, violet, cyan, neutral], default: system }
+        density: { type: string, enum: [comfortable, compact], default: comfortable }
+        surface: { type: string, enum: [plain, soft, glass], default: soft }
+
+    PluginUILayout:
+      type: object
+      additionalProperties: false
+      properties:
+        type: { type: string, enum: [stack, grid], default: stack }
+        columns: { type: integer, minimum: 1, maximum: 4, default: 2 }
+        gap: { type: string, enum: [compact, normal, spacious], default: normal }
+        header: { type: string, enum: [hero, compact, none], default: hero }
+        max_width: { type: string, enum: [full, wide, narrow], default: wide }
+
+    PluginUIStatusPresentation:
+      type: object
+      additionalProperties: false
+      properties:
+        variant: { type: string, enum: [plain, card, metric], default: plain }
+        span:
+          oneOf:
+            - type: string
+              const: full
+            - type: integer
+              minimum: 1
+              maximum: 4
+        tone: { type: string, enum: [default, primary, info, success, warning, danger], default: default }
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+
+    PluginUIFormPresentation:
+      type: object
+      additionalProperties: false
+      properties:
+        variant: { type: string, enum: [plain, card], default: plain }
+        span:
+          oneOf:
+            - type: string
+              const: full
+            - type: integer
+              minimum: 1
+              maximum: 4
+        tone: { type: string, enum: [default, primary, info, success, warning, danger], default: default }
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+
+    PluginUITablePresentation:
+      type: object
+      additionalProperties: false
+      properties:
+        variant: { type: string, enum: [plain, card, table, cards, picker], default: plain }
+        span:
+          oneOf:
+            - type: string
+              const: full
+            - type: integer
+              minimum: 1
+              maximum: 4
+        tone: { type: string, enum: [default, primary, info, success, warning, danger], default: default }
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+
+    PluginUILogPresentation:
+      type: object
+      additionalProperties: false
+      properties:
+        variant: { type: string, enum: [plain, card, console], default: plain }
+        span:
+          oneOf:
+            - type: string
+              const: full
+            - type: integer
+              minimum: 1
+              maximum: 4
+        tone: { type: string, enum: [default, primary, info, success, warning, danger], default: default }
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+
+    PluginUIProgressPresentation:
+      type: object
+      additionalProperties: false
+      properties:
+        variant: { type: string, enum: [plain, card, bar], default: plain }
+        span:
+          oneOf:
+            - type: string
+              const: full
+            - type: integer
+              minimum: 1
+              maximum: 4
+        tone: { type: string, enum: [default, primary, info, success, warning, danger], default: default }
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+
+    PluginUIActionsPresentation:
+      type: object
+      additionalProperties: false
+      properties:
+        variant: { type: string, enum: [plain, card, toolbar, stack], default: plain }
+        span:
+          oneOf:
+            - type: string
+              const: full
+            - type: integer
+              minimum: 1
+              maximum: 4
+        tone: { type: string, enum: [default, primary, info, success, warning, danger], default: default }
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+
+    PluginUIStatusSection:
+      type: object
+      additionalProperties: false
+      required: [type, source, fields]
+      properties:
+        type: { type: string, const: status }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        presentation: { $ref: '#/components/schemas/PluginUIStatusPresentation' }
+        source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        fields:
           type: array
-          items: { $ref: '#/components/schemas/CapabilityName' }
+          minItems: 1
+          maxItems: 24
+          items: { $ref: '#/components/schemas/PluginUIDisplayField' }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+
+    PluginUIFormSection:
+      type: object
+      additionalProperties: false
+      required: [type, id, submit_action, fields]
+      properties:
+        type: { type: string, const: form }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        presentation: { $ref: '#/components/schemas/PluginUIFormPresentation' }
+        source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        submit_action: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        submit_label: { type: string, minLength: 1, maxLength: 100 }
+        fields:
+          type: array
+          minItems: 1
+          maxItems: 40
+          items: { $ref: '#/components/schemas/PluginUIFormField' }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+
+    PluginUITableSection:
+      type: object
+      additionalProperties: false
+      required: [type, source, columns]
+      properties:
+        type: { type: string, const: table }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        presentation: { $ref: '#/components/schemas/PluginUITablePresentation' }
+        source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        row_key: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        selected_source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        selected_row_key: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        columns:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { $ref: '#/components/schemas/PluginUIDisplayField' }
+        row_actions:
+          type: array
+          maxItems: 8
+          items: { $ref: '#/components/schemas/PluginUIAction' }
+        page_size: { type: integer, minimum: 5, maximum: 200, default: 50 }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+      dependentRequired:
+        selected_source: [selected_row_key]
+        selected_row_key: [selected_source]
+
+    PluginUILogSection:
+      type: object
+      additionalProperties: false
+      required: [type, source]
+      properties:
+        type: { type: string, const: log }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        presentation: { $ref: '#/components/schemas/PluginUILogPresentation' }
+        source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        max_rows: { type: integer, minimum: 10, maximum: 1000, default: 200 }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+
+    PluginUIProgressSection:
+      type: object
+      additionalProperties: false
+      required: [type, source]
+      properties:
+        type: { type: string, const: progress }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        presentation: { $ref: '#/components/schemas/PluginUIProgressPresentation' }
+        source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        cancel_action: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
+
+    PluginUIActionsSection:
+      type: object
+      additionalProperties: false
+      required: [type, actions]
+      properties:
+        type: { type: string, const: actions }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        presentation: { $ref: '#/components/schemas/PluginUIActionsPresentation' }
+        actions:
+          type: array
+          minItems: 1
+          maxItems: 12
+          items: { $ref: '#/components/schemas/PluginUIAction' }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+        visible_when: { $ref: '#/components/schemas/PluginUICondition' }
 
     PluginUISection:
-      type: object
-      additionalProperties: true
-      required: [type]
-      properties:
-        type: { type: string, enum: [status, form, table, log, progress, actions] }
-        id: { type: string }
-        title: { type: string }
-        description: { type: string }
-        source: { type: string }
-        fields: { type: array, items: { type: object } }
-        actions: { type: array, items: { $ref: '#/components/schemas/PluginUIAction' } }
-        row_actions: { type: array, items: { $ref: '#/components/schemas/PluginUIAction' } }
-        requires_capabilities:
-          type: array
-          items: { $ref: '#/components/schemas/CapabilityName' }
+      oneOf:
+        - $ref: '#/components/schemas/PluginUIStatusSection'
+        - $ref: '#/components/schemas/PluginUIFormSection'
+        - $ref: '#/components/schemas/PluginUITableSection'
+        - $ref: '#/components/schemas/PluginUILogSection'
+        - $ref: '#/components/schemas/PluginUIProgressSection'
+        - $ref: '#/components/schemas/PluginUIActionsSection'
 
     PluginUIView:
       type: object
-      additionalProperties: true
+      additionalProperties: false
       required: [id, title, sections]
       properties:
-        id: { type: string, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
-        title: { type: string }
-        sections: { type: array, items: { $ref: '#/components/schemas/PluginUISection' } }
+        id: { type: string, minLength: 1, maxLength: 80, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        title: { type: string, minLength: 1, maxLength: 100 }
+        description: { type: string, maxLength: 300 }
+        layout: { $ref: '#/components/schemas/PluginUILayout' }
+        sections:
+          type: array
+          minItems: 1
+          maxItems: 24
+          items: { $ref: '#/components/schemas/PluginUISection' }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
+
+    PluginUINavigation:
+      type: object
+      additionalProperties: false
+      required: [title]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        icon: { type: string, minLength: 1, maxLength: 48, pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$' }
+        badge_source: { type: string, minLength: 1, maxLength: 160, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$' }
+        requires_capabilities: { $ref: '#/components/schemas/PluginUICapabilityList' }
 
     PluginUISchema:
       type: object
-      additionalProperties: true
-      required: [schema_version, views]
+      additionalProperties: false
+      required: [schema_version, navigation, views]
       properties:
+        $schema: { type: string, format: uri }
         schema_version: { type: integer, const: 1 }
-        navigation: { type: object }
-        views: { type: array, items: { $ref: '#/components/schemas/PluginUIView' } }
+        navigation: { $ref: '#/components/schemas/PluginUINavigation' }
+        appearance: { $ref: '#/components/schemas/PluginUIAppearance' }
+        views:
+          type: array
+          minItems: 1
+          maxItems: 12
+          items: { $ref: '#/components/schemas/PluginUIView' }
 
     PluginRuntimeUIResponse:
       type: object

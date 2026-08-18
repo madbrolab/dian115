@@ -32,7 +32,7 @@ Plugin API v1 的当前契约只接受 `runtime.kind=wasm` 清单和 `dian115:pl
 
 ### 2.1 目标
 
-1. 用户可从本地 `.d115p` 文件、仓库 URL 或插件市场安装、更新、禁用和卸载插件。
+1. 用户可从官方市场或用户添加的自定义市场安装、更新、禁用和卸载插件。
 2. 开发者可用受控 WASM 模块开发插件，代码随包安装并在主进程内运行。
 3. 安装或更新时一次性展示插件声明的全部能力和 115 账号访问模式，用户只能整体同意或取消。
 4. 首批开放网络、系统代理、115 转存/离线、文件管理和订阅管理能力。
@@ -470,21 +470,41 @@ POST   /plugin-api/v1/subscriptions/{subscription_ref}/search
 
 ## 12. 声明式 UI
 
-v1 使用 [`ui-schema-v1.schema.json`](ui-schema-v1.schema.json) 描述页面、表单、表格、状态、任务进度和动作按钮，由 DIAN115 的受信 Vue 组件渲染。
+v1 使用 [`ui-schema-v1.schema.json`](ui-schema-v1.schema.json) 描述页面、表单、表格、状态、任务进度和动作按钮，由 DIAN115 的受信 Vue 组件渲染。安装后的插件拥有与内置插件一致的应用页面、返回导航、响应式内容区和主题上下文；业务 UI 不在独立弹窗中运行，也不会向用户展示原始 state JSON、WASM 诊断或手动调用工具。
 
 优点：
 
 - 不执行第三方前端 JavaScript，不共享管理员 Cookie。
-- 自动继承主题、移动端布局、宿主界面国际化、能力不可用状态和命令确认提示。
+- 自动继承宿主明暗主题、移动端布局、宿主界面国际化、能力不可用状态和命令确认提示。
 - action 只调用插件运行时入口，插件仍需通过 Capability Broker 执行业务操作。
 
 UI Schema 中的 `confirm` 只是一层普通交互提示，不会改变安装时已确认的能力集合。状态路径解析必须拒绝 `__proto__`、`prototype`、`constructor` 等保留段，并使用自有属性访问，不能把第三方 patch 直接深合并进 Vue 状态对象。
 
-v1 section 只支持 `status`、`form`、`table`、`log`、`progress`、`actions`。`form` 内可使用 `text`、`textarea`、`number`、`switch`、`select`、`multiselect`、`secret-ref`、`file-picker`、`directory-picker` 控件，`actions` 渲染受控按钮；tabs 留到后续 Schema 版本。
+页面外观只能使用宿主提供的语义 token，不能提交 CSS、HTML、Vue 组件、任意颜色值或强制 light/dark：
 
-v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言的字面字符串；宿主导航、错误和安装确认文案仍随 DIAN115 语言切换。多语言插件资源包和稳定翻译 key 留到 UI Schema v2。v1 也不接受插件自带正则表达式；文本、数值、选项和路径控件只使用宿主提供的有界校验器。
+| 层级 | 字段 | 可选值 |
+| --- | --- | --- |
+| UI | `appearance.theme` | `system`、`blue`、`green`、`amber`、`red`、`violet`、`cyan`、`neutral` |
+| UI | `appearance.density` | `comfortable`、`compact` |
+| UI | `appearance.surface` | `plain`、`soft`、`glass` |
+| View | `layout.type` | `stack`、`grid` |
+| View | `layout.columns` | `1..4`，移动端自动收为一列 |
+| View | `layout.gap` | `compact`、`normal`、`spacious` |
+| View | `layout.header` | `hero`、`compact`、`none` |
+| View | `layout.max_width` | `full`、`wide`、`narrow` |
+| Section | `presentation.span` | `full` 或 `1..4` |
+| Section | `presentation.tone` | `default`、`primary`、`info`、`success`、`warning`、`danger` |
+| Section | `presentation.icon` | kebab-case 宿主图标名 |
 
-安装器必须按作用域检查标识符唯一性：manifest job ID 全局唯一，UI view ID 全局唯一，同一 view 的 section/form/action ID 不重复，同一表单 field key、表格 column key 和选项 value 不重复。发现冲突直接拒绝安装，不能依赖 JSON 对象覆盖或渲染顺序消歧。
+`presentation.variant` 按 section 类型受限：`status` 使用 `plain/card/metric`，`form` 使用 `plain/card`，`table` 使用 `plain/card/table/cards/picker`，`log` 使用 `plain/card/console`，`progress` 使用 `plain/card/bar`，`actions` 使用 `plain/card/toolbar/stack`。未知或类型不匹配的 token 会在安装时被拒绝。
+
+v1 section 只支持 `status`、`form`、`table`、`log`、`progress`、`actions`。`form` 内可使用 `text`、`textarea`、`number`、`switch`、`select`、`multiselect`、`secret-ref` 控件，`actions` 渲染受控按钮。多个 view 由宿主生成页面切换控件。
+
+`table` 使用 `presentation.variant=picker` 时，可同时声明 `selected_source` 和 `selected_row_key`。`selected_source` 指向 state 中当前选中值，`selected_row_key` 指定每行用于比较的字段；两者必须成对出现，宿主用标量值与对应行字段精确比较后显示选中状态。账号、目录和其他资源都应使用稳定的 opaque ref 作为比较值，不能按显示名称或数组位置推断。
+
+v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言的字面字符串；宿主导航、错误和安装确认文案仍随 DIAN115 语言切换。多语言插件资源包和稳定翻译 key 留到 UI Schema v2。v1 也不接受插件自带正则表达式；文本、数值和选项控件只使用宿主提供的有界校验器。
+
+安装器必须按作用域检查标识符唯一性：manifest job ID 全局唯一，UI view ID 全局唯一，同一 view 的 section/form ID 不重复，UI action ID 全局唯一，同一表单 field key、同一表格 column key和同一选项列表的 value 不重复。不同 section 可以复用 `name` 等字段 key。发现作用域内冲突直接拒绝安装，不能依赖 JSON 对象覆盖或渲染顺序消歧。
 
 若未来开放自定义 HTML，必须使用独立来源和 sandbox iframe，禁止 `allow-same-origin`、顶层导航、弹窗和任意表单提交，并通过 nonce 绑定的 `postMessage` 协议通信。不能把第三方 HTML 直接挂在当前同源页面，因为管理员认证使用 HttpOnly Cookie。
 
@@ -581,7 +601,7 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 
 ### 14.1 插件中心用户流程
 
-当前插件中心第一屏是“插件市场”，另有“已安装”和“仓库与开发”视图，不做营销页。市场展示名称、来源、版本、作者、能力原因和账号访问模式；已安装视图提供启用/停用、重新安装/更新、卸载和“运行时”面板。运行时面板显示本地 WASM 加载/健康状态、声明式 UI state、action、job/event，并管理安装实例的 secret binding。
+当前插件中心第一屏是“插件市场”，另有“已安装”和“仓库与开发”视图，不做营销页。市场展示名称、来源、版本、作者、能力原因和账号访问模式；已安装视图提供启用/停用、重新安装/更新、卸载和进入插件页面。插件页面与内置插件共享应用布局、导航、主题和响应式断点，并由宿主按照声明式 UI Schema 渲染业务状态、表单、选择器、任务进度和动作反馈；运行健康、任务投递及托管凭据由宿主在后台管理，不作为独立调试界面暴露给用户。
 
 当前“安装插件”流程使用连续步骤：
 
@@ -591,7 +611,7 @@ v1 的插件自带标题、说明和标签都是 `default_locale` 指定语言�
 4. 调用 `POST /api/plugin-center/v1/installations`，提交 `permissions_accepted: true`、当前 `consent_digest` 和是否立即 `enable`；摘要不匹配时重新打开确认页。
 5. 使用返回的 `operation.id` 展示下载、SHA-256、ZIP/manifest/integrity/Ed25519 校验、安全解压和写库进度；刷新页面后可从 operations 列表恢复查看。
 
-本地 `.d115p` 安装和 WASM 监督器是当前运行模型。包更新必须显示当前版本与目标版本的 publisher、运行配置、capabilities、reasons、account_access 和 UI 差异；任一披露变化都重新整体确认。
+官方或自定义市场安装和进程内 WASM 监督器是当前运行模型；产品不提供本地 `.d115p` 文件导入入口。包更新必须显示当前版本与目标版本的 publisher、运行配置、capabilities、reasons、account_access 和 UI 差异；任一披露变化都重新整体确认。
 
 ### 14.2 插件中心管理 API
 
