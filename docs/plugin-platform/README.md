@@ -65,8 +65,8 @@ flowchart LR
     U["管理员 / 插件中心"] --> PC["Plugin Center API"]
     PC --> I["Installer + Signature Verifier"]
     PC --> R["Plugin Registry"]
-    R --> DB["dian115_plugins.db"]
-    I --> PKG["/config/plugins/<plugin-id>/<version>"]
+    R --> DB["安装记录与能力状态"]
+    I --> PKG["受管插件包目录"]
 
     subgraph Runtime["DIAN115 进程内隔离运行时"]
       W["WASM / wazero Supervisor"]
@@ -92,7 +92,7 @@ flowchart LR
 
 ```text
 /api/plugin-center/v1/*  管理员使用：市场仓库、安装、升级、日志和异步 operation
-/plugin-api/v1/*         外部插件使用：仅限已声明且已整体确认的能力类别
+/plugin-api/v1/*         第三方 WASM 插件使用：仅限已声明且已整体确认的能力类别
 ```
 
 `/plugin-api/v1` 只是 Host API 的契约/调试投影；本地模块只能通过 import module `dian115` 的 `host_call` 在同一进程内进入 Broker，不会向插件开放 HTTP listener。管理员 JWT、HttpOnly Cookie、全局 OpenAPI Key、AI 工具调用器和全局 CORS 都不能成为插件身份或回退路径。
@@ -372,9 +372,9 @@ POST /plugin-api/v1/jobs/{job_ref}/cancel
 - `GET /targets` 返回宿主配置的默认目录；插件声明 `files.cloud.read` 或 `files.cloud.write` 后，可用 File Broker 逐层浏览任意云目录，再通过 `POST /targets` 把同账号绑定的目录 `entry_ref` 转成 `target_ref`。转换时重新验证目录存在性、安装实例归属和账号选择，文件、跨账号引用及根 CID `0` 一律拒绝。
 - 所有目标、预览、离线任务和提交结果都携带或隐式绑定 `account_selection_ref`；创建任务时相关引用必须属于同一账号。
 - 分享链接先创建短时 `preview_ref`，再从预览结果选择 opaque `item_ref`。创建转存时不再接受 raw `share_code`，也不允许空选择或 `file_id=0` 隐式扩大为整分享。
-- 预览必须把分享 URL 限定为 115 官方 host；当前通用解析器允许任意 URL host，不能直接作为插件安全边界。
-- 账号 Cookie、设备信息和 CD2 Token由宿主管理。
-- 每个副作用发生前，必须在同一事务持久化 `plugin_job + idempotency + outbox`，再进行一次 transport attempt。
+- 预览只接受 115 官方 host 的分享 URL，其他 host 一律拒绝。
+- 账号 Cookie、设备信息和 CD2 Token 由宿主管理。
+- 每个副作用发生前，宿主会原子保存任务、幂等和可靠投递记录，再执行一次上游提交。
 - 分享接收和离线提交都由宿主按一次性幂等语义执行；插件不能调用未文档化的桥接流程或自动重试 POST。
 - 公共 job 状态包含 `queued/running/succeeded/partial/failed/cancelled/attention_required`，不会进入逐操作审批状态。
 - 网络中断后无法判断非幂等 115 请求是否已提交时进入终态 `attention_required`，错误码为 `submission_uncertain`，该幂等键在人工对账前不能过期或再次提交。

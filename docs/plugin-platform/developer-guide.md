@@ -158,7 +158,7 @@ WASM 模块由宿主自动绑定安装实例身份，不需要 token、base URL�
 }
 ```
 
-响应同样为 UTF-8 JSON，字段为 `status`、经过过滤的 `headers` 和 `body_base64`。宿主自动绑定 `plugin_id`、`installation_id`、`capability_revision` 和请求 ID；真实账号凭据、Cookie、宿主路径和数据库 ID 永远不会进入模块。插件不能调用 `/plugin-api/v1/auth/*`，也不能设置 `Host`、`Cookie`、`Authorization`、`Proxy-Authorization` 或 `X-Dian115-WASM`。
+响应同样为 UTF-8 JSON，字段为 `status`、经过过滤的 `headers` 和 `body_base64`。宿主自动绑定 `plugin_id`、`installation_id`、`capability_revision` 和请求 ID；真实账号凭据、Cookie、宿主路径和数据库 ID 永远不会进入模块。插件不能设置 `Host`、`Cookie`、`Authorization`、`Proxy-Authorization` 或 `X-Dian115-WASM`。
 
 `dian115_invoke` 的信封格式：
 
