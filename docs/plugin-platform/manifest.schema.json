@@ -56,14 +56,8 @@
       "$ref": "#/$defs/compatibility"
     },
     "runtime": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/wasmRuntime"
-        },
-        {
-          "$ref": "#/$defs/remoteRuntime"
-        }
-      ]
+      "$ref": "#/$defs/wasmRuntime",
+      "description": "The plugin module is packaged in the .d115p archive and loaded by the in-process DIAN115 WASM supervisor."
     },
     "permissions": {
       "$ref": "#/$defs/permissions"
@@ -208,49 +202,6 @@
           "minimum": 1,
           "maximum": 2,
           "default": 1
-        }
-      }
-    },
-    "remoteRuntime": {
-      "type": "object",
-      "description": "Callback paths must be pairwise distinct; the installer enforces this semantic rule.",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "protocol",
-        "health_path",
-        "event_path",
-        "action_path",
-        "state_path",
-        "job_path"
-      ],
-      "properties": {
-        "kind": {
-          "const": "remote"
-        },
-        "protocol": {
-          "const": "dian115-http-plugin@1"
-        },
-        "health_path": {
-          "$ref": "#/$defs/callbackPath"
-        },
-        "event_path": {
-          "$ref": "#/$defs/callbackPath"
-        },
-        "action_path": {
-          "$ref": "#/$defs/callbackPath"
-        },
-        "state_path": {
-          "$ref": "#/$defs/callbackPath"
-        },
-        "job_path": {
-          "$ref": "#/$defs/callbackPath"
-        },
-        "timeout_ms": {
-          "type": "integer",
-          "minimum": 100,
-          "maximum": 30000,
-          "default": 10000
         }
       }
     },
@@ -448,12 +399,6 @@
       "minLength": 1,
       "maxLength": 240,
       "pattern": "^(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)[A-Za-z0-9](?:[A-Za-z0-9._/-]*[A-Za-z0-9._-])?$"
-    },
-    "callbackPath": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 200,
-      "pattern": "^/(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)[A-Za-z0-9](?:[A-Za-z0-9._/-]*[A-Za-z0-9._-])?$"
     }
   }
 }

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://dian115.example/schemas/plugin-integrity-v1.json",
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "manifest.json",
+      "size": 1253,
+      "sha256": "7b06f133239a9a155c9dee9d7cde1ef5d194970f236cd33c578ae6a3afa51d4f"
+    },
+    {
+      "path": "runtime/plugin.wasm",
+      "size": 325,
+      "sha256": "141ff85e14f110a156d73cb73a669d036ca9f568acf4a974c4debc6028d93453"
+    },
+    {
+      "path": "ui.schema.json",
+      "size": 804,
+      "sha256": "d05bf890603c8bcbef3ce4cbc2f15b9911889fa1e78b0e568a7663d94a3f35b7"
+    }
+  ],
+  "schema_version": 1
+}

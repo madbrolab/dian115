@@ -1,49 +1,40 @@
 # DIAN115 插件开发者指南
 
-> 状态：Plugin API v1 当前 Docker 部署可用。主项目已提供市场/仓库、安装确认、remote runtime 管理、网络/代理、文件、115 转存/离线、订阅、KV、托管凭据和独立插件通知能力；官方 SDK、CLI、WASM supervisor 仍未作为稳定公共发行物提供。以下示例均以 HTTP remote runtime 和 `/plugin-api/v1` 为准。
+> 状态：Plugin API v1 在 DIAN115 主进程内运行。插件代码随 `.d115p` 安装，由内置 WASM 监督器在同一个 DIAN115 进程中执行；不需要 Docker、外部服务地址、webhook 或远程插件凭据。
 
-本指南面向开发第三方插件的用户。平台安全设计和实现阶段见 [`README.md`](README.md)，接口的可机读定义见 [`openapi-v1.yaml`](openapi-v1.yaml)。
+发布包必须直接符合本指南的 `dian115:plugin@1` ABI，且运行时清单必须使用 `runtime.kind=wasm`；其他 runtime 类型会被安装器拒绝。
 
-## 1. 选择运行方式
+本指南面向开发第三方插件的用户。平台总体约束见 [`README.md`](README.md)，接口的可机读定义见 [`openapi-v1.yaml`](openapi-v1.yaml)。
 
-| 方式 | 适合场景 | 部署方式 | 限制 |
-|---|---|---|---|
-| WASM（规划） | 规则处理、自动化、轻量数据转换 | 代码随 `.d115p` 安装 | 当前安装器可校验包和 manifest，但 supervisor/import ABI 尚未发布，当前不能执行 |
-| 外部 HTTP 服务（当前可用） | Python/Node/Java、原生依赖、已有服务 | 用户独立部署，插件中心绑定地址 | 需要维护服务可用性和验证 webhook |
+## 1. 运行模型
 
-当前开发和联调请选择外部 HTTP 服务。未来 WASM supervisor 发布后，两种方式将继续使用相同清单、安装时能力确认和业务 API；插件不应根据运行方式绕过能力层。
+第三方插件是一个签名的 `.d115p` ZIP 包。包内的 WASM 模块由 DIAN115 进程内的 wazero 监督器加载，每个安装实例拥有独立模块、线性内存、取消上下文和能力身份。插件不能启动进程、访问宿主环境变量、打开任意 Socket、读取 SQLite 或挂载宿主目录。
+
+插件通过稳定的 `dian115:plugin@1` JSON ABI 调用宿主。所有网络、代理、文件、115、订阅、KV 和 Telegram 插件通知操作都经由 Host API 能力检查；插件只收到脱敏 DTO 和 opaque ref。插件不运行在外部 Docker 服务中，也不填写或绑定 base URL。
+
+一次调用的生命周期如下：
+
+1. 宿主从已安装包加载模块并校验 manifest 声明的入口、ABI 和资源上限。
+2. 宿主向模块导出的 `dian115_invoke` 传入 JSON 信封（`action`、`event`、`job`、`state` 或 `health`）。
+3. 模块通过 import module `dian115` 的 `host_call` 请求 Host API；宿主自动附加安装实例身份和 capability revision。
+4. 宿主校验能力、账号选择、幂等和输入边界后返回 JSON；超时、禁用、卸载或崩溃会取消当前调用。
 
 ## 2. 插件项目结构
 
-### 2.1 WASM
+### 2.1 插件包
 
 ```text
 my-plugin/
   manifest.json
   src/
-  plugin.wasm
+  runtime/
+    plugin.wasm
   ui/
     schema.json
   assets/
     icon.png
   README.md
 ```
-
-### 2.2 外部服务
-
-```text
-my-plugin/
-  manifest.json
-  ui/
-    schema.json
-  assets/
-    icon.png
-  service/
-    ...
-  README.md
-```
-
-外部服务的实际 base URL 不写入清单。用户在插件中心“运行时”面板绑定，例如 `https://plugin.example.com`；非 HTTPS 只允许 localhost/loopback 开发地址，不能把局域网或公网明文地址当作生产配置。
 
 ## 3. `manifest.json`
 
@@ -61,9 +52,7 @@ my-plugin/
 - 插件 ID、发布者密钥和 runtime kind 不能在普通升级中更改。
 - JSON Schema 负责结构校验，宿主和 CLI 还会校验重复 capability、账号依赖、events/jobs 与能力类别的一致性；未知能力会失败。
 
-WASM 清单结构仍由 schema 和安装包检查器保留，用于未来兼容；当前主项目没有 WASM supervisor，插件中心会明确拒绝安装 `runtime.kind=wasm` 的包。当前可实际安装和运行的第三方插件必须使用下文的 remote runtime。
-
-预留的 WASM 清单结构：
+`runtime.kind` 只能是 `wasm`。入口路径必须指向包内 `.wasm` 文件，ABI 必须为 `dian115:plugin@1`；不符合这些条件的清单会被安装器拒绝。示例：
 
 ```json
 {
@@ -84,7 +73,7 @@ WASM 清单结构仍由 schema 和安装包检查器保留，用于未来兼容�
   },
   "runtime": {
     "kind": "wasm",
-    "entry": "plugin.wasm",
+    "entry": "runtime/plugin.wasm",
     "abi": "dian115:plugin@1",
     "memory_mb": 16,
     "timeout_ms": 10000
@@ -94,22 +83,6 @@ WASM 清单结构仍由 schema 和安装包检查器保留，用于未来兼容�
   }
 }
 ```
-
-外部服务 runtime：
-
-```json
-{
-  "kind": "remote",
-  "protocol": "dian115-http-plugin@1",
-  "health_path": "/healthz",
-  "event_path": "/v1/events",
-  "action_path": "/v1/actions",
-  "state_path": "/v1/state",
-  "job_path": "/v1/jobs"
-}
-```
-
-路径必须以 `/` 开头，只能是相对 base URL 的固定路径，不能包含 scheme、host、query 或 fragment。
 
 ## 4. 能力声明与安装确认
 
@@ -147,60 +120,65 @@ WASM 清单结构仍由 schema 和安装包检查器保留，用于未来兼容�
 
 安装确认是全有或全无：用户不能只批准某个 host、目录、账号或单次操作。当前运行时只检查 endpoint 的 `x-dian115-capability` 是否在已确认的 manifest 中，以及 selector 是否属于 `account_access`。Host API 仍执行对所有插件一致的输入校验、SSRF 阻断、opaque ref 归属、账号绑定、幂等、并发和响应大小上限。
 
-安装器和 runtime 管理会做跨文件和跨能力校验：UI 的 `requires_capabilities` 必须已出现在同一 manifest；有 `events` 时必须声明 `events.subscribe`；有 `jobs` 时必须声明 `scheduler.register`；任一 `files.cloud.*` 或 `transfer.115.*` 必须同时声明 `accounts.115.use` 和非空 `account_access`；`jobs[].id` 必须全局唯一；remote runtime 的 health/event/action/state/job path 必须两两不同；runtime/UI 文件必须存在并通过包校验。更新 capability、reason、account_access、runtime 或 UI 声明时，旧 `consent_digest` 不可复用。
+安装器会做跨文件和跨能力校验：UI 的 `requires_capabilities` 必须已出现在同一 manifest；有 `events` 时必须声明 `events.subscribe`；有 `jobs` 时必须声明 `scheduler.register`；任一 `files.cloud.*` 或 `transfer.115.*` 必须同时声明 `accounts.115.use` 和非空 `account_access`；`jobs[].id` 必须全局唯一；WASM 入口必须存在并通过包校验。更新 capability、reason、account_access、runtime 或 UI 声明时，旧 `consent_digest` 不可复用。
 
-插件可调用 `GET /capabilities` 获取当前已确认的能力快照和 `capability_revision`。更新、禁用或卸载会让旧 token 失效；停用时新的 runtime 投递和 Host API 调用会被拒绝。
+插件可通过宿主 ABI 的 `capabilities` 操作获取当前已确认的能力快照和 `capability_revision`。更新、禁用或卸载会立即停止模块并拒绝新的 Host API 调用。
 
 ## 5. 通用调用规则
 
-Base URL：
-
-```text
-https://<dian115-host>/plugin-api/v1
-```
-
 ### 5.1 认证
 
-WASM SDK 由宿主自动绑定身份，不需要处理 token。
+WASM 模块由宿主自动绑定安装实例身份，不需要 token、base URL、client secret 或 webhook secret。模块导出以下 ABI（`runtime.abi` 必须为 `dian115:plugin@1`）：
 
-外部插件先换取短期 token：
+| 导出 | 作用 |
+|---|---|
+| `dian115_alloc(len: i32) -> i32` | 在模块线性内存中申请输入/输出缓冲区 |
+| `dian115_free(ptr: i32, len: i32)` | 释放宿主读取后的缓冲区（可选但建议提供） |
+| `dian115_invoke(ptr: i32, len: i32) -> i64` | 处理一个 JSON 请求并返回 packed 指针/长度 |
 
-```http
-POST /plugin-api/v1/auth/token
-Content-Type: application/json
+模块必须以名称 `memory` 导出线性内存，并设置不超过 manifest `memory_mb` 的明确 maximum；不能 import memory、WASI、文件系统、Socket、进程或其他宿主函数。`dian115_invoke` 返回值高 32 位是响应指针、低 32 位是响应长度。可选生命周期导出为 `dian115_init() -> ()` 和 `dian115_shutdown() -> ()`。
 
-{
-  "client_id": "pli_01K2ABCDE...",
-  "client_secret": "d115ps_0123456789abcdef0123456789"
-}
-```
+宿主提供 import module `dian115`，只允许两个函数：
 
-响应：
+| import | 签名 | 作用 |
+|---|---|---|
+| `host_call` | `(req_ptr, req_len, resp_ptr, resp_cap: i32) -> i64` | 调用 Host API；返回值高 32 位是状态（0 成功、1 缓冲区不足、2 错误），低 32 位是响应长度 |
+| `log` | `(ptr, len: i32)` | 写入单条受限插件日志；不得包含秘密或用户文件内容 |
+
+`host_call` 请求是 UTF-8 JSON：
 
 ```json
 {
-  "data": {
-    "access_token": "eyJ...",
-    "token_type": "Bearer",
-    "expires_in": 900,
-    "capability_revision": 7
+  "method": "POST",
+  "path": "/plugin-api/v1/notifications",
+  "headers": {
+    "Idempotency-Key": "01K2ABCDE..."
   },
-  "meta": {
-    "request_id": "req_01K...",
-    "idempotent_replay": false
+  "body_base64": "eyJsZXZlbCI6InN1Y2Nlc3MifQ"
+}
+```
+
+响应同样为 UTF-8 JSON，字段为 `status`、经过过滤的 `headers` 和 `body_base64`。宿主自动绑定 `plugin_id`、`installation_id`、`capability_revision` 和请求 ID；真实账号凭据、Cookie、宿主路径和数据库 ID 永远不会进入模块。插件不能调用 `/plugin-api/v1/auth/*`，也不能设置 `Host`、`Cookie`、`Authorization`、`Proxy-Authorization` 或 `X-Dian115-WASM`。
+
+`dian115_invoke` 的信封格式：
+
+```json
+{
+  "op": "action",
+  "invocation_id": "inv_01K...",
+  "payload": {
+    "id": "run_now",
+    "input": {"link": "115://..."},
+    "context": {"locale": "zh-CN", "timezone": "Asia/Shanghai"}
   }
 }
 ```
 
-后续请求：
+`op` 可取 `health`、`state`、`action`、`job` 和 `event`。需要访问宿主能力时，插件通过 `host_call` 发送对应 Host API 操作；读取能力快照使用 `GET /plugin-api/v1/capabilities`。能力未声明、插件已停用或请求超限时，宿主返回 `capability_denied`、`plugin_disabled` 或其他稳定错误码。
 
-```http
-Authorization: Bearer <access_token>
-```
+不要把账号 Cookie、令牌、秘密或完整本地路径写入插件日志、KV 或通知内容。
 
-不要记录 `client_secret`、`access_token` 或 webhook secret。收到 `401 token_expired` 时只重试一次换票；收到 `401 token_stale` 时停止工作并重新换票，若安装实例已禁用或正在等待更新确认则不要继续调用。
-
-生产部署必须通过 HTTPS 调用 Plugin API。明文 HTTP 只允许 loopback 开发模式；不要把 client secret 发送到局域网或公网明文端点。
+下文为便于查阅，继续用 `METHOD /plugin-api/v1/...` 表示 Host API 操作。对本地插件而言，这不是一次网络请求：SDK 会把 method、path、headers 和 body 编码进 `dian115.host_call`，由宿主在进程内执行同一套校验和 Broker 逻辑。
 
 ### 5.2 幂等
 
@@ -278,7 +256,7 @@ DELETE /plugin-api/v1/kv/settings/main
 }
 ```
 
-KV 只能保存插件自己的普通状态。不要写入 client secret、webhook secret、115 Cookie、绝对路径或其他安装实例的数据。
+KV 只能保存插件自己的普通状态。不要写入运行时凭据、webhook secret、115 Cookie、绝对路径或其他安装实例的数据。
 
 ## 6. 网络和系统代理
 
@@ -286,7 +264,7 @@ KV 只能保存插件自己的普通状态。不要写入 client secret、webhoo
 
 ```http
 POST /plugin-api/v1/network/requests
-Authorization: Bearer <token>
+# 本地 WASM：通过 dian115.host_call 传入，不设置 HTTP Authorization
 Idempotency-Key: 0ec0e7c8-b04d-4fc4-9cb1-d70ba4823012
 Content-Type: application/json
 
@@ -764,9 +742,9 @@ TV 省略 `season` 时宿主统一按 1，电影只允许 0。`total_episodes` �
 GET /plugin-api/v1/subscriptions?engine=aggregate&state=pending&limit=50
 ```
 
-声明 `subscriptions.read` 后可读取 Host API 暴露的订阅集合；每条记录包含安全的 `created_by` 摘要，便于插件区分自身和其他来源。插件始终使用 opaque `subscription_ref`，权威记录来自 PT subscriptions 或 pool intents，不使用兼容展示表的 ID。
+声明 `subscriptions.read` 后可读取 Host API 暴露的订阅集合；每条记录包含安全的 `created_by` 摘要，便于插件区分自身和其他来源。插件始终使用 opaque `subscription_ref` 和文档定义的 DTO，不依赖内部记录或 provider ID。
 
-活动状态统一为 `pending/searching/transferring/waiting/verifying/partial/needs_attention/failed/expired`。`landed/cancelled` 仅是现有内部兼容状态，不作为 Plugin API 的活动订阅返回；完成或删除由 job/event 表达，之后对象查询为 `404`。
+活动状态统一为 `pending/searching/transferring/waiting/verifying/partial/needs_attention/failed/expired`；完成或删除由 job/event 表达，之后对象查询为 `404`。
 
 ### 9.4 更新 aggregate TV 集数
 
@@ -782,7 +760,7 @@ Content-Type: application/json
 }
 ```
 
-v1 只允许 aggregate TV 调用该接口，并由 `PoolOrchestrator.UpdateIntentEpisodes` 推进状态。PT 通用更新、洗版切换和任意字段 PATCH 暂不开放。revision 不匹配返回 `412 precondition_failed`。
+v1 只允许 aggregate TV 调用该接口，并由宿主订阅服务推进状态。PT 通用更新、洗版切换和任意字段 PATCH 暂不开放。revision 不匹配返回 `412 precondition_failed`。
 
 ### 9.5 删除与手动搜索
 
@@ -800,7 +778,7 @@ POST /plugin-api/v1/subscriptions/sub_01K.../search
 Idempotency-Key: 0531215b-ed4b-48fe-af1c-6231821bd9b5
 ```
 
-搜索进入持久化 job，并要求 `subscriptions.update`；创建、删除和搜索都不能把内部 WorkQueue task ID 暴露给插件。
+搜索进入持久化 job，并要求 `subscriptions.update`；创建、删除和搜索都不能把宿主内部任务 ID 暴露给插件。
 
 ### 9.6 插件通知
 
@@ -808,7 +786,7 @@ Idempotency-Key: 0531215b-ed4b-48fe-af1c-6231821bd9b5
 
 ```http
 POST /plugin-api/v1/notifications
-Authorization: Bearer <plugin access token>
+# 本地 WASM：通过 dian115.host_call 传入，不设置 HTTP Authorization
 Idempotency-Key: 9b293578-ddc2-49c2-9b9d-0b358d72038e
 Content-Type: application/json
 ```
@@ -848,21 +826,9 @@ Content-Type: application/json
 
 事件至少投递一次。处理流程应先用 `event_id` 去重，再执行副作用。
 
-### 10.2 外部服务验证
+### 10.2 WASM 事件入口
 
-收到 webhook 后：
-
-1. 读取原始 body，不要先重新序列化 JSON。
-2. 检查 `X-Dian115-Timestamp` 与当前时间相差不超过 5 分钟。
-3. 计算 body 的十六进制 SHA-256，并构造 `v1\n<timestamp>\n<METHOD>\n<path-and-query>\n<body-sha256>`。
-4. 计算 `HMAC-SHA256(webhook_secret, signing_string)`，再使用常量时间比较验证 `X-Dian115-Signature: v1=<hex>`。
-5. 已处理过 `event_id` 或 `invocation_id` 时直接返回原有 `2xx` 结果。
-
-接收方应在 10 秒内返回。耗时工作放入自己的队列；`5xx` 或超时会触发宿主重试，`2xx` 表示已接收而非业务已完成。
-
-### 10.3 WASM 事件入口
-
-SDK 暴露高层 handler，底层 ABI 不应由业务代码直接操作：
+宿主直接调用同一模块的 `dian115_invoke`，不会发送 webhook。SDK 应把 `op=event` 信封转换为高层 handler：
 
 ```rust
 async fn on_event(event: dian115::Event) -> Result<(), dian115::Error> {
@@ -874,9 +840,7 @@ async fn on_event(event: dian115::Event) -> Result<(), dian115::Error> {
 }
 ```
 
-上例是目标 SDK 形态，SDK 尚未发布。
-
-同一 SDK 还应提供 `on_job(job_id, invocation)` 和 `load_ui_state(view_id)` 高层入口，使 WASM 与远程插件的 scheduled job、声明式 UI 状态语义一致。
+底层事件仍是至少一次语义。插件应使用安装实例 KV 按 `event_id` 去重，返回成功后宿主记录 delivery；发生 trap、超时或可重试错误时，宿主按同一事件 ID 重试。SDK 同时应提供 `on_job(job_id, invocation)`、`on_action(action_id, input)` 和 `load_ui_state(view_id)` 高层入口。
 
 ## 11. 声明式 UI
 
@@ -933,121 +897,73 @@ Action 的 `confirm` 只控制宿主界面的普通命令提示框，不改变�
 
 UI 语义校验还要求 `views[].id` 在整个 UI 文件内唯一；同一 view 内 section/form ID 和 action ID 不重复；同一 form 的 `fields[].key`、同一 table 的 column key 和同一 option 列表的 value 不重复。渲染器不能采用“后一个覆盖前一个”的方式容忍冲突。
 
-## 12. 外部插件回调协议
+## 12. 本地运行时协议
 
-DIAN115 会调用安装时配置的固定路径。
+DIAN115 从安装目录加载 manifest 指定的 WASM 入口。插件没有服务地址，也不需要运行时绑定。安装成功并启用后，模块即可接收健康检查、UI state、action、scheduled job 和 event 调用。
 
-### 12.1 健康检查
-
-```http
-GET <base_url><health_path>
-X-Dian115-Timestamp: ...
-X-Dian115-Signature: v1=...
-```
+### 12.1 请求信封
 
 ```json
 {
-  "status": "ok",
-  "protocol": "dian115-http-plugin@1",
-  "version": "1.0.0"
-}
-```
-
-绑定完成后的健康检查也使用 webhook secret，并按空 body 的 SHA-256 参与同一签名算法。远程插件端点不得通过重定向把宿主带到另一个地址。
-
-### 12.2 UI state
-
-宿主通过签名 GET 拉取声明式 UI 的初始和刷新状态：
-
-```http
-GET <base_url><state_path>?view=main
-X-Dian115-Timestamp: ...
-X-Dian115-Signature: v1=...
-If-None-Match: "state_01K..."
-```
-
-```json
-{
-  "state_version": "state_01K...",
-  "state": {
-    "runtime": {"healthy": true, "processed_today": 3},
-    "settings": {"enabled": true, "interval_minutes": 15},
-    "active_task": {"running": false},
-    "recent_transfers": [],
-    "logs": []
+  "op": "job",
+  "invocation_id": "inv_01KJOB...",
+  "payload": {
+    "id": "poll-rules",
+    "handler": "poll_rules",
+    "scheduled_for": "2026-08-17T03:00:00Z",
+    "trigger": "schedule",
+    "attempt": 1
   }
 }
 ```
 
-响应同时返回 quoted `ETag`；状态未变化可返回 `304`。原始 JSON 最大 256 KiB，路径必须与 UI Schema 的 `source` 对应，并且不得包含 token、secret、宿主绝对路径或其他插件的数据。
+宿主只会调用 manifest 或 UI Schema 已声明的 ID。插件必须按 `invocation_id`/`event_id` 去重；同一 ID 的重试必须返回与第一次相容的结果。
 
-### 12.3 UI action
-
-```http
-POST <base_url><action_path>/test_connection
-X-Dian115-Timestamp: ...
-X-Dian115-Signature: v1=...
-Content-Type: application/json
-
-{
-  "invocation_id": "inv_01K...",
-  "input": {},
-  "context": {
-    "locale": "zh-CN",
-    "timezone": "Asia/Shanghai"
-  }
-}
-```
-
-响应：
+### 12.2 响应信封
 
 ```json
 {
   "status": "succeeded",
-  "message": "连接正常",
+  "message": "任务完成",
+  "result": {},
   "state_patch": {
     "runtime.healthy": true
   }
 }
 ```
 
-插件服务不能要求宿主把管理员 token、Cookie 或能力 token放入回调 body。服务应使用自己的 client credential 调用 Plugin API Gateway。
+`status` 可取 `succeeded`、`accepted`、`skipped` 或 `failed`。插件应返回稳定 `code` 标识错误；不得在 `message`、`result` 或 `state_patch` 中返回秘密、Cookie、宿主绝对路径、115 CID 或其他插件的数据。单次响应最大 256 KiB。
 
-### 12.4 Scheduled job
+### 12.3 UI state
 
-宿主按 manifest 的 job 声明调用固定 job endpoint：
+`op=state` 的 `payload.view` 是 view ID，成功结果为：
 
-```http
-POST <base_url><job_path>/poll_rules
-X-Dian115-Timestamp: ...
-X-Dian115-Signature: v1=...
-Content-Type: application/json
-
+```json
 {
-  "invocation_id": "inv_01KJOB...",
-  "job_id": "poll-rules",
-  "scheduled_for": "2026-08-17T03:00:00Z",
-  "trigger": "schedule",
-  "attempt": 1
+  "status": "succeeded",
+  "state_version": "state_01K...",
+  "state": {
+    "runtime": {"healthy": true, "processed_today": 3},
+    "settings": {"enabled": true, "interval_minutes": 15},
+    "recent_transfers": []
+  }
 }
 ```
 
-插件必须按 `invocation_id` 去重，在 10 秒内把工作放入自己的队列，并返回 `{"status":"accepted"}` 或 `{"status":"skipped"}`。投递语义为至少一次；宿主重试时保持相同 invocation ID。未在 manifest `jobs[]` 中声明的 job 一律拒绝。
+状态路径必须与 UI Schema 的 `source` 对应。宿主可缓存 `state_version`，模块仍必须把 KV 或其他持久状态保存到 Host API；WASM 线性内存不保证跨重启保留。
 
-`default_schedule` 使用 DIAN115 cron v1：恰好五段，依次为分、时、日、月、周，只允许数字、`*`、列表、升序范围和步长，不支持秒、年份或英文名称；星期范围是 `0..6`，`0` 表示星期日。日和星期至少一项必须为 `*`，安装器会拒绝降序范围、越界值、零步长和两项同时限定。时区使用安装实例时区；DST 中不存在的本地时刻跳过，重复时刻只执行一次，系统停机错过的执行也采用 `skip`。宿主可应用对所有插件一致的最短周期和并发上限。
+### 12.4 Scheduled job
 
-### 12.5 管理端绑定与联调
+`default_schedule` 使用 DIAN115 cron v1：恰好五段，依次为分、时、日、月、周，只允许数字、`*`、列表、升序范围和步长，不支持秒、年份或英文名称；星期范围是 `0..6`，`0` 表示星期日。日和星期至少一项必须为 `*`。未在 manifest `jobs[]` 中声明的 job 不会执行。
 
-安装完成后，管理员在插件中心的“运行时”面板完成以下流程：
+### 12.5 安装与联调
 
-1. 从安装 operation 的一次性结果中保存 `client_id`、`client_secret` 和 `webhook_secret`，将它们配置到独立插件服务；宿主只保存 client secret 哈希和加密 webhook secret。
-2. 调用 `PUT /api/plugin-center/v1/installations/{installation_id}/runtime`（或兼容的 `POST .../runtime/bind`）提交 `{"base_url":"https://plugin.example.com"}`。留空可解除绑定。
-3. 调用 `POST .../runtime/health-check`。只有返回 `health.status=ok` 且协议/版本符合 manifest，才应把服务标记为可用。
-4. 用 `GET .../runtime/ui` 读取已校验的 UI Schema、事件主题和 job 声明；用 `GET .../runtime/state?view=main` 加载状态，并保存响应的强 ETag。下一次请求带 `If-None-Match`，收到 `304` 时保留本地状态。
-5. UI action、手动 job 和事件联调分别使用 `/runtime/actions/{action}`、`/runtime/jobs/{job}/trigger` 和 `/runtime/events`。宿主为缺省 invocation/event ID 生成安装作用域的 opaque ID；重试时必须复用同一 ID。
-6. 需要第三方 API 凭据时，在“托管凭据”页创建 `secret binding`。插件只在自己的网络请求中提交 `credential_ref`，不能提交秘密明文或动态注入规则。
-
-运行时管理端点使用管理员认证，插件服务不能调用这些 `/api/plugin-center/v1` 路由。插件服务收到宿主回调后，仍使用自己的短期 Plugin API token 调用 `/plugin-api/v1`；不要把管理员 Cookie、client secret 或 webhook secret 放入回调 body。
+1. 编译生成兼容 `dian115:plugin@1` 的 `.wasm`。
+2. 将 WASM、manifest、UI 和资源打入 `.d115p`，生成 integrity 并用发布者 Ed25519 密钥签名。
+3. 把包发布到官方或自定义市场，或使用主项目提供的本地安装入口。
+4. 用户在插件中心查看全部能力和账号范围并一次性同意；宿主校验、解包并在本地加载模块。
+5. 在插件中心直接打开声明式 UI，触发 action/job/event，查看健康状态和脱敏审计；没有 base URL、凭据复制或外部容器配置步骤。
+6. 需要第三方 API 凭据时，用户在“托管凭据”页创建 secret binding；模块只收到 `credential_ref`，通过 Network Broker 使用。
 
 ## 13. 插件配置与秘密
 
@@ -1130,12 +1046,12 @@ releases/
   "generated_at": "2026-08-17T00:00:00Z",
   "plugins": [
     {
-      "id": "dev.example.remote-auto-transfer",
-      "name": "Remote Auto Transfer",
+      "id": "dev.example.auto-transfer",
+      "name": "Auto Transfer",
       "version": "1.0.0",
       "description": "从规则服务创建 115 转存任务。",
       "author": "Example Studio",
-      "package_url": "https://github.com/example/dian115-plugins/releases/download/v1.0.0/remote-auto-transfer.d115p",
+      "package_url": "https://github.com/example/dian115-plugins/releases/download/v1.0.0/auto-transfer.d115p",
       "sha256": "<64 lowercase hex>",
       "capabilities": [
         {"capability": "network.http", "reason": "读取自动转存规则"},
@@ -1165,7 +1081,7 @@ releases/
 ```json
 {
   "repository_id": 2,
-  "plugin_id": "dev.example.remote-auto-transfer",
+  "plugin_id": "dev.example.auto-transfer",
   "version": "1.0.0",
   "permissions_accepted": true,
   "consent_digest": "<catalog 返回的 64 位小写十六进制摘要>",
@@ -1173,14 +1089,14 @@ releases/
 }
 ```
 
-`consent_digest` 是服务端生成的不透明快照值，管理客户端必须原样回传，不要自行拼字段重算。收到 `409` 时丢弃旧摘要，重新读取 catalog 并让用户查看新的完整披露。
+`consent_digest` 是服务端生成的不透明快照值，管理客户端必须原样回传，不要自行拼字段重算。收到 `409` 时重新读取 catalog，让用户查看新的完整披露并重新确认。
 
-## 16. 版本升级与数据迁移
+## 16. 插件配置与 KV 数据升级
 
 - 插件版本使用 SemVer。
 - 配置与 KV migration 必须可重复执行，并记录最后成功版本。
 - 升级前不要执行不可逆外部副作用。
-- migration 失败应返回错误，让宿主回滚代码与 KV 快照。
+- migration 失败应返回错误，让宿主回滚本次插件更新与 KV 快照。
 - 新增 capability、扩大 `account_access` 或改变 reason 会触发新的整体确认；建议提高插件主版本并在发行说明中说明。
 - 不要依赖 UI Schema 未声明字段、错误文本或内部 provider ID。
 
@@ -1189,9 +1105,8 @@ releases/
 | code | 含义 | 建议处理 |
 |---|---|---|
 | `invalid_request` | 请求格式错误 | 修复插件，不重试 |
-| `unauthorized` | token 无效 | 检查配置 |
-| `token_expired` | 短期 token 过期 | 换票后重试一次 |
-| `token_stale` | capability revision 已变化或安装实例已撤销 | 重新换票；禁用/更新待确认时停止调用 |
+| `unauthorized` | Host ABI 身份无效 | 停止调用并检查安装状态 |
+| `invocation_stale` | capability revision 已变化或安装实例已撤销 | 丢弃旧 invocation，等待宿主重新调度 |
 | `capability_denied` | manifest 未声明该能力类别或账号模式 | 修正 manifest/selector，不重试 |
 | `idempotency_key_required` | 写调用缺少幂等键 | 使用同一逻辑操作的稳定 key 后重试 |
 | `idempotency_conflict` | key 被不同请求占用 | 生成新的逻辑操作或修复状态机 |
@@ -1203,7 +1118,7 @@ releases/
 | `precondition_failed` | `If-Match` revision 已过期 | 重新读取 ETag 并让业务决定是否重试 |
 | `preview_expired` | 分享 preview 已过期 | 用原分享 URL 重新预览并重新选择 item ref |
 | `range_not_satisfiable` | 文件 Range 无效或越界 | 修正 Range，不要原样重试 |
-| `upstream_unavailable` | 115、代理或外部服务不可用 | 有界退避重试 |
+| `upstream_unavailable` | 115、代理或外部网络不可用 | 有界退避重试 |
 | `submission_uncertain` | 非幂等请求结果无法确认 | job 进入 `attention_required`，禁止自动重建，要求人工核对 |
 | `account_context_mismatch` | 组合了不同 115 账号绑定的 selection/target/preview/item/ref | 重新从同一 `account_selection_ref` 获取全部引用 |
 | `account_selection_expired` | 短时账号选择已过期 | 重新创建选择；不要改变已提交 job 的账号 |
@@ -1218,10 +1133,10 @@ releases/
 - `429/5xx` 使用有上限的指数退避和 jitter。
 - 不把 token、secret、分享码、接收码、离线链接或用户文件内容写入日志。
 - 不在本地缓存宿主绝对路径、CID、Cookie、display path 或内部数据库 ID；业务操作只使用 opaque ref。
-- 正确处理 token 撤销、插件禁用、宿主重启和 job `attention_required`。
-- 外部服务验证 webhook 时间戳、HMAC 和重放。
+- 正确处理 invocation 失效、插件禁用、宿主重启和 job `attention_required`。
+- 本地 ABI 事件按 `event_id` 去重并处理重放。
 - 文件重命名使用 revision 条件；v1 不假设内容写入或删除能力存在。
 - 升级 migration 可重复、可失败回滚。
 - UI 文本适合移动端，不依赖自定义 JavaScript。
 
-完整测试包样例位于 [`examples/remote-auto-transfer`](examples/remote-auto-transfer)：包含 manifest、UI、integrity 和 Ed25519 signature；签名只使用公开测试密钥。
+[`examples/in-process-wasm-status`](examples/in-process-wasm-status) 是可被安装器验签的最小进程内样例：WASM 入口位于包内 `runtime/plugin.wasm`，由 DIAN115 主进程直接加载并返回健康/状态 JSON。它不启动 Docker、HTTP 服务或任何外部进程。新插件必须按本章使用 `runtime.kind=wasm`，把 WASM 入口与 manifest、UI、integrity 和 Ed25519 signature 一起放入 `.d115p`。

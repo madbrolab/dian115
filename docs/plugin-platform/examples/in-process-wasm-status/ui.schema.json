@@ -1,0 +1,38 @@
+{
+  "$schema": "https://dian115.example/schemas/plugin-ui-v1.json",
+  "schema_version": 1,
+  "navigation": {
+    "title": "进程内 WASM 示例",
+    "icon": "cpu"
+  },
+  "views": [
+    {
+      "id": "main",
+      "title": "运行状态",
+      "sections": [
+        {
+          "type": "status",
+          "title": "模块状态",
+          "source": "state.runtime",
+          "fields": [
+            {
+              "key": "healthy",
+              "label": "健康",
+              "format": "boolean"
+            },
+            {
+              "key": "abi",
+              "label": "ABI",
+              "format": "text"
+            },
+            {
+              "key": "version",
+              "label": "版本",
+              "format": "text"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

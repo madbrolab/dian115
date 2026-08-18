@@ -1,10 +1,10 @@
 {
   "$schema": "https://dian115.example/schemas/plugin-signature-v1.json",
-  "schema_version": 1,
   "algorithm": "Ed25519",
   "canonicalization": "RFC8785-JCS",
   "domain": "DIAN115-PLUGIN-PACKAGE-V1",
   "key_id": "ed25519:If4x36FUomFia_hUBG_SJxt77UtqvkWqWId-9H-XIbk",
   "public_key": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
-  "signature": "bUoBek44tobvFyjn2CmCMgP3f1bywwpdeDj7kzStU84RoOoVsgNWKJyNVEp4atf9F4TV9xaRDPBmxsgaJPmQCg"
+  "schema_version": 1,
+  "signature": "wrkidUtGMcYu--HxJtIeRpj2b8b8pj7LgWp76Ud9qy9E8XPVRpVSg95Qlox8MB85ut7xLxI9rIK6RI48v7kcDA"
 }

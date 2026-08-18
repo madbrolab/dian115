@@ -7,16 +7,18 @@ info:
     identifier: LicenseRef-DIAN115
   description: |
     Host API contract for user-installed plugins, plus the implemented
-    plugin-center management API. Host routes are isolated from administrator
-    routes and accept only installation-scoped plugin tokens or a host-bound
-    WASM identity. Management routes override the server and security scheme.
+    plugin-center management API. Third-party code is packaged in a .d115p
+    archive and executed by the in-process WASM supervisor. Host routes are
+    isolated from administrator routes; a WASM identity is bound automatically
+    and no external service URL or runtime credential is required. Host API
+    operations are invoked through dian115.host_call with an installation
+    identity injected by the supervisor; plugins do not receive an HTTP token.
 servers:
   - url: /plugin-api/v1
-security:
-  - PluginBearer: []
+    description: Logical Host API namespace. Local WASM plugins call these operations through dian115.host_call; the path is not an outbound network URL.
 tags:
-  - name: Auth
-    description: Remote plugin credential exchange.
+  - name: Runtime
+    description: In-process WASM runtime lifecycle and JSON ABI.
   - name: Capabilities
     description: Capability categories disclosed and accepted for the authenticated installation.
   - name: Accounts
@@ -39,34 +41,6 @@ tags:
     description: Implemented administrator API for repositories, catalog, installations and operations.
 
 paths:
-  /auth/token:
-    post:
-      tags: [Auth]
-      summary: Exchange remote plugin credentials for a short-lived token
-      operationId: createPluginToken
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TokenRequest'
-      responses:
-        '200':
-          description: Token issued
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TokenResponse'
-        '400':
-          $ref: '#/components/responses/Problem'
-        '401':
-          $ref: '#/components/responses/Problem'
-        '429':
-          $ref: '#/components/responses/Problem'
-        default:
-          $ref: '#/components/responses/Problem'
-
   /capabilities:
     get:
       tags: [Capabilities]
@@ -1472,7 +1446,7 @@ paths:
     post:
       tags: [Plugin Center]
       summary: Mark an installation enabled
-      description: Enables Host API authentication, runtime delivery eligibility, and declared schedules while invalidating previously issued tokens through a capability revision bump.
+      description: Enables Host API eligibility and declared schedules while invalidating previously running WASM invocations through a capability revision bump.
       operationId: enablePluginInstallation
       security:
         - AdminBearer: []
@@ -1496,7 +1470,7 @@ paths:
     post:
       tags: [Plugin Center]
       summary: Mark an installation disabled
-      description: Disables new Host API and runtime delivery access, revokes previously issued tokens through a capability revision bump, and reconciles declared schedules.
+      description: Disables new Host API calls, stops the local WASM module, and reconciles declared schedules.
       operationId: disablePluginInstallation
       security:
         - AdminBearer: []
@@ -1542,13 +1516,13 @@ paths:
       - $ref: '#/components/parameters/InstallationIdPath'
     get:
       tags: [Plugin Center]
-      summary: Get the administrator-visible remote runtime binding
+      summary: Get the administrator-visible local WASM runtime status
       operationId: getPluginRuntime
       security:
         - AdminBearer: []
       responses:
         '200':
-          description: Runtime binding without secret material
+          description: Local runtime status without paths, secrets or external endpoints
           content:
             application/json:
               schema:
@@ -1557,87 +1531,6 @@ paths:
           $ref: '#/components/responses/ManagementError'
         default:
           $ref: '#/components/responses/ManagementError'
-    put:
-      tags: [Plugin Center]
-      summary: Bind or unbind a remote plugin runtime
-      operationId: bindPluginRuntime
-      security:
-        - AdminBearer: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PluginRuntimeBindRequest'
-      responses:
-        '200':
-          description: Updated runtime binding
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PluginRuntimeResponse'
-        '400':
-          $ref: '#/components/responses/ManagementError'
-        '404':
-          $ref: '#/components/responses/ManagementError'
-        default:
-          $ref: '#/components/responses/ManagementError'
-
-  /api/plugin-center/v1/installations/{installation_id}/runtime/bind:
-    servers:
-      - url: /
-    parameters:
-      - $ref: '#/components/parameters/InstallationIdPath'
-    post:
-      tags: [Plugin Center]
-      summary: Compatibility alias for binding a remote runtime
-      operationId: bindPluginRuntimeAlias
-      security:
-        - AdminBearer: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PluginRuntimeBindRequest'
-      responses:
-        '200':
-          description: Updated runtime binding
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PluginRuntimeResponse'
-        '400':
-          $ref: '#/components/responses/ManagementError'
-        '404':
-          $ref: '#/components/responses/ManagementError'
-        default:
-          $ref: '#/components/responses/ManagementError'
-
-  /api/plugin-center/v1/installations/{installation_id}/runtime/rotate-credentials:
-    servers:
-      - url: /
-    parameters:
-      - $ref: '#/components/parameters/InstallationIdPath'
-    post:
-      tags: [Plugin Center]
-      summary: Rotate one remote runtime credential bundle
-      description: Plaintext client and webhook secrets are returned only in this response and are not persisted as plaintext.
-      operationId: rotatePluginRuntimeCredentials
-      security:
-        - AdminBearer: []
-      responses:
-        '200':
-          description: New one-time credentials and the public runtime projection
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PluginRuntimeCredentialsResponse'
-        '404':
-          $ref: '#/components/responses/ManagementError'
-        default:
-          $ref: '#/components/responses/ManagementError'
-
   /api/plugin-center/v1/installations/{installation_id}/runtime/health-check:
     servers:
       - url: /
@@ -1645,7 +1538,7 @@ paths:
       - $ref: '#/components/parameters/InstallationIdPath'
     post:
       tags: [Plugin Center]
-      summary: Perform a signed remote runtime health check
+      summary: Check the local WASM runtime
       operationId: healthCheckPluginRuntime
       security:
         - AdminBearer: []
@@ -1672,14 +1565,14 @@ paths:
       - $ref: '#/components/parameters/InstallationIdPath'
     get:
       tags: [Plugin Center]
-      summary: Read the validated declarative UI and callback declarations
+      summary: Read the validated declarative UI and invocation declarations
       description: The response contains package-declared UI metadata, event topics and scheduled jobs. It never includes runtime secrets or installation paths.
       operationId: getPluginRuntimeUI
       security:
         - AdminBearer: []
       responses:
         '200':
-          description: Declarative UI and callback declarations
+          description: Declarative UI and invocation declarations
           content:
             application/json:
               schema:
@@ -1698,7 +1591,7 @@ paths:
       - $ref: '#/components/parameters/InstallationIdPath'
     get:
       tags: [Plugin Center]
-      summary: Load one declarative UI state view from a bound runtime
+      summary: Load one declarative UI state view from the local WASM runtime
       operationId: getPluginRuntimeState
       security:
         - AdminBearer: []
@@ -1718,7 +1611,7 @@ paths:
             pattern: '^"[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*"$'
       responses:
         '200':
-          description: State envelope returned by the remote runtime
+          description: State envelope returned by the in-process WASM module
           headers:
             ETag:
               $ref: '#/components/headers/ETag'
@@ -1766,7 +1659,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PluginRuntimeCallbackResponse'
+                $ref: '#/components/schemas/PluginRuntimeInvocationResponse'
         '400':
           $ref: '#/components/responses/ManagementError'
         '404':
@@ -1803,11 +1696,11 @@ paths:
               $ref: '#/components/schemas/PluginRuntimeJobTriggerRequest'
       responses:
         '200':
-          description: Job callback result
+          description: In-process job invocation result
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PluginRuntimeCallbackResponse'
+                $ref: '#/components/schemas/PluginRuntimeInvocationResponse'
         '400':
           $ref: '#/components/responses/ManagementError'
         '404':
@@ -1826,7 +1719,7 @@ paths:
       - $ref: '#/components/parameters/InstallationIdPath'
     post:
       tags: [Plugin Center]
-      summary: Deliver one manifest-declared event to a remote runtime
+      summary: Deliver one manifest-declared event to the local WASM runtime
       operationId: sendPluginRuntimeEvent
       security:
         - AdminBearer: []
@@ -1838,11 +1731,11 @@ paths:
               $ref: '#/components/schemas/PluginRuntimeEventRequest'
       responses:
         '200':
-          description: Event callback result
+          description: In-process event delivery result
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PluginRuntimeCallbackResponse'
+                $ref: '#/components/schemas/PluginRuntimeInvocationResponse'
         '400':
           $ref: '#/components/responses/ManagementError'
         '404':
@@ -1994,11 +1887,6 @@ paths:
 
 components:
   securitySchemes:
-    PluginBearer:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: Short-lived token scoped to one plugin installation and capability revision.
     AdminBearer:
       type: http
       scheme: bearer
@@ -2448,9 +2336,6 @@ components:
         operation:
           $ref: '#/components/schemas/PluginOperation'
         result: {}
-        credentials:
-          description: One-time plaintext remote runtime credentials returned only on the first successful read of an install operation.
-          $ref: '#/components/schemas/PluginRuntimeCredentials'
 
     PluginUninstallResponse:
       type: object
@@ -2485,28 +2370,66 @@ components:
     PluginRuntime:
       type: object
       additionalProperties: false
-      required: [installation_id, runtime_kind, protocol, health_path, event_path, action_path, state_path, job_path, timeout_ms, bound, health_status]
+      required: [installation_id, runtime_kind, abi, entry, timeout_ms, loaded, health_status]
       properties:
         installation_id: { type: integer, minimum: 1 }
-        runtime_kind: { type: string, const: remote }
-        protocol: { type: string, const: dian115-http-plugin@1 }
-        base_url: { type: string, format: uri }
-        health_path: { type: string, pattern: '^/[^?#]*$' }
-        event_path: { type: string, pattern: '^/[^?#]*$' }
-        action_path: { type: string, pattern: '^/[^?#]*$' }
-        state_path: { type: string, pattern: '^/[^?#]*$' }
-        job_path: { type: string, pattern: '^/[^?#]*$' }
+        runtime_kind: { type: string, const: wasm }
+        abi: { type: string, const: dian115:plugin@1 }
+        entry: { type: string, description: Package-relative WASM entry; never an absolute path. }
+        memory_mb: { type: integer, minimum: 8, maximum: 64 }
         timeout_ms: { type: integer, minimum: 100, maximum: 30000 }
-        client_id: { type: string }
+        background_timeout_ms: { type: integer, minimum: 1000, maximum: 300000 }
+        max_concurrency: { type: integer, minimum: 1, maximum: 2 }
         capability_revision: { type: integer, minimum: 1 }
-        bound: { type: boolean }
-        health_status: { type: string, enum: [healthy, unhealthy, unknown, unbound] }
+        loaded: { type: boolean }
+        health_status: { type: string, enum: [healthy, unhealthy, unknown] }
         health_error: { type: string }
-        bound_at: { $ref: '#/components/schemas/ManagementLocalTime' }
         health_checked_at: { $ref: '#/components/schemas/ManagementLocalTime' }
-        credentials_rotated_at: { $ref: '#/components/schemas/ManagementLocalTime' }
         created_at: { $ref: '#/components/schemas/ManagementLocalTime' }
         updated_at: { $ref: '#/components/schemas/ManagementLocalTime' }
+
+    PluginRuntimeABI:
+      type: object
+      additionalProperties: false
+      description: |
+        In-process JSON ABI used by .d115p WASM modules. This is a logical
+        contract for the supervisor, not an HTTP endpoint.
+      required: [abi, exports, host_imports, request_envelope, host_request]
+      properties:
+        abi: { type: string, const: dian115:plugin@1 }
+        exports:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [dian115_alloc, dian115_free, dian115_invoke, dian115_init, dian115_shutdown]
+        host_imports:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            enum: [dian115.host_call, dian115.log]
+        request_envelope:
+          type: object
+          additionalProperties: false
+          required: [op, invocation_id]
+          properties:
+            op: { type: string, enum: [health, state, action, job, event] }
+            invocation_id: { type: string }
+            payload: { type: object, additionalProperties: true }
+        host_request:
+          type: object
+          additionalProperties: false
+          required: [method, path]
+          properties:
+            method: { type: string, enum: [GET, HEAD, POST, PUT, PATCH, DELETE] }
+            path: { type: string, pattern: '^/plugin-api/v1/' }
+            headers:
+              type: object
+              additionalProperties: { type: string }
+            body_base64:
+              type: string
+              contentEncoding: base64
 
     PluginRuntimeResponse:
       type: object
@@ -2515,35 +2438,6 @@ components:
       properties:
         runtime:
           $ref: '#/components/schemas/PluginRuntime'
-
-    PluginRuntimeBindRequest:
-      type: object
-      additionalProperties: false
-      required: [base_url]
-      properties:
-        base_url:
-          type: string
-          description: HTTPS absolute URL; HTTP is accepted only for localhost or loopback development runtimes. Empty string unbinds.
-
-    PluginRuntimeCredentials:
-      type: object
-      additionalProperties: false
-      required: [client_id, client_secret, webhook_secret, capability_revision]
-      properties:
-        client_id: { type: string }
-        client_secret: { type: string }
-        webhook_secret: { type: string }
-        capability_revision: { type: integer, minimum: 1 }
-
-    PluginRuntimeCredentialsResponse:
-      type: object
-      additionalProperties: false
-      required: [runtime, credentials]
-      properties:
-        runtime:
-          $ref: '#/components/schemas/PluginRuntime'
-        credentials:
-          $ref: '#/components/schemas/PluginRuntimeCredentials'
 
     PluginRuntimeHealthResponse:
       type: object
@@ -2558,7 +2452,6 @@ components:
           required: [status]
           properties:
             status: { type: string, const: ok }
-            protocol: { type: string }
             version: { type: string }
 
     PluginRuntimeJobDeclaration:
@@ -2680,7 +2573,7 @@ components:
         occurred_at: { type: string, format: date-time }
         data: { type: object, additionalProperties: true }
 
-    PluginRuntimeCallbackResponse:
+    PluginRuntimeInvocationResponse:
       type: object
       additionalProperties: false
       properties:
@@ -2807,44 +2700,6 @@ components:
         data:
           type: object
           additionalProperties: false
-        meta:
-          $ref: '#/components/schemas/ResponseMeta'
-
-    TokenRequest:
-      type: object
-      additionalProperties: false
-      required: [client_id, client_secret]
-      properties:
-        client_id:
-          type: string
-          minLength: 8
-          maxLength: 128
-        client_secret:
-          type: string
-          minLength: 24
-          maxLength: 256
-
-    TokenResponse:
-      type: object
-      additionalProperties: false
-      required: [data, meta]
-      properties:
-        data:
-          type: object
-          additionalProperties: false
-          required: [access_token, token_type, expires_in, capability_revision]
-          properties:
-            access_token:
-              type: string
-            token_type:
-              const: Bearer
-            expires_in:
-              type: integer
-              minimum: 60
-              maximum: 3600
-            capability_revision:
-              type: integer
-              minimum: 1
         meta:
           $ref: '#/components/schemas/ResponseMeta'
 
@@ -3900,9 +3755,8 @@ components:
       type: string
       enum: [pending, searching, transferring, waiting, verifying, partial, needs_attention, failed, expired]
       description: |
-        Public union of active PT and aggregate states. Legacy landed/cancelled rows
-        are not returned as live subscriptions; completion or deletion is represented
-        by the corresponding job/event and subsequent GET returns 404.
+        Public union of active PT and aggregate states. Completion or deletion is
+        represented by the corresponding job/event and subsequent GET returns 404.
     MediaType:
       type: string
       enum: [movie, tv]

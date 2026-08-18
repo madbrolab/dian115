@@ -1,0 +1,41 @@
+{
+  "$schema": "https://dian115.example/schemas/plugin-manifest-v1.json",
+  "schema_version": 1,
+  "id": "dev.example.in-process-wasm-status",
+  "name": "进程内 WASM 状态示例",
+  "version": "1.0.0",
+  "description": "最小的进程内 WASM 插件示例：模块随 .d115p 安装，由 DIAN115 主进程加载并提供只读状态。",
+  "default_locale": "zh-CN",
+  "publisher": {
+    "name": "DIAN115 Example",
+    "key_id": "ed25519:If4x36FUomFia_hUBG_SJxt77UtqvkWqWId-9H-XIbk",
+    "url": "https://github.com/madbrolab/dian115/tree/main/docs/plugin-platform/examples/in-process-wasm-status"
+  },
+  "compatibility": {
+    "dian115": ">=3.9.0 <4.0.0",
+    "plugin_api": "^1.0"
+  },
+  "runtime": {
+    "kind": "wasm",
+    "entry": "runtime/plugin.wasm",
+    "abi": "dian115:plugin@1",
+    "memory_mb": 8,
+    "timeout_ms": 10000,
+    "background_timeout_ms": 300000,
+    "max_concurrency": 1
+  },
+  "ui": {
+    "schema": "ui.schema.json"
+  },
+  "permissions": {
+    "capabilities": []
+  },
+  "homepage": "https://github.com/madbrolab/dian115/tree/main/docs/plugin-platform/examples/in-process-wasm-status",
+  "repository": "https://github.com/madbrolab/dian115",
+  "license": "MIT",
+  "tags": [
+    "wasm",
+    "in-process",
+    "example"
+  ]
+}
