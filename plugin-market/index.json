@@ -10,11 +10,11 @@
     {
       "id": "io.github.madbrolab.multi-account-transfer-helper",
       "name": "多账号转存助手",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "选择主账号、备用号池或指定备用账号，将 115 分享链接或离线地址保存到所选账号的指定云目录。",
       "author": "madbrolab",
-      "package_url": "packages/multi-account-transfer-helper-1.0.0.d115p",
-      "sha256": "1bbb1529d33530b7193b0919d9f53e4c12b71b956a155daff63726a04e160d7e",
+      "package_url": "packages/multi-account-transfer-helper-1.0.1.d115p",
+      "sha256": "1d8b253155637f965438c6a2ea3517e931ddefd9232dd46286b1871680ba11c3",
       "capabilities": [
         {
           "capability": "accounts.115.use",
