@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">多账号转存助手</title>
+  <desc id="desc">云端内容转存到多个账号</desc>
+  <rect x="8" y="8" width="240" height="240" rx="48" fill="#0e7490" stroke="#67e8f9" stroke-width="4"/>
+  <path d="M62 132c-17 0-30-13-30-30s13-30 30-30c8-22 29-37 53-37 27 0 50 18 56 44 5-3 11-4 17-4 20 0 36 16 36 36s-16 36-36 36H62Z" fill="#ecfeff"/>
+  <path d="M128 73v48m0 0-20-20m20 20 20-20" fill="none" stroke="#0e7490" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M128 147v18M67 165h122M67 165v13m122-13v13" fill="none" stroke="#cffafe" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="67" cy="195" r="14" fill="#fbbf24" stroke="#164e63" stroke-width="4"/>
+  <circle cx="128" cy="195" r="14" fill="#67e8f9" stroke="#164e63" stroke-width="4"/>
+  <circle cx="189" cy="195" r="14" fill="#34d399" stroke="#164e63" stroke-width="4"/>
+  <path d="M45 225c2-13 10-20 22-20s20 7 22 20M106 225c2-13 10-20 22-20s20 7 22 20M167 225c2-13 10-20 22-20s20 7 22 20" fill="none" stroke="#ecfeff" stroke-width="7" stroke-linecap="round"/>
+</svg>
