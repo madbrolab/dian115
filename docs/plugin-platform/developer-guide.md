@@ -13,7 +13,7 @@ integrity.json
 signature.json
 ```
 
-轻量插件使用 `wasm`。WASM 仅导出 `memory`、`dian115_alloc`、`dian115_invoke`（`dian115_free` 可选），仅导入 `dian115.host_call` 和 `dian115.log`；它不能启动进程、读环境变量、读数据库、访问文件系统或打开 socket。
+轻量插件使用 `wasm`。WASM 仅导出 `memory`、`dian115_alloc`、`dian115_invoke`（`dian115_free` 可选），仅导入 `dian115.host_call` 和 `dian115.log`；它不能启动进程、读环境变量、读数据库、访问文件系统或打开 socket。函数签名、`i64` 编码、短缓冲和内存所有权见[运行时与回调契约](runtime-contract-v1.md)。
 
 仓库中的[最小零权限 WASM 示例](examples/in-process-wasm-status/)已经使用 Plugin API v2，可直接参考其 manifest、状态响应、声明式 UI、完整性清单和 Ed25519 签名。它只演示运行时与打包契约，故意不申请 Host API 或外部网络权限；需要调用 115、文件/CD2、订阅、TMDB、通知或外部网站时，仍须按下文在 manifest 中逐项声明。
 
@@ -28,7 +28,7 @@ integrity.json
 signature.json
 ```
 
-DIAN115 在当前容器内启动并监管该进程；插件不创建额外 Docker 服务、不监听 HTTP 端口，也不持有 DIAN115 Token。启用时启动，禁用、更新、卸载和宿主退出时停止，崩溃时由宿主退避重启。宿主会对原生进程启用 Landlock/seccomp 沙箱：包目录只读/可执行，插件私有数据目录可读写，直连网络、越权文件访问和危险系统调用被拒绝；插件可以启动包内子进程，但子进程继承同一限制。115、文件/CD2、订阅、TMDB、目录监控、外部网络和通知仍只能通过安装时声明并获批的 Host API 使用；沙箱不可用时拒绝启动。
+DIAN115 在当前容器内启动并监管该进程；插件不创建额外 Docker 服务、不监听 HTTP 端口，也不持有 DIAN115 Token。启用时启动，禁用、更新、卸载和宿主退出时停止，崩溃时由宿主退避重启。process 可以常驻循环和启动包内子进程，但会在进入插件入口前强制应用 Landlock 与 seccomp：包目录只读且可执行，插件私有 data 目录可读写但不可执行，其他宿主路径不可访问，直接 socket/外部网络被阻止；子进程继承同一限制。沙箱建立失败或 Landlock ABI 低于 3 时拒绝启动，不会退化为无沙箱运行。115、文件/CD2、TMDB、订阅、通知和外部 HTTPS 都必须通过安装时声明并获批的 `host.call`。完整边界见[进程运行时协议](process-runtime-v1.md)。
 
 ## 2. manifest
 
@@ -72,11 +72,13 @@ manifest 最小结构如下（完整字段以 `manifest.schema.json` 为准）�
 }
 ```
 
-进程入口必须是包内完整性清单覆盖的当前 Docker/Linux 架构 ELF，并保留可执行位。建议发布静态链接二进制，或把运行必需文件放入包内并通过入口程序加载；沙箱不会放开系统库目录。stdio 协议、进程环境、关闭与重启语义见 [进程运行时协议](process-runtime-v1.md)。
+进程入口必须是包内完整性清单覆盖的 Linux ELF，并保留可执行位；当前只支持 `linux/amd64` 与 `linux/arm64`。由于沙箱不允许读取或执行宿主的动态链接器和共享库，入口及包内子程序应构建为自包含的静态链接文件，并按架构分别发布。stdio 协议、进程环境、关闭与重启语义见[进程运行时协议](process-runtime-v1.md)。
 
-`path` 使用宿主登记的路径模板；参数放在 query、path 或 JSON body 中，不要把账号 Cookie、绝对路径或凭据放进请求。写操作带唯一 `Idempotency-Key`。不要声明未实际使用的接口。
+`path` 使用宿主登记的路径模板；参数放在 query、path 或 JSON body 中，不要把账号 Cookie 或凭据放进请求。插件不能猜测宿主文件系统布局；只有文件/目录 picker 或 Host API 返回的已授权 host path/ref 才能回传给文件与 watch 接口。写操作带稳定的 `Idempotency-Key`。不要声明未实际使用的接口。
 
 ## 3. 通用 host_call
+
+本节只展示 JSON 形状；WASM 的精确 import/export ABI、ptr/len、`i64` 返回值、256 KiB 上限，及 health/state/action/job/event 的完整 envelope 以[运行时与回调契约](runtime-contract-v1.md)为准。`dian115:process@1` 当前稳定支持 `state`、`action`、`job` 和 `event`，全部通过 JSON-RPC stdio 的 `runtime.invoke` 承载；process 的健康状态由初始化握手、进程存活与退出状态判断，而不是额外承诺一个 `health` invocation。
 
 一次 `dian115_invoke` 接收 JSON 信封：
 
@@ -130,7 +132,7 @@ GET /api/tmdb/discover/tv
 GET /api/tmdb/genres
 ```
 
-具体 query 参数和响应以当前 OpenAPI/接口目录为准；插件不得猜测未登记的 TMDB v3 路径。图片也应使用宿主返回的代理地址，不要直连 `image.tmdb.org`。完整接口目录通过 `GET /api/plugin-center/v1/host-apis` 查看。
+具体 query 参数、缓存语义和响应见 [Host API 参考](host-api-reference.md)与 [OpenAPI](openapi-v1.yaml)；插件不得猜测未登记的 TMDB v3 路径。图片使用宿主返回的地址；只有在 manifest 另行声明对应 HTTPS origin 后才能直连外部图片域名。当前安装环境的可用接口目录可在插件中心“仓库与开发”中查看。
 
 ## 5. 115、多账号与文件/CD2
 
@@ -138,7 +140,7 @@ GET /api/tmdb/genres
 
 目录、离线任务、离线额度和默认离线目录的 GET 请求使用 `account_mode` 与可选的 `account_id` query；离线新增、删除、清理、重试和分享转存的 POST 请求使用 `{"account":{"mode":"backup","id":12}}`。省略账号选择时保持主账号兼容行为。`backup_pool` 每次请求只选择一次，并在响应的 `account` 中返回实际账号摘要；后续必须继续操作同一账号时，改用该摘要中的 `id` 和 `backup` 模式。
 
-文件操作直接提交宿主登记接口要求的目录标识或路径字段。115 云端目录只能在同一账号上下文内操作。源和目的都是 CD2 挂载目录时宿主走 CD2 gRPC；任一端不是 CD2 目录时，宿主按已暴露的本地挂载路径执行。插件不能取得 gRPC 凭据。
+文件操作直接提交宿主 picker/接口返回的目录标识、ref 或授权 host path。不要从显示名称拼接路径，也不要假设 `/config`、`/media` 或 CD2 挂载前缀。115 云端目录只能在同一账号上下文内操作。源和目的都是 CD2 挂载目录时宿主走 CD2 gRPC；任一端不是 CD2 目录时，宿主按已暴露的本地挂载路径执行。插件不能取得 gRPC 凭据。
 
 ## 6. 订阅、通知、调度与监控
 
@@ -171,14 +173,27 @@ GET    /api/pt/subscriptions/:id/download-tasks
 
 - 订阅调用直接使用登记的 `/api/...` 订阅接口，响应保持主项目语义。
 - 插件通知调用登记的通知接口，宿主以独立 `plugin_notification_message` 类型发送到 Telegram；通知内容必须脱敏。
-- manifest 中声明 cron job 后，宿主会在页面关闭时继续调度；同一 job 默认不重叠执行。
-- 插件通过已批准的 `/api/plugin-runtime/watches` 接口登记持久化目录监控。宿主负责重启恢复、扫描、稳定 event ID、失败重试和事件投递。
+- manifest 中声明 cron job 后，宿主会在页面关闭时继续调度；同一 job 默认不重叠执行。示例：
+
+```json
+{
+  "jobs": [
+    {
+      "id": "refresh-catalog",
+      "handler": "refresh_catalog",
+      "default_schedule": "0 */6 * * *",
+      "allow_overlap": false
+    }
+  ]
+}
+```
+- 插件通过已批准的 `/api/plugin-runtime/watches` 接口登记持久化目录监控。宿主负责访问所选宿主目录、重启恢复、扫描、稳定 event ID、失败重试和事件投递；process 沙箱不能直接打开这些宿主路径。
 - `dian115.log` 和日志接口只写当前安装实例的日志；宿主限制单条大小、总容量和保留天数，超限从最旧记录裁剪。
 - KV、任务、事件和日志均按安装实例隔离；禁用插件会停止新调用、调度和事件投递。
 
 ### 6.2 目录监控
 
-本地或 CD2 目录直接使用文件管理器返回的宿主路径：
+本地或 CD2 目录直接使用文件管理器/picker 返回的宿主路径；下例路径只是响应值示意，不能由插件硬编码或猜测：
 
 ```json
 {
@@ -213,11 +228,17 @@ POST   /api/plugin-runtime/watches/:watch_ref/resync
 
 首次成功扫描只建立基线，不产生“全部新增”事件。后续事件至少包含 `watch_ref`、`backend`、`added`、`removed`、`modified`、`occurred_at` 和 `resync_required`。投递达到重试上限后进入 dead letter，不会永久冻结监控；插件可在处理问题后重试，或请求重新建立基线。插件应按稳定 `event_id` 去重。
 
+每个 watch 的 `event_topic` 必须同时列在 manifest 的 `events` 中，否则安装或创建监控会被拒绝：
+
+```json
+{"events":["files.changed"]}
+```
+
 ## 7. UI 与主题
 
 UI 是插件自己的完整工作区，不是调试 JSON 或临时弹窗。使用 `ui-schema-v1.schema.json` 声明应用导航、页面 header、统计、提示、表单、列表/表格、进度、任务、日志和操作；宿主使用与内置功能一致的组件、主题、移动端断点、对话框、加载态、空状态和错误态渲染。插件可选择受控的主题、密度、卡片和布局 token，但不能提交 CSS、HTML、Vue 组件或独立弹窗。
 
-建议把插件拆成少量清晰页面，例如“工作台 / 任务 / 监控 / 日志 / 设置”。桌面端由宿主渲染 tabs 或侧栏，移动端自动变为紧凑导航；URL 会保留当前 view。`refresh` 可声明手动、窗口重新获得焦点或可见时定时刷新，页面离开后宿主停止轮询，action 完成后只刷新指定数据源。
+建议把插件拆成少量清晰页面，例如“工作台 / 任务 / 监控 / 日志 / 设置”。桌面端由宿主渲染 tabs 或侧栏，移动端自动变为紧凑导航；URL 会保留当前 view。UI Schema v1 没有 `refresh` 字段：宿主在打开/切换 view、action 完成或 process 发出 `host.ui.invalidate` 后重新获取 state；需要定时变化的数据由 job、watch 或 process 常驻循环更新 state，再触发失效通知。
 
 账号和目录不要渲染成几十张通用卡片。需要 115 账号时使用宿主 `account-picker`，需要本地/CD2/115 目录时使用 `directory-picker`；选项可由 state 中的动态 source 提供。危险操作的 `confirm` 由宿主统一对话框呈现。
 
@@ -227,8 +248,8 @@ UI 是插件自己的完整工作区，不是调试 JSON 或临时弹窗。使�
 
 ## 8. 安装、发布与检查
 
-安装页展示运行时类型、所有 `permissions.apis`、`permissions.network`、账号模式、后台调度、目录监控和日志行为；用户一次性整体同意。`process` 还会显示不可隐藏的进程风险说明：它在 DIAN115 容器内持续运行，可启动包内子进程，但宿主会强制文件系统与网络沙箱，且所有系统能力仍需通过获批 Host API。接口、域名或运行时声明发生变化必须重新确认。市场索引中的权限与运行时披露必须与包内 manifest 完全一致。
+安装页展示运行时类型、所有 `permissions.apis`、`permissions.network`、账号模式、后台调度、目录监控和日志行为；用户一次性整体同意。`process` 还会显示不可隐藏的原生进程说明：它可持续运行和启动包内子进程，但包目录/私有 data、无 socket 和 Host Call 白名单边界由宿主强制执行。接口、域名或运行时声明发生变化必须重新确认。市场索引中的权限与运行时披露必须与包内 manifest 完全一致。
 
-发布前检查：验证 JSON Schema、ZIP 路径、执行位、完整性清单和 Ed25519 签名；只在 Linux/Docker 环境验证 WASM 或原生进程；不要为插件运行额外 Docker 服务。插件市场包通过 HTTPS 发布到自己的发行位置，官方索引只记录签名包 URL、摘要、版本、运行时和权限披露。官方仓库不接收插件或主项目源码。
+发布前检查：验证 JSON Schema、ZIP 路径、执行位、完整性清单和 Ed25519 签名；只在 Linux/Docker 环境验证 WASM 或原生进程；不要为插件运行额外 Docker 服务。插件市场包通过 HTTPS 发布到自己的发行位置，官方索引只记录签名包 URL、摘要、版本、运行时和权限披露。官方仓库不接收插件或主项目源码。可复制命令见[打包、完整性与签名](packaging-signing.md)，端到端步骤见[快速开始](quickstart.md)。
 
-完整的错误码、签名规则和 OpenAPI 定义见本目录其他文件。若某路径尚未出现在接口目录，先等待宿主登记后再写入 manifest；不要自行新增“兼容转换接口”。
+完整 UI 字段见[声明式 UI 开发手册](ui-development-guide.md)，请求/响应见 [Host API 参考](host-api-reference.md)与 [OpenAPI](openapi-v1.yaml)，错误语义见[错误码与调试](errors-debugging.md)。若某路径尚未出现在接口目录，先等待宿主登记后再写入 manifest；不要自行新增“兼容转换接口”。

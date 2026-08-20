@@ -1,11 +1,12 @@
 {
-  "$schema": "https://dian115.example/schemas/plugin-integrity-v1.json",
+  "$schema": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/integrity.schema.json",
+  "schema_version": 1,
   "algorithm": "sha256",
   "files": [
     {
       "path": "manifest.json",
-      "size": 1265,
-      "sha256": "0ebc048f99fee4921560a363965d7c225b0da5cae386a5539109f4e9b31256ec"
+      "size": 1308,
+      "sha256": "6a964229f731ef8952c31bc5ac4e2a8260a5ad34278a172a1d8cd3b836a5c6b6"
     },
     {
       "path": "runtime/plugin.wasm",
@@ -14,9 +15,8 @@
     },
     {
       "path": "ui.schema.json",
-      "size": 804,
-      "sha256": "d05bf890603c8bcbef3ce4cbc2f15b9911889fa1e78b0e568a7663d94a3f35b7"
+      "size": 857,
+      "sha256": "bbd33177ff455050ac4ae46e3e8b87d8e6a4941f04ee4d0368566ab8c1b6ce12"
     }
-  ],
-  "schema_version": 1
+  ]
 }

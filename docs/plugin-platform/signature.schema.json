@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dian115.example/schemas/plugin-signature-v1.json",
+  "$id": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/signature.schema.json",
   "title": "DIAN115 Plugin Signature v1",
   "type": "object",
   "additionalProperties": false,

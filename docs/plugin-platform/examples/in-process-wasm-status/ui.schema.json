@@ -1,5 +1,5 @@
 {
-  "$schema": "https://dian115.example/schemas/plugin-ui-v1.json",
+  "$schema": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/ui-schema-v1.schema.json",
   "schema_version": 1,
   "navigation": {
     "title": "进程内 WASM 示例",

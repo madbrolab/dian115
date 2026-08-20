@@ -1,1887 +1,3247 @@
 openapi: 3.1.0
 info:
   title: DIAN115 Plugin Host API v2
-  version: 2.0.0
+  version: 2.1.0
   description: |
-    DIAN115 插件 Host API 开发契约。WASM 与宿主管理的 process 插件通过 Host Call 直接调用安装时批准的 METHOD + /api/path；宿主校验权限后分发到真实 Handler，无需连接 DIAN115 HTTP 端口。
+    第三方插件可直接调用的 DIAN115 宿主业务接口。
 
-    本文档只描述插件开发所需的直接宿主接口。
+    WASM 与宿主管理的 process 插件通过 Host Call 传入 method、path、headers
+    和 body_base64；宿主核对安装时批准的 METHOD + path 后分发到真实 Handler。
+    本文档描述 body_base64 解码后的 HTTP 请求和响应。插件不自行连接 DIAN115
+    HTTP 端口，也不提供 Authorization 或 Cookie。
+
+    所有写操作都应携带 Idempotency-Key。订阅响应会删除 download_url 并脱敏
+    Cookie、Token、API Key、passkey 和可复用 URL。
+externalDocs:
+  description: Plugin Host API 人工参考
+  url: ./host-api-reference.md
 servers:
   - url: /
-    description: 逻辑地址；插件在进程内调用，不自行连接本服务。
+    description: 逻辑地址；仅由插件 Host Call 在宿主进程内分发。
 tags:
-  - name: Direct Host APIs
-    description: 安装时逐项批准、由 WASM host_call 或 process host.call 调用的真实 DIAN115 接口。
   - name: Plugin Discovery
     description: 管理员读取当前版本可声明的 Host API 目录。
+  - name: Host API · 115
+    description: 宿主管理凭据的 115 多账号安全操作。
+  - name: Host API · Files
+    description: 本地挂载与 CD2 挂载统一文件管理。
+  - name: Host API · Runtime
+    description: 当前插件安装实例的 KV 和目录监控。
+  - name: Host API · Subscriptions
+    description: 统一、聚合与 PT 订阅管理；响应由宿主脱敏。
+  - name: Host API · Notifications
+    description: 独立的插件通知类型。
+  - name: Host API · TMDB
+    description: 使用宿主 API Key、代理、缓存与限流的 TMDB 门面。
 x-dian115-host-call:
-  local_request: '{"method":"GET","path":"/api/tmdb/search","headers":{},"body_base64":""}'
-  external_request: '{"method":"GET","path":"https://example.com/items","headers":{},"body_base64":""}'
-  authorization: permissions.apis validates local METHOD + path; permissions.network validates external origin + method + proxy_mode.
+  request_schema: '#/components/schemas/HostCallRequest'
+  response_schema: '#/components/schemas/HostCallResponse'
+  body_encoding: Base64 encoded JSON
+  max_request_body_bytes: 262144
+  max_response_body_bytes: 262144
+  allowed_headers: [Accept, Content-Type, If-Match, If-None-Match, Idempotency-Key, X-Correlation-ID]
+x-dian115-host-api-count: 58
 x-dian115-host-apis:
-  generated_from: internal Host API catalog
+  generated_from: internal Host API catalog plus plugin runtime watch handlers
   entries:
-    - method: GET
-      path: /api/115/directories
-      category: "115"
-      risk: read
-      title: 浏览 115 目录
-      description: 读取目标账号的目录列表。
-      host_credentials: true
-    - method: GET
-      path: /api/115/offline/tasks
-      category: "115"
-      risk: read
-      title: 查询离线任务
-      description: 查询目标账号的离线任务。
-      host_credentials: true
-    - method: GET
-      path: /api/115/offline/quota
-      category: "115"
-      risk: read
-      title: 查询离线额度
-      description: 查询目标账号的离线配额。
-      host_credentials: true
-    - method: POST
-      path: /api/115/offline/add
-      category: "115"
-      risk: write
-      title: 创建离线任务
-      description: 将磁力、ED2K 或其他离线地址添加到指定目录。
-      host_credentials: true
-    - method: POST
-      path: /api/115/offline/delete
-      category: "115"
-      risk: dangerous
-      title: 删除离线任务
-      description: 删除目标账号中的离线任务。
-      host_credentials: true
-    - method: POST
-      path: /api/115/offline/clear
-      category: "115"
-      risk: dangerous
-      title: 清理离线任务
-      description: 批量清理目标账号中的离线任务。
-      host_credentials: true
-    - method: POST
-      path: /api/115/offline/restart
-      category: "115"
-      risk: write
-      title: 重试离线任务
-      description: 重新提交一个离线任务。
-      host_credentials: true
-    - method: GET
-      path: /api/115/offline/download-path
-      category: "115"
-      risk: read
-      title: 查询默认离线目录
-      description: 查询目标账号的默认离线目录。
-      host_credentials: true
-    - method: POST
-      path: /api/115/share/receive
-      category: "115"
-      risk: write
-      title: 转存 115 分享
-      description: 将 115 分享链接转存到目标账号的指定目录。
-      host_credentials: true
-    - method: GET
-      path: /api/115/accounts/options
-      category: "115"
-      risk: read
-      title: 列出可用账号
-      description: 返回不含 Cookie 的主账号和备用号池选项。
-      host_credentials: true
-    - method: GET
-      path: /api/local-dirs
-      category: files
-      risk: read
-      title: 浏览可选目录
-      description: 读取文件管理器可用目录。
-      host_credentials: false
-    - method: GET
-      path: /api/local-files
-      category: files
-      risk: read
-      title: 列出文件
-      description: 列出本地挂载或 CD2 挂载目录中的文件。
-      host_credentials: false
-    - method: GET
-      path: /api/local-files/tree
-      category: files
-      risk: read
-      title: 读取目录树
-      description: 读取本地挂载或 CD2 挂载目录树。
-      host_credentials: false
-    - method: POST
-      path: /api/local-files/mkdir
-      category: files
-      risk: write
-      title: 创建目录
-      description: 在文件管理器中创建目录。
-      host_credentials: false
-    - method: POST
-      path: /api/local-files/rename
-      category: files
-      risk: dangerous
-      title: 重命名文件
-      description: 重命名文件或目录。
-      host_credentials: false
-    - method: DELETE
-      path: /api/local-files
-      category: files
-      risk: dangerous
-      title: 删除文件
-      description: 删除文件或目录。
-      host_credentials: false
-    - method: POST
-      path: /api/local-files/move
-      category: files
-      risk: dangerous
-      title: 移动文件
-      description: 按宿主规则在本地挂载或 CD2 之间移动文件。
-      host_credentials: false
-    - method: POST
-      path: /api/local-files/copy
-      category: files
-      risk: write
-      title: 复制文件
-      description: 按宿主规则在本地挂载或 CD2 之间复制文件。
-      host_credentials: false
-    - method: POST
-      path: /api/local-files/recognize
-      category: files
-      risk: write
-      title: 识别媒体文件
-      description: 调用宿主识别能力分析文件。
-      host_credentials: false
-    - method: GET
-      path: /api/local-files/organize-options
-      category: files
-      risk: read
-      title: 读取整理选项
-      description: 读取可用的整理目标和规则。
-      host_credentials: false
-    - method: POST
-      path: /api/local-files/organize
-      category: files
-      risk: dangerous
-      title: 整理文件
-      description: 调用宿主文件整理能力。
-      host_credentials: false
-    - method: POST
-      path: /api/local-files/batch
-      category: files
-      risk: dangerous
-      title: 批量管理文件
-      description: 批量复制、移动或删除文件。
-      host_credentials: false
-    - method: GET
-      path: /api/local-files/batch-status
-      category: files
-      risk: read
-      title: 查询文件任务
-      description: 查询批量文件任务状态。
-      host_credentials: false
-    - method: GET
-      path: /api/browse
-      category: cd2
-      risk: read
-      title: 浏览 CD2
-      description: 通过宿主已配置的 CD2 gRPC 连接浏览目录。
-      host_credentials: true
-    - method: GET
-      path: /api/cd2/clouds
-      category: cd2
-      risk: read
-      title: 列出 CD2 云盘
-      description: 读取宿主配置中可用的 CD2 云盘名称。
-      host_credentials: true
-    - method: GET
-      path: /api/plugin-runtime/storage/:key
-      category: plugin-runtime
-      risk: read
-      title: 读取插件数据
-      description: 读取当前安装实例自己的持久化数据。
-      host_credentials: false
-    - method: PUT
-      path: /api/plugin-runtime/storage/:key
-      category: plugin-runtime
-      risk: write
-      title: 保存插件数据
-      description: 保存当前安装实例自己的持久化数据。
-      host_credentials: false
-    - method: DELETE
-      path: /api/plugin-runtime/storage/:key
-      category: plugin-runtime
-      risk: dangerous
-      title: 删除插件数据
-      description: 删除当前安装实例自己的持久化数据。
-      host_credentials: false
-    - method: GET
-      path: /api/plugin-runtime/watches
-      category: plugin-runtime/watch
-      risk: read
-      title: 查询目录监控
-      description: 读取当前插件创建的宿主目录监控任务。
-      host_credentials: false
-    - method: POST
-      path: /api/plugin-runtime/watches
-      category: plugin-runtime/watch
-      risk: write
-      title: 创建目录监控
-      description: 由宿主持久化轮询本地、CD2 或 115 目录，并向插件投递变化事件。
-      host_credentials: true
-    - method: PATCH
-      path: /api/plugin-runtime/watches/:watch_ref
-      category: plugin-runtime/watch
-      risk: write
-      title: 更新目录监控
-      description: 更新当前插件的监控周期、事件主题、递归或启停状态。
-      host_credentials: false
-    - method: DELETE
-      path: /api/plugin-runtime/watches/:watch_ref
-      category: plugin-runtime/watch
-      risk: dangerous
-      title: 删除目录监控
-      description: 永久删除当前插件的一条目录监控及其游标。
-      host_credentials: false
-    - method: POST
-      path: /api/plugin-runtime/watches/:watch_ref/retry
-      category: plugin-runtime/watch
-      risk: write
-      title: 重试目录事件
-      description: 立即重试最近待投递或进入死信的目录变化事件。
-      host_credentials: true
-    - method: POST
-      path: /api/plugin-runtime/watches/:watch_ref/resync
-      category: plugin-runtime/watch
-      risk: dangerous
-      title: 重建目录监控基线
-      description: 清空监控游标并从当前目录状态重新建立基线。
-      host_credentials: true
-    - method: GET
-      path: /api/subscribe/records
-      category: subscriptions
-      risk: read
-      title: 查询订阅记录
-      description: 读取宿主订阅记录。
-      host_credentials: false
-    - method: DELETE
-      path: /api/subscribe/records/:id
-      category: subscriptions
-      risk: dangerous
-      title: 删除订阅记录
-      description: 删除一条订阅记录。
-      host_credentials: false
-    - method: PUT
-      path: /api/subscribe/records/:id/status
-      category: subscriptions
-      risk: write
-      title: 更新订阅状态
-      description: 按主项目接口语义启用、停用或更新订阅状态。
-      host_credentials: false
-    - method: GET
-      path: /api/subscribe/pool/intents
-      category: subscriptions
-      risk: read
-      title: 查询聚合订阅
-      description: 读取聚合订阅意图。
-      host_credentials: false
-    - method: POST
-      path: /api/subscribe/pool/intents
-      category: subscriptions
-      risk: write
-      title: 创建聚合订阅
-      description: 创建聚合订阅意图。
-      host_credentials: false
-    - method: GET
-      path: /api/subscribe/pool/intents/:id
-      category: subscriptions
-      risk: read
-      title: 读取聚合订阅
-      description: 读取一条聚合订阅意图。
-      host_credentials: false
-    - method: PATCH
-      path: /api/subscribe/pool/intents/:id/episodes
-      category: subscriptions
-      risk: write
-      title: 更新订阅集数
-      description: 更新聚合订阅需要的集数。
-      host_credentials: false
-    - method: DELETE
-      path: /api/subscribe/pool/intents/:id
-      category: subscriptions
-      risk: dangerous
-      title: 取消聚合订阅
-      description: 取消一条聚合订阅意图。
-      host_credentials: false
-    - method: GET
-      path: /api/pt/subscriptions
-      category: subscriptions
-      risk: read
-      title: 查询 PT 订阅
-      description: 读取 PT 订阅。
-      host_credentials: false
-    - method: POST
-      path: /api/pt/subscriptions
-      category: subscriptions
-      risk: write
-      title: 创建 PT 订阅
-      description: 创建 PT 订阅。
-      host_credentials: false
-    - method: GET
-      path: /api/pt/subscriptions/:id
-      category: subscriptions
-      risk: read
-      title: 读取 PT 订阅
-      description: 读取一条 PT 订阅。
-      host_credentials: false
-    - method: DELETE
-      path: /api/pt/subscriptions/:id
-      category: subscriptions
-      risk: dangerous
-      title: 删除 PT 订阅
-      description: 删除一条 PT 订阅。
-      host_credentials: false
-    - method: POST
-      path: /api/pt/subscriptions/:id/cancel
-      category: subscriptions
-      risk: dangerous
-      title: 取消 PT 订阅
-      description: 取消一条 PT 订阅。
-      host_credentials: false
-    - method: POST
-      path: /api/pt/subscriptions/:id/search
-      category: subscriptions
-      risk: write
-      title: 运行 PT 订阅搜索
-      description: 立即为订阅运行一次搜索。
-      host_credentials: false
-    - method: GET
-      path: /api/pt/subscriptions/:id/attempts
-      category: subscriptions
-      risk: read
-      title: 查询订阅尝试
-      description: 读取订阅执行记录；宿主会移除可复用的 PT 下载地址。
-      host_credentials: false
-    - method: GET
-      path: /api/pt/subscriptions/:id/download-tasks
-      category: subscriptions
-      risk: read
-      title: 查询订阅下载
-      description: 读取订阅关联的下载任务。
-      host_credentials: false
-    - method: POST
-      path: /api/notifications/plugin
-      category: notifications
-      risk: write
-      title: 发送插件通知
-      description: 通过宿主 Telegram 通知配置反馈插件任务结果。
-      host_credentials: true
-    - method: GET
-      path: /api/tmdb/search
-      category: tmdb
-      risk: read
-      title: 搜索 TMDB
-      description: 搜索电影、剧集和人物。
-      host_credentials: true
-    - method: GET
-      path: /api/tmdb/movie/:id
-      category: tmdb
-      risk: read
-      title: 查询 TMDB 电影
-      description: 读取电影详情。
-      host_credentials: true
-    - method: GET
-      path: /api/tmdb/tv/:id
-      category: tmdb
-      risk: read
-      title: 查询 TMDB 剧集
-      description: 读取剧集详情和季度信息。
-      host_credentials: true
-    - method: GET
-      path: /api/tmdb/trending
-      category: tmdb
-      risk: read
-      title: 查询 TMDB 趋势
-      description: 读取电影或剧集趋势。
-      host_credentials: true
-    - method: GET
-      path: /api/tmdb/discover/movie
-      category: tmdb
-      risk: read
-      title: 发现 TMDB 电影
-      description: 按条件发现电影。
-      host_credentials: true
-    - method: GET
-      path: /api/tmdb/discover/tv
-      category: tmdb
-      risk: read
-      title: 发现 TMDB 剧集
-      description: 按条件发现剧集。
-      host_credentials: true
-    - method: GET
-      path: /api/tmdb/genres
-      category: tmdb
-      risk: read
-      title: 查询 TMDB 类型
-      description: 读取电影和剧集类型。
-      host_credentials: true
-x-dian115-subscription-host-apis:
-  description: 订阅安全接口目录；完整开放下列操作，不包含 PT Cookie、API Key、Token、passkey、私密 RSS 地址或下载器凭据。
-  entries:
-    - method: GET
-      path: /api/subscribe/records
-      category: subscriptions
-      risk: read
-    - method: DELETE
-      path: /api/subscribe/records/:id
-      category: subscriptions
-      risk: dangerous
-    - method: PUT
-      path: /api/subscribe/records/:id/status
-      category: subscriptions
-      risk: dangerous
-    - method: GET
-      path: /api/subscribe/pool/intents
-      category: subscriptions
-      risk: read
-    - method: POST
-      path: /api/subscribe/pool/intents
-      category: subscriptions
-      risk: write
-    - method: GET
-      path: /api/subscribe/pool/intents/:id
-      category: subscriptions
-      risk: read
-    - method: PATCH
-      path: /api/subscribe/pool/intents/:id/episodes
-      category: subscriptions
-      risk: write
-    - method: DELETE
-      path: /api/subscribe/pool/intents/:id
-      category: subscriptions
-      risk: dangerous
-    - method: GET
-      path: /api/pt/subscriptions
-      category: subscriptions
-      risk: read
-    - method: POST
-      path: /api/pt/subscriptions
-      category: subscriptions
-      risk: write
-    - method: GET
-      path: /api/pt/subscriptions/:id
-      category: subscriptions
-      risk: read
-    - method: DELETE
-      path: /api/pt/subscriptions/:id
-      category: subscriptions
-      risk: dangerous
-    - method: POST
-      path: /api/pt/subscriptions/:id/cancel
-      category: subscriptions
-      risk: dangerous
-    - method: POST
-      path: /api/pt/subscriptions/:id/search
-      category: subscriptions
-      risk: write
-    - method: GET
-      path: /api/pt/subscriptions/:id/attempts
-      category: subscriptions
-      risk: read
-    - method: GET
-      path: /api/pt/subscriptions/:id/download-tasks
-      category: subscriptions
-      risk: read
+    - { method: GET, path: /api/115/accounts/options, category: '115', risk: read }
+    - { method: GET, path: /api/115/directories, category: '115', risk: read }
+    - { method: GET, path: /api/115/offline/tasks, category: '115', risk: read }
+    - { method: GET, path: /api/115/offline/quota, category: '115', risk: read }
+    - { method: GET, path: /api/115/offline/download-path, category: '115', risk: read }
+    - { method: POST, path: /api/115/offline/add, category: '115', risk: write }
+    - { method: POST, path: /api/115/offline/delete, category: '115', risk: dangerous }
+    - { method: POST, path: /api/115/offline/clear, category: '115', risk: dangerous }
+    - { method: POST, path: /api/115/offline/restart, category: '115', risk: write }
+    - { method: POST, path: /api/115/share/receive, category: '115', risk: write }
+    - { method: GET, path: /api/local-dirs, category: files, risk: read }
+    - { method: GET, path: /api/local-files, category: files, risk: read }
+    - { method: DELETE, path: /api/local-files, category: files, risk: dangerous }
+    - { method: GET, path: /api/local-files/tree, category: files, risk: read }
+    - { method: POST, path: /api/local-files/mkdir, category: files, risk: write }
+    - { method: POST, path: /api/local-files/rename, category: files, risk: dangerous }
+    - { method: POST, path: /api/local-files/move, category: files, risk: dangerous }
+    - { method: POST, path: /api/local-files/copy, category: files, risk: write }
+    - { method: POST, path: /api/local-files/recognize, category: files, risk: write }
+    - { method: GET, path: /api/local-files/organize-options, category: files, risk: read }
+    - { method: POST, path: /api/local-files/organize, category: files, risk: dangerous }
+    - { method: POST, path: /api/local-files/batch, category: files, risk: dangerous }
+    - { method: GET, path: /api/local-files/batch-status, category: files, risk: read }
+    - { method: GET, path: /api/browse, category: cd2, risk: read }
+    - { method: GET, path: /api/cd2/clouds, category: cd2, risk: read }
+    - { method: GET, path: '/api/plugin-runtime/storage/:key', category: plugin-runtime, risk: read }
+    - { method: PUT, path: '/api/plugin-runtime/storage/:key', category: plugin-runtime, risk: write }
+    - { method: DELETE, path: '/api/plugin-runtime/storage/:key', category: plugin-runtime, risk: dangerous }
+    - { method: GET, path: /api/plugin-runtime/watches, category: plugin-runtime/watch, risk: read }
+    - { method: POST, path: /api/plugin-runtime/watches, category: plugin-runtime/watch, risk: write }
+    - { method: PATCH, path: '/api/plugin-runtime/watches/:watch_ref', category: plugin-runtime/watch, risk: write }
+    - { method: DELETE, path: '/api/plugin-runtime/watches/:watch_ref', category: plugin-runtime/watch, risk: dangerous }
+    - { method: POST, path: '/api/plugin-runtime/watches/:watch_ref/retry', category: plugin-runtime/watch, risk: write }
+    - { method: POST, path: '/api/plugin-runtime/watches/:watch_ref/resync', category: plugin-runtime/watch, risk: dangerous }
+    - { method: GET, path: /api/subscribe/records, category: subscriptions, risk: read }
+    - { method: DELETE, path: '/api/subscribe/records/:id', category: subscriptions, risk: dangerous }
+    - { method: PUT, path: '/api/subscribe/records/:id/status', category: subscriptions, risk: write }
+    - { method: GET, path: /api/subscribe/pool/intents, category: subscriptions, risk: read }
+    - { method: POST, path: /api/subscribe/pool/intents, category: subscriptions, risk: write }
+    - { method: GET, path: '/api/subscribe/pool/intents/:id', category: subscriptions, risk: read }
+    - { method: DELETE, path: '/api/subscribe/pool/intents/:id', category: subscriptions, risk: dangerous }
+    - { method: PATCH, path: '/api/subscribe/pool/intents/:id/episodes', category: subscriptions, risk: write }
+    - { method: GET, path: /api/pt/subscriptions, category: subscriptions, risk: read }
+    - { method: POST, path: /api/pt/subscriptions, category: subscriptions, risk: write }
+    - { method: GET, path: '/api/pt/subscriptions/:id', category: subscriptions, risk: read }
+    - { method: DELETE, path: '/api/pt/subscriptions/:id', category: subscriptions, risk: dangerous }
+    - { method: POST, path: '/api/pt/subscriptions/:id/cancel', category: subscriptions, risk: dangerous }
+    - { method: POST, path: '/api/pt/subscriptions/:id/search', category: subscriptions, risk: write }
+    - { method: GET, path: '/api/pt/subscriptions/:id/attempts', category: subscriptions, risk: read }
+    - { method: GET, path: '/api/pt/subscriptions/:id/download-tasks', category: subscriptions, risk: read }
+    - { method: POST, path: /api/notifications/plugin, category: notifications, risk: write }
+    - { method: GET, path: /api/tmdb/search, category: tmdb, risk: read }
+    - { method: GET, path: '/api/tmdb/movie/:id', category: tmdb, risk: read }
+    - { method: GET, path: '/api/tmdb/tv/:id', category: tmdb, risk: read }
+    - { method: GET, path: /api/tmdb/trending, category: tmdb, risk: read }
+    - { method: GET, path: /api/tmdb/discover/movie, category: tmdb, risk: read }
+    - { method: GET, path: /api/tmdb/discover/tv, category: tmdb, risk: read }
+    - { method: GET, path: /api/tmdb/genres, category: tmdb, risk: read }
+
 paths:
   /api/plugin-center/v1/host-apis:
     get:
-      tags:
-        - Plugin Discovery
+      tags: [Plugin Discovery]
       summary: 读取当前 Host API 目录
       operationId: listPluginHostAPIs
       security:
         - AdminBearer: []
       responses:
         '200':
-          description: 当前版本允许插件声明的接口
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - apis
-                properties:
-                  apis:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/HostAPIEntry'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/directories:
-    get:
-      tags:
-        - Direct Host APIs
-      summary: 浏览 115 目录
-      description: 读取目标账号的目录列表。
-      operationId: directHost_3819c5ab636e3614
-      x-dian115-category: "115"
-      x-dian115-risk: read
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/offline/tasks:
-    get:
-      tags:
-        - Direct Host APIs
-      summary: 查询离线任务
-      description: 查询目标账号的离线任务。
-      operationId: directHost_0136d6aee6ff8719
-      x-dian115-category: "115"
-      x-dian115-risk: read
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/offline/quota:
-    get:
-      tags:
-        - Direct Host APIs
-      summary: 查询离线额度
-      description: 查询目标账号的离线配额。
-      operationId: directHost_29aba58ff88033b1
-      x-dian115-category: "115"
-      x-dian115-risk: read
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/offline/add:
-    post:
-      tags:
-        - Direct Host APIs
-      summary: 创建离线任务
-      description: 将磁力、ED2K 或其他离线地址添加到指定目录。
-      operationId: directHost_cb7c330acf71e79a
-      x-dian115-category: "115"
-      x-dian115-risk: write
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/offline/delete:
-    post:
-      tags:
-        - Direct Host APIs
-      summary: 删除离线任务
-      description: 删除目标账号中的离线任务。
-      operationId: directHost_fac11dbb0da39c35
-      x-dian115-category: "115"
-      x-dian115-risk: dangerous
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/offline/clear:
-    post:
-      tags:
-        - Direct Host APIs
-      summary: 清理离线任务
-      description: 批量清理目标账号中的离线任务。
-      operationId: directHost_7b6d401f69cffd71
-      x-dian115-category: "115"
-      x-dian115-risk: dangerous
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/offline/restart:
-    post:
-      tags:
-        - Direct Host APIs
-      summary: 重试离线任务
-      description: 重新提交一个离线任务。
-      operationId: directHost_65ace90439539746
-      x-dian115-category: "115"
-      x-dian115-risk: write
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/offline/download-path:
-    get:
-      tags:
-        - Direct Host APIs
-      summary: 查询默认离线目录
-      description: 查询目标账号的默认离线目录。
-      operationId: directHost_d9a24b2f05a02df4
-      x-dian115-category: "115"
-      x-dian115-risk: read
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
-  /api/115/share/receive:
-    post:
-      tags:
-        - Direct Host APIs
-      summary: 转存 115 分享
-      description: 将 115 分享链接转存到目标账号的指定目录。
-      operationId: directHost_cdd815db56086340
-      x-dian115-category: "115"
-      x-dian115-risk: write
-      x-dian115-host-credentials: true
-      x-dian115-in-process-only: true
-      responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/HostAPICatalog'
+        '401':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/115/accounts/options:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 列出可用账号
-      description: 返回不含 Cookie 的主账号和备用号池选项。
-      operationId: directHost_07e3132449279d42
-      x-dian115-category: "115"
+      tags: [Host API · 115]
+      summary: 列出可用 115 账号
+      operationId: list115AccountOptions
+      x-dian115-category: '115'
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/115/accounts/options
+        headers: {}
+        body_base64: ''
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/AccountOptions'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/directories:
+    get:
+      tags: [Host API · 115]
+      summary: 浏览所选账号的 115 目录
+      operationId: browse115Directories
+      x-dian115-category: '115'
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/115/directories?account_mode=backup&account_id=7&cid=0
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/AccountMode'
+        - $ref: '#/components/parameters/AccountID'
+        - $ref: '#/components/parameters/DirectoryCID'
+      responses:
+        '200':
+          $ref: '#/components/responses/AccountDirectories'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '502':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/offline/tasks:
+    get:
+      tags: [Host API · 115]
+      summary: 查询所选账号的离线任务
+      operationId: list115OfflineTasks
+      x-dian115-category: '115'
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/115/offline/tasks?account_mode=main&page=1&page_size=30
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/AccountMode'
+        - $ref: '#/components/parameters/AccountID'
+        - $ref: '#/components/parameters/Page'
+        - name: page_size
+          in: query
+          schema: { type: integer, minimum: 1, default: 30 }
+          example: 30
+        - name: stat
+          in: query
+          schema: { type: string }
+          description: 115 离线任务状态过滤值；省略时不按状态过滤。
+      responses:
+        '200':
+          $ref: '#/components/responses/Account115UpstreamResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/offline/quota:
+    get:
+      tags: [Host API · 115]
+      summary: 查询所选账号的离线额度
+      operationId: get115OfflineQuota
+      x-dian115-category: '115'
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/115/offline/quota?account_mode=main
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/AccountMode'
+        - $ref: '#/components/parameters/AccountID'
+      responses:
+        '200':
+          $ref: '#/components/responses/Account115UpstreamResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/offline/download-path:
+    get:
+      tags: [Host API · 115]
+      summary: 查询所选账号的默认离线目录
+      operationId: get115OfflineDownloadPath
+      x-dian115-category: '115'
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/115/offline/download-path?account_mode=main
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/AccountMode'
+        - $ref: '#/components/parameters/AccountID'
+      responses:
+        '200':
+          $ref: '#/components/responses/Account115UpstreamResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/offline/add:
+    post:
+      tags: [Host API · 115]
+      summary: 为所选账号创建离线任务
+      operationId: add115OfflineTasks
+      x-dian115-category: '115'
+      x-dian115-risk: write
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/115/offline/add
+        headers:
+          Content-Type: application/json
+          Idempotency-Key: offline-add-01J6YQ8V7J
+        body_base64: eyJhY2NvdW50Ijp7Im1vZGUiOiJtYWluIn0sInVybHMiOlsibWFnbmV0Oj94dD11cm46YnRpaDphYmNkZWYiXSwic2F2ZV9jaWQiOiIxMjMifQ==
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/OfflineAdd'
+      responses:
+        '200':
+          $ref: '#/components/responses/OfflineAddResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '502':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/offline/delete:
+    post:
+      tags: [Host API · 115]
+      summary: 删除所选账号的离线任务
+      operationId: delete115OfflineTasks
+      x-dian115-category: '115'
+      x-dian115-risk: dangerous
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/115/offline/delete
+        headers: { Content-Type: application/json, Idempotency-Key: offline-delete-01J6YQ8V7J }
+        body_base64: eyJhY2NvdW50Ijp7Im1vZGUiOiJtYWluIn0sImluZm9faGFzaCI6ImFiY2RlZiIsImRlbGV0ZV9zb3VyY2UiOmZhbHNlfQ==
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/OfflineDelete'
+      responses:
+        '200':
+          $ref: '#/components/responses/Account115UpstreamResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/offline/clear:
+    post:
+      tags: [Host API · 115]
+      summary: 清理所选账号的离线任务
+      operationId: clear115OfflineTasks
+      x-dian115-category: '115'
+      x-dian115-risk: dangerous
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/115/offline/clear
+        headers: { Content-Type: application/json, Idempotency-Key: offline-clear-01J6YQ8V7J }
+        body_base64: eyJhY2NvdW50Ijp7Im1vZGUiOiJtYWluIn0sImZsYWciOjF9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/OfflineClear'
+      responses:
+        '200':
+          $ref: '#/components/responses/Account115UpstreamResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/offline/restart:
+    post:
+      tags: [Host API · 115]
+      summary: 重试所选账号的离线任务
+      operationId: restart115OfflineTask
+      x-dian115-category: '115'
+      x-dian115-risk: write
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/115/offline/restart
+        headers: { Content-Type: application/json, Idempotency-Key: offline-restart-01J6YQ8V7J }
+        body_base64: eyJhY2NvdW50Ijp7Im1vZGUiOiJtYWluIn0sImluZm9faGFzaCI6ImFiY2RlZiJ9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/OfflineRestart'
+      responses:
+        '200':
+          $ref: '#/components/responses/Account115UpstreamResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
+  /api/115/share/receive:
+    post:
+      tags: [Host API · 115]
+      summary: 将 115 分享转存到所选账号
+      operationId: receive115Share
+      x-dian115-category: '115'
+      x-dian115-risk: write
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/115/share/receive
+        headers: { Content-Type: application/json, Idempotency-Key: share-receive-01J6YQ8V7J }
+        body_base64: eyJhY2NvdW50Ijp7Im1vZGUiOiJiYWNrdXAiLCJpZCI6N30sInNoYXJlX2NvZGUiOiJleGFtcGxlIiwicmVjZWl2ZV9jb2RlIjoiMTIzNCIsInRhcmdldF9jaWQiOiI5ODcifQ==
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/ShareReceive'
+      responses:
+        '200':
+          $ref: '#/components/responses/ShareReceiveResult'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '502':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-dirs:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 浏览可选目录
-      description: 读取文件管理器可用目录。
-      operationId: directHost_df6d2f1527988d92
+      tags: [Host API · Files]
+      summary: 浏览可选本地目录
+      operationId: listLocalDirectories
       x-dian115-category: files
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/local-dirs?path=%2Fmedia&root_path=%2Fmedia
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/FilePathOptional'
+        - name: source_path
+          in: query
+          description: 源路径位于 CD2 挂载前缀时，浏览范围会限制在该前缀内。
+          schema: { type: string }
+          example: /mnt/cd2/115/incoming
+        - name: root_path
+          in: query
+          description: 可选的浏览根；宿主阻止向上越界。
+          schema: { type: string }
+          example: /media
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/LocalDirectories'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 列出文件
-      description: 列出本地挂载或 CD2 挂载目录中的文件。
-      operationId: directHost_38eb0fd5cc97a93a
+      tags: [Host API · Files]
+      summary: 列出本地或 CD2 挂载目录
+      operationId: listLocalFiles
       x-dian115-category: files
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/local-files?path=%2Fmedia
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/FilePathOptional'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/LocalFiles'
+        '500':
+          $ref: '#/components/responses/BusinessError'
     delete:
-      tags:
-        - Direct Host APIs
-      summary: 删除文件
-      description: 删除文件或目录。
-      operationId: directHost_906cd5229abee069
+      tags: [Host API · Files]
+      summary: 删除一个或多个文件或目录
+      operationId: deleteLocalFiles
       x-dian115-category: files
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: DELETE
+        path: /api/local-files
+        headers: { Content-Type: application/json, Idempotency-Key: files-delete-01J6YQ8V7J }
+        body_base64: eyJwYXRocyI6WyIvbWVkaWEvb2Jzb2xldGUubWt2Il19
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FileDelete'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/SimpleSuccess'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/tree:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 读取目录树
-      description: 读取本地挂载或 CD2 挂载目录树。
-      operationId: directHost_50ef295eb864384f
+      tags: [Host API · Files]
+      summary: 读取本地或 CD2 目录树节点
+      operationId: getLocalDirectoryTree
       x-dian115-category: files
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/local-files/tree?path=%2Fmedia
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/FilePathOptional'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/DirectoryTree'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/mkdir:
     post:
-      tags:
-        - Direct Host APIs
-      summary: 创建目录
-      description: 在文件管理器中创建目录。
-      operationId: directHost_de94839a17664f10
+      tags: [Host API · Files]
+      summary: 创建本地或 CD2 目录
+      operationId: createLocalDirectory
       x-dian115-category: files
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/local-files/mkdir
+        headers: { Content-Type: application/json, Idempotency-Key: mkdir-01J6YQ8V7J }
+        body_base64: eyJwYXRoIjoiL21lZGlhL01vdmllcyJ9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FileMkdir'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CreatedPath'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/rename:
     post:
-      tags:
-        - Direct Host APIs
-      summary: 重命名文件
-      description: 重命名文件或目录。
-      operationId: directHost_559347aad560507b
+      tags: [Host API · Files]
+      summary: 重命名本地或 CD2 文件
+      operationId: renameLocalFile
       x-dian115-category: files
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/local-files/rename
+        headers: { Content-Type: application/json, Idempotency-Key: rename-01J6YQ8V7J }
+        body_base64: eyJvbGRfcGF0aCI6Ii9tZWRpYS9PbGQiLCJuZXdfbmFtZSI6Ik5ldyJ9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FileRename'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/RenamedPath'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/move:
     post:
-      tags:
-        - Direct Host APIs
-      summary: 移动文件
-      description: 按宿主规则在本地挂载或 CD2 之间移动文件。
-      operationId: directHost_8eaefbf4902bba66
+      tags: [Host API · Files]
+      summary: 移动文件或目录
+      description: 全部源和目标都是 CD2 路径时走 gRPC；任一侧不是 CD2 路径时走容器挂载路径。
+      operationId: moveLocalFiles
       x-dian115-category: files
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/local-files/move
+        headers: { Content-Type: application/json, Idempotency-Key: move-01J6YQ8V7J }
+        body_base64: eyJzcmNfcGF0aHMiOlsiL21lZGlhL2luY29taW5nL01vdmllLm1rdiJdLCJkZXN0X2RpciI6Ii9tZWRpYS9Nb3ZpZXMifQ==
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FileMoveCopy'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/SimpleSuccess'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/copy:
     post:
-      tags:
-        - Direct Host APIs
-      summary: 复制文件
-      description: 按宿主规则在本地挂载或 CD2 之间复制文件。
-      operationId: directHost_00bbdfca3fbb0a4c
+      tags: [Host API · Files]
+      summary: 复制文件或目录
+      description: 全部源和目标都是 CD2 路径时走 gRPC；任一侧不是 CD2 路径时走容器挂载路径。
+      operationId: copyLocalFiles
       x-dian115-category: files
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/local-files/copy
+        headers: { Content-Type: application/json, Idempotency-Key: copy-01J6YQ8V7J }
+        body_base64: eyJzcmNfcGF0aHMiOlsiL21lZGlhL2luY29taW5nL01vdmllLm1rdiJdLCJkZXN0X2RpciI6Ii9tZWRpYS9Nb3ZpZXMifQ==
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FileMoveCopy'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/SimpleSuccess'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/recognize:
     post:
-      tags:
-        - Direct Host APIs
-      summary: 识别媒体文件
-      description: 调用宿主识别能力分析文件。
-      operationId: directHost_596490e4ed18f942
+      tags: [Host API · Files]
+      summary: 识别文件或目录的媒体信息
+      operationId: recognizeLocalMedia
       x-dian115-category: files
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/local-files/recognize
+        headers: { Content-Type: application/json, Idempotency-Key: recognize-01J6YQ8V7J }
+        body_base64: eyJwYXRoIjoiL21lZGlhL2luY29taW5nL01vdmllLm1rdiJ9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FilePathBody'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/MediaRecognition'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/organize-options:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 读取整理选项
-      description: 读取可用的整理目标和规则。
-      operationId: directHost_9bca67bd643543a6
+      tags: [Host API · Files]
+      summary: 读取可用于指定路径的整理规则
+      operationId: getLocalOrganizeOptions
       x-dian115-category: files
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/local-files/organize-options?path=%2Fmedia%2Fincoming%2FMovie.mkv
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/FilePathRequired'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/OrganizeOptions'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/organize:
     post:
-      tags:
-        - Direct Host APIs
-      summary: 整理文件
-      description: 调用宿主文件整理能力。
-      operationId: directHost_8d3f872aa73ad67b
+      tags: [Host API · Files]
+      summary: 提交文件整理任务
+      operationId: organizeLocalFile
       x-dian115-category: files
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/local-files/organize
+        headers: { Content-Type: application/json, Idempotency-Key: organize-01J6YQ8V7J }
+        body_base64: eyJwYXRoIjoiL21lZGlhL2luY29taW5nL01vdmllLm1rdiIsInJ1bGVfaWQiOjN9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FileOrganize'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/OrganizeAccepted'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/batch:
     post:
-      tags:
-        - Direct Host APIs
-      summary: 批量管理文件
-      description: 批量复制、移动或删除文件。
-      operationId: directHost_0b4b7f725b3bcf1b
+      tags: [Host API · Files]
+      summary: 创建异步批量文件任务
+      operationId: createLocalFileBatch
       x-dian115-category: files
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/local-files/batch
+        headers: { Content-Type: application/json, Idempotency-Key: batch-01J6YQ8V7J }
+        body_base64: eyJvcGVyYXRpb24iOiJtb3ZlIiwicGF0aHMiOlsiL21lZGlhL2luY29taW5nL0EubWt2Il0sImRlc3RfZGlyIjoiL21lZGlhL01vdmllcyJ9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/FileBatch'
       responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
         '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/FileBatchAccepted'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/local-files/batch-status:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询文件任务
-      description: 查询批量文件任务状态。
-      operationId: directHost_58e047c41c9b1905
+      tags: [Host API · Files]
+      summary: 查询异步批量文件任务
+      operationId: getLocalFileBatchStatus
       x-dian115-category: files
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/local-files/batch-status?task_id=file-operation-01J6YQ8V7J
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: task_id
+          in: query
+          required: true
+          schema: { type: string, minLength: 1 }
+          example: file-operation-01J6YQ8V7J
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/FileBatchStatus'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/browse:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 浏览 CD2
-      description: 通过宿主已配置的 CD2 gRPC 连接浏览目录。
-      operationId: directHost_f934770ed3797280
+      tags: [Host API · Files]
+      summary: 通过宿主 CD2 gRPC 浏览原生路径
+      operationId: browseCD2Path
       x-dian115-category: cd2
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/browse?path=%2F115%2FMovies
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: path
+          in: query
+          schema: { type: string, default: / }
+          example: /115/Movies
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CD2Browse'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/cd2/clouds:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 列出 CD2 云盘
-      description: 读取宿主配置中可用的 CD2 云盘名称。
-      operationId: directHost_97e468ce297efba3
+      tags: [Host API · Files]
+      summary: 列出 CD2 云盘根
+      operationId: listCD2Clouds
       x-dian115-category: cd2
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/cd2/clouds
+        headers: {}
+        body_base64: ''
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CD2Clouds'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/plugin-runtime/storage/{key}:
+    parameters:
+      - $ref: '#/components/parameters/StorageKey'
     get:
-      tags:
-        - Direct Host APIs
-      summary: 读取插件数据
-      description: 读取当前安装实例自己的持久化数据。
-      operationId: directHost_08785da47bf07ff0
+      tags: [Host API · Runtime]
+      summary: 读取当前插件实例的数据
+      operationId: getPluginStorage
       x-dian115-category: plugin-runtime
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
-      parameters:
-        - name: key
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/plugin-runtime/storage/settings
+        headers: {}
+        body_base64: ''
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginStorage'
+        '400':
+          $ref: '#/components/responses/PluginProblem'
+        '404':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
     put:
-      tags:
-        - Direct Host APIs
-      summary: 保存插件数据
-      description: 保存当前安装实例自己的持久化数据。
-      operationId: directHost_dfbbfe3fb679870b
+      tags: [Host API · Runtime]
+      summary: 创建或按版本保存当前插件实例的数据
+      operationId: putPluginStorage
       x-dian115-category: plugin-runtime
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: PUT
+        path: /api/plugin-runtime/storage/settings
+        headers:
+          Content-Type: application/json
+          If-Match: '"pkv_3"'
+          Idempotency-Key: storage-put-01J6YQ8V7J
+        body_base64: eyJ2YWx1ZSI6eyJlbmFibGVkIjp0cnVlLCJpbnRlcnZhbCI6MzB9fQ==
       parameters:
-        - name: key
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/StorageIfMatch'
+      requestBody:
+        $ref: '#/components/requestBodies/PluginStoragePut'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginStorage'
+        '400':
+          $ref: '#/components/responses/PluginProblem'
+        '412':
+          $ref: '#/components/responses/PluginProblem'
+        '413':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
     delete:
-      tags:
-        - Direct Host APIs
-      summary: 删除插件数据
-      description: 删除当前安装实例自己的持久化数据。
-      operationId: directHost_fa8850315ff7f484
+      tags: [Host API · Runtime]
+      summary: 删除当前插件实例的数据
+      operationId: deletePluginStorage
       x-dian115-category: plugin-runtime
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: DELETE
+        path: /api/plugin-runtime/storage/settings
+        headers: { Idempotency-Key: storage-delete-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: key
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginEmptyData'
+        '400':
+          $ref: '#/components/responses/PluginProblem'
+        '409':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
+
   /api/plugin-runtime/watches:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询目录监控
-      description: 读取当前插件创建的宿主目录监控任务。
-      operationId: directHost_pluginRuntimeWatchesList
+      tags: [Host API · Runtime]
+      summary: 列出当前插件实例的目录监控
+      operationId: listPluginWatches
       x-dian115-category: plugin-runtime/watch
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/plugin-runtime/watches
+        headers: {}
+        body_base64: ''
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginWatchList'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
     post:
-      tags:
-        - Direct Host APIs
-      summary: 创建目录监控
-      description: 由宿主持久化轮询本地、CD2 或 115 目录，并向插件投递变化事件。
-      operationId: directHost_pluginRuntimeWatchesCreate
+      tags: [Host API · Runtime]
+      summary: 创建宿主目录监控
+      description: event_topic 必须同时声明在 manifest events 中；每个安装实例最多 32 条。
+      operationId: createPluginWatch
       x-dian115-category: plugin-runtime/watch
       x-dian115-risk: write
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/plugin-runtime/watches
+        headers: { Content-Type: application/json, Idempotency-Key: watch-create-01J6YQ8V7J }
+        body_base64: eyJzb3VyY2UiOnsia2luZCI6Imhvc3RfcGF0aCIsInBhdGgiOiIvbWVkaWEvaW5jb21pbmcifSwiZXZlbnRfdG9waWMiOiJmaWxlcy5pbmNvbWluZy5jaGFuZ2VkIiwiaW50ZXJ2YWxfc2Vjb25kcyI6MzAsInJlY3Vyc2l2ZSI6dHJ1ZX0=
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/PluginWatchCreate'
       responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
         '201':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginWatchCreated'
+        '400':
+          $ref: '#/components/responses/PluginProblem'
+        '409':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
+
   /api/plugin-runtime/watches/{watch_ref}:
+    parameters:
+      - $ref: '#/components/parameters/WatchRef'
     patch:
-      tags:
-        - Direct Host APIs
-      summary: 更新目录监控
-      description: 更新当前插件的监控周期、事件主题、递归或启停状态。
-      operationId: directHost_pluginRuntimeWatchesUpdate
+      tags: [Host API · Runtime]
+      summary: 更新目录监控配置
+      operationId: updatePluginWatch
       x-dian115-category: plugin-runtime/watch
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: PATCH
+        path: /api/plugin-runtime/watches/fw_0123456789abcdef
+        headers: { Content-Type: application/json, Idempotency-Key: watch-update-01J6YQ8V7J }
+        body_base64: eyJpbnRlcnZhbF9zZWNvbmRzIjo2MCwic3RhdGUiOiJhY3RpdmUifQ==
       parameters:
-        - name: watch_ref
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/PluginWatchUpdate'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginWatchUpdated'
+        '400':
+          $ref: '#/components/responses/PluginProblem'
+        '404':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
     delete:
-      tags:
-        - Direct Host APIs
-      summary: 删除目录监控
-      description: 永久删除当前插件的一条目录监控及其游标。
-      operationId: directHost_pluginRuntimeWatchesDelete
+      tags: [Host API · Runtime]
+      summary: 删除目录监控及游标
+      operationId: deletePluginWatch
       x-dian115-category: plugin-runtime/watch
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: DELETE
+        path: /api/plugin-runtime/watches/fw_0123456789abcdef
+        headers: { Idempotency-Key: watch-delete-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: watch_ref
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginWatchDeleted'
+        '400':
+          $ref: '#/components/responses/PluginProblem'
+        '404':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
+
   /api/plugin-runtime/watches/{watch_ref}/retry:
+    parameters:
+      - $ref: '#/components/parameters/WatchRef'
     post:
-      tags:
-        - Direct Host APIs
-      summary: 重试目录事件
-      description: 立即重试最近待投递或进入死信的目录变化事件。
-      operationId: directHost_pluginRuntimeWatchesRetry
+      tags: [Host API · Runtime]
+      summary: 立即重试待投递或死信事件
+      operationId: retryPluginWatch
       x-dian115-category: plugin-runtime/watch
       x-dian115-risk: write
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/plugin-runtime/watches/fw_0123456789abcdef/retry
+        headers: { Idempotency-Key: watch-retry-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: watch_ref
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
         '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginWatchRetry'
+        '409':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
+
   /api/plugin-runtime/watches/{watch_ref}/resync:
+    parameters:
+      - $ref: '#/components/parameters/WatchRef'
     post:
-      tags:
-        - Direct Host APIs
-      summary: 重建目录监控基线
-      description: 清空监控游标并从当前目录状态重新建立基线。
-      operationId: directHost_pluginRuntimeWatchesResync
+      tags: [Host API · Runtime]
+      summary: 清空游标并重建目录监控基线
+      operationId: resyncPluginWatch
       x-dian115-category: plugin-runtime/watch
       x-dian115-risk: dangerous
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/plugin-runtime/watches/fw_0123456789abcdef/resync
+        headers: { Idempotency-Key: watch-resync-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: watch_ref
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
-        '200':
-          $ref: '#/components/responses/DirectResponse'
         '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginWatchResync'
+        '404':
+          $ref: '#/components/responses/PluginProblem'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
+
   /api/subscribe/records:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询订阅记录
-      description: 读取宿主订阅记录。
-      operationId: directHost_8b5921fbf8308b48
+      tags: [Host API · Subscriptions]
+      summary: 查询统一订阅记录
+      operationId: listSubscribeRecords
       x-dian115-category: subscriptions
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/subscribe/records?channel=pt&media_type=tv
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: channel
+          in: query
+          schema: { type: string, enum: [pt, aggregate] }
+          example: pt
+        - name: media_type
+          in: query
+          schema: { $ref: '#/components/schemas/MediaType' }
+          example: tv
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/SubscribeRecords'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/subscribe/records/{id}:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     delete:
-      tags:
-        - Direct Host APIs
-      summary: 删除订阅记录
-      description: 删除一条订阅记录。
-      operationId: directHost_426f19ba44eef262
+      tags: [Host API · Subscriptions]
+      summary: 删除旧版统一订阅记录
+      operationId: deleteSubscribeRecord
       x-dian115-category: subscriptions
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: DELETE
+        path: /api/subscribe/records/42
+        headers: { Idempotency-Key: subscribe-record-delete-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CodeOK'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/subscribe/records/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     put:
-      tags:
-        - Direct Host APIs
-      summary: 更新订阅状态
-      description: 按主项目接口语义启用、停用或更新订阅状态。
-      operationId: directHost_4f6d2b405697d5db
+      tags: [Host API · Subscriptions]
+      summary: 更新旧版统一订阅记录状态
+      description: cancelled、completed、landed 会物理删除旧记录。
+      operationId: updateSubscribeRecordStatus
       x-dian115-category: subscriptions
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: PUT
+        path: /api/subscribe/records/42/status
+        headers: { Content-Type: application/json, Idempotency-Key: subscribe-record-status-01J6YQ8V7J }
+        body_base64: eyJzdGF0dXMiOiJjYW5jZWxsZWQifQ==
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/SubscribeRecordStatus'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CodeOK'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/subscribe/pool/intents:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询聚合订阅
-      description: 读取聚合订阅意图。
-      operationId: directHost_5226194c7192583a
+      tags: [Host API · Subscriptions]
+      summary: 查询聚合订阅意图
+      operationId: listPoolIntents
       x-dian115-category: subscriptions
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/subscribe/pool/intents?state=pending&media_type=tv&limit=100&offset=0
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [pending, searching, transferring, partial, landed, failed, expired]
+          example: pending
+        - name: media_type
+          in: query
+          schema: { $ref: '#/components/schemas/MediaType' }
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+        - name: offset
+          in: query
+          schema: { type: integer, minimum: 0, default: 0 }
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PoolIntentList'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
     post:
-      tags:
-        - Direct Host APIs
-      summary: 创建聚合订阅
-      description: 创建聚合订阅意图。
-      operationId: directHost_61468dc2ce590e1e
+      tags: [Host API · Subscriptions]
+      summary: 创建聚合订阅意图
+      operationId: createPoolIntent
       x-dian115-category: subscriptions
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/subscribe/pool/intents
+        headers: { Content-Type: application/json, Idempotency-Key: pool-intent-create-01J6YQ8V7J }
+        body_base64: eyJ0bWRiX2lkIjo1NTAsIm1lZGlhX3R5cGUiOiJtb3ZpZSIsInRpdGxlIjoiRmlnaHQgQ2x1YiIsInllYXIiOiIxOTk5IiwiZW5hYmxlZF9zb3VyY2VzIjpbImRpYW55aW5nIiwicHQiLCJ0ZyJdfQ==
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/PoolIntentCreate'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PoolIntentSingle'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '403':
+          $ref: '#/components/responses/BusinessError'
+        '409':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/subscribe/pool/intents/{id}:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     get:
-      tags:
-        - Direct Host APIs
-      summary: 读取聚合订阅
-      description: 读取一条聚合订阅意图。
-      operationId: directHost_c8b9c12e2bf3c74a
+      tags: [Host API · Subscriptions]
+      summary: 读取一条聚合订阅意图
+      operationId: getPoolIntent
       x-dian115-category: subscriptions
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/subscribe/pool/intents/42
+        headers: {}
+        body_base64: ''
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PoolIntentSingle'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
     delete:
-      tags:
-        - Direct Host APIs
-      summary: 取消聚合订阅
-      description: 取消一条聚合订阅意图。
-      operationId: directHost_849b8bcde703f10e
+      tags: [Host API · Subscriptions]
+      summary: 物理删除聚合订阅意图
+      operationId: deletePoolIntent
       x-dian115-category: subscriptions
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: DELETE
+        path: /api/subscribe/pool/intents/42
+        headers: { Idempotency-Key: pool-intent-delete-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CodeOK'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/subscribe/pool/intents/{id}/episodes:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     patch:
-      tags:
-        - Direct Host APIs
-      summary: 更新订阅集数
-      description: 更新聚合订阅需要和已覆盖的集数。
-      operationId: directHost_4382350a26dd43a6
+      tags: [Host API · Subscriptions]
+      summary: 更新聚合订阅集数范围
+      operationId: updatePoolIntentEpisodes
       x-dian115-category: subscriptions
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: PATCH
+        path: /api/subscribe/pool/intents/42/episodes
+        headers: { Content-Type: application/json, Idempotency-Key: pool-episodes-01J6YQ8V7J }
+        body_base64: eyJ0b3RhbF9lcGlzb2RlcyI6NywibmVlZGVkX2VwaXNvZGVzIjoiNC03IiwiY292ZXJlZF9lcGlzb2RlcyI6IjEtMyJ9
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/PoolIntentEpisodes'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PoolIntentSingle'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/pt/subscriptions:
     get:
-      tags:
-        - Direct Host APIs
+      tags: [Host API · Subscriptions]
       summary: 查询 PT 订阅
-      description: 读取 PT 订阅。
-      operationId: directHost_2c4e660b45060138
+      operationId: listPTSubscriptions
       x-dian115-category: subscriptions
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/pt/subscriptions?state=pending
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [pending, searching, transferring, partial, landed, cancelled, failed, expired]
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PTSubscriptionList'
+        '500':
+          $ref: '#/components/responses/BusinessError'
     post:
-      tags:
-        - Direct Host APIs
+      tags: [Host API · Subscriptions]
       summary: 创建 PT 订阅
-      description: 创建 PT 订阅。
-      operationId: directHost_a5cbb6bd37f70e75
+      operationId: createPTSubscription
       x-dian115-category: subscriptions
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/pt/subscriptions
+        headers: { Content-Type: application/json, Idempotency-Key: pt-subscription-create-01J6YQ8V7J }
+        body_base64: eyJ0bWRiX2lkIjo1NTAsIm1lZGlhX3R5cGUiOiJtb3ZpZSIsInRpdGxlIjoiRmlnaHQgQ2x1YiJ9
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/PTSubscriptionCreate'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PTSubscriptionCreated'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '409':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/pt/subscriptions/{id}:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     get:
-      tags:
-        - Direct Host APIs
-      summary: 读取 PT 订阅
-      description: 读取一条 PT 订阅。
-      operationId: directHost_d983ecc05d166eac
+      tags: [Host API · Subscriptions]
+      summary: 读取一条 PT 订阅
+      operationId: getPTSubscription
       x-dian115-category: subscriptions
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/pt/subscriptions/42
+        headers: {}
+        body_base64: ''
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PTSubscriptionSingle'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
     delete:
-      tags:
-        - Direct Host APIs
+      tags: [Host API · Subscriptions]
       summary: 删除 PT 订阅
-      description: 删除一条 PT 订阅。
-      operationId: directHost_e81eb3c4e4ce4b34
+      operationId: deletePTSubscription
       x-dian115-category: subscriptions
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: DELETE
+        path: /api/pt/subscriptions/42
+        headers: { Idempotency-Key: pt-subscription-delete-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CodeOK'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/pt/subscriptions/{id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     post:
-      tags:
-        - Direct Host APIs
-      summary: 取消 PT 订阅
-      description: 取消一条 PT 订阅。
-      operationId: directHost_6ecb67734fba1f9e
+      tags: [Host API · Subscriptions]
+      summary: 取消并物理删除 PT 订阅
+      operationId: cancelPTSubscription
       x-dian115-category: subscriptions
       x-dian115-risk: dangerous
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/pt/subscriptions/42/cancel
+        headers: { Idempotency-Key: pt-subscription-cancel-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CodeOK'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/pt/subscriptions/{id}/search:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     post:
-      tags:
-        - Direct Host APIs
-      summary: 运行 PT 订阅搜索
-      description: 立即为订阅运行一次搜索。
-      operationId: directHost_627fafc40503e86c
+      tags: [Host API · Subscriptions]
+      summary: 立即提交一次 PT 订阅搜索
+      operationId: searchPTSubscription
       x-dian115-category: subscriptions
       x-dian115-risk: write
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/pt/subscriptions/42/search
+        headers: { Idempotency-Key: pt-subscription-search-01J6YQ8V7J }
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/CodeOKMessage'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '404':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/pt/subscriptions/{id}/attempts:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询订阅尝试
-      description: 读取订阅执行记录。
-      operationId: directHost_71ac867693e2be36
+      tags: [Host API · Subscriptions]
+      summary: 查询 PT 订阅执行记录
+      description: 宿主删除 download_url，并脱敏详情中的凭据和可复用 URL。
+      operationId: listPTSubscriptionAttempts
       x-dian115-category: subscriptions
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/pt/subscriptions/42/attempts?limit=50
+        headers: {}
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 50, default: 50 }
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PTSubscriptionAttempts'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/pt/subscriptions/{id}/download-tasks:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询订阅下载
-      description: 读取订阅关联的下载任务。
-      operationId: directHost_492bd8757e63d8a6
+      tags: [Host API · Subscriptions]
+      summary: 查询 PT 订阅关联的下载任务
+      operationId: listPTSubscriptionDownloadTasks
       x-dian115-category: subscriptions
       x-dian115-risk: read
       x-dian115-host-credentials: false
       x-dian115-in-process-only: true
+      x-dian115-response-sanitized: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/pt/subscriptions/42/download-tasks?limit=20
+        headers: {}
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - name: limit
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PTDownloadTasks'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+
   /api/notifications/plugin:
     post:
-      tags:
-        - Direct Host APIs
+      tags: [Host API · Notifications]
       summary: 发送插件通知
-      description: 通过宿主 Telegram 通知配置反馈插件任务结果。
-      operationId: directHost_e655c9f96ee9d46f
+      description: |
+        以独立的“插件通知”类型交给宿主通知系统。宿主应用通知渠道、模板、去重、
+        频率限制和 TG 配置；插件不会取得 TG Token 或 Chat ID。
+      operationId: sendPluginNotification
       x-dian115-category: notifications
       x-dian115-risk: write
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: POST
+        path: /api/notifications/plugin
+        headers:
+          Content-Type: application/json
+          Idempotency-Key: plugin-notify-01J6YQ8V7J
+        body_base64: eyJsZXZlbCI6InN1Y2Nlc3MiLCJ0aXRsZSI6IlRhc2sgY29tcGxldGUiLCJib2R5IjoiMTIgaXRlbXMgY29tcGxldGVkIiwiZGVkdXBlX2tleSI6InRhc2stNDIifQ==
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        $ref: '#/components/requestBodies/PluginNotification'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
+          $ref: '#/components/responses/PluginNotificationAccepted'
         '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/PluginNotificationAccepted'
+        '400':
+          $ref: '#/components/responses/PluginProblem'
+        '429':
+          $ref: '#/components/responses/PluginNotificationRateLimited'
+        '500':
+          $ref: '#/components/responses/PluginProblem'
+
   /api/tmdb/search:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 搜索 TMDB
-      description: 搜索电影、剧集和人物。
-      operationId: directHost_6fa8d8784caa2961
+      tags: [Host API · TMDB]
+      summary: 搜索电影和剧集
+      operationId: searchTMDB
       x-dian115-category: tmdb
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/tmdb/search?q=Arrival&page=1
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 1, maxLength: 200 }
+          example: Arrival
+        - $ref: '#/components/parameters/Page'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/TMDBPage'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/tmdb/movie/{id}:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询 TMDB 电影
-      description: 读取电影详情。
-      operationId: directHost_fa94210e12e73553
+      tags: [Host API · TMDB]
+      summary: 获取电影详情
+      operationId: getTMDBMovie
       x-dian115-category: tmdb
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/tmdb/movie/550
+        headers: {}
+        body_base64: ''
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/TMDBMovie'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/tmdb/tv/{id}:
+    parameters:
+      - $ref: '#/components/parameters/NumericID'
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询 TMDB 剧集
-      description: 读取剧集详情和季度信息。
-      operationId: directHost_3beb8cf623cb9014
+      tags: [Host API · TMDB]
+      summary: 获取剧集详情
+      description: 默认应用宿主维护的集数修正规则；显式请求 raw_episode_counts=true 才返回 TMDB 原始集数。
+      operationId: getTMDBTV
       x-dian115-category: tmdb
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/tmdb/tv/1396?raw_episode_counts=false
+        headers: {}
+        body_base64: ''
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            minLength: 1
+        - name: raw_episode_counts
+          in: query
+          schema: { type: boolean, default: false }
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/TMDBTV'
+        '400':
+          $ref: '#/components/responses/BusinessError'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/tmdb/trending:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询 TMDB 趋势
-      description: 读取电影或剧集趋势。
-      operationId: directHost_5db618a30715df1e
+      tags: [Host API · TMDB]
+      summary: 获取 TMDB 趋势
+      operationId: getTMDBTrending
       x-dian115-category: tmdb
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/tmdb/trending?media_type=all&time_window=day&page=1
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: media_type
+          in: query
+          schema: { type: string, enum: [all, movie, tv, person], default: all }
+        - name: time_window
+          in: query
+          schema: { type: string, enum: [day, week], default: day }
+        - $ref: '#/components/parameters/Page'
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/TMDBPage'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/tmdb/discover/movie:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 发现 TMDB 电影
-      description: 按条件发现电影。
-      operationId: directHost_5747fafc8170f2ca
+      tags: [Host API · TMDB]
+      summary: 按条件发现电影
+      description: 常用 TMDB discover 参数由宿主原样转发，并统一使用宿主语言、代理、API Key 与缓存策略。
+      operationId: discoverTMDBMovies
       x-dian115-category: tmdb
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/tmdb/discover/movie?sort_by=popularity.desc&with_genres=878&page=1
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/TMDBSortBy'
+        - $ref: '#/components/parameters/TMDBWithGenres'
+        - $ref: '#/components/parameters/TMDBWithoutGenres'
+        - $ref: '#/components/parameters/TMDBVoteAverage'
+        - $ref: '#/components/parameters/TMDBVoteCount'
+        - $ref: '#/components/parameters/TMDBOriginalLanguage'
+        - name: primary_release_year
+          in: query
+          schema: { type: integer, minimum: 1874, maximum: 2200 }
+        - name: year
+          in: query
+          schema: { type: integer, minimum: 1874, maximum: 2200 }
+        - name: region
+          in: query
+          schema: { type: string, pattern: '^[A-Z]{2}$' }
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/TMDBPage'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/tmdb/discover/tv:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 发现 TMDB 剧集
-      description: 按条件发现剧集。
-      operationId: directHost_f43981ca9c144d5d
+      tags: [Host API · TMDB]
+      summary: 按条件发现剧集
+      description: 常用 TMDB discover 参数由宿主原样转发，并统一使用宿主语言、代理、API Key 与缓存策略。
+      operationId: discoverTMDBTV
       x-dian115-category: tmdb
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/tmdb/discover/tv?sort_by=popularity.desc&first_air_date_year=2025&page=1
+        headers: {}
+        body_base64: ''
+      parameters:
+        - $ref: '#/components/parameters/Page'
+        - $ref: '#/components/parameters/TMDBSortBy'
+        - $ref: '#/components/parameters/TMDBWithGenres'
+        - $ref: '#/components/parameters/TMDBWithoutGenres'
+        - $ref: '#/components/parameters/TMDBVoteAverage'
+        - $ref: '#/components/parameters/TMDBVoteCount'
+        - $ref: '#/components/parameters/TMDBOriginalLanguage'
+        - name: first_air_date_year
+          in: query
+          schema: { type: integer, minimum: 1874, maximum: 2200 }
+        - name: with_networks
+          in: query
+          schema: { type: string, pattern: '^[0-9|,]+$' }
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/TMDBPage'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
   /api/tmdb/genres:
     get:
-      tags:
-        - Direct Host APIs
-      summary: 查询 TMDB 类型
-      description: 读取电影和剧集类型。
-      operationId: directHost_c289fe6f7cca8fa5
+      tags: [Host API · TMDB]
+      summary: 获取电影或剧集类型
+      operationId: getTMDBGenres
       x-dian115-category: tmdb
       x-dian115-risk: read
       x-dian115-host-credentials: true
       x-dian115-in-process-only: true
+      x-dian115-host-call-example:
+        method: GET
+        path: /api/tmdb/genres?type=movie
+        headers: {}
+        body_base64: ''
+      parameters:
+        - name: type
+          in: query
+          schema: { type: string, enum: [movie, tv], default: movie }
       responses:
         '200':
-          $ref: '#/components/responses/DirectResponse'
-        '202':
-          $ref: '#/components/responses/DirectResponse'
-        default:
-          $ref: '#/components/responses/Problem'
+          $ref: '#/components/responses/TMDBGenres'
+        '500':
+          $ref: '#/components/responses/BusinessError'
+        '503':
+          $ref: '#/components/responses/BusinessError'
+
 components:
   securitySchemes:
     AdminBearer:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  responses:
-    DirectResponse:
-      description: 真实 DIAN115 Handler 的响应；字段与对应主项目接口一致。
-    Problem:
-      description: 调用失败
+      description: 仅插件中心管理接口使用；插件 Host Call 不携带此凭据。
+
+  parameters:
+    AccountMode:
+      name: account_mode
+      in: query
+      description: 主账号、由宿主分配备用账号，或显式备用账号。
+      schema:
+        $ref: '#/components/schemas/AccountMode'
+        default: main
+    AccountID:
+      name: account_id
+      in: query
+      description: account_mode=backup 时必填；其他模式忽略。
+      schema: { type: integer, format: int64, minimum: 1 }
+      example: 7
+    DirectoryCID:
+      name: cid
+      in: query
+      schema: { type: string, default: '0', minLength: 1 }
+      example: '987654321'
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+      example: 1
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: 写操作的调用方唯一键；同一语义重试复用，同一键不可改请求内容。
+      schema: { type: string, minLength: 1, maxLength: 200 }
+      example: plugin-action-01J6YQ8V7J
+    FilePathOptional:
+      name: path
+      in: query
+      schema: { type: string, default: / }
+      example: /media/incoming
+    FilePathRequired:
+      name: path
+      in: query
+      required: true
+      schema: { type: string, minLength: 1 }
+      example: /media/incoming/Movie.mkv
+    StorageKey:
+      name: key
+      in: path
+      required: true
+      description: 当前插件安装实例内的 KV 键。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 160
+        pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$'
+      example: settings.v1
+    StorageIfMatch:
+      name: If-Match
+      in: header
+      required: false
+      description: 更新已有值时必须传最近一次 GET/PUT 返回的 ETag；首次创建省略。
+      schema:
+        type: string
+        pattern: '^"pkv_[1-9][0-9]*"$'
+      example: '"pkv_3"'
+    WatchRef:
+      name: watch_ref
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: '^fw_[A-Za-z0-9_-]+$'
+        maxLength: 128
+      example: fw_0123456789abcdef
+    NumericID:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64, minimum: 1 }
+      example: 42
+    TMDBSortBy:
+      name: sort_by
+      in: query
+      schema: { type: string, minLength: 1, maxLength: 80 }
+      example: popularity.desc
+    TMDBWithGenres:
+      name: with_genres
+      in: query
+      schema: { type: string, pattern: '^[0-9|,]+$' }
+      example: '878,18'
+    TMDBWithoutGenres:
+      name: without_genres
+      in: query
+      schema: { type: string, pattern: '^[0-9|,]+$' }
+    TMDBVoteAverage:
+      name: vote_average.gte
+      in: query
+      schema: { type: number, minimum: 0, maximum: 10 }
+    TMDBVoteCount:
+      name: vote_count.gte
+      in: query
+      schema: { type: integer, minimum: 0 }
+    TMDBOriginalLanguage:
+      name: with_original_language
+      in: query
+      schema: { type: string, pattern: '^[a-z]{2,3}$' }
+
+  requestBodies:
+    OfflineAdd:
+      required: true
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Problem'
+            type: object
+            additionalProperties: false
+            required: [urls]
+            properties:
+              account: { $ref: '#/components/schemas/AccountSelector' }
+              urls:
+                type: array
+                minItems: 1
+                maxItems: 100
+                uniqueItems: true
+                items: { type: string, minLength: 1, maxLength: 4096 }
+              save_cid: { type: string, minLength: 1 }
+          examples:
+            main:
+              value: { account: { mode: main }, urls: ['magnet:?xt=urn:btih:abcdef'], save_cid: '123' }
+    OfflineDelete:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              account: { $ref: '#/components/schemas/AccountSelector' }
+              info_hash: { type: string, minLength: 1 }
+              info_hashes:
+                type: array
+                minItems: 1
+                uniqueItems: true
+                items: { type: string, minLength: 1 }
+              delete_source: { type: boolean, default: false }
+            anyOf:
+              - required: [info_hash]
+              - required: [info_hashes]
+    OfflineClear:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [flag]
+            properties:
+              account: { $ref: '#/components/schemas/AccountSelector' }
+              flag: { type: integer, minimum: 0 }
+    OfflineRestart:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [info_hash]
+            properties:
+              account: { $ref: '#/components/schemas/AccountSelector' }
+              info_hash: { type: string, minLength: 1 }
+    ShareReceive:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              account: { $ref: '#/components/schemas/AccountSelector' }
+              share_url: { type: string, format: uri, maxLength: 4096 }
+              share_code: { type: string, minLength: 1, maxLength: 256 }
+              receive_code: { type: string, maxLength: 64 }
+              file_ids:
+                type: array
+                minItems: 1
+                uniqueItems: true
+                items: { type: string, minLength: 1 }
+              target_cid: { type: string, minLength: 1 }
+            anyOf:
+              - required: [share_url]
+              - required: [share_code]
+    FileDelete:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [paths]
+            properties:
+              paths: { $ref: '#/components/schemas/NonEmptyPaths' }
+    FileMkdir:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [path]
+            properties:
+              path: { type: string, minLength: 1 }
+    FileRename:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [old_path, new_name]
+            properties:
+              old_path: { type: string, minLength: 1 }
+              new_name: { type: string, minLength: 1, maxLength: 255 }
+    FileMoveCopy:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [src_paths, dest_dir]
+            properties:
+              src_paths: { $ref: '#/components/schemas/NonEmptyPaths' }
+              dest_dir: { type: string, minLength: 1 }
+    FilePathBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [path]
+            properties:
+              path: { type: string, minLength: 1 }
+    FileOrganize:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [path, rule_id]
+            properties:
+              path: { type: string, minLength: 1 }
+              rule_id: { type: integer, format: int64, minimum: 1 }
+    FileBatch:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [operation, paths]
+            properties:
+              operation: { type: string, enum: [delete, move, copy] }
+              paths: { $ref: '#/components/schemas/NonEmptyPaths' }
+              dest_dir: { type: string, minLength: 1 }
+          example: { operation: move, paths: [/media/incoming/A.mkv], dest_dir: /media/Movies }
+    PluginStoragePut:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [value]
+            properties:
+              value: true
+          example: { value: { enabled: true, interval: 30 } }
+    PluginWatchCreate:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [source, event_topic, recursive]
+            properties:
+              source: { $ref: '#/components/schemas/PluginWatchSource' }
+              event_topic: { $ref: '#/components/schemas/EventTopic' }
+              interval_seconds: { type: integer, minimum: 5, maximum: 86400, default: 30 }
+              recursive: { type: boolean }
+          example:
+            source: { kind: host_path, path: /media/incoming }
+            event_topic: files.incoming.changed
+            interval_seconds: 30
+            recursive: true
+    PluginWatchUpdate:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            minProperties: 1
+            properties:
+              event_topic: { $ref: '#/components/schemas/EventTopic' }
+              interval_seconds: { type: integer, minimum: 5, maximum: 86400 }
+              recursive: { type: boolean }
+              state: { type: string, enum: [active, paused] }
+    SubscribeRecordStatus:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [status]
+            properties:
+              status: { type: string, minLength: 1, maxLength: 64 }
+          example: { status: cancelled }
+    PoolIntentCreate:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PoolIntentCreate'
+    PoolIntentEpisodes:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [total_episodes]
+            properties:
+              total_episodes: { type: integer, minimum: 0 }
+              needed_episodes: { type: string, maxLength: 4096 }
+              covered_episodes: { type: string, maxLength: 4096 }
+          example: { total_episodes: 7, needed_episodes: 4-7, covered_episodes: 1-3 }
+    PTSubscriptionCreate:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PTSubscriptionCreate'
+    PluginNotification:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [level, title, body]
+            properties:
+              level: { type: string, enum: [info, success, warning, error] }
+              title: { type: string, minLength: 1, maxLength: 160 }
+              body: { type: string, minLength: 1, maxLength: 2000 }
+              job_ref:
+                type: string
+                maxLength: 128
+                pattern: '^job_[A-Za-z0-9_-]+$'
+              dedupe_key: { type: string, maxLength: 200 }
+          example:
+            level: success
+            title: Task complete
+            body: 12 items completed
+            dedupe_key: task-42
+
+  responses:
+    HostAPICatalog:
+      description: 当前宿主版本可声明的 METHOD + path 目录。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/HostAPICatalog' }
+    BusinessError:
+      description: 真实业务 Handler 拒绝或执行失败。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/BusinessError' }
+    PluginProblem:
+      description: 插件运行时接口失败。
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/PluginProblem' }
+        application/json:
+          schema: { $ref: '#/components/schemas/PluginProblem' }
+    AccountOptions:
+      description: 不含 Cookie、Token 或其他登录材料的账号选项。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [accounts]
+            properties:
+              accounts:
+                type: array
+                items: { $ref: '#/components/schemas/AccountSummary' }
+    AccountDirectories:
+      description: 所选账号当前 CID 的目录。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [dirs, cid, account]
+            properties:
+              dirs:
+                type: array
+                items: { $ref: '#/components/schemas/AccountDirectory' }
+              cid: { type: string }
+              account: { $ref: '#/components/schemas/AccountSummary' }
+    Account115UpstreamResult:
+      description: 115 业务结果；宿主追加安全账号摘要，上游业务字段按操作保留。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Account115UpstreamResult' }
+    OfflineAddResult:
+      description: 离线任务已由所选账号接受。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success, accepted, save_cid, account]
+            properties:
+              success: { type: boolean, const: true }
+              accepted: { type: integer, minimum: 0 }
+              save_cid: { type: string }
+              account: { $ref: '#/components/schemas/AccountSummary' }
+    ShareReceiveResult:
+      description: 分享内容已转存。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success, share_code, target_cid, account]
+            properties:
+              success: { type: boolean, const: true }
+              share_code: { type: string }
+              target_cid: { type: string }
+              account: { $ref: '#/components/schemas/AccountSummary' }
+    LocalDirectories:
+      description: 可选目录列表。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [current, entries]
+            properties:
+              current: { type: string }
+              entries:
+                type: array
+                items: { $ref: '#/components/schemas/FileEntry' }
+    LocalFiles:
+      description: 本地或 CD2 挂载目录内容。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [current, parent, backend, entries]
+            properties:
+              current: { type: string }
+              parent: { type: string }
+              backend: { type: string, enum: [local, cd2] }
+              entries:
+                type: array
+                items: { $ref: '#/components/schemas/FileEntry' }
+    SimpleSuccess:
+      description: 同步文件操作完成。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success]
+            properties:
+              success: { type: boolean, const: true }
+    DirectoryTree:
+      description: 当前层目录树节点。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/DirectoryNode' }
+    CreatedPath:
+      description: 目录创建完成。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success, path]
+            properties:
+              success: { type: boolean, const: true }
+              path: { type: string }
+    RenamedPath:
+      description: 重命名完成。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [success, new_path]
+            properties:
+              success: { type: boolean, const: true }
+              new_path: { type: string }
+    MediaRecognition:
+      description: 宿主媒体识别结果；具体字段随识别器版本扩展。
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+    OrganizeOptions:
+      description: 路径可使用的整理规则。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [path, mode, rules]
+            properties:
+              path: { type: string }
+              mode: { type: string }
+              rules:
+                type: array
+                items: { $ref: '#/components/schemas/OrganizeRuleOption' }
+    OrganizeAccepted:
+      description: 文件整理任务已提交。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [message]
+            properties:
+              message: { type: string }
+    FileBatchAccepted:
+      description: 批量文件任务已入队。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [task_id, status, total]
+            properties:
+              task_id: { type: string }
+              status: { type: string }
+              total: { type: integer, minimum: 0 }
+    FileBatchStatus:
+      description: 批量文件任务进度。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/FileBatchTask' }
+    CD2Browse:
+      description: CD2 gRPC 浏览结果。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [path, files]
+            properties:
+              path: { type: string }
+              files:
+                type: array
+                items: { $ref: '#/components/schemas/FileEntry' }
+    CD2Clouds:
+      description: CD2 云盘根列表。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [clouds]
+            properties:
+              clouds:
+                type: array
+                items:
+                  type: object
+                  required: [name, path]
+                  properties:
+                    name: { type: string }
+                    path: { type: string }
+    PluginStorage:
+      description: 当前插件实例的 KV 值和版本。
+      headers:
+        ETag:
+          description: 保存下一次条件更新使用的版本标签。
+          schema: { type: string, pattern: '^"pkv_[1-9][0-9]*"$' }
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PluginStorageRecord' }
+    PluginEmptyData:
+      description: 操作成功且无额外数据。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/PluginEnvelope' }
+    PluginWatchList:
+      description: 当前插件实例的监控列表。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required: [items]
+                    properties:
+                      items:
+                        type: array
+                        items: { $ref: '#/components/schemas/PluginWatch' }
+    PluginWatchCreated:
+      description: 监控已创建。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PluginWatch' }
+    PluginWatchUpdated:
+      description: 监控已更新。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PluginWatch' }
+    PluginWatchDeleted:
+      description: 监控和游标已删除。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required: [watch_ref, deleted]
+                    properties:
+                      watch_ref: { type: string }
+                      deleted: { type: boolean, const: true }
+    PluginWatchRetry:
+      description: 死信或待投递事件已进入重试。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required: [watch_ref, event_id, status]
+                    properties:
+                      watch_ref: { type: string }
+                      event_id: { type: string }
+                      status: { type: string, const: retrying }
+    PluginWatchResync:
+      description: 监控游标已清空，等待重建基线。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data:
+                    type: object
+                    required: [watch_ref, status]
+                    properties:
+                      watch_ref: { type: string }
+                      status: { type: string, const: baseline_pending }
+    SubscribeRecords:
+      description: 已脱敏的统一订阅记录。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: string, const: ok }
+              data:
+                type: object
+                required: [records]
+                properties:
+                  records:
+                    type: array
+                    items: { $ref: '#/components/schemas/SubscribeRecord' }
+    CodeOK:
+      description: 操作成功。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code]
+            properties:
+              code: { type: string, const: ok }
+    CodeOKMessage:
+      description: 操作成功并返回说明。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, message]
+            properties:
+              code: { type: string, const: ok }
+              message: { type: string }
+    PoolIntentList:
+      description: 聚合订阅和各状态计数。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data, counts]
+            properties:
+              code: { type: string, const: ok }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/PoolIntent' }
+              counts:
+                type: object
+                additionalProperties: { type: integer, minimum: 0 }
+    PoolIntentSingle:
+      description: 一条已脱敏的聚合订阅。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: string, const: ok }
+              data: { $ref: '#/components/schemas/PoolIntent' }
+    PTSubscriptionList:
+      description: 已脱敏的 PT 订阅列表。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: string, const: ok }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/PTSubscription' }
+    PTSubscriptionCreated:
+      description: PT 订阅已创建，并返回首次搜索是否提交。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data, search_submitted]
+            properties:
+              code: { type: string, const: ok }
+              data: { $ref: '#/components/schemas/PTSubscription' }
+              search_submitted: { type: boolean }
+              search_message: { type: string }
+    PTSubscriptionSingle:
+      description: 一条已脱敏的 PT 订阅。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: string, const: ok }
+              data: { $ref: '#/components/schemas/PTSubscription' }
+    PTSubscriptionAttempts:
+      description: 已删除 download_url 并递归脱敏的执行记录。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: string, const: ok }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/PTSubscriptionAttempt' }
+    PTDownloadTasks:
+      description: 已脱敏的关联下载任务。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [code, data]
+            properties:
+              code: { type: string, const: ok }
+              data:
+                type: array
+                items: { $ref: '#/components/schemas/PTDownloadTask' }
+    PluginNotificationAccepted:
+      description: 通知已发送、排队、去重，或按用户配置抑制；均不需要无限重试。
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/PluginEnvelope'
+              - type: object
+                properties:
+                  data: { $ref: '#/components/schemas/PluginNotificationResult' }
+    PluginNotificationRateLimited:
+      description: 当前插件安装实例超过每分钟通知上限。
+      headers:
+        Retry-After:
+          description: 建议等待秒数。
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/PluginProblem' }
+        application/json:
+          schema: { $ref: '#/components/schemas/PluginProblem' }
+    TMDBPage:
+      description: 宿主缓存链路返回的 TMDB 分页结果。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TMDBPage' }
+    TMDBMovie:
+      description: 宿主缓存链路返回的电影详情。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TMDBMovieDetail' }
+    TMDBTV:
+      description: 宿主缓存链路返回的剧集详情。
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TMDBTVDetail' }
+    TMDBGenres:
+      description: TMDB 类型列表。
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [genres]
+            properties:
+              genres:
+                type: array
+                items: { $ref: '#/components/schemas/TMDBGenre' }
+
   schemas:
-    HostAPIEntry:
-      type: object
-      additionalProperties: false
-      required:
-        - method
-        - path
-        - category
-        - risk
-        - title
-      properties:
-        method:
-          type: string
-          enum:
-            - GET
-            - HEAD
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-        path:
-          type: string
-          pattern: ^/api/
-        category:
-          type: string
-        risk:
-          type: string
-          enum:
-            - read
-            - write
-            - dangerous
-        title:
-          type: string
-        description:
-          type: string
-        host_credentials:
-          type: boolean
-    PluginPermissions:
-      type: object
-      additionalProperties: false
-      properties:
-        apis:
-          type: array
-          maxItems: 128
-          items:
-            $ref: '#/components/schemas/APIPermission'
-        network:
-          type: array
-          maxItems: 64
-          items:
-            $ref: '#/components/schemas/NetworkPermission'
-        hosted_credentials:
-          type: boolean
-          readOnly: true
-          description: 宿主根据已批准接口自动计算，插件作者不声明。
-        credential_reasons:
-          type: array
-          readOnly: true
-          items:
-            type: string
-    APIPermission:
-      type: object
-      additionalProperties: false
-      required:
-        - method
-        - path
-        - reason
-      properties:
-        method:
-          type: string
-          enum:
-            - GET
-            - HEAD
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-        path:
-          type: string
-          pattern: ^/api/
-        reason:
-          type: string
-          minLength: 1
-          maxLength: 240
-    NetworkPermission:
-      type: object
-      additionalProperties: false
-      required:
-        - origin
-        - methods
-        - proxy_mode
-        - reason
-      properties:
-        origin:
-          type: string
-          format: uri
-          pattern: ^https://
-        methods:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items:
-            type: string
-            enum:
-              - GET
-              - HEAD
-              - POST
-              - PUT
-              - PATCH
-              - DELETE
-        proxy_mode:
-          type: string
-          enum:
-            - system
-            - direct
-            - required
-        reason:
-          type: string
-          minLength: 1
-          maxLength: 240
     HostCallRequest:
       type: object
       additionalProperties: false
-      required:
-        - method
-        - path
+      required: [method, path]
       properties:
         method:
           type: string
-          enum:
-            - GET
-            - HEAD
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
+          enum: [GET, HEAD, POST, PUT, PATCH, DELETE]
         path:
           type: string
-          description: 已登记的 /api/... 路径，或 permissions.network 已批准的完整 HTTPS URL。
-          pattern: ^(?:/api/|https://)
+          pattern: '^/api/'
+          description: 已批准模板对应的实际 API 路径，可直接包含查询串。
         headers:
           type: object
-          additionalProperties:
-            type: string
+          propertyNames:
+            enum: [Accept, Content-Type, If-Match, If-None-Match, Idempotency-Key, X-Correlation-ID]
+          additionalProperties: { type: string }
         body_base64:
           type: string
+          contentEncoding: base64
+          description: 解码后最多 256 KiB；GET/HEAD 通常为空。
     HostCallResponse:
       type: object
       additionalProperties: false
-      required:
-        - status
-        - headers
-        - body_base64
+      required: [status, headers, body_base64]
       properties:
-        status:
-          type: integer
-          minimum: 100
-          maximum: 599
+        status: { type: integer, minimum: 100, maximum: 599 }
         headers:
           type: object
           additionalProperties:
             type: array
-            items:
-              type: string
+            items: { type: string }
         body_base64:
           type: string
-    Problem:
+          contentEncoding: base64
+    HostAPICatalog:
+      type: object
+      required: [apis]
+      properties:
+        apis:
+          type: array
+          items: { $ref: '#/components/schemas/HostAPIEntry' }
+    HostAPIEntry:
+      type: object
+      additionalProperties: false
+      required: [method, path, category, risk, title]
+      properties:
+        method: { type: string, enum: [GET, HEAD, POST, PUT, PATCH, DELETE] }
+        path: { type: string, pattern: '^/api/' }
+        category: { type: string }
+        risk: { type: string, enum: [read, write, dangerous] }
+        title: { type: string }
+        description: { type: string }
+        host_credentials: { type: boolean, default: false }
+    BusinessError:
+      type: object
+      additionalProperties: true
+      required: [error]
+      properties:
+        error: { type: string }
+        code: { type: string }
+        message: { type: string }
+    PluginProblem:
       type: object
       additionalProperties: true
       properties:
-        error:
+        type: { type: string, format: uri-reference }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
+        code: { type: string }
+        error: { type: string }
+        request_id: { type: string }
+    AccountMode:
+      type: string
+      enum: [main, backup_pool, backup]
+    AccountSelector:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode: { $ref: '#/components/schemas/AccountMode' }
+        id: { type: integer, format: int64, minimum: 1 }
+      description: mode=backup 时 id 必填；backup_pool 由宿主分配并在响应中返回实际账号。
+    AccountSummary:
+      type: object
+      additionalProperties: false
+      required: [mode, name]
+      properties:
+        mode: { $ref: '#/components/schemas/AccountMode' }
+        id: { type: integer, format: int64, minimum: 1 }
+        name: { type: string }
+        user_name: { type: string }
+        cloud_name: { type: string }
+        is_vip: { type: boolean }
+        cookie_status: { type: string }
+    AccountDirectory:
+      type: object
+      additionalProperties: true
+      required: [cid, name]
+      properties:
+        cid: { type: string }
+        name: { type: string }
+    Account115UpstreamResult:
+      type: object
+      additionalProperties: true
+      required: [account]
+      properties:
+        account: { $ref: '#/components/schemas/AccountSummary' }
+    NonEmptyPaths:
+      type: array
+      minItems: 1
+      uniqueItems: true
+      items: { type: string, minLength: 1 }
+    FileEntry:
+      type: object
+      additionalProperties: true
+      required: [name, path, is_dir]
+      properties:
+        name: { type: string }
+        path: { type: string }
+        is_dir: { type: boolean }
+        size: { type: integer, format: int64, minimum: 0 }
+        mod_time: { type: string, format: date-time }
+        ext: { type: string }
+    DirectoryNode:
+      type: object
+      additionalProperties: true
+      required: [name, path]
+      properties:
+        name: { type: string }
+        path: { type: string }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/DirectoryNode' }
+    OrganizeRuleOption:
+      type: object
+      additionalProperties: true
+      required: [id, name, mode, source_path, target_path, media_type, transfer_mode]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        name: { type: string }
+        mode: { type: string }
+        source_path: { type: string }
+        target_path: { type: string }
+        media_type: { type: string }
+        transfer_mode: { type: string }
+        cloud_name: { type: string }
+    FileBatchTask:
+      type: object
+      additionalProperties: true
+      required: [id, operation, status, total, done, errors]
+      properties:
+        id: { type: string }
+        operation: { type: string, enum: [delete, move, copy] }
+        status: { type: string }
+        total: { type: integer, minimum: 0 }
+        done: { type: integer, minimum: 0 }
+        errors:
+          type: array
+          items: { type: string }
+    PluginMeta:
+      type: object
+      additionalProperties: true
+      required: [request_id, idempotent_replay]
+      properties:
+        request_id: { type: string }
+        idempotent_replay: { type: boolean }
+    PluginEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data: true
+        meta: { $ref: '#/components/schemas/PluginMeta' }
+    PluginStorageRecord:
+      type: object
+      additionalProperties: false
+      required: [key, value, revision, updated_at]
+      properties:
+        key: { type: string }
+        value: true
+        revision: { type: integer, format: int64, minimum: 1 }
+        updated_at: { type: string, format: date-time }
+    EventTopic:
+      type: string
+      minLength: 1
+      maxLength: 160
+      pattern: '^[a-z0-9]+(?:[._-][a-z0-9]+)*$'
+    PluginWatchSource:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [kind, path]
+          properties:
+            kind: { type: string, const: host_path }
+            path: { type: string, minLength: 1 }
+        - type: object
+          additionalProperties: false
+          required: [kind, cid]
+          properties:
+            kind: { type: string, const: '115' }
+            account: { $ref: '#/components/schemas/AccountSelector' }
+            cid: { type: string, pattern: '^[0-9]{1,32}$' }
+    PluginWatch:
+      type: object
+      additionalProperties: false
+      required:
+        - watch_ref
+        - source
+        - backend
+        - event_topic
+        - interval_seconds
+        - recursive
+        - state
+        - baseline_ready
+        - resync_required
+        - created_at
+        - updated_at
+      properties:
+        watch_ref: { type: string, pattern: '^fw_[A-Za-z0-9_-]+$' }
+        source: { $ref: '#/components/schemas/PluginWatchSource' }
+        backend: { type: string, enum: [local, cd2, '115'] }
+        event_topic: { $ref: '#/components/schemas/EventTopic' }
+        interval_seconds: { type: integer, minimum: 5, maximum: 86400 }
+        recursive: { type: boolean }
+        state: { type: string, enum: [active, paused] }
+        last_error: { type: string, description: 稳定错误码，不返回原始宿主错误。 }
+        baseline_ready: { type: boolean }
+        resync_required: { type: boolean }
+        pending_attempts: { type: integer, minimum: 0 }
+        pending_next_attempt_at: { type: string, format: date-time }
+        dead_letter_event_id: { type: string }
+        dead_letter_error: { type: string }
+        dead_lettered_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        last_polled_at: { type: string, format: date-time }
+    PluginNotificationResult:
+      type: object
+      additionalProperties: false
+      required: [event, accepted]
+      properties:
+        event: { type: string, const: plugin_notification_message }
+        accepted: { type: boolean }
+        deduplicated: { type: boolean }
+        suppressed: { type: boolean }
+        suppression_reason: { type: string }
+    MediaType:
+      type: string
+      enum: [movie, tv]
+    SubscribeRecord:
+      type: object
+      additionalProperties: false
+      required: [id, tmdb_id, media_type, title, season, year, channel, status, poster_path, backdrop_path, created_at, updated_at]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        tmdb_id: { type: integer, minimum: 1 }
+        media_type: { $ref: '#/components/schemas/MediaType' }
+        title: { type: string }
+        season: { type: integer, minimum: 0 }
+        year: { type: string }
+        channel: { type: string, enum: [pt, aggregate] }
+        status: { type: string }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PoolIntentCreate:
+      type: object
+      additionalProperties: false
+      required: [tmdb_id, media_type, title]
+      properties:
+        proxy_id: { type: integer, format: int64, minimum: 1 }
+        tmdb_id: { type: integer, minimum: 1 }
+        media_type: { $ref: '#/components/schemas/MediaType' }
+        season: { type: integer, minimum: 0, default: 1 }
+        title: { type: string, minLength: 1 }
+        year: { type: string, maxLength: 16 }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        total_episodes: { type: integer, minimum: 0 }
+        enabled_sources:
+          type: array
+          uniqueItems: true
+          items: { type: string, enum: [dianying, pt, tg] }
+        priority_rule: { type: string }
+        is_upgrade: { type: boolean }
+        baseline_tag: { type: string }
+        initial_covered_episodes: { type: string, maxLength: 4096 }
+        initial_needed_episodes: { type: string, maxLength: 4096 }
+        library_snapshot_provided: { type: boolean, default: false }
+    PoolIntent:
+      type: object
+      additionalProperties: true
+      required: [id, tmdb_id, season, media_type, title, state]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        proxy_id: { type: integer, format: int64 }
+        tmdb_id: { type: integer, minimum: 1 }
+        season: { type: integer, minimum: 0 }
+        media_type: { $ref: '#/components/schemas/MediaType' }
+        title: { type: string }
+        year: { type: string }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        total_episodes_known: { type: integer, minimum: 0 }
+        state:
           type: string
-        code:
+          enum: [pending, searching, transferring, partial, landed, failed, expired]
+        priority_rule: { type: string }
+        enabled_sources: { type: string, description: JSON 数组字符串。 }
+        is_upgrade: { type: integer, enum: [0, 1] }
+        subscribe_kind: { type: string }
+        needed_episodes: { type: string }
+        covered_episodes: { type: string }
+        landed_via: { type: string }
+        landed_share_code: { type: string, description: 响应脱敏后不会包含可复用接收材料。 }
+        landed_tag: { type: string }
+        landed_at: { type: string, format: date-time }
+        last_check_at: { type: string, format: date-time }
+        last_error: { type: string }
+        retry_count: { type: integer, minimum: 0 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PTSubscriptionCreate:
+      type: object
+      additionalProperties: false
+      required: [tmdb_id, media_type, title]
+      properties:
+        proxy_id: { type: integer, format: int64, minimum: 1 }
+        tmdb_id: { type: integer, minimum: 1 }
+        media_type: { $ref: '#/components/schemas/MediaType' }
+        title: { type: string, minLength: 1 }
+        season: { type: integer, minimum: 0, default: 1 }
+        year: { type: string, maxLength: 16 }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        total_episodes_known: { type: integer, minimum: 0 }
+        sites: { type: string, description: 站点 ID 的 JSON 数组字符串；省略时使用宿主默认值。 }
+        search_interval_seconds: { type: integer, minimum: 1 }
+        needed_episodes: { type: string, maxLength: 4096 }
+        covered_episodes: { type: string, maxLength: 4096 }
+        library_snapshot_provided: { type: boolean, default: false }
+        is_upgrade: { type: boolean }
+        baseline_tag: { type: string }
+        keyword: { type: string }
+        search_imdbid: { type: string }
+        episode_priority: { type: string, description: JSON 对象字符串。 }
+        filter_params: { type: string, description: JSON 对象字符串。 }
+    PTSubscription:
+      type: object
+      additionalProperties: true
+      required: [id, tmdb_id, season, media_type, title, state]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        pool_intent_id: { type: integer, format: int64 }
+        proxy_id: { type: integer, format: int64 }
+        tmdb_id: { type: integer, minimum: 1 }
+        season: { type: integer, minimum: 0 }
+        media_type: { $ref: '#/components/schemas/MediaType' }
+        title: { type: string }
+        year: { type: string }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        total_episodes_known: { type: integer, minimum: 0 }
+        state:
           type: string
+          enum: [pending, searching, transferring, partial, landed, cancelled, failed, expired]
+        sites: { type: string, description: 站点 ID 的 JSON 数组字符串；凭据始终由宿主管理。 }
+        downloader: { type: string }
+        search_interval_seconds: { type: integer, minimum: 1 }
+        last_search_at: { type: string, format: date-time }
+        last_success_at: { type: string, format: date-time }
+        last_error: { type: string }
+        retry_count: { type: integer, minimum: 0 }
+        needed_episodes: { type: string }
+        covered_episodes: { type: string }
+        is_upgrade: { type: boolean }
+        keyword: { type: string }
+        search_imdbid: { type: string }
+        episode_priority: { type: string }
+        filter_params: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    PTSubscriptionAttempt:
+      type: object
+      additionalProperties: true
+      required: [id, subscription_id, action, result, created_at]
+      properties:
+        id: { type: integer, format: int64, minimum: 1 }
+        subscription_id: { type: integer, format: int64, minimum: 1 }
+        site_id: { type: integer, format: int64 }
+        site_name: { type: string }
+        action: { type: string }
+        result: { type: string }
+        title: { type: string }
+        info_hash: { type: string }
+        tag: { type: string }
+        priority_level: { type: integer }
+        downloader: { type: string }
+        download_id: { type: string }
+        selected_files: { type: string }
+        selected_episodes: { type: string }
+        detail: { type: string }
+        created_at: { type: string, format: date-time }
+      description: download_url 永远从插件响应中删除。
+    PTDownloadTask:
+      type: object
+      additionalProperties: true
+      required: [attempt_id, subscription_id, title, downloader, download_id, created_at]
+      properties:
+        attempt_id: { type: integer, format: int64 }
+        subscription_id: { type: integer, format: int64 }
+        title: { type: string }
+        downloader: { type: string }
+        download_id: { type: string }
+        selected_files: { type: string }
+        episodes: { type: string }
+        created_at: true
+        status: { type: object, additionalProperties: true }
+        error: { type: string }
+    TMDBPage:
+      type: object
+      additionalProperties: false
+      required: [page, total_results, total_pages, results]
+      properties:
+        page: { type: integer, minimum: 1 }
+        total_results: { type: integer, minimum: 0 }
+        total_pages: { type: integer, minimum: 0 }
+        results:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBItem' }
+    TMDBItem:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - title
+        - name
+        - original_title
+        - original_name
+        - original_language
+        - overview
+        - poster_path
+        - backdrop_path
+        - release_date
+        - first_air_date
+        - media_type
+        - genre_ids
+        - vote_average
+        - vote_count
+        - popularity
+      properties:
+        id: { type: integer, minimum: 1 }
+        title: { type: string }
+        name: { type: string }
+        original_title: { type: string }
+        original_name: { type: string }
+        original_language: { type: string }
+        overview: { type: string }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        release_date: { type: string }
+        first_air_date: { type: string }
+        media_type:
+          type: string
+          description: search/trending 通常为 movie、tv 或 person；discover 结果可能为空。
+        genre_ids:
+          type: array
+          items: { type: integer, minimum: 0 }
+        vote_average: { type: number, minimum: 0, maximum: 10 }
+        vote_count: { type: integer, minimum: 0 }
+        popularity: { type: number }
+    TMDBGenre:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id: { type: integer, minimum: 1 }
+        name: { type: string }
+    TMDBCompany:
+      type: object
+      additionalProperties: false
+      required: [id, name, logo_path, origin_country]
+      properties:
+        id: { type: integer, minimum: 0 }
+        name: { type: string }
+        logo_path: { type: string }
+        origin_country: { type: string }
+    TMDBProductionCountry:
+      type: object
+      additionalProperties: false
+      required: [iso_3166_1, name]
+      properties:
+        iso_3166_1: { type: string }
+        name: { type: string }
+    TMDBCastMember:
+      type: object
+      additionalProperties: false
+      required: [id, name, original_name, character, profile_path, order]
+      properties:
+        id: { type: integer, minimum: 0 }
+        name: { type: string }
+        original_name: { type: string }
+        character: { type: string }
+        profile_path: { type: string }
+        order: { type: integer, minimum: 0 }
+    TMDBCrewMember:
+      type: object
+      additionalProperties: false
+      required: [id, name, department, job]
+      properties:
+        id: { type: integer, minimum: 0 }
+        name: { type: string }
+        department: { type: string }
+        job: { type: string }
+    TMDBCredits:
+      type: object
+      additionalProperties: false
+      required: [cast, crew]
+      properties:
+        cast:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBCastMember' }
+        crew:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBCrewMember' }
+    TMDBCollectionRef:
+      type: object
+      additionalProperties: false
+      required: [id, name, poster_path, backdrop_path]
+      properties:
+        id: { type: integer, minimum: 1 }
+        name: { type: string }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+    TMDBMovieDetail:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - adult
+        - title
+        - original_title
+        - overview
+        - poster_path
+        - backdrop_path
+        - release_date
+        - vote_average
+        - vote_count
+        - runtime
+        - tagline
+        - budget
+        - revenue
+        - original_language
+        - origin_country
+        - production_countries
+        - production_companies
+        - status
+        - genres
+      properties:
+        id: { type: integer, minimum: 1 }
+        adult: { type: boolean }
+        title: { type: string }
+        original_title: { type: string }
+        overview: { type: string }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        release_date: { type: string }
+        vote_average: { type: number, minimum: 0, maximum: 10 }
+        vote_count: { type: integer, minimum: 0 }
+        runtime: { type: integer, minimum: 0 }
+        tagline: { type: string }
+        budget: { type: integer, format: int64, minimum: 0 }
+        revenue: { type: integer, format: int64, minimum: 0 }
+        original_language: { type: string }
+        origin_country:
+          type: array
+          items: { type: string }
+        production_countries:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBProductionCountry' }
+        production_companies:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBCompany' }
+        status: { type: string }
+        genres:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBGenre' }
+        belongs_to_collection:
+          oneOf:
+            - $ref: '#/components/schemas/TMDBCollectionRef'
+            - type: 'null'
+        credits: { $ref: '#/components/schemas/TMDBCredits' }
+        alternative_titles: { type: object, additionalProperties: true }
+        translations: { type: object, additionalProperties: true }
+        keywords: { type: object, additionalProperties: true }
+        external_ids: { type: object, additionalProperties: true }
+        release_dates: { type: object, additionalProperties: true }
+    TMDBSeason:
+      type: object
+      additionalProperties: false
+      required: [id, season_number, episode_count, name, air_date, poster_path]
+      properties:
+        id: { type: integer, minimum: 0 }
+        season_number: { type: integer, minimum: 0 }
+        episode_count: { type: integer, minimum: 0 }
+        name: { type: string }
+        air_date: { type: string }
+        poster_path: { type: string }
+    TMDBTVDetail:
+      type: object
+      additionalProperties: true
+      required:
+        - id
+        - name
+        - original_name
+        - overview
+        - poster_path
+        - backdrop_path
+        - first_air_date
+        - number_of_seasons
+        - number_of_episodes
+        - seasons
+        - episode_run_time
+        - original_language
+        - origin_country
+        - vote_average
+        - vote_count
+        - tagline
+        - status
+        - genres
+        - production_companies
+        - networks
+      properties:
+        id: { type: integer, minimum: 1 }
+        name: { type: string }
+        original_name: { type: string }
+        overview: { type: string }
+        poster_path: { type: string }
+        backdrop_path: { type: string }
+        first_air_date: { type: string }
+        number_of_seasons: { type: integer, minimum: 0 }
+        number_of_episodes: { type: integer, minimum: 0 }
+        seasons:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBSeason' }
+        episode_run_time:
+          type: array
+          items: { type: integer, minimum: 0 }
+        original_language: { type: string }
+        origin_country:
+          type: array
+          items: { type: string }
+        vote_average: { type: number, minimum: 0, maximum: 10 }
+        vote_count: { type: integer, minimum: 0 }
+        tagline: { type: string }
+        status: { type: string }
+        genres:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBGenre' }
+        production_companies:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBCompany' }
+        networks:
+          type: array
+          items: { $ref: '#/components/schemas/TMDBCompany' }
+        credits: { $ref: '#/components/schemas/TMDBCredits' }
+        alternative_titles: { type: object, additionalProperties: true }
+        translations: { type: object, additionalProperties: true }
+        keywords: { type: object, additionalProperties: true }
+        external_ids: { type: object, additionalProperties: true }
+        content_ratings: { type: object, additionalProperties: true }

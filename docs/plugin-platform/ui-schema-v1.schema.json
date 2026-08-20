@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://dian115.example/schemas/plugin-ui-v1.json",
+  "$id": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/ui-schema-v1.schema.json",
   "title": "DIAN115 Declarative Plugin UI v1",
   "type": "object",
   "additionalProperties": false,
