@@ -21,6 +21,12 @@
       "id": "io.github.madbrolab.multi-account-transfer-helper",
       "name": "多账号转存助手",
       "package_url": "packages/multi-account-transfer-helper-1.0.3.d115p",
+      "runtime": {
+        "kind": "wasm",
+        "protocol": "dian115:plugin@1",
+        "autostart": true,
+        "trust_level": "sandboxed"
+      },
       "sha256": "8dbb48a78d7bbead0ad9e24fdcbe18dff05fbaaad3f37be6f1ed7711ecbb05a0",
       "tags": [
         "115",

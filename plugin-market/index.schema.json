@@ -44,10 +44,42 @@
         "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
     },
+    "runtimeDisclosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "protocol", "autostart", "trust_level"],
+      "properties": {
+        "kind": { "type": "string", "enum": ["wasm", "process"] },
+        "protocol": { "type": "string", "enum": ["dian115:plugin@1", "dian115:process@1"] },
+        "autostart": { "type": "boolean" },
+        "trust_level": { "type": "string", "enum": ["sandboxed", "isolated-process"] }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "wasm" } } },
+          "then": {
+            "properties": {
+              "protocol": { "const": "dian115:plugin@1" },
+              "trust_level": { "const": "sandboxed" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "process" } } },
+          "then": {
+            "properties": {
+              "protocol": { "const": "dian115:process@1" },
+              "autostart": { "const": true },
+              "trust_level": { "const": "isolated-process" }
+            }
+          }
+        }
+      ]
+    },
     "plugin": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["id", "name", "version", "package_url", "sha256", "permissions"],
+      "required": ["id", "name", "version", "package_url", "sha256", "runtime", "permissions"],
       "properties": {
         "id": {
           "type": "string",
@@ -82,6 +114,7 @@
           ]
         },
         "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "runtime": { "$ref": "#/$defs/runtimeDisclosure" },
         "permissions": {
           "type": "object", "additionalProperties": false,
           "required": ["apis", "network"],

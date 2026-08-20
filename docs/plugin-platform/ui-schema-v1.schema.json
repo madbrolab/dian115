@@ -626,12 +626,17 @@
             "switch",
             "select",
             "multiselect",
-            "secret-ref"
+            "secret-ref",
+            "account-picker",
+            "directory-picker"
           ]
         },
         "required": {
           "type": "boolean",
           "default": false
+        },
+        "source": {
+          "$ref": "#/$defs/source"
         },
         "min": {
           "type": "number"
@@ -715,6 +720,20 @@
             "required": ["options"],
             "properties": {
               "options": true,
+              "min": false,
+              "max": false,
+              "step": false,
+              "min_length": false,
+              "max_length": false
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "control": { "enum": ["account-picker", "directory-picker"] } }
+          },
+          "then": {
+            "properties": {
               "min": false,
               "max": false,
               "step": false,

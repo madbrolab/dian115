@@ -56,8 +56,11 @@
       "$ref": "#/$defs/compatibility"
     },
     "runtime": {
-      "$ref": "#/$defs/wasmRuntime",
-      "description": "The plugin module is packaged in the .d115p archive and loaded by the in-process DIAN115 WASM supervisor."
+      "oneOf": [
+        { "$ref": "#/$defs/wasmRuntime" },
+        { "$ref": "#/$defs/processRuntime" }
+      ],
+      "description": "The signed runtime is loaded by DIAN115 itself: either an in-process WASM module or a supervised Linux process in the current DIAN115 container."
     },
     "permissions": {
       "$ref": "#/$defs/permissions"
@@ -202,6 +205,60 @@
           "minimum": 1,
           "maximum": 2,
           "default": 1
+        }
+      }
+    },
+    "processRuntime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "entry",
+        "protocol"
+      ],
+      "properties": {
+        "kind": {
+          "const": "process"
+        },
+        "entry": {
+          "$ref": "#/$defs/packagePath"
+        },
+        "protocol": {
+          "const": "dian115:process@1"
+        },
+        "startup_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 10000
+        },
+        "shutdown_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 5000
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000,
+          "default": 30000
+        },
+        "background_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000,
+          "default": 300000
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "default": 4
+        },
+        "restart_policy": {
+          "const": "on-failure",
+          "default": "on-failure"
         }
       }
     },
