@@ -2,24 +2,21 @@ openapi: 3.1.0
 info:
   title: DIAN115 Plugin Host API v2
   version: 2.0.0
-  description: 'DIAN115 进程内 WASM 插件开发契约。插件通过 dian115.host_call 直接调用
-
-    安装时批准的 METHOD + /api/path；宿主校验权限后分发到真实 Handler。
+  description: |
+    DIAN115 插件 Host API 开发契约。WASM 与宿主管理的 process 插件通过 Host Call 直接调用安装时批准的 METHOD + /api/path；宿主校验权限后分发到真实 Handler，无需连接 DIAN115 HTTP 端口。
 
     本文档只描述插件开发所需的直接宿主接口。
-
-'
 servers:
   - url: /
     description: 逻辑地址；插件在进程内调用，不自行连接本服务。
 tags:
   - name: Direct Host APIs
-    description: 安装时逐项批准、由 dian115.host_call 调用的真实 DIAN115 接口。
+    description: 安装时逐项批准、由 WASM host_call 或 process host.call 调用的真实 DIAN115 接口。
   - name: Plugin Discovery
     description: 管理员读取当前版本可声明的 Host API 目录。
 x-dian115-host-call:
   local_request: '{"method":"GET","path":"/api/tmdb/search","headers":{},"body_base64":""}'
-  external_request: '{"method":"GET","url":"https://example.com/items","headers":{},"body_base64":""}'
+  external_request: '{"method":"GET","path":"https://example.com/items","headers":{},"body_base64":""}'
   authorization: permissions.apis validates local METHOD + path; permissions.network validates external origin + method + proxy_mode.
 x-dian115-host-apis:
   generated_from: internal Host API catalog
@@ -220,6 +217,48 @@ x-dian115-host-apis:
       title: 删除插件数据
       description: 删除当前安装实例自己的持久化数据。
       host_credentials: false
+    - method: GET
+      path: /api/plugin-runtime/watches
+      category: plugin-runtime/watch
+      risk: read
+      title: 查询目录监控
+      description: 读取当前插件创建的宿主目录监控任务。
+      host_credentials: false
+    - method: POST
+      path: /api/plugin-runtime/watches
+      category: plugin-runtime/watch
+      risk: write
+      title: 创建目录监控
+      description: 由宿主持久化轮询本地、CD2 或 115 目录，并向插件投递变化事件。
+      host_credentials: true
+    - method: PATCH
+      path: /api/plugin-runtime/watches/:watch_ref
+      category: plugin-runtime/watch
+      risk: write
+      title: 更新目录监控
+      description: 更新当前插件的监控周期、事件主题、递归或启停状态。
+      host_credentials: false
+    - method: DELETE
+      path: /api/plugin-runtime/watches/:watch_ref
+      category: plugin-runtime/watch
+      risk: dangerous
+      title: 删除目录监控
+      description: 永久删除当前插件的一条目录监控及其游标。
+      host_credentials: false
+    - method: POST
+      path: /api/plugin-runtime/watches/:watch_ref/retry
+      category: plugin-runtime/watch
+      risk: write
+      title: 重试目录事件
+      description: 立即重试最近待投递或进入死信的目录变化事件。
+      host_credentials: true
+    - method: POST
+      path: /api/plugin-runtime/watches/:watch_ref/resync
+      category: plugin-runtime/watch
+      risk: dangerous
+      title: 重建目录监控基线
+      description: 清空监控游标并从当前目录状态重新建立基线。
+      host_credentials: true
     - method: GET
       path: /api/subscribe/records
       category: subscriptions
@@ -1002,6 +1041,142 @@ paths:
           $ref: '#/components/responses/DirectResponse'
         default:
           $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/watches:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 查询目录监控
+      description: 读取当前插件创建的宿主目录监控任务。
+      operationId: directHost_pluginRuntimeWatchesList
+      x-dian115-category: plugin-runtime/watch
+      x-dian115-risk: read
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      responses:
+        '200':
+          $ref: '#/components/responses/DirectResponse'
+        '202':
+          $ref: '#/components/responses/DirectResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    post:
+      tags:
+        - Direct Host APIs
+      summary: 创建目录监控
+      description: 由宿主持久化轮询本地、CD2 或 115 目录，并向插件投递变化事件。
+      operationId: directHost_pluginRuntimeWatchesCreate
+      x-dian115-category: plugin-runtime/watch
+      x-dian115-risk: write
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      responses:
+        '200':
+          $ref: '#/components/responses/DirectResponse'
+        '201':
+          $ref: '#/components/responses/DirectResponse'
+        '202':
+          $ref: '#/components/responses/DirectResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/watches/{watch_ref}:
+    patch:
+      tags:
+        - Direct Host APIs
+      summary: 更新目录监控
+      description: 更新当前插件的监控周期、事件主题、递归或启停状态。
+      operationId: directHost_pluginRuntimeWatchesUpdate
+      x-dian115-category: plugin-runtime/watch
+      x-dian115-risk: write
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - name: watch_ref
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          $ref: '#/components/responses/DirectResponse'
+        '202':
+          $ref: '#/components/responses/DirectResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags:
+        - Direct Host APIs
+      summary: 删除目录监控
+      description: 永久删除当前插件的一条目录监控及其游标。
+      operationId: directHost_pluginRuntimeWatchesDelete
+      x-dian115-category: plugin-runtime/watch
+      x-dian115-risk: dangerous
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - name: watch_ref
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          $ref: '#/components/responses/DirectResponse'
+        '202':
+          $ref: '#/components/responses/DirectResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/watches/{watch_ref}/retry:
+    post:
+      tags:
+        - Direct Host APIs
+      summary: 重试目录事件
+      description: 立即重试最近待投递或进入死信的目录变化事件。
+      operationId: directHost_pluginRuntimeWatchesRetry
+      x-dian115-category: plugin-runtime/watch
+      x-dian115-risk: write
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - name: watch_ref
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          $ref: '#/components/responses/DirectResponse'
+        '202':
+          $ref: '#/components/responses/DirectResponse'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/watches/{watch_ref}/resync:
+    post:
+      tags:
+        - Direct Host APIs
+      summary: 重建目录监控基线
+      description: 清空监控游标并从当前目录状态重新建立基线。
+      operationId: directHost_pluginRuntimeWatchesResync
+      x-dian115-category: plugin-runtime/watch
+      x-dian115-risk: dangerous
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - name: watch_ref
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          $ref: '#/components/responses/DirectResponse'
+        '202':
+          $ref: '#/components/responses/DirectResponse'
+        default:
+          $ref: '#/components/responses/Problem'
   /api/subscribe/records:
     get:
       tags:
@@ -1661,6 +1836,7 @@ components:
       additionalProperties: false
       required:
         - method
+        - path
       properties:
         method:
           type: string
@@ -1673,28 +1849,14 @@ components:
             - DELETE
         path:
           type: string
-          pattern: ^/api/
-        url:
-          type: string
-          format: uri
-          pattern: ^https://
+          description: 已登记的 /api/... 路径，或 permissions.network 已批准的完整 HTTPS URL。
+          pattern: ^(?:/api/|https://)
         headers:
           type: object
           additionalProperties:
             type: string
         body_base64:
           type: string
-      oneOf:
-        - required:
-            - path
-          not:
-            required:
-              - url
-        - required:
-            - url
-          not:
-            required:
-              - path
     HostCallResponse:
       type: object
       additionalProperties: false
