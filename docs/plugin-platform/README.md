@@ -34,6 +34,7 @@ manifest 的 `permissions.apis` 声明完整方法和路径，`permissions.netwo
 ## 文档
 
 - [开发指南](developer-guide.md)：manifest、UI、调用示例、监控和发布流程。
+- [最小零权限 WASM 示例](examples/in-process-wasm-status/)：已签名的 Plugin API v2 包内容示例，用于验证 WASM ABI、状态响应、声明式 UI、完整性清单和签名。
 - [进程运行时协议](process-runtime-v1.md)：同容器常驻进程、stdio 协议和生命周期。
 - [manifest schema](manifest.schema.json)、[UI schema](ui-schema-v1.schema.json)：机器校验定义。
 - [OpenAPI](openapi-v1.yaml)：Host API 的逻辑投影；插件通过 Host Call 调用，不需要连接 DIAN115 HTTP 端口。

@@ -15,6 +15,8 @@ signature.json
 
 轻量插件使用 `wasm`。WASM 仅导出 `memory`、`dian115_alloc`、`dian115_invoke`（`dian115_free` 可选），仅导入 `dian115.host_call` 和 `dian115.log`；它不能启动进程、读环境变量、读数据库、访问文件系统或打开 socket。
 
+仓库中的[最小零权限 WASM 示例](examples/in-process-wasm-status/)已经使用 Plugin API v2，可直接参考其 manifest、状态响应、声明式 UI、完整性清单和 Ed25519 签名。它只演示运行时与打包契约，故意不申请 Host API 或外部网络权限；需要调用 115、文件/CD2、订阅、TMDB、通知或外部网站时，仍须按下文在 manifest 中逐项声明。
+
 需要常驻循环、第三方运行库或自主后台任务的插件使用 `process`，包结构中的运行文件改为 Linux 可执行文件：
 
 ```text
