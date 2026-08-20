@@ -207,199 +207,37 @@
     },
     "permissions": {
       "type": "object",
-      "description": "All declared capability categories are shown together and accepted or rejected as one installation consent. Per-host, per-root, quota and per-operation grants are intentionally not part of manifest v1.",
+      "description": "安装时整体确认的精确接口和外部网络声明。宿主仅允许登记目录中的 METHOD + path。",
       "additionalProperties": false,
-      "required": [
-        "capabilities"
-      ],
+      "required": ["apis", "network"],
       "properties": {
-        "capabilities": {
-          "type": "array",
-          "maxItems": 64,
-          "uniqueItems": true,
-          "items": {
-            "$ref": "#/$defs/capabilityRequest"
-          }
+        "apis": {
+          "type": "array", "maxItems": 128, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/apiPermission" }
         },
-        "account_access": {
-          "type": "array",
-          "minItems": 1,
-          "maxItems": 3,
-          "uniqueItems": true,
-          "items": {
-            "enum": [
-              "main",
-              "backup_pool",
-              "backup_select"
-            ]
-          }
+        "network": {
+          "type": "array", "maxItems": 64, "uniqueItems": true,
+          "items": { "$ref": "#/$defs/networkPermission" }
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "type": "array",
-                "contains": {
-                  "type": "object",
-                  "required": ["capability"],
-                  "properties": {
-                    "capability": {
-                      "const": "accounts.115.use"
-                    }
-                  }
-                }
-              }
-            },
-            "required": ["capabilities"]
-          },
-          "then": {
-            "required": ["account_access"],
-            "properties": {
-              "account_access": { "type": "array" }
-            }
-          },
-          "else": {
-            "not": {
-              "required": ["account_access"]
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "type": "array",
-                "contains": {
-                  "type": "object",
-                  "required": ["capability"],
-                  "properties": {
-                    "capability": {
-                      "enum": [
-                        "transfer.115.read",
-                        "transfer.115.create",
-                        "transfer.115.cancel"
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "required": ["capabilities"]
-          },
-          "then": {
-            "properties": {
-              "account_access": { "type": "array" },
-              "capabilities": {
-                "type": "array",
-                "contains": {
-                  "type": "object",
-                  "required": ["capability"],
-                  "properties": {
-                    "capability": {
-                      "const": "accounts.115.use"
-                    }
-                  }
-                }
-              }
-            },
-            "required": ["capabilities", "account_access"]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "type": "array",
-                "contains": {
-                  "type": "object",
-                  "required": ["capability"],
-                  "properties": {
-                    "capability": {
-                      "const": "files.watch"
-                    }
-                  }
-                }
-              }
-            },
-            "required": ["capabilities"]
-          },
-          "then": {
-            "properties": {
-              "capabilities": {
-                "type": "array",
-                "allOf": [
-                  {
-                    "contains": {
-                      "type": "object",
-                      "required": ["capability"],
-                      "properties": {
-                        "capability": {
-                          "const": "events.subscribe"
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "contains": {
-                      "type": "object",
-                      "required": ["capability"],
-                      "properties": {
-                        "capability": {
-                          "enum": [
-                            "files.local.read",
-                            "files.cloud.read"
-                          ]
-                        }
-                      }
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      ]
+      }
     },
-    "capabilityRequest": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "capability",
-        "reason"
-      ],
+    "apiPermission": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "path", "reason"],
       "properties": {
-        "capability": {
-          "type": "string",
-          "enum": [
-            "network.http",
-            "network.proxy",
-            "files.local.read",
-            "files.local.write",
-            "files.cloud.read",
-            "files.cloud.write",
-            "files.watch",
-            "transfer.115.read",
-            "transfer.115.create",
-            "transfer.115.cancel",
-            "accounts.115.use",
-            "subscriptions.read",
-            "subscriptions.create",
-            "subscriptions.update",
-            "subscriptions.cancel",
-            "events.subscribe",
-            "scheduler.register",
-            "storage.kv",
-            "secrets.use",
-            "notifications.plugin.send"
-          ]
-        },
-        "reason": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 240
-        }
+        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "path": { "type": "string", "minLength": 5, "maxLength": 240, "pattern": "^/api/[A-Za-z0-9._~:/{}?=&-]+$" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
+      }
+    },
+    "networkPermission": {
+      "type": "object", "additionalProperties": false,
+      "required": ["origin", "methods", "reason"],
+      "properties": {
+        "origin": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^https://[^/]+$" },
+        "methods": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] } },
+        "proxy_mode": { "type": "string", "enum": ["direct", "system", "required"], "default": "system" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
     },
     "ui": {

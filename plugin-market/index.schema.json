@@ -24,44 +24,30 @@
     }
   },
   "$defs": {
-    "capability": {
+    "apiPermission": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["capability", "reason"],
+      "required": ["method", "path", "reason"],
       "properties": {
-        "capability": { "$ref": "#/$defs/capabilityString" },
+        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "path": { "type": "string", "pattern": "^/api/[A-Za-z0-9._~:/{}?=&-]+$" },
         "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
     },
-    "capabilityString": {
-      "type": "string",
-      "enum": [
-        "network.http",
-        "network.proxy",
-        "files.local.read",
-        "files.local.write",
-        "files.cloud.read",
-        "files.cloud.write",
-        "files.watch",
-        "transfer.115.read",
-        "transfer.115.create",
-        "transfer.115.cancel",
-        "subscriptions.read",
-        "subscriptions.create",
-        "subscriptions.update",
-        "subscriptions.cancel",
-        "events.subscribe",
-        "scheduler.register",
-        "storage.kv",
-        "secrets.use",
-        "accounts.115.use",
-        "notifications.plugin.send"
-      ]
+    "networkPermission": {
+      "type": "object", "additionalProperties": false,
+      "required": ["origin", "methods", "reason"],
+      "properties": {
+        "origin": { "type": "string", "pattern": "^https://[^/]+$" },
+        "methods": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] } },
+        "proxy_mode": { "type": "string", "enum": ["direct", "system", "required"], "default": "system" },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
+      }
     },
     "plugin": {
       "type": "object",
       "additionalProperties": true,
-      "required": ["id", "name", "version", "package_url", "sha256", "capabilities"],
+      "required": ["id", "name", "version", "package_url", "sha256", "permissions"],
       "properties": {
         "id": {
           "type": "string",
@@ -96,84 +82,20 @@
           ]
         },
         "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
-        "capabilities": {
-          "type": "array",
-          "maxItems": 64,
-          "uniqueItems": true,
-          "items": { "$ref": "#/$defs/capability" }
-        },
-        "account_access": {
-          "type": "array",
-          "minItems": 1,
-          "maxItems": 3,
-          "uniqueItems": true,
-          "items": { "enum": ["main", "backup_pool", "backup_select"] }
+        "permissions": {
+          "type": "object", "additionalProperties": false,
+          "required": ["apis", "network"],
+          "properties": {
+            "apis": { "type": "array", "maxItems": 128, "uniqueItems": true, "items": { "$ref": "#/$defs/apiPermission" } },
+            "network": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/networkPermission" } }
+          }
         },
         "tags": {
           "type": "array",
           "maxItems": 20,
           "items": { "type": "string", "maxLength": 40 }
         }
-      },
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "type": "array",
-                "contains": {
-                  "type": "object",
-                  "required": ["capability"],
-                  "properties": { "capability": { "const": "accounts.115.use" } }
-                }
-              }
-            },
-            "required": ["capabilities"]
-          },
-          "then": {
-            "required": ["account_access"],
-            "properties": { "account_access": { "type": "array" } }
-          },
-          "else": { "not": { "required": ["account_access"] } }
-        },
-        {
-          "if": {
-            "properties": {
-              "capabilities": {
-                "type": "array",
-                "contains": {
-                  "type": "object",
-                  "required": ["capability"],
-                  "properties": {
-                    "capability": {
-                      "enum": [
-                        "transfer.115.read",
-                        "transfer.115.create",
-                        "transfer.115.cancel"
-                      ]
-                    }
-                  }
-                }
-              }
-            },
-            "required": ["capabilities"]
-          },
-          "then": {
-            "required": ["account_access"],
-            "properties": {
-              "account_access": { "type": "array" },
-              "capabilities": {
-                "type": "array",
-                "contains": {
-                  "type": "object",
-                  "required": ["capability"],
-                  "properties": { "capability": { "const": "accounts.115.use" } }
-                }
-              }
-            }
-          }
-        }
-      ]
+      }
     }
   }
 }

@@ -3,8 +3,8 @@
   "algorithm": "Ed25519",
   "canonicalization": "RFC8785-JCS",
   "domain": "DIAN115-PLUGIN-PACKAGE-V1",
-  "key_id": "ed25519:If4x36FUomFia_hUBG_SJxt77UtqvkWqWId-9H-XIbk",
-  "public_key": "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo",
+  "key_id": "ed25519:hwvuHz8zm0Iq1-ErtJvz3Mf_5XH9_nzbx-wHSHxLqbE",
+  "public_key": "x-2tFClcvgn1yARmQ_kw4q6EKo-dmg6CXacOCqXOjek",
   "schema_version": 1,
-  "signature": "wrkidUtGMcYu--HxJtIeRpj2b8b8pj7LgWp76Ud9qy9E8XPVRpVSg95Qlox8MB85ut7xLxI9rIK6RI48v7kcDA"
+  "signature": "e9TtemsNGtXg7pYU8BVrpr8GZbYZHK4Mt6wve481Hzu4aIlgF1QJj9ntQXLghPNFTetfDFR481S86ZLC4S6tBA"
 }

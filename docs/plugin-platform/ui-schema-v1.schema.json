@@ -53,7 +53,7 @@
           "$ref": "#/$defs/source"
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         }
       }
     },
@@ -237,7 +237,7 @@
           }
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         }
       }
     },
@@ -274,7 +274,7 @@
           "maxLength": 300
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -318,7 +318,7 @@
           }
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -369,7 +369,7 @@
           }
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -435,7 +435,7 @@
           "default": 50
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -480,7 +480,7 @@
           "default": 200
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -518,7 +518,7 @@
           "$ref": "#/$defs/id"
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -558,7 +558,7 @@
           }
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -800,7 +800,7 @@
           }
         },
         "requires_capabilities": {
-          "$ref": "#/$defs/capabilityList"
+          "$ref": "#/$defs/apiList"
         },
         "visible_when": {
           "$ref": "#/$defs/condition"
@@ -833,33 +833,15 @@
         "value": {}
       }
     },
-    "capabilityList": {
+    "apiList": {
       "type": "array",
-      "maxItems": 16,
+      "maxItems": 32,
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "enum": [
-          "network.http",
-          "network.proxy",
-          "files.local.read",
-          "files.local.write",
-          "files.cloud.read",
-          "files.cloud.write",
-          "files.watch",
-          "accounts.115.use",
-          "transfer.115.read",
-          "transfer.115.create",
-          "transfer.115.cancel",
-          "subscriptions.read",
-          "subscriptions.create",
-          "subscriptions.update",
-          "subscriptions.cancel",
-          "events.subscribe",
-          "scheduler.register",
-          "storage.kv",
-          "secrets.use",
-          "notifications.plugin.send"
+        "anyOf": [
+          { "pattern": "^/api/[A-Za-z0-9._~:/{}?=&-]+$" },
+          { "pattern": "^https://[^/]+$" }
         ]
       }
     },

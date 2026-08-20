@@ -8,12 +8,12 @@
   "default_locale": "zh-CN",
   "publisher": {
     "name": "DIAN115 Example",
-    "key_id": "ed25519:If4x36FUomFia_hUBG_SJxt77UtqvkWqWId-9H-XIbk",
+    "key_id": "ed25519:hwvuHz8zm0Iq1-ErtJvz3Mf_5XH9_nzbx-wHSHxLqbE",
     "url": "https://github.com/madbrolab/dian115/tree/main/docs/plugin-platform/examples/in-process-wasm-status"
   },
   "compatibility": {
-    "dian115": ">=3.9.0 <4.0.0",
-    "plugin_api": "^1.0"
+    "dian115": ">=3.8.47 <4.0.0",
+    "plugin_api": "^2.0"
   },
   "runtime": {
     "kind": "wasm",
@@ -28,7 +28,8 @@
     "schema": "ui.schema.json"
   },
   "permissions": {
-    "capabilities": []
+    "apis": [],
+    "network": []
   },
   "homepage": "https://github.com/madbrolab/dian115/tree/main/docs/plugin-platform/examples/in-process-wasm-status",
   "repository": "https://github.com/madbrolab/dian115",

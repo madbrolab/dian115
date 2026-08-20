@@ -4,8 +4,8 @@
   "files": [
     {
       "path": "manifest.json",
-      "size": 1253,
-      "sha256": "7b06f133239a9a155c9dee9d7cde1ef5d194970f236cd33c578ae6a3afa51d4f"
+      "size": 1265,
+      "sha256": "0ebc048f99fee4921560a363965d7c225b0da5cae386a5539109f4e9b31256ec"
     },
     {
       "path": "runtime/plugin.wasm",

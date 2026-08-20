@@ -1,58 +1,39 @@
 {
   "$schema": "./index.schema.json",
-  "schema_version": 1,
-  "repository": {
-    "id": "madbrolab.dian115",
-    "name": "DIAN115 官方市场",
-    "homepage": "https://github.com/madbrolab/dian115"
-  },
   "plugins": [
     {
+      "author": "madbrolab",
+      "permissions": {
+        "apis": [
+          {"method":"GET","path":"/api/115/accounts/options","reason":"选择执行任务的主账号、备用号池或指定备用账号"},
+          {"method":"GET","path":"/api/115/directories","reason":"浏览所选账号的 115 云端目录"},
+          {"method":"POST","path":"/api/115/offline/add","reason":"将离线地址添加到所选账号的目标目录"},
+          {"method":"POST","path":"/api/115/share/receive","reason":"将 115 分享链接转存到所选账号的目标目录"},
+          {"method":"POST","path":"/api/notifications/plugin","reason":"通过独立的插件通知反馈转存结果"},
+          {"method":"GET","path":"/api/plugin-runtime/storage/:key","reason":"恢复当前安装实例的账号、目录和最近任务状态"},
+          {"method":"PUT","path":"/api/plugin-runtime/storage/:key","reason":"保存当前安装实例的账号、目录和最近任务状态"}
+        ],
+        "network": []
+      },
+      "description": "选择主账号、备用号池或指定备用账号，将 115 分享链接或离线地址保存到所选账号的指定云目录。",
+      "homepage": "https://github.com/madbrolab/dian115",
+      "icon_url": "assets/multi-account-transfer-helper.svg",
       "id": "io.github.madbrolab.multi-account-transfer-helper",
       "name": "多账号转存助手",
-      "version": "1.0.2",
-      "description": "选择主账号、备用号池或指定备用账号，将 115 分享链接或离线地址保存到所选账号的指定云目录。",
-      "author": "madbrolab",
-      "homepage": "https://github.com/madbrolab/dian115",
-      "package_url": "packages/multi-account-transfer-helper-1.0.2.d115p",
-      "icon_url": "assets/multi-account-transfer-helper.svg",
-      "sha256": "24d7b37246a1642788f1d1f1bff483bd5f4afecdcea677feb0c6e0a9ef160504",
-      "capabilities": [
-        {
-          "capability": "accounts.115.use",
-          "reason": "列出并选择主账号、备用号池或指定备用账号执行 115 操作"
-        },
-        {
-          "capability": "files.cloud.read",
-          "reason": "浏览所选 115 账号的云端目录并选择目标目录"
-        },
-        {
-          "capability": "transfer.115.create",
-          "reason": "创建分享转存和离线下载任务"
-        },
-        {
-          "capability": "storage.kv",
-          "reason": "保存账号、目录选择和最近任务状态，支持刷新与重启恢复"
-        },
-        {
-          "capability": "notifications.plugin.send",
-          "reason": "通过插件通知通道反馈任务提交和完成结果"
-        },
-        {
-          "capability": "events.subscribe",
-          "reason": "接收本插件创建的转存任务完成或失败事件"
-        }
-      ],
-      "account_access": [
-        "main",
-        "backup_pool",
-        "backup_select"
-      ],
+      "package_url": "packages/multi-account-transfer-helper-1.0.3.d115p",
+      "sha256": "8dbb48a78d7bbead0ad9e24fdcbe18dff05fbaaad3f37be6f1ed7711ecbb05a0",
       "tags": [
         "115",
         "transfer",
         "multi-account"
-      ]
+      ],
+      "version": "1.0.3"
     }
-  ]
+  ],
+  "repository": {
+    "homepage": "https://github.com/madbrolab/dian115",
+    "id": "madbrolab.dian115",
+    "name": "DIAN115 官方市场"
+  },
+  "schema_version": 1
 }
