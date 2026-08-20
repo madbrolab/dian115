@@ -15,25 +15,25 @@
         ],
         "network": []
       },
-      "description": "选择主账号、备用号池或指定备用账号，将 115 分享链接或离线地址保存到所选账号的指定云目录。",
+      "description": "使用宿主原生账号与目录选择器，将 115 分享链接或离线地址保存到主账号、备用号池或指定备用账号的云目录。",
       "homepage": "https://github.com/madbrolab/dian115",
       "icon_url": "assets/multi-account-transfer-helper.svg",
       "id": "io.github.madbrolab.multi-account-transfer-helper",
       "name": "多账号转存助手",
-      "package_url": "packages/multi-account-transfer-helper-1.0.3.d115p",
+      "package_url": "packages/multi-account-transfer-helper-1.0.4.d115p",
       "runtime": {
         "kind": "wasm",
         "protocol": "dian115:plugin@1",
         "autostart": true,
         "trust_level": "sandboxed"
       },
-      "sha256": "8dbb48a78d7bbead0ad9e24fdcbe18dff05fbaaad3f37be6f1ed7711ecbb05a0",
+      "sha256": "e2e2d45fe67e7f8ce160e4dded4833552960653e4be4a973c4e8dfc6a6b82c52",
       "tags": [
         "115",
         "transfer",
         "multi-account"
       ],
-      "version": "1.0.3"
+      "version": "1.0.4"
     }
   ],
   "repository": {
