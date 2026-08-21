@@ -13,7 +13,7 @@ Vue Federation page (opaque-origin iframe)
   -> runtime.invoke over framed JSON-RPC
   -> plugin process
   -> host.call
-  -> approved DIAN115 handler or public HTTPS Broker
+  -> approved DIAN115 handler or host HTTP/HTTPS Broker
 ```
 
 The page never receives the administrator Axios client, cookies, local storage, router, DOM, Bot Token, 115 credentials, TMDB key, proxy credentials, CD2 credentials, or direct filesystem access. Business work belongs in the process runtime. The page calls the runtime through the narrow bridge described in [Vue Federation UI v1](ui-federation-v1.md).
@@ -84,10 +84,10 @@ The UI and runtime are both required:
     ],
     "network": [
       {
-        "origin": "https://api.example.com",
+        "origin": "http://127.0.0.1:8080",
         "methods": ["GET", "POST"],
         "proxy_mode": "system",
-        "reason": "Call the publisher service"
+        "reason": "Call a local companion service"
       }
     ]
   },
@@ -114,7 +114,7 @@ The UI and runtime are both required:
 
 Only declare local APIs the process actually calls. Every `(method, path template)` must appear in [OpenAPI](openapi-v1.yaml). Paths are exact; declaring one parameter route does not authorize a static sibling. Write methods require an `Idempotency-Key` between 16 and 128 printable ASCII characters unless the endpoint's OpenAPI operation says it owns an equivalent idempotency mechanism.
 
-`permissions.network` is not a website allowlist. A plugin can use the Broker for any public HTTPS origin. These declarations record a routing preference for a specific origin and method:
+`permissions.network` is not a website allowlist. A plugin can use the Broker for any HTTP/HTTPS origin, including localhost, loopback, container, host and LAN services. These declarations record a routing preference for a specific origin and method:
 
 - `system`: use the host proxy-domain decision;
 - `direct`: use a direct route only when no host proxy-domain rule matches;
@@ -136,7 +136,7 @@ The host calls:
 
 The process can call:
 
-- `host.call` for approved local APIs or external public HTTPS;
+- `host.call` for approved local APIs or external HTTP/HTTPS services;
 - `host.log` for structured installation-scoped logs;
 - `host.ui.invalidate` to request a state refresh;
 - `host.telegram.register`, `host.telegram.list`, and `host.telegram.unregister`.
@@ -161,7 +161,7 @@ External request:
 ```json
 {
   "method": "POST",
-  "path": "https://api.example.com/v1/items",
+  "path": "http://127.0.0.1:8080/v1/items",
   "headers": {"content-type": "application/json"},
   "body_base64": "eyJuYW1lIjoiZXhhbXBsZSJ9"
 }
@@ -179,7 +179,7 @@ Result:
 
 `body_base64` accepts padded or unpadded standard Base64 on requests. Responses use unpadded standard Base64. The process Host Call request and response are each limited to 256 KiB.
 
-External access supports only `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE`. `OPTIONS`, `CONNECT`, and `TRACE` are not part of the contract. TLS, DNS, redirects, SSRF checks and proxy selection are performed by the host. Details are in [Host Call v2](host-call-v2.md).
+External access supports only `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE`. `OPTIONS`, `CONNECT`, and `TRACE` are not part of the contract. HTTP/HTTPS transport, DNS, redirects, target resolution and proxy selection are performed by the host. Details and HTTP security warnings are in [Host Call v2](host-call-v2.md).
 
 ## 6. Telegram
 
@@ -284,7 +284,7 @@ Publish the `.d115p` on HTTPS and add one entry to a market `index.json`. The ma
 - Runtime handles full-duplex JSON-RPC and every required response contract.
 - Every local Host API is declared exactly and appears in OpenAPI.
 - Write calls use stable idempotency keys.
-- Network calls use public HTTPS and tolerate proxy use and redirect revalidation.
+- Network calls use host-brokered HTTP/HTTPS, support local services, and tolerate proxy use and redirect revalidation.
 - Filesystem requests never depend on Linux system paths or `/config`.
 - Telegram registration stays within 3 commands and 3 keywords and handles conflicts.
 - The publisher key is stable across upgrades and the private key is not shipped.

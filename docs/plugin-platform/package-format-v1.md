@@ -172,18 +172,18 @@ ui
 - 不能使用通配符扩大路径；
 - 市场索引和包内 Manifest 必须完全一致。
 
-`permissions.network` 可选，最多 64 个不重复 HTTPS origin。它只是代理路由偏好，不限制插件可访问的网站：
+`permissions.network` 可选，最多 64 个不重复 HTTP/HTTPS origin。它只是代理路由偏好，不限制插件可访问的地址：
 
 ```json
 {
-  "origin": "https://api.example.com",
+  "origin": "http://127.0.0.1:8080",
   "methods": ["GET", "POST"],
   "proxy_mode": "required",
   "reason": "该服务要求通过配置代理访问"
 }
 ```
 
-`origin` 只能包含小写/可规范化的 `https` scheme 与 authority，不能包含用户信息、路径、查询、片段或 `*`。方法为 `GET`、`HEAD`、`POST`、`PUT`、`PATCH`、`DELETE`；省略时使用 `GET`。`proxy_mode` 省略时为 `system`。
+`origin` 只能包含小写/可规范化的 `http` 或 `https` scheme 与 authority，不能包含用户信息、路径、查询、片段或 `*`。可以使用 `localhost`、loopback、容器服务名、宿主名、局域网 IP 或公网域名。方法为 `GET`、`HEAD`、`POST`、`PUT`、`PATCH`、`DELETE`；省略时使用 `GET`。`proxy_mode` 省略时为 `system`。HTTP 不加密，携带秘密时必须确认目标可信。
 
 宿主从这些公开声明派生内部能力开关。插件作者不得在 Manifest 或市场索引中提交旧的 `capabilities` 或 `account_access` 字段。
 

@@ -16,8 +16,8 @@ tags:
     description: 管理员读取当前版本可声明的 Host API 目录。
 x-dian115-host-call:
   local_request: '{"method":"GET","path":"/api/tmdb/search","headers":{},"body_base64":""}'
-  external_request: '{"method":"GET","path":"https://example.com/items","headers":{},"body_base64":"","credential_ref":"cred_..."}'
-  authorization: permissions.apis validates local METHOD + path. External public HTTPS is brokered by the host; permissions.network supplies optional per-origin/method routing preferences, and host proxy-domain rules always win.
+  external_request: '{"method":"GET","path":"http://127.0.0.1:8080/items","headers":{},"body_base64":""}'
+  authorization: permissions.apis validates local METHOD + path. External HTTP/HTTPS is brokered by the host, including local and LAN targets; permissions.network supplies optional per-origin/method routing preferences, and host proxy-domain rules always win.
   limits: process host.call request/response frames and decoded request/response bodies are each limited to 256 KiB; Base64 and JSON envelope overhead counts toward the frame limit.
 x-dian115-host-apis:
   generated_from: internal Host API catalog
@@ -1808,13 +1808,12 @@ components:
       required:
         - origin
         - methods
-        - proxy_mode
         - reason
       properties:
         origin:
           type: string
           format: uri
-          pattern: ^https://
+          pattern: ^https?://[^/]+$
         methods:
           type: array
           minItems: 1
@@ -1857,8 +1856,8 @@ components:
             - DELETE
         path:
           type: string
-          description: 已登记的 /api/... 路径，或任意公网完整 HTTPS URL。外部地址统一由宿主 Broker 访问。
-          pattern: ^(?:/api/|https://)
+          description: 已登记的 /api/... 路径，或任意完整 HTTP/HTTPS URL（包括本机、容器和局域网地址）。外部地址统一由宿主 Broker 访问。
+          pattern: ^(?:/api/|https?://)
         headers:
           type: object
           additionalProperties:
@@ -1868,7 +1867,7 @@ components:
         credential_ref:
           type: string
           pattern: '^cred_[A-Za-z0-9]+$'
-          description: Installation-scoped hosted credential reference. Only valid when path is an external HTTPS URL and permissions include the hosted credential capability.
+          description: Installation-scoped hosted credential reference. Valid for external HTTP/HTTPS paths when permissions include the hosted credential capability; HTTP sends the secret without transport encryption.
     PluginNotificationRequest:
       type: object
       additionalProperties: false

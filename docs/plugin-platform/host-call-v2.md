@@ -3,7 +3,7 @@
 `host.call` 是 process 插件唯一的网络与宿主业务入口。它同时承载：
 
 - 安装时批准的 DIAN115 本地 Host API；
-- 任意公网 HTTPS 网站请求。
+- 任意 HTTP/HTTPS 网站或本地服务请求。
 
 插件不连接 DIAN115 HTTP 端口，也不持有管理员 Token。宿主在进程内校验安装实例、权限、路径、代理、目标地址、请求大小和响应内容后执行调用。
 
@@ -44,10 +44,10 @@
 | 字段 | 必需 | 说明 |
 | --- | --- | --- |
 | `method` | 是 | `GET`、`HEAD`、`POST`、`PUT`、`PATCH`、`DELETE`；空值按 `GET` 处理，但开发者应显式填写 |
-| `path` | 是 | `/api/...` 请求 URI，或小写 `https://` 开头的绝对 URL；最长 4096 字符 |
+| `path` | 是 | `/api/...` 请求 URI，或小写 `http://` / `https://` 开头的绝对 URL；最长 4096 字符 |
 | `headers` | 否 | 单值 header map；规则因本地/外部请求不同 |
 | `body_base64` | 否 | 标准 Base64；请求接受 padded/unpadded，响应固定 unpadded |
-| `credential_ref` | 否 | 仅外部 HTTPS 可用的安装实例托管凭据引用 |
+| `credential_ref` | 否 | 外部 HTTP/HTTPS 可用的安装实例托管凭据引用；使用 HTTP 时秘密会以明文传输 |
 
 JSON 解码器拒绝未知字段和尾随 JSON。单个 Host Call 参数帧、请求正文和返回正文都受 256 KiB process 通道限制。
 
@@ -120,14 +120,14 @@ GET /api/plugin-center/v1/host-apis
 
 以 `code` 和 `retryable` 为程序判断依据。复用主项目 Handler 的接口可能返回该 Handler 原有 JSON 错误结构；应以对应 OpenAPI operation 为准。
 
-## 3. 外部公网 HTTPS
+## 3. 外部 HTTP/HTTPS 与本地服务
 
 把完整 URL 放入 `path`：
 
 ```json
 {
   "method": "PATCH",
-  "path": "https://api.example.com/v1/items/42",
+  "path": "http://127.0.0.1:8080/v1/items/42",
   "headers": {
     "accept": "application/json",
     "content-type": "application/json"
@@ -136,14 +136,14 @@ GET /api/plugin-center/v1/host-apis
 }
 ```
 
-网站访问没有 origin 白名单。任何安装实例都能通过 Broker 请求任意公网 HTTPS origin；Manifest `permissions.network` 只提供代理路由偏好。以下边界始终存在：
+地址访问没有 origin 白名单。任何安装实例都能通过 Broker 请求任意 HTTP/HTTPS 地址，包括互联网、局域网、宿主机、容器、`localhost`、loopback 和插件可达的本地项目；Manifest `permissions.network` 只提供代理路由偏好。以下边界始终存在：
 
-- URL 必须以精确小写 `https://` 开头；
+- URL 必须以精确小写 `http://` 或 `https://` 开头；
 - 禁止 URL userinfo 和 fragment；
 - 只支持 `GET`、`HEAD`、`POST`、`PUT`、`PATCH`、`DELETE`；
-- TLS 最低 1.2，证书、SNI 和 hostname 正常校验；
+- HTTPS 使用 TLS 最低 1.2、证书、SNI 和 hostname 正常校验；HTTP 不提供加密或证书保护，插件应只把 HTTP 用于本地/受信任网络或本身不含秘密的接口；
 - 默认总超时 10 秒；process `host.call` 不提供自定义超时字段；
-- 最多跟随 3 次跳转，每次重新校验 URL、DNS、公网地址和代理规则；
+- 最多跟随 3 次跳转，每次重新校验 URL、DNS、目标地址和代理规则；跳转仍只能到 HTTP/HTTPS；
 - `301/302` 的 POST 和 `303` 会转为 GET 并丢弃 body；
 - 响应正文最多 256 KiB；超出的部分被截断后返回；
 - 查询与 fragment 不会写入审计日志，审计记录 origin、方法、状态、耗时和代理范围。
@@ -174,16 +174,13 @@ Broker 失败返回 HTTP 语义的 `502` Host Call result，body 为脱敏 JSON�
 {"error":"upstream request failed"}
 ```
 
-## 4. SSRF 与 DNS 规则
+## 4. 目标地址与 DNS 规则
 
-“任意网站”表示任意公网 HTTPS 网站，不表示容器、宿主机或局域网服务。宿主在直连前解析全部 A/AAAA 结果；任意结果命中保护范围时整次请求被拒绝。至少包括：
+直连时宿主解析目标 hostname，依次尝试解析得到的地址，并保留原 hostname 用于 HTTP Host 与 HTTPS SNI。此版本有意允许 loopback、局域网、容器、宿主机、link-local 和其他非公网地址，以便插件对接本地项目；因此安装者必须把插件发布者和插件包视为同一信任边界。每个 redirect 都会重新解析目标。使用代理时由宿主选择的代理解析目标，以支持只能通过代理 DNS 解析的地址；宿主代理域名列表的命中规则始终优先。
 
-- unspecified、loopback、link-local、multicast；
-- RFC 1918 私网；
-- CGNAT、benchmark、documentation 和其他非公网保留段；
-- IPv6 ULA、link-local、loopback 和 documentation 段。
+`localhost`、`127.0.0.1` 和 `::1` 指 DIAN115 宿主进程所在的网络命名空间；Docker 部署中通常是当前 DIAN115 容器。访问物理宿主机或其他容器时，应使用该目标在 DIAN115 容器网络中可解析、可路由的 hostname 或 IP（例如同一 Docker network 的服务名、明确配置的宿主网关名或局域网地址）。
 
-直连时宿主固定拨号到已经验证的一个 IP，同时保留原 hostname 用于 HTTP Host 与 TLS SNI，降低 DNS rebinding 风险。每个 redirect 重新解析并检查。使用代理时仍在发送前执行目标 hostname 的公网解析检查。
+HTTP 明文请求可能被同机或同网段观察或篡改；插件不要把密码、Token 或托管凭据发送到不受信任的 HTTP 地址。HTTPS 仍建议用于互联网服务。
 
 插件进程的 `socket`、`connect`、`bind`、`listen`、`accept`、send/receive 和 socket option 系统调用由 seccomp 拒绝，因此不能用自己的 DNS/HTTP 客户端绕过 Broker。
 
@@ -202,7 +199,7 @@ Broker 失败返回 HTTP 语义的 `502` Host Call result，body 为脱敏 JSON�
 {
   "network": [
     {
-      "origin": "https://api.example.com",
+      "origin": "http://127.0.0.1:8080",
       "methods": ["GET", "POST"],
       "proxy_mode": "direct",
       "reason": "宿主未指定代理时优先直连该服务"
@@ -221,7 +218,7 @@ origin 包含非默认端口时，声明也必须包含该端口。
 
 ## 6. 安装实例托管凭据
 
-需要第三方站点秘密时，Manifest 应在 `permissions.network` 中声明对应 origin。宿主由此为该安装实例启用托管凭据能力。管理员通过管理端为该安装实例创建绑定，秘密被宿主加密保存；插件只保存返回的 `credential_ref`，调用时提交引用：
+需要第三方站点秘密时，Manifest 应在 `permissions.network` 中声明对应 origin。宿主由此为该安装实例启用托管凭据能力。管理员通过管理端为该安装实例创建绑定，秘密被宿主加密保存；插件只保存返回的 `credential_ref`，调用时提交引用。HTTP 地址同样支持托管凭据，但秘密会以明文经过网络，因此只应绑定受信任的本地或内网服务：
 
 ```json
 {
