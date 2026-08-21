@@ -36,7 +36,7 @@
     },
     "networkPermission": {
       "type": "object", "additionalProperties": false,
-      "required": ["origin", "methods", "proxy_mode", "reason"],
+      "required": ["origin", "methods", "reason"],
       "properties": {
         "origin": { "type": "string", "pattern": "^https://[^/]+$" },
         "methods": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] } },
@@ -49,32 +49,16 @@
       "additionalProperties": false,
       "required": ["kind", "protocol", "autostart", "trust_level"],
       "properties": {
-        "kind": { "type": "string", "enum": ["wasm", "process"] },
-        "protocol": { "type": "string", "enum": ["dian115:plugin@1", "dian115:process@1"] },
+        "kind": { "const": "process" },
+        "protocol": { "const": "dian115:process@1" },
         "autostart": { "type": "boolean" },
-        "trust_level": { "type": "string", "enum": ["sandboxed", "isolated-process"] }
+        "trust_level": { "const": "isolated-process" }
       },
-      "allOf": [
-        {
-          "if": { "properties": { "kind": { "const": "wasm" } } },
-          "then": {
-            "properties": {
-              "protocol": { "const": "dian115:plugin@1" },
-              "trust_level": { "const": "sandboxed" }
-            }
-          }
-        },
-        {
-          "if": { "properties": { "kind": { "const": "process" } } },
-          "then": {
-            "properties": {
-              "protocol": { "const": "dian115:process@1" },
-              "autostart": { "const": true },
-              "trust_level": { "const": "isolated-process" }
-            }
-          }
+      "allOf": [{
+        "properties": {
+          "autostart": { "const": true }
         }
-      ]
+      }]
     },
     "plugin": {
       "type": "object",
@@ -117,7 +101,7 @@
         "runtime": { "$ref": "#/$defs/runtimeDisclosure" },
         "permissions": {
           "type": "object", "additionalProperties": false,
-          "required": ["apis", "network"],
+          "required": ["apis"],
           "properties": {
             "apis": { "type": "array", "maxItems": 128, "uniqueItems": true, "items": { "$ref": "#/$defs/apiPermission" } },
             "network": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/networkPermission" } }

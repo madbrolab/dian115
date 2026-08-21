@@ -1,65 +1,74 @@
 # DIAN115 Process Runtime v1
 
-`process` 运行时用于需要常驻循环、第三方原生库或主动后台任务的插件。可执行文件由 DIAN115 在当前 Docker 容器内通过强制沙箱启动和监管；它不是远程运行时，不监听 DIAN115 回调端口，也不是额外的 Docker 服务。`dian115:process@1` 当前稳定支持 `state`、`action`、`job` 和 `event`，共享信封、幂等、超时、错误层次和 Host Call JSON 见[运行时契约 v1](runtime-contract-v1.md)。
+本文是 `dian115:process@1` 的完整线协议。插件入口是由宿主管理的常驻 Linux 进程，通过 stdin/stdout 全双工 JSON-RPC 2.0 通信。
 
-## 1. Manifest
+## 1. 启动环境
 
-```json
-{
-  "runtime": {
-    "kind": "process",
-    "entry": "runtime/plugin",
-    "protocol": "dian115:process@1",
-    "startup_timeout_ms": 10000,
-    "shutdown_timeout_ms": 5000,
-    "timeout_ms": 30000,
-    "background_timeout_ms": 300000,
-    "max_concurrency": 4,
-    "restart_policy": "on-failure"
-  }
-}
-```
+入口由 `runtime.entry` 指定，必须是当前宿主架构的静态 Linux ELF。工作目录是安装实例的私有数据目录。宿主只设置以下环境：
 
-`entry` 必须是包内相对路径，必须被 `integrity.json` 覆盖，并在 ZIP 中带可执行位。当前只支持 `linux/amd64` 与 `linux/arm64`，安装器会检查 ELF 架构与当前容器一致。入口及包内子程序应静态链接并把运行所需文件全部放进签名包；沙箱不允许读取或执行宿主共享库。入口可以创建线程、常驻循环和包内子进程，但不得自行 daemonize、脱离宿主创建的进程组或遗留后台服务。
-
-## 2. 生命周期
-
-| 时机 | 宿主行为 |
+| 变量 | 值 |
 | --- | --- |
-| DIAN115 启动或插件启用 | 建立沙箱并启动入口，完成初始化握手后再接受 state/action/job/event |
-| 插件页面关闭 | 进程继续运行，调度和监控不停止 |
-| 进程异常退出 | 指数退避重启；连续失败进入熔断状态 |
-| 插件禁用 | 停止新投递，发送关闭请求，随后终止整个进程组 |
-| 插件更新 | 先停止旧进程；新包握手成功后才启用新版本 |
-| 插件卸载或 DIAN115 退出 | 停止进程并回收子进程，不留下后台服务 |
+| `PATH` | 包内 `bin`、包根目录以及标准系统二进制路径 |
+| `HOME` | 当前插件私有数据目录 |
+| `LANG` | `C.UTF-8` |
+| `TZ` | `Asia/Shanghai` |
+| `DIAN115_PLUGIN_ID` | Manifest 插件 ID |
+| `DIAN115_PLUGIN_VERSION` | 当前安装版本 |
+| `DIAN115_PLUGIN_PROTOCOL` | `dian115:process@1` |
+| `DIAN115_PLUGIN_DATA` | 唯一可写私有数据目录 |
+| `DIAN115_PLUGIN_PACKAGE` | 只读/可执行包目录 |
+| `TMPDIR` | 私有数据目录内的 `tmp` |
 
-运行状态会显示 `starting`、`running`、`backoff`、`failed` 或 `stopped`，以及 PID、启动时间、重启次数、最近退出码和最近错误。插件自己的 stderr 与结构化日志写入当前安装实例的独立日志；单条 message 与 fields 各限 8 KiB，总量按 4 MiB、5000 条和 14 天限制裁剪。
+宿主不继承任意容器环境变量，不传数据库、Cookie、JWT、115、TMDB、Telegram、CD2 或代理秘密。
 
-## 3. stdio 帧
+入口不得 daemonize、脱离进程组或把 stdout 用作日志。可执行包内子进程，但子进程继承文件系统和 seccomp 限制。主进程退出后宿主终止遗留进程组。
 
-stdin/stdout 是全双工 JSON-RPC 2.0 通道。stdout 只能写协议帧；普通日志必须写 stderr 或调用 `host.log`。每帧使用 UTF-8 JSON 和 `Content-Length`，格式如下：
+## 2. 帧格式
+
+每条 JSON-RPC 消息使用 UTF-8 `Content-Length` 帧：
 
 ```text
 Content-Length: <JSON 字节数>\r\n
 Content-Type: application/json\r\n
 \r\n
-<JSON>
+<JSON bytes>
 ```
 
-每个 JSON-RPC frame 最大 256 KiB，header 总计最大 8 KiB。需要响应的 request 及其 response 的 `id` 必须是非空且不超过 128 字节的字符串；notification 省略 `id`。实现必须支持请求与响应交错：插件处理一次 `runtime.invoke` 时可以同步发起 `host.call`，常驻循环也可以在没有待处理 invocation 时主动发起 `host.call`；宿主还可能并发发送最多 `runtime.max_concurrency` 个 invocation。JSON-RPC `id` 在未完成请求中必须唯一，插件发起的请求建议使用 `p:` 前缀。未知 method 应返回标准 `-32601`，坏参数返回 `-32602`；不得让单个错误终止读循环。stdout 的帧写入必须串行化，不能由多个线程交错输出。
+接收方忽略除 `Content-Length` 外的帧 header，但 header 总大小不得超过 8192 字节。`Content-Length` 必须恰好出现一次，范围 1-262144。JSON body 必须是单个合法对象。协议消息也不得超过 262144 字节。
 
-## 4. 宿主调用插件
-
-启动后的第一个请求是 `runtime.initialize`：
+JSON-RPC 对象只允许：
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "host_1",
+  "id": "string-id",
+  "method": "method.name",
+  "params": {},
+  "result": {},
+  "error": {"code": -32601, "message": "method not found", "data": {}}
+}
+```
+
+`jsonrpc` 必须为 `2.0`。`id` 必须是 1-128 字符的 JSON string，数字/null ID 不受支持。请求包含 `method`；响应不包含 `method`，并包含 `result` 或 `error`。未知响应 ID 可能是已超时调用的迟到响应，宿主会忽略。
+
+stdio 是全双工的。宿主可能并发发起最多 `runtime.max_concurrency` 个 invocation。插件处理 `runtime.invoke` 时可以同步发出 `host.call`，因此插件必须保持一个持续读取循环，把响应分发给等待者，并在独立 goroutine/task 中处理入站请求。串行“读一个请求、处理完再读”会在嵌套 Host Call 时死锁。
+
+插件收到未知方法应返回 `-32601`；参数类型/字段错误返回 `-32602`。单个业务错误不应关闭帧读取循环。无法解析帧、JSON-RPC 结构错误或 stdout 混入普通文本会使宿主关闭进程。
+
+## 3. 生命周期
+
+### 3.1 初始化
+
+进程启动后的第一个宿主请求：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "h:1",
   "method": "runtime.initialize",
   "params": {
     "protocol": "dian115:process@1",
-    "plugin_id": "example.helper",
+    "plugin_id": "example.complete-plugin",
     "plugin_version": "1.0.0",
     "installation_id": 42,
     "locale": "zh-CN",
@@ -68,92 +77,391 @@ Content-Type: application/json\r\n
 }
 ```
 
-插件成功响应后视为 ready：
-
-```json
-{"jsonrpc":"2.0","id":"host_1","result":{"ready":true}}
-```
-
-所有状态读取、UI 动作、定时任务和事件投递都属于当前稳定协议，并统一使用 `runtime.invoke`；`envelope` 与 WASM 的 `dian115_invoke` 对应操作完全相同，不存在另一个 HTTP callback。process 的健康状态由 `runtime.initialize` 握手、进程存活和退出状态判断，v1 不要求插件处理单独的 `health` invocation：
+成功响应：
 
 ```json
 {
   "jsonrpc": "2.0",
-  "id": "host_2",
+  "id": "h:1",
+  "result": {
+    "ready": true,
+    "protocol": "dian115:process@1"
+  }
+}
+```
+
+`protocol` 可省略；填写时必须匹配。`ready` 必须为 `true`。插件可在处理初始化期间使用全双工通道调用 `host.log` 或 `host.telegram.register`，但必须在 `startup_timeout_ms` 内响应初始化。失败会终止该进程并进入重启策略。
+
+### 3.2 调用超时与并发
+
+- 前台 `state`、`action` 和 Telegram event 使用 `timeout_ms`，默认 30 秒；
+- 后台 scheduled job 和普通 event 使用 `background_timeout_ms`，默认 5 分钟；
+- `max_concurrency` 默认 4，范围 1-16；
+- 超时后宿主认为进程不健康并终止它，随后按失败策略重启。
+
+插件应尊重 invocation context，自行停止已取消工作。由于进程被终止前可能已产生外部副作用，写操作必须使用稳定幂等 key。
+
+### 3.3 关闭
+
+宿主有意停止时发送：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "h:9",
+  "method": "runtime.shutdown",
+  "params": {"reason": "host_stop"}
+}
+```
+
+插件应停止接受新工作、刷新持久状态并返回任意 JSON object result。超过 `shutdown_timeout_ms` 后宿主向整个进程组发送终止信号，再等待同一时长，最后强制结束。
+
+### 3.4 退出与重启
+
+正常退出码 0、宿主有意停止或宿主退出不会自动重启。非零意外退出或启动失败使用 `1s, 2s, 4s, 8s, 16s` 退避，最多 5 次；超过后状态为 `failed`，需要管理员操作。连续运行至少 1 分钟后，重启计数重置。
+
+可见运行状态包括 `starting`、`running`、`backoff`、`failed` 和 `stopped`，并可能显示 PID、启动/退出时间、重启次数、退出码和脱敏错误。
+
+插件更新的文件提交与初始化不是回滚事务。更新语义详见 [插件包格式](package-format-v1.md#6-安装更新和回滚语义)。
+
+## 4. `runtime.invoke` 通用信封
+
+所有业务调用使用：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "h:2",
   "method": "runtime.invoke",
   "params": {
     "envelope": {
-      "op": "event",
-      "invocation_id": "evt_01",
-      "payload": {
-        "id": "evt_01",
-        "topic": "files.changed",
-        "occurred_at": "2026-08-20T08:00:00Z",
-        "data": {"watch_ref": "fw_01", "added": ["movie.mkv"]}
-      }
+      "op": "action",
+      "invocation_id": "inv_0123456789abcdef",
+      "payload": {}
     },
-    "background": true
+    "background": false
   }
 }
 ```
 
-`result` 是对应 state/action/job/event 契约要求的 JSON 对象，完整字段和响应 status 见[运行时契约 v1](runtime-contract-v1.md)。宿主对 action/job/event 使用持久化 delivery ledger；不确定投递会带相同 `invocation_id` 重试，插件必须按 ID 幂等处理。state 可重复调用但不进入 ledger。
+`op` 为 `state`、`action`、`job` 或 `event`。`invocation_id` 在逻辑调用中稳定；宿主对不确定投递重试时复用同一 ID 和完全相同的 envelope。插件必须以该 ID 做幂等去重。相同 ID 如果对应不同请求，宿主拒绝为 `invocation_conflict`；正在执行时重入为 `invocation_in_progress`。
 
-停止时宿主发送 `runtime.shutdown`，参数为 `{"reason":"host_stop"}`。插件必须先进入 stopping 状态，停止自主循环、定时器、新的 `host.call` 和子进程，再处理或取消未完成 invocation、刷新私有状态并响应，随后退出入口进程。超过 `shutdown_timeout_ms` 后，宿主先终止整个进程组，再在宽限期后强制结束；迟到响应不会被接受。
+除特别说明外，所有 result 必须是一个不超过 256 KiB 的 JSON object，不能包含尾随 JSON。为了防止运行时把秘密或宿主路径传到 UI/日志，宿主递归拒绝：
 
-## 5. 插件调用宿主
+- key 为 `cid`、`file_id`、`database_id`、`absolute_path`、`raw_path`、`password`、`client_secret`、`webhook_secret`、`access_token`、`refresh_token`、`authorization`；
+- 任意包含 `cookie` 的 key；
+- 以 `_token` 或 `_secret` 结尾的 key；
+- 任意绝对 POSIX、UNC 或 Windows drive path string。
 
-插件通过 `host.call` 调用安装时批准的 Host API 或 HTTPS 来源。它既可以在处理 `runtime.invoke` 时调用，也可以由插件自己的常驻循环、定时器或包内子进程任务主动触发；主动调用不需要先收到一个 invocation，也不需要 DIAN115 Token。进程及其子进程没有直接 socket 能力，因此外部 HTTPS 也必须走这条通道：
+以 `_ref` 结尾的 opaque reference 字段允许返回。插件应返回稳定 opaque ref，不要返回宿主原始 ID、凭据或绝对路径。
+
+## 5. State 调用
+
+请求 payload：
 
 ```json
 {
-  "jsonrpc": "2.0",
-  "id": "plugin_1",
-  "method": "host.call",
-  "params": {
-    "method": "POST",
-    "path": "/api/notifications/plugin",
-    "headers": {"content-type": "application/json", "idempotency-key": "task-42-done-0001"},
-    "body_base64": "eyJsZXZlbCI6InN1Y2Nlc3MiLCJ0aXRsZSI6IuS7u+WKoeWujOaIkCIsImJvZHkiOiLlt7LlpITnkIYifQ"
+  "op": "state",
+  "invocation_id": "state_main",
+  "payload": {
+    "view": "main",
+    "if_none_match": "\"state-v7\""
   }
 }
 ```
 
-成功结果与 WASM Host Call 相同：
+`view` 长度 1-80，格式为字母/数字段，以 `.`、`_`、`-` 分隔，默认页面使用 `main`。`if_none_match` 为空或一个强 ETag，禁止 weak ETag、列表和控制字符。
+
+有新状态时必须返回：
 
 ```json
-{"jsonrpc":"2.0","id":"plugin_1","result":{"status":200,"headers":{"content-type":["application/json"]},"body_base64":"e30"}}
+{
+  "state_version": "state-v8",
+  "etag": "\"state-v8\"",
+  "state": {
+    "status": "ready",
+    "processed": 12
+  }
+}
 ```
 
-`host.call` 必须带非空 JSON-RPC `id`；ABI、声明或权限层拒绝时宿主返回 `-32001`，正常 Host Call 则在 `result.status` 返回真实 HTTP 状态，包括 4xx/5xx。多个 `host.call` 可以并发且响应可以乱序，必须按 ID 关联。写操作始终携带由 invocation 或插件任务引用派生的稳定 `Idempotency-Key`。
+规则：
 
-外部请求把完整 `https://...` URL 放在 `path` 字段。宿主只允许 manifest `permissions.network` 已声明且用户安装时批准的 origin、方法和 `proxy_mode`，并执行代理选择、请求限制、审计和响应脱敏；不要在命令行参数、环境变量、stdout 或日志中保存账号 Cookie、Token 或其他凭据。完整的允许 header、Base64、大小限制和错误分层见[运行时契约 v1](runtime-contract-v1.md)。
+- `state_version` 必须是有效 1-80 字符 runtime identifier；
+- `state` 必须存在，可以是任意合法 JSON 值，但完整 result 仍受安全字段规则限制；
+- `etag` 可省略，宿主会生成 `"<state_version>"`；
+- 填写时必须是强 ETag，且去掉双引号后与 `state_version` 完全相同。
 
-结构化日志使用 `host.log`，可以作为不等待响应的 notification，也可以带 ID 等待 `{"accepted":true}`：
+若请求 ETag 与当前状态相同，可返回：
+
+```json
+{
+  "not_modified": true,
+  "etag": "\"state-v8\""
+}
+```
+
+只有请求确实带同一个合法强 ETag 时才允许 `not_modified=true`；否则宿主返回 `runtime_protocol_error`。宿主也会在完整状态响应的 ETag 等于请求时转换为前端 304。
+
+## 6. Action 调用
+
+请求：
+
+```json
+{
+  "op": "action",
+  "invocation_id": "inv_0123456789abcdef",
+  "payload": {
+    "id": "send-test",
+    "input": {"message": "hello"},
+    "context": {
+      "locale": "zh-CN",
+      "timezone": "Asia/Shanghai"
+    }
+  }
+}
+```
+
+`payload.id` 和 invocation ID 使用 runtime identifier 格式；action invocation ID 必须以 `inv_` 开头。`input` 缺省为 `{}`，并受安全 JSON 规则约束。
+
+响应必须含以下状态之一：
+
+```json
+{"status":"succeeded","message":"done","refresh":true}
+{"status":"failed","message":"business operation failed","code":"upstream_rejected"}
+{"status":"accepted","job_ref":"job_opaque_ref"}
+{"status":"skipped","message":"nothing to do"}
+```
+
+允许额外安全字段，宿主只固定校验 `status` 枚举。`failed` 是插件业务结果，仍以成功 JSON-RPC response 返回；协议/传输错误才使用 JSON-RPC error。
+
+## 7. Scheduled job 调用
+
+Manifest job：
+
+```json
+{
+  "id": "refresh",
+  "handler": "refresh",
+  "default_schedule": "*/15 * * * *",
+  "allow_overlap": false
+}
+```
+
+投递：
+
+```json
+{
+  "op": "job",
+  "invocation_id": "inv_0123456789abcdef",
+  "payload": {
+    "id": "refresh",
+    "handler": "refresh",
+    "scheduled_for": "2026-08-22T08:00:00Z",
+    "trigger": "schedule",
+    "attempt": 1
+  }
+}
+```
+
+`trigger` 为 `schedule` 或 `manual`。当前 envelope 的 `attempt` 固定为 `1`；重试保持原 envelope 和 invocation ID，不用该字段推断 delivery ledger 次数。
+
+job 结果只能是：
+
+```json
+{"status":"accepted","job_ref":"refresh_20260822"}
+{"status":"skipped","message":"previous run still active"}
+```
+
+耗时工作可以在进程内继续，但宿主将 `accepted` 视为本次 job 调用已完成。若需要让宿主持久跟踪具体进度，应把状态写入插件私有数据/KV，并由 `state` 暴露安全摘要。
+
+## 8. 普通 Event 调用
+
+Manifest 必须声明普通 topic：
+
+```json
+"events": ["files.changed"]
+```
+
+投递：
+
+```json
+{
+  "op": "event",
+  "invocation_id": "evt_0123456789abcdef",
+  "payload": {
+    "id": "evt_0123456789abcdef",
+    "topic": "files.changed",
+    "occurred_at": "2026-08-22T08:00:00.123Z",
+    "data": {
+      "watch_ref": "fw_0123456789abcdef",
+      "backend": "local",
+      "added": ["movie/file.mkv"],
+      "removed": [],
+      "modified": [],
+      "truncated": false,
+      "resync_required": false
+    }
+  }
+}
+```
+
+event ID 必须以 `evt_` 开头。成功可返回任意安全 JSON object，推荐：
+
+```json
+{"accepted":true}
+```
+
+目录监控投递失败会按稳定 ID 重试；超过重试上限进入 dead letter。插件可通过 watch retry/resync Host API 恢复。`truncated` 或 `resync_required` 为 true 时不要假设变化列表完整，应主动读取当前目录或请求重建基线。
+
+## 9. Telegram Event
+
+Telegram 命令/关键词匹配使用同一个 `op=event`，但 topic 固定为 `telegram.message`，不需要写入 Manifest `events`：
+
+```json
+{
+  "op": "event",
+  "invocation_id": "evt_0123456789abcdef",
+  "payload": {
+    "id": "evt_0123456789abcdef",
+    "topic": "telegram.message",
+    "occurred_at": "2026-08-22T08:00:00Z",
+    "data": {
+      "match": {"type": "command", "value": "media_helper"},
+      "message": {
+        "message_id": 42,
+        "message_thread_id": 7,
+        "chat_id": -100123,
+        "chat_type": "supergroup",
+        "user_id": 10001,
+        "text": "/media_helper status"
+      }
+    }
+  }
+}
+```
+
+`match.type` 为 `command` 或 `keyword`。消息只包含最小投影；没有 Bot Token、原始 Update、用户名或附件。
+
+响应必须严格符合：
+
+```json
+{
+  "handled": true,
+  "reply": {
+    "format": "html",
+    "text": "<b>Media helper</b> is ready",
+    "image_url": "https://cdn.example.com/status.png",
+    "buttons": [
+      [{"text": "Open help", "url": "https://example.com/help"}]
+    ]
+  }
+}
+```
+
+- `handled=false` 时宿主忽略 `reply`；
+- `handled=true` 可以不回复；
+- `format` 为 `plain`（默认）或 `html`；
+- text 最多 4000 字符；text 和 `image_url` 至少一个非空；
+- 图片和按钮必须是绝对 HTTPS URL；
+- 最多 8 行按钮，每行 1-4 个，每个按钮文本 1-64 字符；
+- 不支持插件 callback data；
+- 不允许未知字段、尾随 JSON 或不安全控制字符。
+
+Telegram event 使用 15 秒总超时。分发失败时宿主将其视为插件通道已匹配但处理失败，不会再让其他插件接管同一消息。
+
+## 10. 插件调用宿主的方法
+
+### 10.1 `host.call`
+
+完整定义见 [Host Call v2](host-call-v2.md)。成功返回 `{status, headers, body_base64}`。参数/权限/调度错误返回 JSON-RPC `-32001`。
+
+### 10.2 `host.log`
 
 ```json
 {
   "jsonrpc": "2.0",
+  "id": "p:log:1",
   "method": "host.log",
-  "params": {"level": "info", "message": "任务完成", "fields": {"job_ref": "job_01"}}
+  "params": {
+    "level": "info",
+    "message": "任务完成",
+    "fields": {"job_ref": "job_01", "count": 12}
+  }
 }
 ```
 
-## 6. 运行环境与沙箱边界
+成功 result：`{"accepted":true}`。level 为 `debug`、`info`、`warn`/`warning` 或 `error`，空值按 `info`。message 必需且最多 8 KiB；fields 是安全 JSON，最多 8 KiB。宿主对常见 secret 名和敏感 URL 再脱敏。
 
-当前稳定实现只在 `linux/amd64` 与 `linux/arm64` 启动 process。宿主在执行插件入口之前设置 `no_new_privs`、Landlock 文件系统规则和 seccomp 系统调用过滤；Landlock 不可用、ABI 低于 3 或任一规则安装失败时均 fail closed，插件不会在降级模式下运行。
+stderr 每行也以 `info` 写入插件日志；扫描行最大 64 KiB，最终单条截断为 8 KiB。stdout 绝不能写日志。
 
-文件系统边界如下：
+每安装实例日志最多 5000 条、4 MiB、保留 14 天；达到任一限制从最旧记录裁剪。
 
-- `DIAN115_PLUGIN_PACKAGE` 指向已签名包树。插件可以读取并执行其中的文件，但不能创建、修改、删除或截断包内容。
-- 工作目录、`HOME` 和 `DIAN115_PLUGIN_DATA` 指向当前安装实例的私有 data 树。插件可以读写、创建、移动和删除数据，但不能从该树执行程序；临时文件也位于这棵树中。
-- 除标准流实现所需的 `/dev/null` 普通读写外，宿主的配置、数据库、媒体挂载、CD2 挂载、系统目录和其他插件目录都不可访问。
-- 包树与 data 树必须互不包含；路径解析或隔离规则无法建立时启动失败。
+### 10.3 `host.ui.invalidate`
 
-seccomp 阻止 `socket`、`socketpair`、`connect`、`bind`、`listen`、收发消息等直接网络入口，同时阻止 mount/namespace、ptrace、BPF 等逃逸面。插件不能直连公网、局域网、DIAN115 HTTP 端口、CD2 gRPC socket 或本机代理。它可以执行签名包树中的子程序，但所有子进程都会继承同一 Landlock、seccomp、无新权限和进程组边界，不能借子进程扩大文件或网络权限，也不能执行从 data 目录下载的文件。
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "p:ui:1",
+  "method": "host.ui.invalidate",
+  "params": {}
+}
+```
 
-宿主只传递运行协议所需的环境，不把数据库凭据、115 Cookie、管理员 JWT、TMDB Key、CD2 gRPC 凭据或代理秘密交给插件。115、文件/CD2、TMDB、订阅、Telegram 插件通知以及 manifest 声明的外部 HTTPS 均必须调用用户已批准的 `host.call`；宿主统一执行账号选择、代理、缓存、幂等、审计和响应脱敏。
+成功 result 为 `{"accepted":true}`。当前宿主把它作为刷新提示；插件仍应让 action result 带足够信息，并让下一次 `state` 返回新 `state_version`。
 
-process 可以运行自己的循环和维护私有 data，但不能直接打开宿主目录做原生 watcher。监控本地挂载、CD2 或 115 目录时，必须通过已批准的 `/api/plugin-runtime/watches` Host API 登记；宿主负责访问目录、识别 CD2 挂载前缀、调用 gRPC、固定 115 账号、跨重启保存快照，并以稳定事件 ID 向 process 的 `event` 操作投递变化。
+### 10.4 Telegram 注册
 
-安装页仍会展示“原生常驻进程”、发布者、包签名、后台行为、申请的接口和外部来源。沙箱限制不替代对发布者和签名包的判断，安装者应只批准确实需要的 Host Call。
+注册或原子替换：
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "p:tg:1",
+  "method": "host.telegram.register",
+  "params": {
+    "commands": [
+      {"command": "media_helper", "description": "打开媒体助手"}
+    ],
+    "keywords": [
+      {"keyword": "媒体助手", "match": "prefix"}
+    ]
+  }
+}
+```
+
+约束：
+
+- 至少 1 个命令或关键词；
+- 每插件最多 3 个命令、3 个关键词；
+- 命令会去掉开头 `/` 并转小写，最终匹配 `[a-z][a-z0-9_]{0,31}`；
+- description 1-80 个安全字符；
+- 关键词去除首尾空白，长度 2-80，match 为 `exact`、`prefix`、`contains`；
+- 同插件内不能重复；关键词跨插件按忽略大小写判冲突；
+- 宿主保留命令、其他插件冲突或全局插件命令超过 64 时返回 `-32003`，旧注册不变；
+- 进程 generation 已失效时返回 `-32004`；
+- 其他参数错误返回 `-32602`。
+
+查询：
+
+```json
+{"jsonrpc":"2.0","id":"p:tg:2","method":"host.telegram.list","params":{}}
+```
+
+注销：
+
+```json
+{"jsonrpc":"2.0","id":"p:tg:3","method":"host.telegram.unregister","params":{}}
+```
+
+两者都返回 `{commands:[...], keywords:[...]}`。禁用、更新、卸载和进程 generation 替换时宿主自动注销；每次初始化应重新注册。
+
+宿主所有内置消息处理器优先。只有宿主未处理且命中注册项的消息才选择一个插件；未匹配消息不会广播给插件。
+
+## 11. 沙箱与文件边界
+
+启动 helper 先应用 `no_new_privs`，再应用 Landlock 文件规则和 seccomp 系统调用过滤，最后 exec 入口。沙箱不可用时 fail closed，进程不启动。
+
+包目录只读/可执行，私有数据目录可读写。除私有目录外，插件不能读取 `/config`；也不能读取 Linux 系统目录。直接读取宿主媒体挂载同样不在进程权限内，应通过已批准的文件 Host API。危险 syscall 包括挂载/命名空间、ptrace、BPF、内核模块、fanotify 和网络 socket 能力。
+
+插件不得把 `DIAN115_PLUGIN_DATA` 的绝对值或其他绝对路径放入 runtime result。持久业务状态可直接写私有数据目录，或通过 `/api/plugin-runtime/storage/:key` 使用带 ETag 的宿主 KV。

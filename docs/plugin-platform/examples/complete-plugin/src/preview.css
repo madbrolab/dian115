@@ -1,0 +1,63 @@
+:root {
+  --dian-color-scheme: light;
+  --dian-background: #f5f6f8;
+  --dian-surface: #ffffff;
+  --dian-surface-raised: #ffffff;
+  --dian-surface-soft: #f7faff;
+  --dian-surface-hover: #eaf4fd;
+  --dian-text-primary: rgba(0, 0, 0, 0.88);
+  --dian-text-secondary: rgba(0, 0, 0, 0.72);
+  --dian-text-muted: rgba(0, 0, 0, 0.45);
+  --dian-text-inverse: #ffffff;
+  --dian-border: #e0e4ea;
+  --dian-border-strong: #c8d8ec;
+  --dian-divider: #e0e4ea;
+  --dian-primary: #2196f3;
+  --dian-primary-hover: #1976d2;
+  --dian-primary-pressed: #1565c0;
+  --dian-primary-contrast: #ffffff;
+  --dian-success: #18a058;
+  --dian-warning: #f0a020;
+  --dian-error: #d03050;
+  --dian-info: #2196f3;
+  --dian-focus-ring: rgba(33, 150, 243, 0.44);
+  --dian-shadow-sm: 0 6px 18px rgba(35, 52, 84, 0.08);
+  --dian-shadow-md: 0 14px 36px rgba(35, 52, 84, 0.12);
+  --dian-shadow-lg: 0 24px 60px rgba(35, 52, 84, 0.18);
+  --dian-radius-sm: 8px;
+  --dian-radius-md: 12px;
+  --dian-radius-lg: 14px;
+  --dian-radius-panel: 20px;
+  --dian-radius-pill: 999px;
+  --dian-space-1: 4px;
+  --dian-space-2: 8px;
+  --dian-space-3: 12px;
+  --dian-space-4: 16px;
+  --dian-space-5: 20px;
+  --dian-space-6: 24px;
+  --dian-font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+  --dian-font-mono: Consolas, monospace;
+  color-scheme: var(--dian-color-scheme);
+  background: var(--dian-background);
+}
+
+body {
+  box-sizing: border-box;
+  min-width: 320px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+  background: var(--dian-background);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+@media (max-width: 600px) {
+  body {
+    padding: 12px;
+  }
+}

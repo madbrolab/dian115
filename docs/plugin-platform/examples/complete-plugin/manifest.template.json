@@ -1,0 +1,71 @@
+{
+  "$schema": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/manifest.schema.json",
+  "schema_version": 1,
+  "id": "example.complete-plugin",
+  "name": "完整插件示例",
+  "version": "1.0.0",
+  "description": "演示状态、动作、任务、事件、通知、目录监控、Telegram 和主题界面。",
+  "default_locale": "zh-CN",
+  "publisher": {
+    "name": "Example Publisher",
+    "key_id": "ed25519:REPLACED_BY_PACKAGER",
+    "url": "https://example.com/plugins"
+  },
+  "compatibility": {
+    "dian115": ">=3.8.51 <4.0.0",
+    "plugin_api": "^2.0"
+  },
+  "runtime": {
+    "kind": "process",
+    "entry": "runtime/plugin",
+    "protocol": "dian115:process@1",
+    "startup_timeout_ms": 10000,
+    "shutdown_timeout_ms": 5000,
+    "timeout_ms": 30000,
+    "background_timeout_ms": 300000,
+    "max_concurrency": 4,
+    "restart_policy": "on-failure"
+  },
+  "permissions": {
+    "apis": [
+      {
+        "method": "POST",
+        "path": "/api/notifications/plugin",
+        "reason": "发送由用户主动触发的测试通知"
+      },
+      {
+        "method": "POST",
+        "path": "/api/plugin-runtime/watches",
+        "reason": "创建用户在插件界面配置的目录监控"
+      }
+    ],
+    "network": []
+  },
+  "ui": {
+    "mode": "federation",
+    "icon": "frontend/icon.svg",
+    "federation": {
+      "entry": "frontend/dist/assets/remoteEntry.js",
+      "assets_root": "frontend/dist/assets",
+      "module": "./AppPage"
+    }
+  },
+  "events": [
+    "files.changed"
+  ],
+  "jobs": [
+    {
+      "id": "refresh",
+      "handler": "refresh",
+      "default_schedule": "*/15 * * * *",
+      "allow_overlap": false
+    }
+  ],
+  "homepage": "https://example.com/plugins/complete-plugin",
+  "repository": "https://example.com/source/complete-plugin",
+  "license": "MIT",
+  "tags": [
+    "example",
+    "automation"
+  ]
+}

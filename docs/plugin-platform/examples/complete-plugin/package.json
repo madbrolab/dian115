@@ -1,0 +1,31 @@
+{
+  "name": "dian115-complete-plugin-example",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build:ui": "vue-tsc --noEmit && vite build",
+    "build:runtime": "node scripts/build-runtime.mjs",
+    "build": "npm run build:ui && npm run build:runtime",
+    "package": "node scripts/package.mjs",
+    "release": "npm run build && npm run package"
+  },
+  "peerDependencies": {
+    "@lucide/vue": "^1.16.0",
+    "naive-ui": "^2.38.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@lucide/vue": "^1.16.0",
+    "@originjs/vite-plugin-federation": "^1.4.1",
+    "@types/yazl": "^3.3.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "naive-ui": "^2.38.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.4.3",
+    "vue": "^3.4.0",
+    "vue-tsc": "^2.0.0",
+    "yazl": "^3.3.1"
+  }
+}

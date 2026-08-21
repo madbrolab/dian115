@@ -1,0 +1,24 @@
+{
+  "id": "example.complete-plugin",
+  "name": "完整插件示例",
+  "version": "1.0.0",
+  "description": "演示完整 DIAN115 第三方插件协议。",
+  "author": "Example Publisher",
+  "homepage": "https://example.com/plugins/complete-plugin",
+  "package_url": "https://example.com/releases/example.complete-plugin-1.0.0.d115p",
+  "sha256": "REPLACED_BY_PACKAGER",
+  "runtime": {
+    "kind": "process",
+    "protocol": "dian115:process@1",
+    "autostart": true,
+    "trust_level": "isolated-process"
+  },
+  "permissions": {
+    "apis": [],
+    "network": []
+  },
+  "tags": [
+    "example",
+    "automation"
+  ]
+}

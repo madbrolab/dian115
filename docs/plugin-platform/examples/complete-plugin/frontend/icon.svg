@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Complete plugin example">
+  <rect width="64" height="64" rx="16" fill="#2196f3"/>
+  <path fill="#fff" d="M18 20a6 6 0 0 1 6-6h16a6 6 0 0 1 6 6v5h3a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-3v5a6 6 0 0 1-6 6H24a6 6 0 0 1-6-6v-5h-3a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h3zm8 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6m12 0a3 3 0 1 0 0 6 3 3 0 0 0 0-6M25 38a2 2 0 0 0 0 4h14a2 2 0 0 0 0-4z"/>
+</svg>

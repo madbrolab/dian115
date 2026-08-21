@@ -14,7 +14,8 @@
     "publisher",
     "compatibility",
     "runtime",
-    "permissions"
+    "permissions",
+    "ui"
   ],
   "properties": {
     "$schema": {
@@ -56,11 +57,8 @@
       "$ref": "#/$defs/compatibility"
     },
     "runtime": {
-      "oneOf": [
-        { "$ref": "#/$defs/wasmRuntime" },
-        { "$ref": "#/$defs/processRuntime" }
-      ],
-      "description": "The signed runtime is loaded by DIAN115 itself: either an in-process WASM module or a supervised Linux process in the current DIAN115 container."
+      "$ref": "#/$defs/processRuntime",
+      "description": "The signed runtime is a supervised Linux process started by DIAN115 in the current container."
     },
     "permissions": {
       "$ref": "#/$defs/permissions"
@@ -164,50 +162,6 @@
         }
       }
     },
-    "wasmRuntime": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "kind",
-        "entry",
-        "abi"
-      ],
-      "properties": {
-        "kind": {
-          "const": "wasm"
-        },
-        "entry": {
-          "$ref": "#/$defs/packagePath"
-        },
-        "abi": {
-          "const": "dian115:plugin@1"
-        },
-        "memory_mb": {
-          "type": "integer",
-          "minimum": 8,
-          "maximum": 64,
-          "default": 32
-        },
-        "timeout_ms": {
-          "type": "integer",
-          "minimum": 100,
-          "maximum": 30000,
-          "default": 10000
-        },
-        "background_timeout_ms": {
-          "type": "integer",
-          "minimum": 1000,
-          "maximum": 300000,
-          "default": 300000
-        },
-        "max_concurrency": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 2,
-          "default": 1
-        }
-      }
-    },
     "processRuntime": {
       "type": "object",
       "additionalProperties": false,
@@ -264,9 +218,9 @@
     },
     "permissions": {
       "type": "object",
-      "description": "安装时整体确认的精确接口和外部网络声明。宿主仅允许登记目录中的 METHOD + path。",
+      "description": "安装时整体确认的精确宿主接口声明。插件进程不能创建网络 socket；任意公网 HTTPS 请求均通过宿主网络 Broker。network 用于声明特定地址的代理路由偏好，未声明地址默认跟随宿主规则。",
       "additionalProperties": false,
-      "required": ["apis", "network"],
+      "required": ["apis"],
       "properties": {
         "apis": {
           "type": "array", "maxItems": 128, "uniqueItems": true,
@@ -289,7 +243,7 @@
     },
     "networkPermission": {
       "type": "object", "additionalProperties": false,
-      "required": ["origin", "methods", "proxy_mode", "reason"],
+      "required": ["origin", "methods", "reason"],
       "properties": {
         "origin": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^https://[^/]+$" },
         "methods": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] } },
@@ -300,15 +254,38 @@
     "ui": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "schema"
-      ],
+      "description": "Plugin UI exposed as a signed Vue Module Federation page.",
+      "required": ["mode", "federation"],
       "properties": {
-        "schema": {
-          "$ref": "#/$defs/packagePath"
+        "mode": {
+          "const": "federation"
         },
         "icon": {
           "$ref": "#/$defs/packagePath"
+        },
+        "federation": {
+          "$ref": "#/$defs/federation"
+        }
+      }
+    },
+    "federation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entry", "assets_root"],
+      "properties": {
+        "entry": {
+          "$ref": "#/$defs/packagePath",
+          "description": "Signed ESM remoteEntry.js path inside assets_root."
+        },
+        "assets_root": {
+          "$ref": "#/$defs/packagePath",
+          "description": "Directory containing remoteEntry.js and every imported JS/CSS asset."
+        },
+        "module": {
+          "type": "string",
+          "pattern": "^\\./[A-Za-z][A-Za-z0-9_-]{0,79}$",
+          "default": "./AppPage",
+          "description": "Vue component expose loaded by the host. Defaults to ./AppPage when omitted."
         }
       }
     },

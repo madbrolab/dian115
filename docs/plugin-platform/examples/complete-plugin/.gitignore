@@ -1,0 +1,5 @@
+node_modules/
+build/
+releases/
+developer-ed25519-private.pem
+market-entry.generated.json
