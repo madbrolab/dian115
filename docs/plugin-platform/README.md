@@ -1,7 +1,6 @@
 # DIAN115 Plugin API v2
 
-This directory is the complete public contract for third-party plugins. A plugin author should not need DIAN115 source code to build, sign, publish, install, and run a plugin.
-
+This directory is the complete public contract for third-party plugins.
 ## Supported plugin shape
 
 Every plugin is one signed `.d115p` ZIP containing both parts below:
