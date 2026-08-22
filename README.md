@@ -14,7 +14,7 @@
   ·
   <a href="https://t.me/dian115group">Telegram 群组</a>
   ·
-  [`插件开发`](docs/plugin-platform/README.md)
+  <a href="docs/plugin-platform/README.md"><code>插件开发</code></a>
 </p>
 
 <p align="center">
