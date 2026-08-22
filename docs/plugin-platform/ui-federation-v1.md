@@ -195,7 +195,7 @@ const emit = defineEmits<{
 页面加载在：
 
 ```html
-<iframe sandbox="allow-scripts">
+<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox">
 ```
 
 没有 `allow-same-origin`。因此页面：
@@ -204,12 +204,35 @@ const emit = defineEmits<{
 - 不能读取宿主 Cookie、localStorage、sessionStorage 或 IndexedDB；
 - 不能直接请求带管理员身份的 DIAN115 API；
 - 不能依赖固定 iframe origin；
-- 不能导航父页面或弹出未授权窗口；
+- 不能导航父页面；可在用户点击等浏览器认可的用户操作中使用 `window.open()` 打开 HTTP/HTTPS 外部页面；
 - 只能通过带随机 channel token 的 `postMessage` bridge 执行 `getState`、`invokeAction`、`refresh`、`close`。
+
+`allow-popups-to-escape-sandbox` 只解除新窗口继承 iframe sandbox 的问题，便于 OAuth、登录和外部详情页正常工作；iframe 自身仍没有 `allow-same-origin`、表单、父页面导航或直接网络连接权限。浏览器通常会拦截没有用户操作的弹窗。若弹窗 URL 需要先通过异步 action 获取，应在点击回调开头同步创建 `about:blank` 窗口，action 成功后再设置其 `location`；失败时关闭空白窗口。
 
 宿主只接受来自当前 iframe window、正确 source 标识和随机 channel 的消息。bridge 每次调用 30 秒超时。iframe 高度由 sandbox 根据内容 ResizeObserver 自动上报，限制在 320-100000 px。
 
-宿主为 sandbox 建立 Naive UI provider 栈：`NConfigProvider`、`NMessageProvider`、`NNotificationProvider`、`NDialogProvider`。远程组件可正常使用 `useMessage`、`useNotification` 和 `useDialog`。
+宿主为 sandbox 建立 Naive UI provider 栈：`NConfigProvider`、`NMessageProvider`、`NNotificationProvider`、`NDialogProvider`。远程组件可正常使用 `useMessage`、`useNotification` 和 `useDialog`。sandbox 页面响应头同时使用等价的 CSP sandbox 标志，包括 `allow-popups` 和 `allow-popups-to-escape-sandbox`。
+
+### 4.1 用户手势弹窗契约
+
+需要异步生成地址时，插件必须在点击处理函数的第一步同步创建窗口，再等待 runtime action：
+
+```ts
+async function openOAuth() {
+  const popup = window.open('about:blank', '_blank', 'popup,width=1080,height=760')
+  if (!popup) return
+  try {
+    const response = await props.api.invokeAction('external-link', {})
+    const url = String(response.result?.url || '')
+    if (!/^https?:\/\//i.test(url)) throw new Error('invalid external URL')
+    popup.location.replace(url)
+  } catch (error) {
+    popup.close()
+  }
+}
+```
+
+只有用户点击、键盘操作等浏览器认可的手势可以打开弹窗。初始化、定时任务、Telegram 事件和后台 Promise 不能打开窗口。弹窗地址可以是 HTTP 或 HTTPS；业务数据和管理员权限仍必须通过 runtime 与 Host API 获取。
 
 ## 5. `dian115-theme-v1`
 

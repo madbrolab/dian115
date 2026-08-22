@@ -377,6 +377,28 @@ func (r *runtime) action(invocationID string, raw json.RawMessage) (any, error) 
 		}
 		r.updateState("succeeded", "测试通知已发送", false)
 		return map[string]any{"status": "succeeded", "message": "测试通知已发送", "hostStatus": response.Status}, nil
+	case "storage-demo":
+		return r.storageDemo(invocationID)
+	case "external-link":
+		return map[string]any{"status": "succeeded", "message": "外部页面地址已生成", "url": "https://example.com/oauth/start"}, nil
+	case "fetch-local":
+		var actionInput struct {
+			URL string `json:"url"`
+		}
+		if json.Unmarshal(payload.Input, &actionInput) != nil || strings.TrimSpace(actionInput.URL) == "" {
+			return map[string]any{"status": "failed", "message": "URL 不能为空"}, nil
+		}
+		response, err := r.hostCall(hostCallRequest{Method: "GET", Path: strings.TrimSpace(actionInput.URL), Headers: map[string]string{"accept": "application/json, text/plain;q=0.9"}})
+		if err != nil || response.Status >= 400 {
+			message := "宿主网络 Broker 调用失败"
+			if err != nil {
+				message = err.Error()
+			}
+			r.updateState("failed", message, false)
+			return map[string]any{"status": "failed", "message": message, "hostStatus": response.Status}, nil
+		}
+		r.updateState("succeeded", fmt.Sprintf("宿主 Broker 返回 HTTP %d", response.Status), false)
+		return map[string]any{"status": "succeeded", "message": "宿主 Broker 请求完成", "hostStatus": response.Status}, nil
 	case "create-watch":
 		var actionInput struct {
 			Path string `json:"path"`
@@ -406,6 +428,45 @@ func (r *runtime) action(invocationID string, raw json.RawMessage) (any, error) 
 	default:
 		return map[string]any{"status": "failed", "code": "unknown_action", "message": "未知动作"}, nil
 	}
+}
+
+func (r *runtime) storageDemo(invocationID string) (any, error) {
+	const path = "/api/plugin-runtime/storage/example"
+	response, err := r.hostCall(hostCallRequest{Method: "GET", Path: path, Headers: map[string]string{"accept": "application/json"}})
+	if err != nil {
+		return map[string]any{"status": "failed", "message": err.Error()}, nil
+	}
+	if response.Status != 200 && response.Status != 404 {
+		return map[string]any{"status": "failed", "message": fmt.Sprintf("Host Storage 读取失败（HTTP %d）", response.Status)}, nil
+	}
+	value, _ := json.Marshal(map[string]any{"saved_by": "complete-plugin", "updated_at": time.Now().UTC().Format(time.RFC3339Nano)})
+	body, _ := json.Marshal(map[string]json.RawMessage{"value": value})
+	headers := map[string]string{
+		"content-type": "application/json",
+		"accept": "application/json",
+		"idempotency-key": "complete-storage-" + invocationID,
+	}
+	if etag := firstHeader(response.Headers, "ETag"); etag != "" {
+		headers["if-match"] = etag
+	}
+	writeResponse, writeErr := r.hostCall(hostCallRequest{Method: "PUT", Path: path, Headers: headers, BodyBase64: base64.RawStdEncoding.EncodeToString(body)})
+	if writeErr != nil || writeResponse.Status >= 400 {
+		if writeErr != nil {
+			return map[string]any{"status": "failed", "message": writeErr.Error()}, nil
+		}
+		return map[string]any{"status": "failed", "message": fmt.Sprintf("Host Storage 写入失败（HTTP %d）", writeResponse.Status)}, nil
+	}
+	r.updateState("succeeded", "Host Storage 已使用 ETag/CAS 保存示例数据", false)
+	return map[string]any{"status": "succeeded", "message": "Host Storage 已使用 ETag/CAS 保存示例数据", "hostStatus": writeResponse.Status}, nil
+}
+
+func firstHeader(headers map[string][]string, name string) string {
+	for key, values := range headers {
+		if strings.EqualFold(key, name) && len(values) > 0 {
+			return strings.TrimSpace(values[0])
+		}
+	}
+	return ""
 }
 
 func (r *runtime) job(raw json.RawMessage) (any, error) {
@@ -440,7 +501,7 @@ func (r *runtime) event(raw json.RawMessage) (any, error) {
 			"handled": true,
 			"reply": map[string]any{
 				"format": "plain", "text": "完整插件示例已收到：" + data.Match.Value,
-				"buttons": [][]map[string]string{{{"text": "查看文档", "url": "https://github.com/madbrolab/dian115"}}},
+				"buttons": [][]map[string]string{{{"text": "查看文档", "url": "https://example.com/plugins/complete-plugin"}}},
 			},
 		}, nil
 	}

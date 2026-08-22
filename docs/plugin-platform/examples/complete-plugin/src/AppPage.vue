@@ -13,7 +13,7 @@ import {
   NTag,
   useMessage,
 } from 'naive-ui'
-import { Bell, FolderSearch, RefreshCw } from '@lucide/vue'
+import { Bell, ExternalLink, FolderSearch, Globe2, HardDrive, RefreshCw } from '@lucide/vue'
 
 interface RuntimeCallback {
   invocation_id?: string
@@ -31,19 +31,51 @@ interface HostBridge {
   refresh(): Promise<Record<string, unknown>>
 }
 
+interface PluginRuntimeSummary {
+  health_status?: string
+  process_state?: string
+  pid?: number
+  [key: string]: unknown
+}
+
 const props = defineProps<{
   api: HostBridge
   hostApi?: HostBridge
   installationId?: number
   pluginId?: string
+  runtime?: PluginRuntimeSummary | null
   runtimeState?: Record<string, unknown>
+  navKey?: string
   themeContract?: string
 }>()
 
 const message = useMessage()
 const busyAction = ref('')
 const watchPath = ref('')
+const localURL = ref('http://127.0.0.1:8080/health')
 const state = computed(() => props.runtimeState || {})
+
+async function openExternal() {
+  // Open synchronously from the click, then navigate after the runtime action resolves.
+  const popup = window.open('about:blank', '_blank', 'popup,width=1080,height=760')
+  if (!popup) {
+    message.warning('浏览器阻止了弹窗，请允许当前页面打开新窗口')
+    return
+  }
+  busyAction.value = 'external-link'
+  try {
+    const response = await props.api.invokeAction('external-link', {})
+    const result = response.result || {}
+    const url = String(result.url || '')
+    if (result.status === 'failed' || !/^https?:\/\//i.test(url)) throw new Error(String(result.message || '外部地址无效'))
+    popup.location.replace(url)
+  } catch (error: any) {
+    popup.close()
+    message.error(String(error?.message || '打开外部页面失败'))
+  } finally {
+    busyAction.value = ''
+  }
+}
 
 async function runAction(action: string, input: Record<string, unknown> = {}) {
   busyAction.value = action
@@ -101,6 +133,40 @@ async function createWatch() {
         <template #icon><NIcon :component="RefreshCw" /></template>
         刷新运行时状态
       </NButton>
+      <NButton :loading="busyAction === 'external-link'" @click="openExternal">
+        <template #icon><NIcon :component="ExternalLink" /></template>
+        打开外部授权页
+      </NButton>
+    </section>
+
+    <section class="tool-panel">
+      <div class="section-heading">
+        <NIcon :component="HardDrive" :size="20" />
+        <div>
+          <h3>Host Storage</h3>
+          <p>host-api-only 模式下使用同一接口保存插件私有状态，ETag 和幂等键由宿主保护。</p>
+        </div>
+      </div>
+      <NButton :loading="busyAction === 'storage-demo'" @click="runAction('storage-demo')">
+        <template #icon><NIcon :component="HardDrive" /></template>
+        读写示例数据
+      </NButton>
+    </section>
+
+    <section class="tool-panel">
+      <div class="section-heading">
+        <NIcon :component="Globe2" :size="20" />
+        <div>
+          <h3>宿主网络 Broker</h3>
+          <p>HTTP、HTTPS、localhost、局域网和其他容器地址都由宿主访问；宿主代理规则优先。</p>
+        </div>
+      </div>
+      <NForm label-placement="top" @submit.prevent="runAction('fetch-local', { url: localURL })">
+        <NFormItem label="本地或局域网 URL">
+          <NInput v-model:value="localURL" placeholder="例如 http://127.0.0.1:8080/health" clearable />
+        </NFormItem>
+        <NButton attr-type="submit" type="primary" :loading="busyAction === 'fetch-local'">通过宿主请求</NButton>
+      </NForm>
     </section>
 
     <section class="watch-panel">
@@ -169,7 +235,8 @@ p {
 }
 
 .metrics,
-.watch-panel {
+.watch-panel,
+.tool-panel {
   border: 1px solid var(--dian-border);
   border-radius: var(--dian-radius-lg);
   background: var(--dian-surface-raised);

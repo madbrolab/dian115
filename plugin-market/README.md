@@ -28,3 +28,5 @@
 管理员也可以在插件中心直接导入完整的 `.d115p` 文件。此路径不需要市场索引，但仍执行完全相同的签名、完整性、Manifest、权限、运行时和 UI 校验，并要求管理员确认权限；导入包不会自动发布到本市场。
 
 完整开发说明见 `docs/plugin-platform/developer-guide.md`。
+
+市场仓库只接收插件索引、Schema、图标和插件作者发布地址，不接收 DIAN115 主项目源码、Docker 构建上下文、构建产物或私钥。公共发布边界和自动检查见 `docs/plugin-platform/publication-policy.md`。

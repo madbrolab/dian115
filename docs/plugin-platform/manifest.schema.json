@@ -236,7 +236,7 @@
       "type": "object", "additionalProperties": false,
       "required": ["method", "path", "reason"],
       "properties": {
-        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "method": { "type": "string", "enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"] },
         "path": { "type": "string", "minLength": 5, "maxLength": 240, "pattern": "^/api/[A-Za-z0-9._~:/{}?=&-]+$" },
         "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
       }

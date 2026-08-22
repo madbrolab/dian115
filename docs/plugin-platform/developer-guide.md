@@ -1,6 +1,6 @@
 # DIAN115 plugin developer guide
 
-This guide takes a plugin from source to an installable package. Normative details are linked at each step.
+This guide takes a plugin from source to an installable package. It is self-contained and does not require the main project's source code. Normative details are linked at each step; use the [black-box conformance tools](conformance/README.md) for local runtime validation.
 
 ## 1. Architecture
 
@@ -271,7 +271,7 @@ The remote Vue component receives:
 
 The bridge provides only `getState(view)`, `invokeAction(action, input)`, and `refresh()`. The component may emit `action`, `refresh`, or `close`. Use Naive UI for controls and `@lucide/vue` for icons. Style with the stable `--dian-*` variables so light/dark and configured host themes update without remounting.
 
-The page runs in `sandbox="allow-scripts"` without `allow-same-origin`. It cannot call DIAN115 HTTP APIs directly. See [Vue Federation UI v1](ui-federation-v1.md) for the exact TypeScript contract and theme table.
+The page runs in `sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"` without `allow-same-origin`. It may open an HTTP/HTTPS page only from a browser-recognized user action for OAuth, login, or external details. It cannot navigate the parent or call DIAN115 HTTP APIs directly. See [Vue Federation UI v1](ui-federation-v1.md) for the exact TypeScript contract, theme table, and popup sequence.
 
 ## 9. Package, sign and publish
 
@@ -319,3 +319,4 @@ Import tokens are private, single-use, and expire after 15 minutes. The host del
 - Telegram registration stays within 3 commands and 3 keywords and handles conflicts.
 - The publisher key is stable across upgrades and the private key is not shipped.
 - Market metadata exactly matches the signed package.
+- `node docs/plugin-platform/conformance/verify-public-surface.mjs` passes before public publication; no main-project source is included.

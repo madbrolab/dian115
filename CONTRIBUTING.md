@@ -1,5 +1,19 @@
 # dian115 规则贡献指南
 
+## 插件平台公开发布边界
+
+本项目的 GitHub 公共分支只公开插件开发契约、第三方插件示例、市场索引和黑盒联调资料。**主项目源码在任何情况下都不得上传到 GitHub。**这条规则不因插件开发、版本发布、问题排查或 CI 调试而改变。
+
+禁止公开 `cmd/`、`internal/`、`frontend/src/`、主项目构建/部署文件、`go.mod`、`go.sum`、生产脚本、构建产物、插件发布包和私钥。允许的第三方插件示例源码只能位于 `docs/plugin-platform/examples/`，其 `build/`、`releases/` 和签名私钥同样不能提交。
+
+提交公共分支前必须运行：
+
+```bash
+node docs/plugin-platform/conformance/verify-public-surface.mjs
+```
+
+CI 会重复执行该检查。不得通过改名、压缩、复制到文档或生成文件绕过。第三方开发者只依赖 [`docs/plugin-platform/`](docs/plugin-platform/README.md) 中的公开契约，不需要访问主项目源码。
+
 欢迎通过 Pull Request（PR）补充或修正自定义识别词规则。
 
 本仓库接受来自社区的规则贡献。请先 Fork 仓库，在自己的分支中修改，然后向本仓库的 `main` 分支提交 PR。

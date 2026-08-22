@@ -37,7 +37,12 @@ const Preview = defineComponent({
         default: () => h(NDialogProvider, null, {
           default: () => h(AppPage, {
             api: previewBridge,
+            hostApi: previewBridge,
+            installationId: 1,
+            pluginId: 'example.complete-plugin',
+            runtime: { health_status: 'healthy', process_state: 'running' },
             runtimeState: previewState,
+            navKey: 'main',
             themeContract: 'dian115-theme-v1',
           }),
         }),

@@ -1,6 +1,6 @@
 # DIAN115 Plugin API v2
 
-This directory is the complete public contract for third-party plugins.
+This directory is the complete public contract for third-party plugins. It is intentionally source-free: the main application's implementation is private and is never required for plugin development. The permanent publication boundary is defined in [publication-policy.md](publication-policy.md).
 ## Supported plugin shape
 
 Every plugin is one signed `.d115p` ZIP containing both parts below:
@@ -22,13 +22,14 @@ Read these files in order:
 4. [Host Call v2](host-call-v2.md): local Host APIs, external HTTP/HTTPS, local services, proxy precedence, credentials, limits and errors.
 5. [Vue Federation UI v1](ui-federation-v1.md): build contract, component props, bridge API, sandbox and every stable theme variable.
 6. [OpenAPI](openapi-v1.yaml): exact request and response schemas for every approved local Host API.
+7. [Black-box conformance](conformance/README.md): runtime smoke testing and public-surface checks without main-project source.
 
 Machine-readable schemas:
 
 - [manifest.schema.json](manifest.schema.json)
 - [integrity.schema.json](integrity.schema.json)
 - [signature.schema.json](signature.schema.json)
-- [market index schema](../../plugin-market/index.schema.json)
+- [market index schema](market-index.schema.json)
 
 The complete sample is in [`examples/complete-plugin`](examples/complete-plugin/README.md). It contains a Go process runtime, a Vue page, a Manifest template, packaging/signing code, and a market entry template.
 
@@ -36,7 +37,7 @@ The complete sample is in [`examples/complete-plugin`](examples/complete-plugin/
 
 `compatibility.dian115` is a SemVer range selected by the plugin publisher. `compatibility.plugin_api` must target Plugin API v2. The host still checks the signed package, market disclosure, platform, ELF architecture, UI and permissions at installation time.
 
-For local Host APIs, the runtime catalog returned by `GET /api/plugin-center/v1/host-apis` and the `x-dian115-host-apis.entries` section in `openapi-v1.yaml` contain the same entries. A repository test compares the code catalog with this published list so a catalog change cannot silently leave the documentation behind.
+For local Host APIs, the runtime catalog returned by `GET /api/plugin-center/v1/host-apis` and the `x-dian115-host-apis.entries` section in `openapi-v1.yaml` are the public compatibility contract. A host release must keep those two public lists identical; plugin authors do not need access to the private implementation. The black-box conformance materials describe how to validate a plugin against this contract.
 
 ## Security summary
 
@@ -62,3 +63,7 @@ boundary as a market install:
 3. After the administrator accepts the displayed permissions and process risk, the token is submitted to install. The host re-checks the token, expiry, SHA-256, consent digest, and package before starting the normal asynchronous install operation.
 
 The token expires after 15 minutes, is single-use, and is removed after install, cancellation, failure, or expiry. Local import does not create a market repository entry and does not bypass signature, integrity, UI, runtime, filesystem, network, Telegram, or permission checks. Installed records show `本地导入` as their source.
+
+## Public-source boundary
+
+The GitHub repository publishes plugin contracts and third-party examples only. Never publish the main project's `cmd/`, `internal/`, `frontend/src/`, build files, deployment files, generated release packages, or private signing keys. Run the public-surface check before every public commit; CI rejects violations. See [publication-policy.md](publication-policy.md).

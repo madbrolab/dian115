@@ -5,7 +5,7 @@
   "description": "演示完整 DIAN115 第三方插件协议。",
   "author": "Example Publisher",
   "homepage": "https://example.com/plugins/complete-plugin",
-  "package_url": "https://example.com/releases/example.complete-plugin-1.0.0.d115p",
+  "package_url": "https://example.invalid/releases/example.complete-plugin-1.0.0.d115p",
   "sha256": "REPLACED_BY_PACKAGER",
   "runtime": {
     "kind": "process",

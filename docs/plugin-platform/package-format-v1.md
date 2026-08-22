@@ -284,7 +284,7 @@ RFC8785-JCS(parse(integrity.json))
 
 ## 5. 市场 `index.json`
 
-市场索引格式见 [index.schema.json](../../plugin-market/index.schema.json)。最小示例：
+市场索引格式见本目录的 [market-index.schema.json](market-index.schema.json)。最小示例：
 
 ```json
 {

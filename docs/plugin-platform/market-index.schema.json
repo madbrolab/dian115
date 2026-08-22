@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/madbrolab/dian115/main/plugin-market/index.schema.json",
+  "$id": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/market-index.schema.json",
   "title": "DIAN115 Plugin Market Index v1",
   "type": "object",
   "additionalProperties": true,

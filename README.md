@@ -24,6 +24,18 @@
 
 > DIAN-115 是私有授权项目。普通用户使用发布镜像部署即可，README 不提供源码构建指引。
 
+## 插件开发与源码发布边界
+
+第三方插件开发只依赖 [`docs/plugin-platform/`](docs/plugin-platform/README.md) 中的公开协议、Schema、OpenAPI、Vue Federation UI 契约、完整示例和黑盒联调工具。主项目源码是私有实现，**任何情况下都不得上传到 GitHub，也不得作为插件 SDK、联调包、文档附件或 Docker 构建上下文公开**。
+
+公共分支发布前必须执行：
+
+```bash
+node docs/plugin-platform/conformance/verify-public-surface.mjs
+```
+
+详细规则见 [`AGENTS.md`](AGENTS.md) 和 [`docs/plugin-platform/publication-policy.md`](docs/plugin-platform/publication-policy.md)。
+
 ## 完整 Wiki
 
 项目的完整使用说明已经发布到 GitHub Pages：

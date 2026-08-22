@@ -4,7 +4,7 @@
   "id": "example.complete-plugin",
   "name": "完整插件示例",
   "version": "1.0.0",
-  "description": "演示状态、动作、任务、事件、通知、目录监控、Telegram 和主题界面。",
+  "description": "演示状态、动作、任务、事件、通知、Host Storage、本地 HTTP、目录监控、Telegram 和主题界面。",
   "default_locale": "zh-CN",
   "publisher": {
     "name": "Example Publisher",
@@ -37,9 +37,26 @@
         "method": "POST",
         "path": "/api/plugin-runtime/watches",
         "reason": "创建用户在插件界面配置的目录监控"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plugin-runtime/storage/:key",
+        "reason": "读取插件自己的 Host Storage 示例数据"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/plugin-runtime/storage/:key",
+        "reason": "保存插件自己的 Host Storage 示例数据"
       }
     ],
-    "network": []
+    "network": [
+      {
+        "origin": "http://127.0.0.1:8080",
+        "methods": ["GET"],
+        "proxy_mode": "system",
+        "reason": "演示通过宿主 Broker 访问容器内或局域网本地服务"
+      }
+    ]
   },
   "ui": {
     "mode": "federation",
