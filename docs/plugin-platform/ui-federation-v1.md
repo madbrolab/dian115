@@ -2,7 +2,7 @@
 
 每个插件必须提供一个签名的 Vue 3 Module Federation 页面。该页面在独立 opaque-origin iframe 中运行，使用宿主提供的 Vue 3、Naive UI 和 `@lucide/vue` singleton，并通过 `dian115-theme-v1` 变量跟随宿主主题。
 
-不存在声明式 UI、HTML 片段模式或加载失败回退协议。Federation 页面无法加载时，宿主显示错误，用户可以重试或管理插件。
+不存在其他 UI 格式、HTML 片段模式或加载失败回退协议。Federation 页面无法加载时，宿主显示错误，用户可以重试或管理插件。
 
 ## 1. Manifest 契约
 

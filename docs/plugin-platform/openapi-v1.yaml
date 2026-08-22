@@ -496,6 +496,131 @@ x-dian115-subscription-host-apis:
       category: subscriptions
       risk: read
 paths:
+  /api/plugin-center/v1/imports/inspect:
+    post:
+      tags:
+        - Plugin Management
+      summary: 检查本地插件包
+      description: 上传 `.d115p` 并在安装前执行完整包校验。返回短期、单次使用的导入令牌，不返回服务器文件路径。
+      operationId: inspectLocalPluginImport
+      security:
+        - AdminBearer: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [package]
+              properties:
+                package:
+                  type: string
+                  format: binary
+                  description: 完整的 `.d115p` ZIP 包，最大 32 MiB。
+      responses:
+        '200':
+          description: 包检查通过，等待管理员确认权限
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [import_token, expires_at, file_name, plugin]
+                properties:
+                  import_token:
+                    type: string
+                    format: uuid
+                  expires_at:
+                    type: string
+                    format: date-time
+                  file_name:
+                    type: string
+                  plugin:
+                    type: object
+                    description: 与市场安装确认对话框相同的权限、运行时和 SHA-256 快照。
+        '400':
+          $ref: '#/components/responses/Problem'
+        '413':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-center/v1/imports/{token}/install:
+    post:
+      tags:
+        - Plugin Management
+      summary: 安装已检查的本地插件
+      description: 使用检查阶段返回的单次令牌安装本地插件。宿主会重新校验包 SHA-256、权限同意摘要和完整包内容。
+      operationId: installLocalPluginImport
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [permissions_accepted, consent_digest]
+              properties:
+                permissions_accepted:
+                  type: boolean
+                  const: true
+                process_risk_accepted:
+                  type: boolean
+                consent_digest:
+                  type: string
+                  pattern: '^[0-9a-f]{64}$'
+                enable:
+                  type: boolean
+                  default: true
+      responses:
+        '202':
+          description: 已创建异步插件安装操作
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [operation]
+                properties:
+                  operation:
+                    type: object
+                    description: 通过插件操作查询接口轮询状态。
+        '400':
+          $ref: '#/components/responses/Problem'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-center/v1/imports/{token}:
+    delete:
+      tags:
+        - Plugin Management
+      summary: 取消本地插件导入
+      description: 删除尚未提交安装的本地导入暂存包。
+      operationId: discardLocalPluginImport
+      security:
+        - AdminBearer: []
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 暂存包已删除
+        '404':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
   /api/plugin-center/v1/host-apis:
     get:
       tags:

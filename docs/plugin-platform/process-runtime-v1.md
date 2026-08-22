@@ -4,24 +4,25 @@
 
 ## 1. 启动环境
 
-入口由 `runtime.entry` 指定，必须是当前宿主架构的静态 Linux ELF。工作目录是安装实例的私有数据目录。宿主只设置以下环境：
+入口由 `runtime.entry` 指定，必须是当前宿主架构的静态 Linux ELF。宿主主服务在当前 Docker 容器内直接启动该入口作为伴生子进程；不创建插件容器，也不要求宿主机额外安装运行组件。启动前宿主会将进程根切换到 `/config/package/<plugin-id>/`，工作目录为私有根 `/`。该根只包含当前插件的 `package`、`data`、`tmp` 三个目录：其他插件、`/config`、Linux 系统目录和媒体挂载均不可见。宿主只设置以下环境：
 
 | 变量 | 值 |
 | --- | --- |
-| `PATH` | 包内 `bin`、包根目录以及标准系统二进制路径 |
-| `HOME` | 当前插件私有数据目录 |
+| `PATH` | 当前版本包内的 `runtime` 与 `bin` 目录；通过它启动的辅助进程继承相同私有根 |
+| `HOME` | `/data` |
 | `LANG` | `C.UTF-8` |
 | `TZ` | `Asia/Shanghai` |
 | `DIAN115_PLUGIN_ID` | Manifest 插件 ID |
 | `DIAN115_PLUGIN_VERSION` | 当前安装版本 |
 | `DIAN115_PLUGIN_PROTOCOL` | `dian115:process@1` |
-| `DIAN115_PLUGIN_DATA` | 唯一可写私有数据目录 |
-| `DIAN115_PLUGIN_PACKAGE` | 只读/可执行包目录 |
-| `TMPDIR` | 私有数据目录内的 `tmp` |
+| `DIAN115_PLUGIN_DATA` | `/data`；当前插件的持久化目录，可直接读写 |
+| `DIAN115_PLUGIN_PACKAGE` | `/package/<当前版本目录>`；当前安装包，可直接读取并执行包内文件 |
+| `TMPDIR` | `/tmp`；当前插件的临时目录，可直接读写 |
+| `DIAN115_PLUGIN_FILESYSTEM` | `private-root` 表示已进入插件私有根；`host-api-only` 表示部署主动删除了 Docker 默认 chroot 能力，此时路径文件 syscall 会被拒绝，插件必须使用 Host API |
 
 宿主不继承任意容器环境变量，不传数据库、Cookie、JWT、115、TMDB、Telegram、CD2 或代理秘密。
 
-入口不得 daemonize、脱离进程组或把 stdout 用作日志。可执行包内子进程，但子进程继承文件系统和 seccomp 限制。主进程退出后宿主终止遗留进程组。
+入口不得 daemonize、脱离进程组或把 stdout 用作日志。插件可以按需启动随包提供的辅助进程；辅助进程继承相同私有根、seccomp/no-new-privileges 限制和宿主进程组生命周期，可以访问当前插件的 `/package`、`/data`、`/tmp`，但不能访问其他路径或建立直连 socket。主进程退出后宿主终止整个进程组。
 
 ## 2. 帧格式
 
@@ -273,7 +274,7 @@ job 结果只能是：
 {"status":"skipped","message":"previous run still active"}
 ```
 
-耗时工作可以在进程内继续，但宿主将 `accepted` 视为本次 job 调用已完成。若需要让宿主持久跟踪具体进度，应把状态写入插件私有数据/KV，并由 `state` 暴露安全摘要。
+耗时工作可以在进程内继续，但宿主将 `accepted` 视为本次 job 调用已完成。若需要让宿主持久跟踪具体进度，应把状态写入安装实例级 KV，并由 `state` 暴露安全摘要。
 
 ## 8. 普通 Event 调用
 
@@ -460,8 +461,10 @@ stderr 每行也以 `info` 写入插件日志；扫描行最大 64 KiB，最终�
 
 ## 11. 沙箱与文件边界
 
-启动 helper 先应用 `no_new_privs`，再应用 Landlock 文件规则和 seccomp 系统调用过滤，最后 exec 入口。沙箱不可用时 fail closed，进程不启动。
+启动 helper 先校验包内入口和当前插件私有根，再使用生产环境标准 Docker 已有的 `SYS_CHROOT` 能力执行 chroot；随后在不改变 UID 的情况下清空进程全部 capability，应用 `no_new_privs` 和 seccomp 系统调用过滤，最后启动入口。该流程不修改 Compose、不创建插件容器，不要求挂载、网络管理或宿主额外服务。生产 Compose 保持现状即可：默认能力可用时运行在 `private-root`；如果部署方显式删掉 `SYS_CHROOT`，则自动降级为 `host-api-only`，插件仍可运行 JSON-RPC、网络 Broker、TG、通知和业务 Host API，但所有路径文件 syscall 都被拒绝。只有 mandatory seccomp、入口校验或进程设置本身失败时，插件才不会启动。无论哪种模式，宿主文件均只能通过 Host API 操作。
 
-包目录只读/可执行，私有数据目录可读写。除私有目录外，插件不能读取 `/config`；也不能读取 Linux 系统目录。直接读取宿主媒体挂载同样不在进程权限内，应通过已批准的文件 Host API。危险 syscall 包括挂载/命名空间、ptrace、BPF、内核模块、fanotify 和网络 socket 能力。
+插件可以直接使用普通文件 API 访问 `/package`、`/data`、`/tmp`；这些目录只对应当前插件。版本包为只读，`data` 在更新和容器重启后保留，`tmp` 只用于插件私有临时文件。`/config`、其他插件目录、Linux 系统目录、媒体挂载和宿主其他路径不在私有根中。文件 Host API 仍用于访问宿主文件服务，并继续校验路径、解析后的符号链接目标和权限。直接 socket、挂载/命名空间、ptrace、BPF、内核模块和 fanotify 等逃逸面被拒绝。辅助进程可以存在，但同样不能绕过私有根或影响宿主其他进程。
 
-插件不得把 `DIAN115_PLUGIN_DATA` 的绝对值或其他绝对路径放入 runtime result。持久业务状态可直接写私有数据目录，或通过 `/api/plugin-runtime/storage/:key` 使用带 ETag 的宿主 KV。
+如果 `DIAN115_PLUGIN_FILESYSTEM=host-api-only`，这是宿主检测到当前容器没有可用的默认 chroot 能力后的安全降级：插件仍正常运行 JSON-RPC、网络 Broker、TG、通知和业务 Host API，但所有路径文件 syscall 都返回 `EPERM`。宿主不会为了插件修改 Compose 或增加 capability。
+
+插件不得把真实宿主路径写入日志、runtime result 或 UI。插件自己的文件状态可直接保存在 `/data`，小型结构化状态也可继续通过 `/api/plugin-runtime/storage/:key` 使用安装实例级 KV。网络请求、宿主目录监控、TG、通知和所有 DIAN115 操作均通过 Host API/Broker 完成。

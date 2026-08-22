@@ -8,9 +8,9 @@ Every plugin is one signed `.d115p` ZIP containing both parts below:
 - a statically linked Linux `process` runtime supervised by DIAN115;
 - a signed Vue 3 Module Federation page using the host-provided Vue 3, Naive UI, and `@lucide/vue` packages.
 
-The UI is mandatory. Packages without `ui.mode=federation`, a signed Federation entry, and a valid process runtime are rejected. There is no WASM runtime, remote runtime, extra plugin container, declarative UI, or UI fallback protocol.
+The UI is mandatory. Packages without `ui.mode=federation`, a signed Federation entry, and a valid process runtime are rejected. The only runtime is the supervised native process; there is no remote runtime, extra plugin container, alternate UI format, or UI fallback protocol.
 
-The process cannot open network sockets or freely browse the container filesystem. It receives a read-only package directory and one writable private data directory. All HTTP/HTTPS requests and all DIAN115 business operations go through `host.call`. HTTP targets may be internet, LAN, host, container, loopback, or other locally reachable services. Linux system directories and `/config` are denied, except that the plugin can access only its own private data directory supplied in `DIAN115_PLUGIN_DATA`.
+The process is started directly by the main service inside the current Docker container. It cannot open network sockets or inspect paths outside its private root. Each installation owns `/config/package/<plugin-id>/`: its `package/` release directory, `data/` persistent directory and `tmp/` temporary directory are visible as `/package`, `/data` and `/tmp` after the helper enters the private root. Other plugins, `/config` itself, Linux system directories and media mounts are not present in that root. Host files, watches, HTTP requests and DIAN115 business operations continue through `host.call`. HTTP targets may be internet, LAN, host, container, loopback, or other locally reachable services.
 
 ## Authoritative files
 
@@ -42,9 +42,23 @@ For local Host APIs, the runtime catalog returned by `GET /api/plugin-center/v1/
 
 - Install only packages signed by a publisher you trust. A native process remains publisher code even inside the host sandbox.
 - The package limit is 32 MiB compressed, 128 MiB expanded, 1024 ZIP members, and 32 MiB per member.
-- The Linux sandbox is fail closed. If Landlock/seccomp cannot be applied, the plugin does not start.
+- The Linux sandbox uses the capabilities already present in a standard Docker container for the pre-exec `chroot`, then clears all capabilities without changing UID or the container configuration. No Compose addition, mount, network, ptrace, BPF or host service is required. The normal mode is `private-root`; if a deployment deliberately removes the default `SYS_CHROOT` capability, the helper uses `host-api-only` instead and denies all plugin pathname file syscalls. If the mandatory seccomp or process setup cannot be applied, the plugin does not start.
+- The host validates the signed static ELF before installing the filter. A plugin may start a package-local helper process when needed; every descendant inherits the same private root, seccomp/no-new-privileges policy and process-group lifecycle, so it can use only that plugin's files and cannot open a direct socket or affect unrelated processes.
+- `DIAN115_PLUGIN_DATA=/data`, `DIAN115_PLUGIN_PACKAGE=/package/...` and `TMPDIR=/tmp` are paths inside the plugin's private root. Use them for plugin-owned resources and persistent files. Use the approved file/watch APIs for host data; a host path is never exposed as a plugin-owned path.
 - Brokered network access supports `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE` over HTTP and HTTPS. The host does not reject a target because it resolves to loopback, private, link-local, container, host or other non-public addresses.
 - Host proxy-domain rules have higher priority than plugin routing preferences.
 - Telegram registrations are runtime operations, not install-time declarations. Each plugin can register at most 3 commands and 3 keywords. Conflicts are rejected at registration and do not fail installation.
 - Host message parsing always runs before plugin Telegram matching.
 - File APIs validate the submitted path, normalized path, resolved symbolic-link target, and saved watch source. Linux system directories and `/config` remain protected.
+
+## Local import
+
+Administrators can import a plugin package directly from the Plugin Center's
+"Repositories & development" tab. The flow is deliberately the same trust
+boundary as a market install:
+
+1. Select a `.d115p` file. The host stores it in a private, short-lived staging directory and returns a review token; the browser never receives a server filesystem path.
+2. The host validates ZIP limits, `manifest.json`, `integrity.json`, Ed25519 signature, process runtime, static ELF, Federation UI, and declared permissions before showing the review dialog.
+3. After the administrator accepts the displayed permissions and process risk, the token is submitted to install. The host re-checks the token, expiry, SHA-256, consent digest, and package before starting the normal asynchronous install operation.
+
+The token expires after 15 minutes, is single-use, and is removed after install, cancellation, failure, or expiry. Local import does not create a market repository entry and does not bypass signature, integrity, UI, runtime, filesystem, network, Telegram, or permission checks. Installed records show `本地导入` as their source.

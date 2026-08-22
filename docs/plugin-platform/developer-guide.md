@@ -18,7 +18,9 @@ Vue Federation page (opaque-origin iframe)
 
 The page never receives the administrator Axios client, cookies, local storage, router, DOM, Bot Token, 115 credentials, TMDB key, proxy credentials, CD2 credentials, or direct filesystem access. Business work belongs in the process runtime. The page calls the runtime through the narrow bridge described in [Vue Federation UI v1](ui-federation-v1.md).
 
-The process is started in the current DIAN115 container. It must not listen on a port, create another container, daemonize, or require a remote callback. Direct socket syscalls are blocked. The host exposes the package read-only, one private writable data directory, stdio JSON-RPC, and approved Host APIs.
+The process is started directly by the main service in the current Docker container. It must not listen on a port, create another plugin container, daemonize, or require a remote callback. The host creates `/config/package/<plugin-id>/package`, `/config/package/<plugin-id>/data` and `/config/package/<plugin-id>/tmp`, then enters that installation root before starting the entry. Inside the process these are `/package`, `/data` and `/tmp`; other plugins, `/config`, Linux system directories and media mounts are outside the root. A plugin may start a bounded helper process from its own package, but that helper inherits the same private root, seccomp/no-new-privileges policy and process-group lifecycle. Direct socket, mount and kernel escape surfaces are blocked. Host files, watches, network, Telegram and notifications remain mediated by approved Host APIs.
+
+To start a helper shipped in the package, execute it below the path in `DIAN115_PLUGIN_PACKAGE`, for example `$DIAN115_PLUGIN_PACKAGE/runtime/helper`. It must be a static Linux ELF and remain inside the package directory. Helpers inherit the same private root and are terminated with the main plugin process group.
 
 ## 2. Start from the complete sample
 
@@ -142,6 +144,26 @@ The process can call:
 - `host.telegram.register`, `host.telegram.list`, and `host.telegram.unregister`.
 
 The precise frames, payloads, response status enums, ETag requirements, retries and error codes are in [Process runtime v1](process-runtime-v1.md). Do not return an arbitrary JSON object for `state`, `action`, or `job`; the host validates each result.
+
+### Plugin-owned files
+
+Use the paths supplied by the host; never hard-code `/config/package` because that path exists only outside the private root:
+
+```go
+packageDir := os.Getenv("DIAN115_PLUGIN_PACKAGE") // /package/<current-release>
+dataDir := os.Getenv("DIAN115_PLUGIN_DATA")       // /data
+tempDir := os.Getenv("TMPDIR")                   // /tmp
+
+template, err := os.ReadFile(filepath.Join(packageDir, "assets", "template.json"))
+if err != nil { /* report initialization failure */ }
+
+if err := os.MkdirAll(filepath.Join(dataDir, "cache"), 0o700); err != nil { /* handle */ }
+if err := os.WriteFile(filepath.Join(dataDir, "cache", "index.json"), payload, 0o600); err != nil { /* handle */ }
+```
+
+The current release under `/package` is host-managed and read-only. `/data` persists across process restarts, container restarts and plugin updates. `/tmp` is private to the plugin but must not be treated as durable state. Absolute paths such as `/config`, `/etc`, `/proc`, media mounts and paths copied from another plugin do not resolve outside the private root. To access an administrator-approved host path, call the corresponding file Host API; do not try to translate it into a local path.
+
+Read `DIAN115_PLUGIN_FILESYSTEM` during initialization. `private-root` is the normal mode. `host-api-only` means the deployment removed the Docker default chroot capability; in that mode all pathname filesystem syscalls are intentionally denied and plugin-owned files must also be stored through Host API storage.
 
 ## 5. Use Host Call
 
@@ -276,7 +298,15 @@ RFC8785-JCS(integrity.json)
 
 Publish the `.d115p` on HTTPS and add one entry to a market `index.json`. The market runtime and permissions disclosure must exactly match the signed Manifest; the market SHA-256 must match the package bytes. The complete sample packager generates the key ID, integrity file, signature file, ZIP permissions, package SHA-256, and market entry values.
 
-## 10. Release checklist
+## 10. Local import behavior
+
+An administrator may also select the finished `.d115p` from the Plugin Center. This is an installation path, not a second package format: the host performs the same archive, manifest, integrity, signature, process, static ELF, Federation UI, and permission checks before presenting the consent dialog. The package must therefore be complete and signed even when it is not published in a market index.
+
+The inspect endpoint is `POST /api/plugin-center/v1/imports/inspect` with a multipart field named `package`. A successful response contains `import_token`, `expires_at`, `file_name`, and the same plugin permission snapshot shown by a market install. The administrator then submits `POST /api/plugin-center/v1/imports/{token}/install` with `permissions_accepted: true`, the returned `consent_digest`, and `process_risk_accepted: true` for process plugins. The host revalidates every value and queues the normal `plugin_install` operation.
+
+Import tokens are private, single-use, and expire after 15 minutes. The host deletes the staged file after the operation is accepted or rejected. No local package is uploaded to a repository, and the installed source is recorded as `本地导入`.
+
+## 11. Release checklist
 
 - UI is present, exposes the declared module, uses host singletons, and contains no unsigned remote scripts.
 - Every UI asset and runtime file is covered by `integrity.json`.
