@@ -1,23 +1,28 @@
-# 时长模板：利用规则的首次命中语义形成互斥时长区间。
-# 有实际媒体时长时优先使用实际值，否则使用 TMDB 时长；缺失时进入兜底目录。
+# 完整时长模板：成人内容先隔离，其余媒体按互斥时长区间分类。
 movie:
-  "短片（40分钟内）":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "短片":
     runtime: "<40"
-  "中短片（40-89分钟）":
+  "中短片":
     runtime: "<90"
-  "标准长片（90-149分钟）":
+  "标准片":
     runtime: "<150"
-  "超长电影（150分钟起）":
+  "超长片":
     runtime: ">=150"
-  "时长未知电影": {}
+  "时长未知": {}
 
 tv:
-  "短节目（25分钟内）":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "短节目":
     runtime: "<25"
-  "常规节目（25-59分钟）":
+  "常规节目":
     runtime: "<60"
-  "长节目（60-119分钟）":
+  "长节目":
     runtime: "<120"
-  "超长节目（120分钟起）":
+  "超长节目":
     runtime: ">=120"
-  "时长未知剧集": {}
+  "时长未知": {}

@@ -1,36 +1,62 @@
-# 精简模板：类型目录下只增加一级静态分类目录。
+# 均衡精简模板：成人内容先隔离，用较少目录覆盖主要类型与地区。
 movie:
-  "动画":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "动画电影":
     genre_ids: "16"
   "纪录片":
     genre_ids: "99,-16"
-  "音乐演出":
+  "音乐与演出":
     genre_ids: "10402,-16"
+  "家庭电影":
+    genre_ids: "10751,-16"
+  "恐怖与惊悚":
+    genre_ids: "27,53,-16"
+  "科幻与动作":
+    genre_ids: "878,14,28,12,-16"
+  "喜剧爱情":
+    genre_ids: "35,10749,-16"
+  "剧情电影":
+    genre_ids: "18,-16"
   "华语电影":
-    ?original_language: "zh,cn"
+    ?original_language: "zh"
     ?origin_country: "CN,HK,TW,MO"
   "日韩电影":
     ?original_language: "ja,ko"
     ?origin_country: "JP,KR"
   "欧美电影":
-    origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,CA,AU,NZ"
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
   "其他电影": {}
 
 tv:
-  "儿童节目":
-    genre_ids: "10762"
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
   "动漫":
     genre_ids: "16"
+  "儿童节目":
+    genre_ids: "10762,-16"
   "纪录片":
     genre_ids: "99,-16"
-  "综艺":
+  "新闻节目":
+    genre_ids: "10763"
+  "综艺脱口秀":
     genre_ids: "10764,10767"
+  "科幻动作":
+    genre_ids: "10765,10759"
+  "悬疑犯罪":
+    genre_ids: "9648,80"
+  "喜剧家庭":
+    genre_ids: "35,10751"
+  "剧情剧集":
+    genre_ids: "18"
   "华语剧集":
-    ?original_language: "zh,cn"
-    ?origin_country: "CN,HK,TW,MO,SG"
+    ?original_language: "zh"
+    ?origin_country: "CN,HK,TW,MO"
   "日韩剧集":
     ?original_language: "ja,ko"
     ?origin_country: "JP,KR"
   "欧美剧集":
-    origin_country: "US,GB,FR,DE,IT,ES,PT,NL,SE,PL,CA,AU,NZ"
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
   "其他剧集": {}

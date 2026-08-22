@@ -1,4 +1,4 @@
-# 精简静态分类后追加 TMDB 评分段动态目录。
+# 成人内容先隔离，其余媒体按完整静态分类并追加 TMDB 评分段动态层级。
 sub_classify:
   movie:
     enabled: true
@@ -8,19 +8,59 @@ sub_classify:
     levels: [rating_tier]
 
 movie:
-  "动画":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "动画电影":
     genre_ids: "16"
   "纪录片":
     genre_ids: "99,-16"
-  "音乐演出":
+  "音乐与演出":
     genre_ids: "10402,-16"
-  "剧情电影": {}
+  "电视电影":
+    genre_ids: "10770,-16"
+  "家庭电影":
+    genre_ids: "10751,-16"
+  "恐怖悬疑":
+    genre_ids: "27,53,9648,80,-16"
+  "科幻动作":
+    genre_ids: "878,14,28,12,-16"
+  "喜剧爱情":
+    genre_ids: "35,10749,-16"
+  "剧情电影":
+    genre_ids: "18,-16"
+  "战争历史":
+    genre_ids: "10752,36,-16"
+  "西部片":
+    genre_ids: "37,-16"
+  "其他电影": {}
 
 tv:
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
   "动漫":
     genre_ids: "16"
+  "儿童节目":
+    genre_ids: "10762,-16"
   "纪录片":
     genre_ids: "99,-16"
-  "综艺":
+  "新闻节目":
+    genre_ids: "10763"
+  "综艺脱口秀":
     genre_ids: "10764,10767"
-  "剧情剧集": {}
+  "肥皂剧":
+    genre_ids: "10766"
+  "科幻动作":
+    genre_ids: "10765,10759"
+  "悬疑犯罪":
+    genre_ids: "9648,80"
+  "喜剧家庭":
+    genre_ids: "35,10751"
+  "剧情剧集":
+    genre_ids: "18"
+  "战争政治":
+    genre_ids: "10768"
+  "西部剧":
+    genre_ids: "37"
+  "其他剧集": {}

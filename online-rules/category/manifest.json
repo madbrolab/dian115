@@ -5,39 +5,31 @@
     {
       "id": "standard",
       "name": "标准完整分类",
-      "description": "与项目默认模板保持一致，覆盖电影和电视剧规则，不修改当前子分类与 Emby 设置。",
+      "description": "成人内容独立隔离；完整细分动画、纪实、演出、综艺和地区影视。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/standard.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["标准", "完整"]
     },
     {
       "id": "compact",
-      "name": "精简一级分类",
-      "description": "类型目录下仅使用一级静态分类，适合控制媒体库数量。",
+      "name": "均衡精简分类",
+      "description": "成人内容独立隔离；用较少目录覆盖主要类型和地区，兼顾浏览与媒体库数量。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/compact.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["精简"]
     },
     {
-      "id": "minimal",
-      "name": "极简三分类",
-      "description": "每种媒体只保留两个常用特殊分类和一个兜底目录，适合追求最少目录与媒体库的用户。",
-      "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/minimal.yaml",
-      "media_types": ["movie", "tv"],
-      "tags": ["极简", "一级目录"]
-    },
-    {
       "id": "region",
-      "name": "地区优先分类",
-      "description": "按 TMDB 制片国家/地区划分华语、日韩、东南亚、南亚、欧美及大洋洲，全部保持一级目录。",
+      "name": "全球地区分类",
+      "description": "成人内容独立隔离；其余媒体按 TMDB 制片国家覆盖全球主要区域。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/region.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["地区", "一级目录"]
     },
     {
       "id": "genre",
-      "name": "题材优先分类",
-      "description": "按动画、纪实、科幻、悬疑犯罪、动作等 TMDB 题材首次命中分类，适合按内容类型浏览。",
+      "name": "完整题材分类",
+      "description": "成人内容独立隔离；其余媒体按完整 TMDB 电影和电视类型表分类。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/genre.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["题材", "一级目录"]
@@ -45,15 +37,15 @@
     {
       "id": "family",
       "name": "亲子与分级隔离",
-      "description": "优先隔离成人、成熟和分级缺失内容，再划分儿童与家庭内容；依赖 TMDB 分级完整度。",
+      "description": "隔离成人与成熟内容，优先识别亲子内容，其余媒体仍按题材和地区正常分类。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/family.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["亲子", "内容分级", "二级目录"]
     },
     {
       "id": "documentary-variety",
-      "name": "纪实综艺优先",
-      "description": "集中管理纪录片、音乐演出、新闻、综艺和脱口秀，剧情类内容保持精简兜底。",
+      "name": "纪实节目完整分类",
+      "description": "成人内容独立隔离；纪实节目优先，其余动画、剧情影视按题材和地区正常分类。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/documentary-variety.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["纪实", "综艺", "二级目录"]
@@ -61,15 +53,15 @@
     {
       "id": "anime-focused",
       "name": "动漫细分分类",
-      "description": "按产地细分电影动画和剧集动漫，真人影视只保留少量目录，适合动漫收藏为主的用户。",
+      "description": "成人内容独立隔离；动画按产地优先细分，真人影视按节目、题材和地区正常分类。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/anime-focused.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["动漫", "产地", "二级目录"]
     },
     {
       "id": "runtime",
-      "name": "按时长分类",
-      "description": "利用首次命中顺序划分短片、常规、长片和超长内容；时长缺失时进入独立兜底目录。",
+      "name": "完整时长分类",
+      "description": "成人内容独立隔离；其余媒体按互斥时长区间覆盖短片、常规、长片和超长内容。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/runtime.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["时长", "一级目录"]
@@ -77,18 +69,18 @@
     {
       "id": "decade",
       "name": "标准分类 + 年代",
-      "description": "在标准分类后追加年代子目录；只修改电影和电视剧的年代子分类开关，其余全局设置保持本地值。",
+      "description": "成人内容独立隔离；其余媒体完成静态分类后追加年代动态层级。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/decade.yaml",
       "media_types": ["movie", "tv"],
       "tags": ["详细", "年代"]
     },
     {
       "id": "rating-tier",
-      "name": "精简分类 + 评分段",
-      "description": "使用少量静态分类，并在其后追加 TMDB 评分段目录；会覆盖电影和电视剧的评分子分类开关。",
+      "name": "完整分类 + 评分段",
+      "description": "成人内容独立隔离；其余媒体完成静态分类后追加 TMDB 评分段层级。",
       "url": "https://raw.githubusercontent.com/madbrolab/dian115/main/online-rules/category/rating-tier.yaml",
       "media_types": ["movie", "tv"],
-      "tags": ["精简", "评分", "动态层级"]
+      "tags": ["完整", "评分", "动态层级"]
     }
   ]
 }

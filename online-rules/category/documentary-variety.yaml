@@ -1,24 +1,64 @@
-# 纪实与节目优先模板：将非剧情内容集中管理，剧情影视统一兜底。
+# 纪实节目模板：成人内容先隔离，纪录与节目优先，其余媒体继续按动画、题材和地区分类。
 movie:
-  "非剧情内容/纪录片":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "纪实与节目/纪录片":
     genre_ids: "99,-16"
-  "非剧情内容/音乐与演出":
+  "纪实与节目/音乐演出":
     genre_ids: "10402,-16"
-  "剧情影视/动画电影":
+  "动画与家庭/动画电影":
     genre_ids: "16"
-  "剧情影视/其他电影": {}
+  "动画与家庭/家庭电影":
+    genre_ids: "10751,-16"
+  "剧情电影/恐怖悬疑":
+    genre_ids: "27,53,9648,80,-16"
+  "剧情电影/动作科幻":
+    genre_ids: "28,12,878,14,-16"
+  "剧情电影/喜剧爱情":
+    genre_ids: "35,10749,-16"
+  "剧情电影/剧情片":
+    genre_ids: "18,-16"
+  "剧情电影/华语":
+    ?original_language: "zh"
+    ?origin_country: "CN,HK,TW,MO"
+  "剧情电影/日韩":
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "剧情电影/欧美":
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
+  "剧情电影/待分类": {}
 
 tv:
-  "非剧情内容/纪录片":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "纪实与节目/纪录片":
     genre_ids: "99,-16"
-  "非剧情内容/新闻":
+  "纪实与节目/新闻":
     genre_ids: "10763"
-  "非剧情内容/综艺真人秀":
+  "纪实与节目/综艺真人秀":
     genre_ids: "10764"
-  "非剧情内容/脱口秀":
+  "纪实与节目/脱口秀":
     genre_ids: "10767"
-  "非剧情内容/儿童节目":
+  "儿童与动漫/儿童节目":
     genre_ids: "10762,-16"
-  "剧情影视/动漫":
+  "儿童与动漫/动漫":
     genre_ids: "16"
-  "剧情影视/其他剧集": {}
+  "剧情剧集/科幻动作":
+    genre_ids: "10765,10759"
+  "剧情剧集/悬疑犯罪":
+    genre_ids: "9648,80"
+  "剧情剧集/喜剧家庭":
+    genre_ids: "35,10751"
+  "剧情剧集/剧情剧":
+    genre_ids: "18"
+  "剧情剧集/华语":
+    ?original_language: "zh"
+    ?origin_country: "CN,HK,TW,MO"
+  "剧情剧集/日韩":
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "剧情剧集/欧美":
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
+  "剧情剧集/待分类": {}

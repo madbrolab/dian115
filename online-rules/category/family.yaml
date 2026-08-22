@@ -1,33 +1,71 @@
-# 亲子模板：先隔离高分级与分级缺失内容，再划分家庭内容。
-# 内容分级依赖 TMDB 数据，只适合作为辅助整理，不能替代人工家长控制。
+# 亲子分级模板：成人内容先隔离，儿童家庭内容优先，其余媒体继续按常规题材与地区分类。
+# TMDB 分级并非家长控制系统，成人与成熟目录仍需人工复核。
 movie:
-  "需家长确认/成人限制级":
-    content_rating: "ADULT"
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
   "需家长确认/成熟内容":
     content_rating: "MATURE"
+  "亲子专区/儿童动画":
+    genre_ids: "+16,10751"
+  "亲子专区/家庭电影":
+    genre_ids: "10751"
+  "常规题材/纪录片":
+    genre_ids: "99,-16,-10751"
+  "常规题材/音乐演出":
+    genre_ids: "10402,-16,-10751"
+  "常规题材/科幻动作":
+    genre_ids: "28,12,878,14,-16,-10751"
+  "常规题材/悬疑犯罪":
+    genre_ids: "27,53,9648,80,-16,-10751"
+  "常规题材/喜剧爱情":
+    genre_ids: "35,10749,-16,-10751"
+  "常规题材/剧情片":
+    genre_ids: "18,-16,-10751"
+  "常规地区/华语电影":
+    ?original_language: "zh"
+    ?origin_country: "CN,HK,TW,MO"
+  "常规地区/日韩电影":
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "常规地区/欧美电影":
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
   "需家长确认/分级缺失":
     content_rating: "UNRATED"
-  "家庭专区/儿童动画":
-    genre_ids: "+16,10751"
-  "家庭专区/家庭电影":
-    genre_ids: "10751"
-  "普通内容/青少年内容":
-    content_rating: "TEEN"
-  "普通内容/其他电影": {}
+  "常规内容/待分类": {}
 
 tv:
-  "需家长确认/成人限制级":
-    content_rating: "ADULT"
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
   "需家长确认/成熟内容":
     content_rating: "MATURE"
+  "亲子专区/儿童节目":
+    genre_ids: "10762"
+  "亲子专区/家庭动漫":
+    genre_ids: "+16,10751"
+  "亲子专区/家庭剧集":
+    genre_ids: "10751"
+  "常规节目/纪录片新闻":
+    genre_ids: "99,10763,-16,-10762,-10751"
+  "常规节目/综艺脱口秀":
+    genre_ids: "10764,10767,-16,-10762,-10751"
+  "常规剧集/科幻动作":
+    genre_ids: "10765,10759,-16,-10762,-10751"
+  "常规剧集/悬疑犯罪":
+    genre_ids: "9648,80,-16,-10762,-10751"
+  "常规剧集/喜剧剧集":
+    genre_ids: "35,-16,-10762,-10751"
+  "常规剧集/剧情剧":
+    genre_ids: "18,-16,-10762,-10751"
+  "常规地区/华语剧集":
+    ?original_language: "zh"
+    ?origin_country: "CN,HK,TW,MO"
+  "常规地区/日韩剧集":
+    ?original_language: "ja,ko"
+    ?origin_country: "JP,KR"
+  "常规地区/欧美剧集":
+    origin_country: "US,CA,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
   "需家长确认/分级缺失":
     content_rating: "UNRATED"
-  "家庭专区/儿童节目":
-    genre_ids: "10762"
-  "家庭专区/家庭动漫":
-    genre_ids: "+16,10751"
-  "家庭专区/家庭剧集":
-    genre_ids: "10751"
-  "普通内容/青少年内容":
-    content_rating: "TEEN"
-  "普通内容/其他剧集": {}
+  "常规内容/待分类": {}

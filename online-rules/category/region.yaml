@@ -1,6 +1,9 @@
-# 地区优先模板：仅依据 TMDB 制片国家/地区划分，避免语言与制片地区交叉误判。
+# 全球地区模板：成人内容先隔离，其余媒体按 TMDB 制片国家划分。
 movie:
-  "华语地区电影":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "华语电影":
     origin_country: "CN,HK,TW,MO"
   "日本电影":
     origin_country: "JP"
@@ -10,12 +13,23 @@ movie:
     origin_country: "TH,VN,MY,PH,LA,MM,SG,ID,BN,KH,TL"
   "南亚电影":
     origin_country: "IN,PK,BD,LK,NP,BT,MV"
-  "欧美及大洋洲电影":
-    origin_country: "US,CA,MX,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
-  "其他地区电影": {}
+  "北美电影":
+    origin_country: "US,CA"
+  "拉美电影":
+    origin_country: "MX,BR,AR,CL,CO,PE,VE,UY,PY,BO,EC,CR,CU,DO,GT,HN,NI,PA,PR,SV"
+  "欧洲电影":
+    origin_country: "GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,RS,BA,MK,AL,ME,MD,BY,CY,MT"
+  "中东非洲片":
+    origin_country: "TR,IL,PS,IR,IQ,SA,AE,QA,KW,JO,LB,SY,EG,MA,DZ,TN,ZA,NG,KE,GH,ET,SN,CI,CM,UG,TZ,ZW"
+  "大洋洲电影":
+    origin_country: "AU,NZ,FJ,PG,WS,TO"
+  "其他电影": {}
 
 tv:
-  "华语地区剧集":
+  "成人内容":
+    ?content_rating: "ADULT"
+    ?keywords: "eroticism,erotic drama,softcore,pornography,sexploitation,adult film"
+  "华语剧集":
     origin_country: "CN,HK,TW,MO"
   "日本剧集":
     origin_country: "JP"
@@ -25,6 +39,14 @@ tv:
     origin_country: "TH,VN,MY,PH,LA,MM,SG,ID,BN,KH,TL"
   "南亚剧集":
     origin_country: "IN,PK,BD,LK,NP,BT,MV"
-  "欧美及大洋洲剧集":
-    origin_country: "US,CA,MX,GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,AU,NZ"
-  "其他地区剧集": {}
+  "北美剧集":
+    origin_country: "US,CA"
+  "拉美剧集":
+    origin_country: "MX,BR,AR,CL,CO,PE,VE,UY,PY,BO,EC,CR,CU,DO,GT,HN,NI,PA,PR,SV"
+  "欧洲剧集":
+    origin_country: "GB,IE,FR,DE,IT,ES,PT,NL,BE,LU,CH,AT,SE,NO,DK,FI,IS,PL,CZ,SK,HU,RO,BG,GR,HR,SI,EE,LV,LT,UA,RU,RS,BA,MK,AL,ME,MD,BY,CY,MT"
+  "中东非洲剧":
+    origin_country: "TR,IL,PS,IR,IQ,SA,AE,QA,KW,JO,LB,SY,EG,MA,DZ,TN,ZA,NG,KE,GH,ET,SN,CI,CM,UG,TZ,ZW"
+  "大洋洲剧集":
+    origin_country: "AU,NZ,FJ,PG,WS,TO"
+  "其他剧集": {}
