@@ -13,6 +13,8 @@
   <a href="https://madbrolab.github.io/dian115/">完整 Wiki</a>
   ·
   <a href="https://t.me/dian115group">Telegram 群组</a>
+  ·
+  [`插件开发`](docs/plugin-platform/README.md)
 </p>
 
 <p align="center">
@@ -25,11 +27,7 @@
 > DIAN-115 是私有授权项目。普通用户使用发布镜像部署即可，README 不提供源码构建指引。
 
 
-## 完整 Wiki
 
-项目的完整使用说明已经发布到 GitHub Pages：
-
-[https://madbrolab.github.io/dian115/](https://madbrolab.github.io/dian115/)
 
 ## 插件开发与源码发布边界
 
