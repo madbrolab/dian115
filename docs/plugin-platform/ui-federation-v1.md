@@ -1,6 +1,6 @@
 # DIAN115 Vue Federation UI v1
 
-每个插件必须提供一个签名的 Vue 3 Module Federation 页面。该页面在独立 opaque-origin iframe 中运行，使用宿主提供的 Vue 3、Naive UI 和 `@lucide/vue` singleton，并通过 `dian115-theme-v1` 变量跟随宿主主题。
+每个插件必须提供一个签名的 Vue 3 Module Federation 页面。该页面作为可信发布者代码在同源 iframe 中运行，使用宿主提供的 Vue 3、Naive UI 和 `@lucide/vue` singleton，并通过 `dian115-theme-v1` 变量跟随宿主主题。
 
 不存在其他 UI 格式、HTML 片段模式或加载失败回退协议。Federation 页面无法加载时，宿主显示错误，用户可以重试或管理插件。
 
@@ -91,7 +91,7 @@ export default defineConfig({
 
 `@originjs/vite-plugin-federation` 的生产端默认生成 ESM remote entry，不要添加只适用于消费端 remote 配置的顶层 `format`。三个 shared 必须使用 `singleton: true` 和 `generate: false`。示例中的局部 `as any` 只用于绕过当前 Federation 插件缺少 `singleton` 字段的 TypeScript 声明，不会改变生成配置。插件不能打包自己的第二份 Vue/Naive UI/Lucide。宿主返回的 Federation descriptor 会明确列出 `shared: ["vue", "naive-ui", "@lucide/vue"]`。
 
-不要从 CDN 动态加载框架、脚本、CSS、字体或图标。构建产物必须全部进入签名包。业务数据不得在浏览器直接请求第三方站点，应通过 action 进入 process，再由 `host.call` 请求。
+不要从 CDN 动态加载框架或可执行脚本；可执行构建产物必须全部进入签名包。页面可以渲染包内、HTTP、HTTPS、`data:` 和 `blob:` 图片，也可以发出普通浏览器请求。普通请求受 CORS、混合内容、Cookie 策略和页面生命周期约束；需要宿主代理、托管凭据、后台运行、审计或可靠重试时，应通过 action 进入 process，再由 `host.call` 请求。
 
 ## 3. 组件 TypeScript 契约
 
@@ -190,28 +190,25 @@ const emit = defineEmits<{
 - `action`：当前同样只触发刷新，不携带 action 名；调用业务 action 必须使用 `api.invokeAction`；
 - `close`：离开当前插件页面。
 
-## 4. iframe 安全模型
+## 4. 同源可信 UI 模型
 
-页面加载在：
+宿主使用普通同源 iframe 加载插件页面，不添加 `sandbox` 属性，也不为插件页附加额外的 CSP sandbox。插件 UI 因而是完整的浏览器发布者代码，可以：
 
-```html
-<iframe sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox">
-```
+- 使用 `localStorage`、`sessionStorage`、IndexedDB、Cache API 和同源 Cookie 的浏览器默认行为；
+- 使用 `fetch`、XHR、WebSocket、EventSource 和其他正常浏览器网络能力；
+- 渲染包内、HTTP、HTTPS、`data:` 和 `blob:` 图片；
+- 提交表单、使用剪贴板等浏览器 API，并在用户手势中打开 HTTP/HTTPS 弹窗；
+- 使用同源页面能够访问的 DOM 和浏览器状态。
 
-没有 `allow-same-origin`。因此页面：
+这不是 UI 权限隔离边界。管理员安装插件即表示信任签名发布者提供的 UI 和 process runtime。插件不得把宿主浏览器状态、Cookie 或其他敏感数据发送到未获得管理员信任的目标。宿主不会通过 bridge 主动下发 Bot Token、115 Cookie、TMDB key、代理凭据或 CD2 凭据，但同源页面仍应被视为高信任代码。
 
-- 不能访问管理后台 DOM、Vue app、Pinia、router 或 Axios；
-- 不能读取宿主 Cookie、localStorage、sessionStorage 或 IndexedDB；
-- 不能直接请求带管理员身份的 DIAN115 API；
-- 不能依赖固定 iframe origin；
-- 不能导航父页面；可在用户点击等浏览器认可的用户操作中使用 `window.open()` 打开 HTTP/HTTPS 外部页面；
-- 只能通过带随机 channel token 的 `postMessage` bridge 执行 `getState`、`invokeAction`、`refresh`、`close`。
+普通浏览器网络能力不会替代 Host Call：跨域请求仍受 CORS，HTTPS 管理页加载 HTTP 资源仍受 mixed-content 规则，浏览器请求也没有宿主代理优先、托管凭据、后台生命周期、安装实例审计或重试语义。需要这些能力时必须通过 `api.invokeAction` 进入 process，再由 `host.call` 请求。
 
-`allow-popups-to-escape-sandbox` 只解除新窗口继承 iframe sandbox 的问题，便于 OAuth、登录和外部详情页正常工作；iframe 自身仍没有 `allow-same-origin`、表单、父页面导航或直接网络连接权限。浏览器通常会拦截没有用户操作的弹窗。若弹窗 URL 需要先通过异步 action 获取，应在点击回调开头同步创建 `about:blank` 窗口，action 成功后再设置其 `location`；失败时关闭空白窗口。
+组件与宿主仍通过带随机 channel 的 `postMessage` bridge 执行 `getState`、`invokeAction`、`refresh` 和 `close`。宿主只接受来自当前 iframe window、正确 source 标识和 channel 的消息。bridge 每次调用 30 秒超时，iframe 高度由 `ResizeObserver` 上报并限制在 320-100000 px。
 
-宿主只接受来自当前 iframe window、正确 source 标识和随机 channel 的消息。bridge 每次调用 30 秒超时。iframe 高度由 sandbox 根据内容 ResizeObserver 自动上报，限制在 320-100000 px。
+bridge 消息在发送前按 JSON 往返复制。props、action input、state 和 action result 必须可由 `JSON.stringify`/`JSON.parse` 无损传递；不要传函数、DOM 节点、循环引用、`BigInt`、`Symbol`、`Map`、`Set`、Vue ref/reactive proxy 或类实例。二进制数据使用 Base64 字符串，时间使用 ISO 8601 字符串。
 
-宿主为 sandbox 建立 Naive UI provider 栈：`NConfigProvider`、`NMessageProvider`、`NNotificationProvider`、`NDialogProvider`。远程组件可正常使用 `useMessage`、`useNotification` 和 `useDialog`。sandbox 页面响应头同时使用等价的 CSP sandbox 标志，包括 `allow-popups` 和 `allow-popups-to-escape-sandbox`。
+宿主建立 Naive UI provider 栈：`NConfigProvider`、`NMessageProvider`、`NNotificationProvider`、`NDialogProvider`。远程组件可正常使用 `useMessage`、`useNotification` 和 `useDialog`。
 
 ### 4.1 用户手势弹窗契约
 
@@ -232,11 +229,11 @@ async function openOAuth() {
 }
 ```
 
-只有用户点击、键盘操作等浏览器认可的手势可以打开弹窗。初始化、定时任务、Telegram 事件和后台 Promise 不能打开窗口。弹窗地址可以是 HTTP 或 HTTPS；业务数据和管理员权限仍必须通过 runtime 与 Host API 获取。
+只有用户点击、键盘操作等浏览器认可的手势通常能可靠打开弹窗。初始化、定时任务、Telegram 事件和后台 Promise 可能被浏览器拦截。弹窗地址可以是 HTTP 或 HTTPS；HTTPS 页面打开 HTTP 页面是否被限制由浏览器策略决定。
 
 ## 5. `dian115-theme-v1`
 
-宿主在 iframe 根元素声明所有 `--dian-*` 变量，并在主题切换时原地更新。插件不得覆盖 `:root` 或依赖 Naive UI 内部 `--n-*` 变量。可以在局部组件内派生自己的变量。
+宿主在 iframe 根元素声明所有 `--dian-*` 变量，并在主题切换时原地更新。插件不要覆盖宿主提供的 `:root --dian-*` 值，也不要依赖 Naive UI 内部 `--n-*` 变量；可以在局部组件内派生自己的变量。
 
 ### 5.1 模式、背景和表面
 
@@ -300,7 +297,7 @@ async function openOAuth() {
 
 ## 6. 基础样式
 
-sandbox 已提供两个稳定 class：
+插件页面已提供两个稳定 class：
 
 ```css
 .dian-plugin-page {

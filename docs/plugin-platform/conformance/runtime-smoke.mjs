@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const args = process.argv.slice(2)
@@ -10,6 +10,19 @@ const valueOf = (name, fallback) => {
 const runtimePath = resolve(valueOf('--runtime', 'build/runtime/plugin'))
 const timeoutMs = Math.max(1000, Number(valueOf('--timeout-ms', '5000')) || 5000)
 const verbose = args.includes('--verbose')
+const exerciseManifest = args.includes('--exercise-manifest')
+const expectHostCall = args.includes('--expect-host-call')
+const expectTelegram = args.includes('--expect-telegram')
+const actionID = String(valueOf('--action', '')).trim()
+const actionInput = JSON.parse(valueOf('--action-input', '{}'))
+const manifestArgument = String(valueOf('--manifest', '')).trim()
+
+let manifest = null
+if (manifestArgument) {
+  const manifestPath = resolve(manifestArgument)
+  if (!existsSync(manifestPath)) throw new Error(`manifest not found: ${manifestPath}`)
+  manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+}
 
 if (!existsSync(runtimePath)) throw new Error(`runtime not found: ${runtimePath}`)
 if (process.platform !== 'linux') throw new Error('runtime-smoke.mjs must run on Linux, WSL, or a Linux container')
@@ -29,6 +42,8 @@ const child = spawn(runtimePath, [], {
 let buffer = Buffer.alloc(0)
 let nextID = 1
 const pending = new Map()
+const hostCalls = []
+let telegramRegistration = { commands: [], keywords: [] }
 const exitPromise = new Promise((resolvePromise, rejectPromise) => {
   child.once('error', rejectPromise)
   child.once('exit', (code, signal) => {
@@ -53,14 +68,29 @@ function handle(message) {
   if (verbose && message.method) process.stderr.write(`[runtime] ${message.method}\n`)
   if (message.method) {
     if (message.method === 'host.telegram.register') {
-      send({ jsonrpc: '2.0', id: message.id, result: { commands: message.params?.commands || [], keywords: message.params?.keywords || [] } })
-    } else if (message.method === 'host.telegram.list' || message.method === 'host.telegram.unregister') {
-      send({ jsonrpc: '2.0', id: message.id, result: { commands: [], keywords: [] } })
+      const commands = Array.isArray(message.params?.commands) ? message.params.commands : []
+      const keywords = Array.isArray(message.params?.keywords) ? message.params.keywords : []
+      if (commands.length > 3 || keywords.length > 3 || commands.length + keywords.length === 0) {
+        send({ jsonrpc: '2.0', id: message.id, error: { code: -32003, message: 'invalid Telegram registration in smoke host' } })
+      } else {
+        telegramRegistration = { commands, keywords }
+        send({ jsonrpc: '2.0', id: message.id, result: telegramRegistration })
+      }
+    } else if (message.method === 'host.telegram.list') {
+      send({ jsonrpc: '2.0', id: message.id, result: telegramRegistration })
+    } else if (message.method === 'host.telegram.unregister') {
+      telegramRegistration = { commands: [], keywords: [] }
+      send({ jsonrpc: '2.0', id: message.id, result: telegramRegistration })
     } else if (message.method === 'host.log') {
       send({ jsonrpc: '2.0', id: message.id, result: { accepted: true } })
     } else if (message.method === 'host.ui.invalidate') {
       send({ jsonrpc: '2.0', id: message.id, result: { accepted: true } })
     } else if (message.method === 'host.call') {
+      if (!message.params || typeof message.params.path !== 'string' || typeof message.params.method !== 'string') {
+        send({ jsonrpc: '2.0', id: message.id, error: { code: -32602, message: 'invalid host.call params' } })
+        return
+      }
+      hostCalls.push(message.params)
       send({ jsonrpc: '2.0', id: message.id, result: { status: 200, headers: {}, body_base64: '' } })
     } else {
       send({ jsonrpc: '2.0', id: message.id, error: { code: -32601, message: 'method not provided by smoke host' } })
@@ -128,33 +158,101 @@ function request(method, params) {
   })
 }
 
+function assertObject(value, label) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} did not return an object`)
+  return value
+}
+
+function invocation(op, invocationID, payload, background = false) {
+  return request('runtime.invoke', {
+    envelope: { op, invocation_id: invocationID, payload },
+    background,
+  })
+}
+
 try {
   const initialized = await request('runtime.initialize', {
     protocol: 'dian115:process@1',
-    plugin_id: 'conformance.runtime-smoke',
-    plugin_version: '1.0.0',
+    plugin_id: manifest?.id || 'conformance.runtime-smoke',
+    plugin_version: manifest?.version || '1.0.0',
     installation_id: 1,
     locale: 'zh-CN',
     timezone: 'Asia/Shanghai',
   })
   if (!initialized || initialized.ready !== true) throw new Error('runtime.initialize did not return ready=true')
 
-  const state = await request('runtime.invoke', {
-    envelope: {
-      op: 'state',
-      invocation_id: 'smoke-state-1',
-      payload: { view: 'main' },
-    },
-    background: false,
-  })
+  const state = await invocation('state', 'smoke-state-1', { view: 'main' })
   if (!state || typeof state.state_version !== 'string' || typeof state.etag !== 'string' || !state.state || typeof state.state !== 'object') {
     throw new Error('runtime state response does not match Plugin API v2')
   }
 
+  const conditionalState = await invocation('state', 'smoke-state-2', { view: 'main', if_none_match: state.etag })
+  assertObject(conditionalState, 'conditional state')
+  if (conditionalState.not_modified !== true && typeof conditionalState.state_version !== 'string') {
+    throw new Error('conditional state returned neither not_modified nor a complete state')
+  }
+
+  if (actionID) {
+    const action = await invocation('action', 'inv_smoke_action_1', {
+      id: actionID,
+      input: actionInput,
+      context: { locale: 'zh-CN', timezone: 'Asia/Shanghai' },
+    })
+    assertObject(action, 'action')
+    if (!['succeeded', 'failed', 'accepted', 'skipped'].includes(action.status)) {
+      throw new Error(`action returned invalid status ${JSON.stringify(action.status)}`)
+    }
+  }
+
+  if (exerciseManifest) {
+    const job = Array.isArray(manifest?.jobs) ? manifest.jobs[0] : null
+    if (job) {
+      const jobResult = await invocation('job', 'inv_smoke_job_1', {
+        id: job.id,
+        handler: job.handler,
+        scheduled_for: new Date().toISOString(),
+        trigger: 'manual',
+        attempt: 1,
+      }, true)
+      assertObject(jobResult, 'job')
+      if (!['accepted', 'skipped'].includes(jobResult.status)) throw new Error(`job returned invalid status ${JSON.stringify(jobResult.status)}`)
+    }
+
+    const topic = Array.isArray(manifest?.events) ? manifest.events[0] : ''
+    if (topic) {
+      assertObject(await invocation('event', 'evt_smoke_event_1', {
+        id: 'evt_smoke_event_1',
+        topic,
+        occurred_at: new Date().toISOString(),
+        data: { source: 'conformance-smoke' },
+      }, true), 'event')
+    }
+  }
+
+  if (expectTelegram) {
+    if (telegramRegistration.commands.length + telegramRegistration.keywords.length === 0) {
+      throw new Error('runtime did not register a Telegram command or keyword')
+    }
+    const command = telegramRegistration.commands[0]?.command || 'plugin_smoke'
+    const telegram = await invocation('event', 'evt_smoke_telegram_1', {
+      id: 'evt_smoke_telegram_1',
+      topic: 'telegram.message',
+      occurred_at: new Date().toISOString(),
+      data: {
+        match: { type: 'command', value: command },
+        message: { message_id: 1, chat_id: -10001, chat_type: 'supergroup', user_id: 10001, text: `/${command}` },
+      },
+    }, true)
+    assertObject(telegram, 'Telegram event')
+    if (typeof telegram.handled !== 'boolean') throw new Error('Telegram event result is missing handled')
+  }
+
+  if (expectHostCall && hostCalls.length === 0) throw new Error('runtime did not issue the expected host.call')
+
   const shutdown = await request('runtime.shutdown', { reason: 'conformance-smoke' })
-  if (!shutdown || typeof shutdown !== 'object' || Array.isArray(shutdown)) throw new Error('runtime.shutdown did not return an object')
+  assertObject(shutdown, 'runtime.shutdown')
   await Promise.race([exitPromise, new Promise((_, rejectPromise) => setTimeout(() => rejectPromise(new Error('runtime did not exit after shutdown')), timeoutMs))])
-  process.stdout.write('Plugin runtime smoke: PASS\n')
+  process.stdout.write(`Plugin runtime smoke: PASS (host_calls=${hostCalls.length}, telegram_commands=${telegramRegistration.commands.length}, telegram_keywords=${telegramRegistration.keywords.length})\n`)
 } catch (error) {
   child.kill('SIGTERM')
   process.stderr.write(`Plugin runtime smoke: FAIL: ${error?.message || error}\n`)

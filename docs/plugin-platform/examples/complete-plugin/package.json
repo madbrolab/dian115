@@ -8,8 +8,9 @@
     "build:ui": "vue-tsc --noEmit && vite build",
     "build:runtime": "node scripts/build-runtime.mjs",
     "build": "npm run build:ui && npm run build:runtime",
+    "check": "node ../../conformance/project-check.mjs --manifest manifest.template.json --market market-entry.template.json --build-root build --require-build",
     "package": "node scripts/package.mjs",
-    "release": "npm run build && npm run package"
+    "release": "npm run build && npm run check && npm run package"
   },
   "peerDependencies": {
     "@lucide/vue": "^1.16.0",

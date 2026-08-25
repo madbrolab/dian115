@@ -7,7 +7,7 @@ This guide takes a plugin from source to an installable package. It is self-cont
 A plugin has one supervised Linux process and one mandatory Vue page:
 
 ```text
-Vue Federation page (opaque-origin iframe)
+Vue Federation page (trusted same-origin iframe)
   -> getState / invokeAction
   -> DIAN115 runtime bridge
   -> runtime.invoke over framed JSON-RPC
@@ -16,7 +16,7 @@ Vue Federation page (opaque-origin iframe)
   -> approved DIAN115 handler or host HTTP/HTTPS Broker
 ```
 
-The page never receives the administrator Axios client, cookies, local storage, router, DOM, Bot Token, 115 credentials, TMDB key, proxy credentials, CD2 credentials, or direct filesystem access. Business work belongs in the process runtime. The page calls the runtime through the narrow bridge described in [Vue Federation UI v1](ui-federation-v1.md).
+The page is signed publisher code loaded in a same-origin iframe without an iframe sandbox or an extra UI CSP. It can use normal browser features, including images, `localStorage`, `sessionStorage`, IndexedDB, popups and ordinary `fetch`/XHR requests. It can also access same-origin browser state, so installing a plugin means trusting its publisher. The page is never given raw Bot, 115, TMDB, proxy or CD2 credentials by the plugin bridge, and it has no direct filesystem access. Privileged and background work should stay in the process runtime so it remains covered by plugin permissions, audit, proxy and retry behavior.
 
 The process is started directly by the main service in the current Docker container. It must not listen on a port, create another plugin container, daemonize, or require a remote callback. The host creates `/config/package/<plugin-id>/package`, `/config/package/<plugin-id>/data` and `/config/package/<plugin-id>/tmp`, then enters that installation root before starting the entry. Inside the process these are `/package`, `/data` and `/tmp`; other plugins, `/config`, Linux system directories and media mounts are outside the root. A plugin may start a bounded helper process from its own package, but that helper inherits the same private root, seccomp/no-new-privileges policy and process-group lifecycle. Direct socket, mount and kernel escape surfaces are blocked. Host files, watches, network, Telegram and notifications remain mediated by approved Host APIs.
 
@@ -172,7 +172,7 @@ Local request:
 ```json
 {
   "method": "GET",
-  "path": "/api/tmdb/search?query=Dune",
+  "path": "/api/tmdb/search?q=Dune&page=1",
   "headers": {"accept": "application/json"},
   "body_base64": ""
 }
@@ -271,7 +271,7 @@ The remote Vue component receives:
 
 The bridge provides only `getState(view)`, `invokeAction(action, input)`, and `refresh()`. The component may emit `action`, `refresh`, or `close`. Use Naive UI for controls and `@lucide/vue` for icons. Style with the stable `--dian-*` variables so light/dark and configured host themes update without remounting.
 
-The page runs in `sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"` without `allow-same-origin`. It may open an HTTP/HTTPS page only from a browser-recognized user action for OAuth, login, or external details. It cannot navigate the parent or call DIAN115 HTTP APIs directly. See [Vue Federation UI v1](ui-federation-v1.md) for the exact TypeScript contract, theme table, and popup sequence.
+The page runs as trusted same-origin publisher code without an iframe `sandbox` attribute or an extra UI CSP. It may render packaged, HTTP, HTTPS, `data:` and `blob:` images; use browser storage; open HTTP/HTTPS pages; and make ordinary browser requests subject to the browser's normal CORS, mixed-content and popup rules. Values sent through the bridge must still be JSON-serializable. See [Vue Federation UI v1](ui-federation-v1.md) for the exact TypeScript contract, trust model, theme table and popup sequence.
 
 ## 9. Package, sign and publish
 
@@ -309,6 +309,7 @@ Import tokens are private, single-use, and expire after 15 minutes. The host del
 ## 11. Release checklist
 
 - UI is present, exposes the declared module, uses host singletons, and contains no unsigned remote scripts.
+- UI bridge props, action inputs and results are JSON-serializable; no functions, DOM nodes, cyclic objects, `BigInt` or Vue proxy objects cross the bridge.
 - Every UI asset and runtime file is covered by `integrity.json`.
 - Runtime entry is a static ELF for the target architecture and has executable ZIP mode bits.
 - Runtime handles full-duplex JSON-RPC and every required response contract.

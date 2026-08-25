@@ -19,6 +19,8 @@ jobs:
           fetch-depth: 1
       - name: Reject main-project source and release material
         run: node docs/plugin-platform/conformance/verify-public-surface.mjs
+      - name: Validate public OpenAPI contract
+        run: node docs/plugin-platform/conformance/openapi-check.mjs
 
   plugin-example:
     runs-on: ubuntu-latest
@@ -42,7 +44,11 @@ jobs:
         run: npm ci
       - name: Build Vue UI and Linux runtime
         run: npm run build
+      - name: Validate manifest, market template, UI and runtime
+        run: npm run check
       - name: Run public process-protocol smoke test
-        run: node ../../conformance/runtime-smoke.mjs --runtime build/runtime/plugin
+        run: node ../../conformance/runtime-smoke.mjs --runtime build/runtime/plugin --manifest manifest.template.json --exercise-manifest --action send-test --expect-host-call --expect-telegram
       - name: Build and sign a disposable package
         run: npm run package -- --generate-key
+      - name: Validate generated market entry
+        run: node ../../conformance/project-check.mjs --manifest manifest.template.json --market releases/market-entry.generated.json --build-root build --require-build

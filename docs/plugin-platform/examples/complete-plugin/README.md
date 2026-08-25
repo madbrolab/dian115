@@ -10,7 +10,7 @@
 - `runtime.initialize`、state、action、job、普通 event、Telegram event 和 shutdown；
 - `host.call` 发送插件通知、读写 Host Storage、访问本地 HTTP 服务和创建目录监控；
 - 初始化时动态注册 1 个 Telegram 命令和 1 个关键词；示例遵守每个插件最多 3 个命令和 3 个关键词；
-- 用户点击触发的 `window.open()` 外部弹窗，以及 iframe `allow-popups` 约束；
+- 用户点击触发的 `window.open()` 外部弹窗、图片渲染和浏览器存储；
 - 生成完整性清单、Ed25519 签名、正确 ZIP 执行位、包 SHA-256 和市场条目。
 
 ## 前置条件
@@ -26,6 +26,7 @@
 ```bash
 npm install
 npm run build
+npm run check
 ```
 
 本地预览 Vue 页面：
@@ -36,7 +37,7 @@ npm run dev
 
 预览入口提供与宿主一致的 Naive UI Provider 和主题变量，并使用本地 mock bridge；正式包仍通过 Federation 加载 `./AppPage`。
 
-示例页必须由宿主提供的 Vue 3、Naive UI 和 `@lucide/vue` singleton 渲染。页面中的业务网络请求不能使用浏览器 `fetch`，应调用 action 进入进程，再由 `host.call` 访问宿主或外部服务。
+示例页必须由宿主提供的 Vue 3、Naive UI 和 `@lucide/vue` singleton 渲染。插件 UI 可以使用普通浏览器 `fetch`，但它受 CORS、混合内容和页面生命周期约束；需要宿主代理、托管凭据、后台运行、审计或稳定重试的业务请求应调用 action 进入进程，再由 `host.call` 访问宿主或外部服务。
 
 默认架构跟随当前 Node 架构，非 ARM64 默认生成 `amd64`。显式选择：
 
@@ -56,7 +57,7 @@ UI 输出到 `build/frontend/dist/assets`，runtime 输出到 `build/runtime/plu
 在 Linux、WSL 或 Linux CI 中运行公开的 process 协议 smoke test：
 
 ```bash
-node ../../conformance/runtime-smoke.mjs --runtime build/runtime/plugin
+node ../../conformance/runtime-smoke.mjs --runtime build/runtime/plugin --manifest manifest.template.json --exercise-manifest --action send-test --expect-host-call --expect-telegram
 ```
 
 该测试只使用公开 JSON-RPC 契约和最小 Host Call mock，不读取主项目源码、数据库、配置或 Docker 构建上下文。Windows 和 macOS 可以完成 UI/Go 交叉构建，但应把 runtime smoke 放到目标 Linux 架构执行。
@@ -124,4 +125,4 @@ Telegram 路由在 `runtime.initialize` 中注册，而不是安装时写入 Man
 
 `example.com`、示例插件 ID、发布者名称和市场 URL 都是占位符。不要把开发私钥或 `releases/` 提交到源码仓库。正式发布时必须使用长期稳定的发布者密钥和真实 HTTPS 包地址。
 
-插件开发只依赖 `docs/plugin-platform/` 的公开契约；主项目源码不会作为 SDK、联调包或发布附件提供。公共发布边界见 [`../publication-policy.md`](../publication-policy.md)。
+插件开发只依赖 `docs/plugin-platform/` 的公开契约；主项目源码不会作为 SDK、联调包或发布附件提供。公共发布边界见 [`../../publication-policy.md`](../../publication-policy.md)。

@@ -13,7 +13,8 @@ import {
   NTag,
   useMessage,
 } from 'naive-ui'
-import { Bell, ExternalLink, FolderSearch, Globe2, HardDrive, RefreshCw } from '@lucide/vue'
+import { Bell, ExternalLink, FolderSearch, Globe2, HardDrive, RefreshCw, Save } from '@lucide/vue'
+import pluginIconURL from '../frontend/icon.svg'
 
 interface RuntimeCallback {
   invocation_id?: string
@@ -53,7 +54,13 @@ const message = useMessage()
 const busyAction = ref('')
 const watchPath = ref('')
 const localURL = ref('http://127.0.0.1:8080/health')
+const browserNote = ref(localStorage.getItem('complete-plugin.browser-note') || '')
 const state = computed(() => props.runtimeState || {})
+
+function saveBrowserNote() {
+  localStorage.setItem('complete-plugin.browser-note', browserNote.value)
+  message.success('已保存到浏览器 localStorage')
+}
 
 async function openExternal() {
   // Open synchronously from the click, then navigate after the runtime action resolves.
@@ -137,6 +144,25 @@ async function createWatch() {
         <template #icon><NIcon :component="ExternalLink" /></template>
         打开外部授权页
       </NButton>
+    </section>
+
+    <section class="tool-panel">
+      <div class="section-heading">
+        <img class="plugin-preview-image" :src="pluginIconURL" alt="完整插件示例图标">
+        <div>
+          <h3>图片与浏览器存储</h3>
+          <p>图片来自签名包；同源插件页可以使用 localStorage、sessionStorage 和 IndexedDB。</p>
+        </div>
+      </div>
+      <NForm label-placement="top" @submit.prevent="saveBrowserNote">
+        <NFormItem label="浏览器备注">
+          <NInput v-model:value="browserNote" placeholder="刷新页面后仍会保留" clearable />
+        </NFormItem>
+        <NButton attr-type="submit">
+          <template #icon><NIcon :component="Save" /></template>
+          保存到浏览器
+        </NButton>
+      </NForm>
     </section>
 
     <section class="tool-panel">
@@ -251,6 +277,16 @@ p {
   align-items: flex-start;
   margin-bottom: var(--dian-space-4);
   color: var(--dian-primary);
+}
+
+.plugin-preview-image {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  object-fit: contain;
+  border: 1px solid var(--dian-border);
+  border-radius: var(--dian-radius-sm);
+  background: var(--dian-surface-soft);
 }
 
 @media (max-width: 600px) {

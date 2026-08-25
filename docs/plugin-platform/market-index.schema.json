@@ -36,10 +36,10 @@
     },
     "networkPermission": {
       "type": "object", "additionalProperties": false,
-      "required": ["origin", "methods", "reason"],
+      "required": ["origin", "reason"],
       "properties": {
         "origin": { "type": "string", "pattern": "^https?://[^/]+$" },
-        "methods": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] } },
+        "methods": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "default": ["GET"], "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] } },
         "proxy_mode": { "type": "string", "enum": ["direct", "system", "required"], "default": "system" },
         "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
@@ -107,6 +107,8 @@
             "network": { "type": "array", "maxItems": 64, "uniqueItems": true, "items": { "$ref": "#/$defs/networkPermission" } }
           }
         },
+        "capabilities": false,
+        "account_access": false,
         "tags": {
           "type": "array",
           "maxItems": 20,

@@ -4,12 +4,30 @@
 
 ## 验证范围
 
+`project-check.mjs` 会在构包前检查 Manifest、市场条目、权限格式、三项前端 singleton 依赖、Federation 入口和静态 Linux ELF。它只使用 Node.js 标准库：
+
+```bash
+node docs/plugin-platform/conformance/project-check.mjs \
+  --manifest manifest.template.json \
+  --market market-entry.template.json \
+  --build-root build \
+  --require-build
+```
+
+`openapi-check.mjs` 会核对公开 Host API 目录与全部 OpenAPI path operation，检查每项接口都有明确成功模型、400 错误体、写操作幂等键和可解析的组件引用：
+
+```bash
+node docs/plugin-platform/conformance/openapi-check.mjs
+```
+
 `runtime-smoke.mjs` 会：
 
 1. 启动指定的静态 Linux ELF；
 2. 发送 `runtime.initialize`，并处理插件在初始化期间发出的 `host.telegram.register`、`host.log` 和 `host.call`；
-3. 发送 `runtime.invoke` 的 `state` 请求，检查状态响应包含 `state_version`、`etag` 和对象状态；
-4. 发送 `runtime.shutdown`，检查进程返回 JSON object 并正常退出。
+3. 发送完整 state 和带 ETag 的条件 state，校验两种响应；
+4. 按参数调用 action，并可从 Manifest 调用首个 job 和 event；
+5. 可校验初始化时的 Telegram 注册、Telegram event 和嵌套 Host Call；
+6. 发送 `runtime.shutdown`，检查进程返回 JSON object 并正常退出。
 
 它不会模拟主项目数据库、文件系统或管理员身份，也不会给插件额外权限。Host Call 的默认响应只用于让协议测试可以完成；业务接口仍必须在安装到实际宿主时按 OpenAPI 逐项声明和批准。
 
@@ -20,7 +38,8 @@
 ```bash
 npm ci
 npm run build
-node ../../conformance/runtime-smoke.mjs --runtime build/runtime/plugin
+npm run check
+node ../../conformance/runtime-smoke.mjs --runtime build/runtime/plugin --manifest manifest.template.json --exercise-manifest --action send-test --expect-host-call --expect-telegram
 ```
 
 Windows 或 macOS 上可以构建插件，但 Linux ELF 联调必须在 WSL、Linux CI 或与宿主相同架构的容器中执行。ARM64 示例：
@@ -41,17 +60,24 @@ node docs/plugin-platform/conformance/runtime-smoke.mjs --runtime ./build/runtim
 ```text
 --timeout-ms <整数>       每个协议阶段的超时，默认 5000
 --verbose                 输出收到的 JSON-RPC method 名
+--manifest <JSON>         使用真实插件 ID/version，并为扩展测试读取 jobs/events
+--exercise-manifest       调用 Manifest 中首个 job 和 event
+--action <ID>             调用一个插件 action
+--action-input <JSON>     action input，默认 {}
+--expect-host-call        要求测试过程中至少出现一次 host.call
+--expect-telegram         要求 runtime 注册 TG 路由并校验一次 telegram.message
 ```
 
 工具只要求 runtime 使用标准输入/输出上的 `Content-Length` JSON-RPC 2.0。不要向 stdout 写日志；调试信息写 stderr，并确保所有入站请求都能在处理嵌套 Host Call 时继续被读取。
 
 ## UI 联调
 
-UI 仍然使用主项目同一套 Vue 3、Naive UI 和 `@lucide/vue` singleton。示例的 `npm run dev` 提供本地 mock bridge，可验证组件 props、主题变量、弹窗用户手势和错误状态；正式包通过 `ui-federation-v1.md` 规定的 opaque-origin iframe 加载。浏览器弹窗必须由用户点击同步创建，不能由定时任务或初始化回调创建。
+UI 使用宿主同一套 Vue 3、Naive UI 和 `@lucide/vue` singleton。示例的 `npm run dev` 提供本地 mock bridge，可验证组件 props、主题变量、图片、浏览器存储、弹窗和错误状态；正式包作为同源可信发布者代码加载，不附加 iframe sandbox 或额外 UI CSP。弹窗仍受浏览器用户手势规则约束，普通浏览器请求仍受 CORS 和混合内容规则约束。所有 bridge 值必须可由 `JSON.stringify`/`JSON.parse` 完整往返。
 
 ## 通过标准
 
 - runtime smoke 命令退出码为 `0`；
+- OpenAPI contract check 通过，Manifest 中的每项 Host API 也通过 `project-check.mjs` 的目录核对；
 - 入口是目标架构的静态 ELF，且没有 `PT_INTERP`；
 - `.d115p` 由示例 `scripts/package.mjs` 生成并能通过包格式、完整性和签名校验；
 - UI 暴露 Manifest 中声明的 Federation module，且所有静态资源进入签名包；

@@ -14,8 +14,36 @@
     "trust_level": "isolated-process"
   },
   "permissions": {
-    "apis": [],
-    "network": []
+    "apis": [
+      {
+        "method": "POST",
+        "path": "/api/notifications/plugin",
+        "reason": "发送由用户主动触发的测试通知"
+      },
+      {
+        "method": "POST",
+        "path": "/api/plugin-runtime/watches",
+        "reason": "创建用户在插件界面配置的目录监控"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plugin-runtime/storage/:key",
+        "reason": "读取插件自己的 Host Storage 示例数据"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/plugin-runtime/storage/:key",
+        "reason": "保存插件自己的 Host Storage 示例数据"
+      }
+    ],
+    "network": [
+      {
+        "origin": "http://127.0.0.1:8080",
+        "methods": ["GET"],
+        "proxy_mode": "system",
+        "reason": "演示通过宿主 Broker 访问容器内或局域网本地服务"
+      }
+    ]
   },
   "tags": [
     "example",

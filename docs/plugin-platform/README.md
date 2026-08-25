@@ -20,7 +20,7 @@ Read these files in order:
 2. [Package format v1](package-format-v1.md): Manifest, ZIP, integrity, signature, market index, installation and update rules.
 3. [Process runtime v1](process-runtime-v1.md): framed JSON-RPC, lifecycle, invocation envelopes, results, Telegram and logging.
 4. [Host Call v2](host-call-v2.md): local Host APIs, external HTTP/HTTPS, local services, proxy precedence, credentials, limits and errors.
-5. [Vue Federation UI v1](ui-federation-v1.md): build contract, component props, bridge API, sandbox and every stable theme variable.
+5. [Vue Federation UI v1](ui-federation-v1.md): build contract, component props, bridge API, trusted same-origin behavior and every stable theme variable.
 6. [OpenAPI](openapi-v1.yaml): exact request and response schemas for every approved local Host API.
 7. [Black-box conformance](conformance/README.md): runtime smoke testing and public-surface checks without main-project source.
 
@@ -42,6 +42,7 @@ For local Host APIs, the runtime catalog returned by `GET /api/plugin-center/v1/
 ## Security summary
 
 - Install only packages signed by a publisher you trust. A native process remains publisher code even inside the host sandbox.
+- The mandatory Vue page is trusted same-origin publisher code. It is not placed in an iframe sandbox or an extra CSP sandbox and may use browser storage, images, popups and ordinary browser requests. Administrators must treat installing a plugin as trusting both its signed UI and runtime; backend authorization remains authoritative for Host APIs.
 - The package limit is 32 MiB compressed, 128 MiB expanded, 1024 ZIP members, and 32 MiB per member.
 - The Linux sandbox uses the capabilities already present in a standard Docker container for the pre-exec `chroot`, then clears all capabilities without changing UID or the container configuration. No Compose addition, mount, network, ptrace, BPF or host service is required. The normal mode is `private-root`; if a deployment deliberately removes the default `SYS_CHROOT` capability, the helper uses `host-api-only` instead and denies all plugin pathname file syscalls. If the mandatory seccomp or process setup cannot be applied, the plugin does not start.
 - The host validates the signed static ELF before installing the filter. A plugin may start a package-local helper process when needed; every descendant inherits the same private root, seccomp/no-new-privileges policy and process-group lifecycle, so it can use only that plugin's files and cannot open a direct socket or affect unrelated processes.

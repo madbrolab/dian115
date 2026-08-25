@@ -18,7 +18,7 @@
   "method": "host.call",
   "params": {
     "method": "GET",
-    "path": "/api/tmdb/search?query=Dune",
+    "path": "/api/tmdb/search?q=Dune&page=1",
     "headers": {"accept": "application/json"},
     "body_base64": ""
   }
@@ -118,7 +118,7 @@ GET /api/plugin-center/v1/host-apis
 }
 ```
 
-以 `code` 和 `retryable` 为程序判断依据。复用主项目 Handler 的接口可能返回该 Handler 原有 JSON 错误结构；应以对应 OpenAPI operation 为准。
+以 `code` 和 `retryable` 为程序判断依据。各接口的请求、成功响应和错误结构以对应 OpenAPI operation 为准；公开契约不要求开发者读取任何宿主实现源码。
 
 ## 3. 外部 HTTP/HTTPS 与本地服务
 
