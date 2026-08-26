@@ -81,7 +81,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -171,7 +171,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -261,7 +261,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ item_id }}",
+                "value": "{% if item_id %}{{ item_id }}{% elif event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -351,7 +351,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ item_id }}",
+                "value": "{% if item_id %}{{ item_id }}{% elif event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -441,7 +441,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ item_id }}",
+                "value": "{% if item_id %}{{ item_id }}{% elif event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -520,7 +520,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -599,7 +599,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -674,7 +674,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -749,7 +749,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -824,7 +824,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -899,7 +899,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -974,7 +974,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1064,7 +1064,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1154,7 +1154,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1237,7 +1237,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1320,7 +1320,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1403,7 +1403,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1486,7 +1486,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1569,7 +1569,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1652,7 +1652,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1735,7 +1735,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1818,7 +1818,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1901,7 +1901,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -1984,7 +1984,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2067,7 +2067,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2157,7 +2157,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2232,7 +2232,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2311,7 +2311,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2394,7 +2394,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2477,7 +2477,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2556,7 +2556,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2635,7 +2635,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2717,7 +2717,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2796,7 +2796,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2879,7 +2879,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -2962,7 +2962,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ event_code }}",
+                "value": "{% if event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]
@@ -3290,7 +3290,7 @@
               {
                 "text": "⚔️ 复制编号",
                 "action": "copy_text",
-                "value": "{{ job_ref }}",
+                "value": "{% if job_ref %}{{ job_ref }}{% elif event_code %}{{ event_code }}{% else %}{{ notification_type }}{% endif %}",
                 "style": "success"
               }
             ]

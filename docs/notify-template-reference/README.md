@@ -17,7 +17,7 @@
 | 使用 Bot API 10.3 结构化富消息 | `rich_message` | `rich-*` |
 | Rich API 明确拒绝时仍需保证通知可读 | `rich_message` | Rich 模板使用自带的经典文本投影回退 |
 
-`rich-*` 模板在通道选择 `classic_html` 时也可导入和预览，但发送时会按经典格式投影，不会调用 `sendRichMessage`。
+`rich-*` 模板在通道选择 `classic_html` 时也可导入和预览，但发送时会按经典格式投影，不会调用 Rich 发送接口。协议由前端选择；发送端不会根据接收者客户端版本猜测或自动改协议。若用户选择 Rich，只有 Rich API 明确报错时才使用该模板携带的经典文本投影重发。
 
 ## 普通富文本：10 套
 
