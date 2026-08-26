@@ -49,6 +49,7 @@ For local Host APIs, the runtime catalog returned by `GET /api/plugin-center/v1/
 - `DIAN115_PLUGIN_DATA=/data`, `DIAN115_PLUGIN_PACKAGE=/package/...` and `TMPDIR=/tmp` are paths inside the plugin's private root. Use them for plugin-owned resources and persistent files. Use the approved file/watch APIs for host data; a host path is never exposed as a plugin-owned path.
 - Brokered network access supports `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE` over HTTP and HTTPS. The host does not reject a target because it resolves to loopback, private, link-local, container, host or other non-public addresses.
 - Host proxy-domain rules have higher priority than plugin routing preferences.
+- Backend plugins can read host-configured Emby instances, aggregate statistics, libraries and safe media metadata through five explicit read-only Host APIs. Emby addresses, API Keys, paths, media sources, users, sessions, devices, logs and mutations remain private.
 - Telegram registrations are runtime operations, not install-time declarations. Each plugin can register at most 3 commands and 3 keywords. Conflicts are rejected at registration and do not fail installation.
 - Host message parsing always runs before plugin Telegram matching.
 - File APIs validate the submitted path, normalized path, resolved symbolic-link target, and saved watch source. Linux system directories and `/config` remain protected.

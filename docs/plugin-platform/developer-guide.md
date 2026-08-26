@@ -199,9 +199,32 @@ Result:
 }
 ```
 
-`body_base64` accepts padded or unpadded standard Base64 on requests. Responses use unpadded standard Base64. The process Host Call request and response are each limited to 256 KiB.
+`body_base64` accepts padded or unpadded standard Base64 on requests. Responses use unpadded standard Base64. A process JSON-RPC frame may be up to 16 MiB, and the decoded Host Call request or response body may be up to 8 MiB. Use endpoint pagination even though normal payloads are no longer constrained to 256 KiB.
 
 External access supports only `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE`. `OPTIONS`, `CONNECT`, and `TRACE` are not part of the contract. HTTP/HTTPS transport, DNS, redirects, target resolution and proxy selection are performed by the host. Details and HTTP security warnings are in [Host Call v2](host-call-v2.md).
+
+### Read host-configured Emby data
+
+The backend process can read Emby without receiving the server URL or API Key. Declare only the operations it uses:
+
+```json
+{
+  "apis": [
+    {"method":"GET","path":"/api/plugin-host/emby/instances","reason":"Let the user select an Emby instance"},
+    {"method":"GET","path":"/api/plugin-host/emby/libraries","reason":"List available media libraries"},
+    {"method":"GET","path":"/api/plugin-host/emby/items","reason":"Search safe media metadata"},
+    {"method":"GET","path":"/api/plugin-host/emby/items/:id","reason":"Read one selected media item"}
+  ]
+}
+```
+
+At runtime, call `GET /api/plugin-host/emby/instances`, let the user choose an `id`, and pass it as `proxy_id` to the other calls. When only one instance exists or the host has a valid default, `proxy_id` may be omitted. An instance with `id: 0` represents legacy single-instance configuration and must be used by omitting `proxy_id`, not by sending zero.
+
+```json
+{"method":"GET","path":"/api/plugin-host/emby/items?proxy_id=2&type=Movie&q=Dune&limit=20&offset=0"}
+```
+
+The item result includes IDs, titles, overview, year, rating, genres, provider IDs, series/episode numbers, dates and image-presence hints. It intentionally excludes the Emby URL, API Key, filesystem paths, media sources, user data, sessions, devices and logs. There are no Emby mutations in the plugin catalog. See the five `PluginEmby*` operations and exact schemas in [OpenAPI](openapi-v1.yaml), and use `offset`/`limit` pagination up to 50 items per call.
 
 ## 6. Telegram
 

@@ -49,7 +49,7 @@
 | `body_base64` | 否 | 标准 Base64；请求接受 padded/unpadded，响应固定 unpadded |
 | `credential_ref` | 否 | 外部 HTTP/HTTPS 可用的安装实例托管凭据引用；使用 HTTP 时秘密会以明文传输 |
 
-JSON 解码器拒绝未知字段和尾随 JSON。单个 Host Call 参数帧、请求正文和返回正文都受 256 KiB process 通道限制。
+JSON 解码器拒绝未知字段和尾随 JSON。JSON-RPC 帧上限为 16 MiB；解码后的 Host Call 请求正文和返回正文上限均为 8 MiB。该上限只防止异常插件耗尽主容器内存，不再把正常数据限制在 256 KiB；列表接口仍应使用各自的分页参数。
 
 以下情况返回 JSON-RPC `-32001`：参数无效、路径歧义、本地 API 未批准、凭据引用无效或宿主无法调度调用。错误消息已经脱敏，不应按自由文本分支业务逻辑。
 
@@ -120,6 +120,57 @@ GET /api/plugin-center/v1/host-apis
 
 以 `code` 和 `retryable` 为程序判断依据。各接口的请求、成功响应和错误结构以对应 OpenAPI operation 为准；公开契约不要求开发者读取任何宿主实现源码。
 
+### 2.3 读取宿主 Emby 数据
+
+插件后端需要读取媒体库时，声明并调用专用的只读接口，不要自行索要 Emby 地址或 API Key：
+
+```json
+{
+  "apis": [
+    {"method":"GET","path":"/api/plugin-host/emby/instances","reason":"列出用户可选择的 Emby 实例"},
+    {"method":"GET","path":"/api/plugin-host/emby/libraries","reason":"读取媒体库选项"},
+    {"method":"GET","path":"/api/plugin-host/emby/items","reason":"搜索媒体库内容"},
+    {"method":"GET","path":"/api/plugin-host/emby/items/:id","reason":"读取选中媒体详情"}
+  ]
+}
+```
+
+可声明的 Emby Host API 恰好为：
+
+```text
+GET /api/plugin-host/emby/instances
+GET /api/plugin-host/emby/stats
+GET /api/plugin-host/emby/libraries
+GET /api/plugin-host/emby/items
+GET /api/plugin-host/emby/items/:id
+```
+
+先读取实例：
+
+```json
+{"method":"GET","path":"/api/plugin-host/emby/instances"}
+```
+
+响应正文示例：
+
+```json
+{"items":[{"id":2,"name":"家庭媒体库","is_default":true,"api_key_configured":true}]}
+```
+
+将选中的正整数 `id` 作为其他接口的 `proxy_id`：
+
+```json
+{"method":"GET","path":"/api/plugin-host/emby/libraries?proxy_id=2"}
+```
+
+```json
+{"method":"GET","path":"/api/plugin-host/emby/items?proxy_id=2&library_id=library-1&type=Movie&q=Dune&limit=20&offset=0&sort_by=date_created&sort_order=desc"}
+```
+
+若宿主只有一个可用实例或已经设置有效默认实例，可以省略 `proxy_id`。旧版单实例配置在实例列表中使用 `id: 0`；此时不要传 `proxy_id=0`，直接省略参数。存在多个实例且没有有效默认实例时，省略参数会返回 `409`；不存在、禁用或格式错误的显式 `proxy_id` 返回 `400`，宿主不会静默改用另一个实例。
+
+宿主使用自己保存的地址和 API Key 发起请求。插件只能获得 OpenAPI 列出的安全字段；地址、API Key、媒体路径、`MediaSources`、用户播放数据、用户身份、会话、设备和日志不会返回，也没有 Emby 写接口。统计接口中的 `user_count` 和 `playing_count` 只是数量。媒体列表一次最多 50 条，应按 `offset + limit` 分页，直到已读取数量达到 `total`。
+
 ## 3. 外部 HTTP/HTTPS 与本地服务
 
 把完整 URL 放入 `path`：
@@ -145,7 +196,7 @@ GET /api/plugin-center/v1/host-apis
 - 默认总超时 10 秒；process `host.call` 不提供自定义超时字段；
 - 最多跟随 3 次跳转，每次重新校验 URL、DNS、目标地址和代理规则；跳转仍只能到 HTTP/HTTPS；
 - `301/302` 的 POST 和 `303` 会转为 GET 并丢弃 body；
-- 响应正文最多 256 KiB；超出的部分被截断后返回；
+- 响应正文最多 8 MiB；极端超大响应会在 8 MiB 处截断并返回 `x-dian115-body-truncated: true`，常规列表应使用上游分页参数；
 - 查询与 fragment 不会写入审计日志，审计记录 origin、方法、状态、耗时和代理范围。
 
 外部请求 header 名必须是小写合法 HTTP token，最多 64 个；单值最长 8192 字节且不能包含 CR/LF。禁止这些请求头：

@@ -22,7 +22,7 @@ x-dian115-host-call:
   local_request: '{"method":"GET","path":"/api/tmdb/search","headers":{},"body_base64":""}'
   external_request: '{"method":"GET","path":"http://127.0.0.1:8080/items","headers":{},"body_base64":""}'
   authorization: permissions.apis validates local METHOD + path. External HTTP/HTTPS is brokered by the host, including local and LAN targets; permissions.network supplies optional per-origin/method routing preferences, and host proxy-domain rules always win.
-  limits: process host.call request/response frames and decoded request/response bodies are each limited to 256 KiB; Base64 and JSON envelope overhead counts toward the frame limit.
+  limits: process JSON-RPC frames are limited to 16 MiB; decoded host.call request and response bodies are limited to 8 MiB, leaving room for Base64 and the JSON envelope.
 x-dian115-host-apis:
   generated_from: internal Host API catalog
   entries:
@@ -200,6 +200,41 @@ x-dian115-host-apis:
       risk: read
       title: 列出 CD2 云盘
       description: 读取宿主配置中可用的 CD2 云盘名称。
+      host_credentials: true
+    - method: GET
+      path: /api/plugin-host/emby/instances
+      category: emby
+      risk: read
+      title: 列出 Emby 实例
+      description: 列出可供插件选择的已启用 Emby 实例，不返回服务器地址或 API Key。
+      host_credentials: true
+    - method: GET
+      path: /api/plugin-host/emby/stats
+      category: emby
+      risk: read
+      title: 读取 Emby 统计
+      description: 读取选定 Emby 实例的媒体数量和在线统计。
+      host_credentials: true
+    - method: GET
+      path: /api/plugin-host/emby/libraries
+      category: emby
+      risk: read
+      title: 读取 Emby 媒体库
+      description: 读取选定 Emby 实例的媒体库名称和类型，不返回媒体路径。
+      host_credentials: true
+    - method: GET
+      path: /api/plugin-host/emby/items
+      category: emby
+      risk: read
+      title: 查询 Emby 媒体
+      description: 分页搜索或列出选定 Emby 实例中的安全媒体元数据。
+      host_credentials: true
+    - method: GET
+      path: /api/plugin-host/emby/items/:id
+      category: emby
+      risk: read
+      title: 读取 Emby 媒体详情
+      description: 读取选定 Emby 实例中的一条安全媒体元数据。
       host_credentials: true
     - method: GET
       path: /api/plugin-runtime/storage/:key
@@ -1213,6 +1248,181 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
+  /api/plugin-host/emby/instances:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 列出 Emby 实例
+      description: 列出宿主中已启用且可供插件选择的 Emby 实例。只返回实例标识、显示名称、默认状态和 API Key 是否已配置，不返回地址或凭据。
+      operationId: directHost_pluginEmbyInstances
+      x-dian115-category: emby
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      responses:
+        '200':
+          description: 已启用的安全 Emby 实例摘要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginEmbyInstanceList'
+        '400':
+          $ref: '#/components/responses/HostError'
+        default:
+          $ref: '#/components/responses/HostError'
+  /api/plugin-host/emby/stats:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 读取 Emby 统计
+      description: 使用宿主保存的 Emby 地址和 API Key 读取媒体总数以及聚合后的用户数、播放中数量。不会返回用户、会话或服务器身份详情。
+      operationId: directHost_pluginEmbyStats
+      x-dian115-category: emby
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/EmbyProxyID'
+      responses:
+        '200':
+          description: 选定 Emby 实例的聚合统计
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginEmbyStats'
+        '400':
+          $ref: '#/components/responses/HostError'
+        '409':
+          $ref: '#/components/responses/HostError'
+        '502':
+          $ref: '#/components/responses/HostError'
+        '503':
+          $ref: '#/components/responses/HostError'
+        default:
+          $ref: '#/components/responses/HostError'
+  /api/plugin-host/emby/libraries:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 读取 Emby 媒体库
+      description: 使用宿主保存的 Emby 凭据读取媒体库标识、名称和类型。媒体库文件路径及原始 Emby 配置不会返回。
+      operationId: directHost_pluginEmbyLibraries
+      x-dian115-category: emby
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/EmbyProxyID'
+      responses:
+        '200':
+          description: 选定实例的安全媒体库列表
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginEmbyLibraryList'
+        '400':
+          $ref: '#/components/responses/HostError'
+        '409':
+          $ref: '#/components/responses/HostError'
+        '502':
+          $ref: '#/components/responses/HostError'
+        '503':
+          $ref: '#/components/responses/HostError'
+        default:
+          $ref: '#/components/responses/HostError'
+  /api/plugin-host/emby/items:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 查询 Emby 媒体
+      description: 使用宿主保存的 Emby 凭据分页搜索安全媒体元数据。宿主明确禁用用户播放数据并丢弃媒体路径、MediaSources 及未列入响应模型的字段；一页最多返回 50 条。
+      operationId: directHost_pluginEmbyItems
+      x-dian115-category: emby
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/EmbyProxyID'
+        - name: q
+          in: query
+          required: false
+          description: Emby 搜索词；宿主按 UTF-8 字节安全截取到 200 字节。
+          schema: {type: string, maxLength: 200}
+        - name: library_id
+          in: query
+          required: false
+          description: 仅列出指定媒体库下的条目；值来自媒体库列表的 `id`。
+          schema: {type: string, minLength: 1, maxLength: 256}
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [Movie, Series, Episode, Video, Audio, MusicAlbum, MusicArtist, BoxSet]
+        - name: limit
+          in: query
+          required: false
+          schema: {type: integer, minimum: 1, maximum: 50, default: 20}
+        - name: offset
+          in: query
+          required: false
+          schema: {type: integer, minimum: 0, maximum: 1000000, default: 0}
+        - name: sort_by
+          in: query
+          required: false
+          schema: {type: string, enum: [date_created, name, community_rating], default: date_created}
+        - name: sort_order
+          in: query
+          required: false
+          schema: {type: string, enum: [asc, desc], default: desc}
+      responses:
+        '200':
+          description: 选定实例的一页安全媒体元数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginEmbyItemList'
+        '400':
+          $ref: '#/components/responses/HostError'
+        '409':
+          $ref: '#/components/responses/HostError'
+        '502':
+          $ref: '#/components/responses/HostError'
+        '503':
+          $ref: '#/components/responses/HostError'
+        default:
+          $ref: '#/components/responses/HostError'
+  /api/plugin-host/emby/items/{id}:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 读取 Emby 媒体详情
+      description: 使用宿主保存的 Emby 凭据读取一条安全媒体元数据。返回字段与列表条目相同，不包含路径、MediaSources、用户播放数据或宿主凭据。
+      operationId: directHost_pluginEmbyItem
+      x-dian115-category: emby
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/EmbyItemID'
+        - $ref: '#/components/parameters/EmbyProxyID'
+      responses:
+        '200':
+          description: 一条安全媒体元数据
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginEmbyItemEnvelope'
+        '400':
+          $ref: '#/components/responses/HostError'
+        '409':
+          $ref: '#/components/responses/HostError'
+        '502':
+          $ref: '#/components/responses/HostError'
+        '503':
+          $ref: '#/components/responses/HostError'
+        default:
+          $ref: '#/components/responses/HostError'
   /api/plugin-runtime/storage/{key}:
     get:
       tags:
@@ -1953,6 +2163,24 @@ components:
       schema:
         type: integer
         minimum: 1
+    EmbyProxyID:
+      name: proxy_id
+      in: query
+      required: false
+      description: Emby 实例 ID。存在多个实例且宿主未设置有效默认实例时必填；旧版单实例配置省略该参数。
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    EmbyItemID:
+      name: id
+      in: path
+      required: true
+      description: Emby 媒体条目 ID。
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 256
   requestBodies:
     OfflineAdd:
       required: true
@@ -2513,6 +2741,120 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CD2Cloud'
+    PluginEmbyInstance:
+      type: object
+      additionalProperties: false
+      required: [id, name, is_default, api_key_configured]
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 0
+          description: 持久化实例 ID；旧版单实例配置使用 0，调用其他接口时应省略 `proxy_id`。
+        name: {type: string, maxLength: 160}
+        is_default: {type: boolean}
+        api_key_configured: {type: boolean}
+    PluginEmbyInstanceList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginEmbyInstance'
+    PluginEmbyStats:
+      type: object
+      additionalProperties: false
+      required: [configured, online, proxy_id, proxy_name, movie_count, series_count, episode_count, playing_count, user_count]
+      properties:
+        configured: {type: boolean, const: true}
+        online: {type: boolean, const: true}
+        proxy_id: {type: integer, format: int64, minimum: 0}
+        proxy_name: {type: string, maxLength: 160}
+        movie_count: {type: integer, minimum: 0}
+        series_count: {type: integer, minimum: 0}
+        episode_count: {type: integer, minimum: 0}
+        playing_count:
+          type: integer
+          minimum: 0
+          description: 当前正在播放的聚合数量；不返回会话或用户详情。
+        user_count:
+          type: integer
+          minimum: 0
+          description: 用户聚合数量；不返回用户身份。
+    PluginEmbyLibrary:
+      type: object
+      additionalProperties: false
+      required: [id, name, type, proxy_id, proxy_name]
+      properties:
+        id: {type: string, maxLength: 256}
+        name: {type: string, maxLength: 1024}
+        type: {type: string, maxLength: 64}
+        proxy_id: {type: integer, format: int64, minimum: 0}
+        proxy_name: {type: string, maxLength: 160}
+    PluginEmbyLibraryList:
+      type: object
+      additionalProperties: false
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PluginEmbyLibrary'
+    PluginEmbyItem:
+      type: object
+      additionalProperties: false
+      required: [id, name, type, genres, has_primary_image, backdrop_count, proxy_id, proxy_name]
+      properties:
+        id: {type: string, maxLength: 256}
+        name: {type: string, maxLength: 512}
+        sort_name: {type: string, maxLength: 512}
+        original_title: {type: string, maxLength: 512}
+        type: {type: string, maxLength: 64}
+        overview: {type: string, maxLength: 1024}
+        production_year: {type: integer}
+        community_rating: {type: number}
+        genres:
+          type: array
+          maxItems: 16
+          items: {type: string, maxLength: 64}
+        provider_ids:
+          type: object
+          maxProperties: 12
+          propertyNames: {maxLength: 32}
+          additionalProperties: {type: string, maxLength: 96}
+        series_id: {type: string, maxLength: 256}
+        series_name: {type: string, maxLength: 512}
+        parent_id: {type: string, maxLength: 256}
+        index_number: {type: integer}
+        parent_index_number: {type: integer}
+        premiere_date: {type: string, maxLength: 64}
+        date_created: {type: string, maxLength: 64}
+        has_primary_image: {type: boolean}
+        backdrop_count: {type: integer, minimum: 0, maximum: 1000}
+        proxy_id: {type: integer, format: int64, minimum: 0}
+        proxy_name: {type: string, maxLength: 160}
+    PluginEmbyItemList:
+      type: object
+      additionalProperties: false
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/PluginEmbyItem'
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 50}
+        offset: {type: integer, minimum: 0, maximum: 1000000}
+    PluginEmbyItemEnvelope:
+      type: object
+      additionalProperties: false
+      required: [item]
+      properties:
+        item:
+          $ref: '#/components/schemas/PluginEmbyItem'
     PluginMeta:
       type: object
       additionalProperties: false

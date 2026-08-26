@@ -19,7 +19,7 @@ import (
 
 const (
 	protocol  = "dian115:process@1"
-	frameSize = 256 << 10
+	frameSize = 16 << 20
 )
 
 type rpcError struct {

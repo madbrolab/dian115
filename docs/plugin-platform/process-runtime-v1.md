@@ -35,7 +35,7 @@ Content-Type: application/json\r\n
 <JSON bytes>
 ```
 
-接收方忽略除 `Content-Length` 外的帧 header，但 header 总大小不得超过 8192 字节。`Content-Length` 必须恰好出现一次，范围 1-262144。JSON body 必须是单个合法对象。协议消息也不得超过 262144 字节。
+接收方忽略除 `Content-Length` 外的帧 header，但 header 总大小不得超过 8192 字节。`Content-Length` 必须恰好出现一次，范围 1-16777216。JSON body 必须是单个合法对象。协议消息不得超过 16 MiB，以容纳 Base64 编码后的 8 MiB Host Call 正文。
 
 JSON-RPC 对象只允许：
 
@@ -147,7 +147,7 @@ stdio 是全双工的。宿主可能并发发起最多 `runtime.max_concurrency`
 
 `op` 为 `state`、`action`、`job` 或 `event`。`invocation_id` 在逻辑调用中稳定；宿主对不确定投递重试时复用同一 ID 和完全相同的 envelope。插件必须以该 ID 做幂等去重。相同 ID 如果对应不同请求，宿主拒绝为 `invocation_conflict`；正在执行时重入为 `invocation_in_progress`。
 
-除特别说明外，所有 result 必须是一个不超过 256 KiB 的 JSON object，不能包含尾随 JSON。为了防止运行时把秘密或宿主路径传到 UI/日志，宿主递归拒绝：
+除 `host.call` 外，插件对 `runtime.invoke` 返回的业务 result 必须是一个不超过 256 KiB 的 JSON object，不能包含尾随 JSON。`host.call` 可承载 8 MiB 正文，详见 [Host Call v2](host-call-v2.md)。为了防止运行时把秘密或宿主路径传到 UI/日志，宿主递归拒绝：
 
 - key 为 `cid`、`file_id`、`database_id`、`absolute_path`、`raw_path`、`password`、`client_secret`、`webhook_secret`、`access_token`、`refresh_token`、`authorization`；
 - 任意包含 `cookie` 的 key；
