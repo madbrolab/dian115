@@ -1,0 +1,3306 @@
+{
+  "format": "dian115-notify-template-package",
+  "version": 2,
+  "exported_at": "2026-08-26T08:00:00+08:00",
+  "templates": [
+    {
+      "key": "playback_start",
+      "name": "开始播放",
+      "parent_type": "playback",
+      "template": {
+        "title": "🧭 QUEST·开播",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}开始播放·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if client %}⚔️ 客户端 · {{ client }}{% endif %}\n{% if device_name %}⚔️ 设备 · {{ device_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if position_time %}⚔️ 播放位置 · {{ position_time }}{% endif %}\n{% if runtime_time %}⚔️ 总时长 · {{ runtime_time }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if rating %}⚔️ 评分 · {{ rating }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ quality or '开始播放' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "用户 · {{ user_name or '—' }}",
+              "客户端 · {{ client or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "设备",
+                "value": "{{ device_name or '—' }}"
+              },
+              {
+                "label": "Emby 实例名称",
+                "value": "{{ emby_instance_name or '—' }}"
+              },
+              {
+                "label": "播放位置",
+                "value": "{{ position_time or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if runtime_time %}⚔️ 总时长 · {{ runtime_time }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if rating %}⚔️ 评分 · {{ rating }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "playback_stop",
+      "name": "停止播放",
+      "parent_type": "playback",
+      "template": {
+        "title": "🧭 QUEST·停播",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}停止播放·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if client %}⚔️ 客户端 · {{ client }}{% endif %}\n{% if device_name %}⚔️ 设备 · {{ device_name }}{% endif %}\n{% if percentage %}⚔️ 播放进度 · {{ percentage }}{% endif %}\n{% if position_time %}⚔️ 播放位置 · {{ position_time }}{% endif %}\n{% if runtime_time %}⚔️ 总时长 · {{ runtime_time }}{% endif %}\n{% if remaining_time %}⚔️ 剩余时间 · {{ remaining_time }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ quality or '停止播放' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "用户 · {{ user_name or '—' }}",
+              "客户端 · {{ client or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "设备",
+                "value": "{{ device_name or '—' }}"
+              },
+              {
+                "label": "播放进度",
+                "value": "{{ percentage or '—' }}"
+              },
+              {
+                "label": "播放位置",
+                "value": "{{ position_time or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if runtime_time %}⚔️ 总时长 · {{ runtime_time }}{% endif %}\n{% if remaining_time %}⚔️ 剩余时间 · {{ remaining_time }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "media_library_add",
+      "name": "资源入库",
+      "parent_type": "media_library",
+      "template": {
+        "title": "🧭 QUEST·新片入库",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}资源入库·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if media_type %}⚔️ 媒体类型 · {{ media_type }}{% endif %}\n{% if library_name %}⚔️ 媒体库 · {{ library_name }}{% endif %}\n{% if file_count %}⚔️ 文件数 · {{ file_count }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ time_range or now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status or '资源入库' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "媒体类型 · {{ media_type or '—' }}",
+              "媒体库 · {{ library_name or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "文件数",
+                "value": "{{ file_count or '—' }}"
+              },
+              {
+                "label": "总大小",
+                "value": "{{ total_size or '—' }}"
+              },
+              {
+                "label": "质量摘要",
+                "value": "{{ quality or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ item_id }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "media_library_update",
+      "name": "媒体更新",
+      "parent_type": "media_library",
+      "template": {
+        "title": "🧭 QUEST·资料更新",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}媒体更新·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if media_type %}⚔️ 媒体类型 · {{ media_type }}{% endif %}\n{% if library_name %}⚔️ 媒体库 · {{ library_name }}{% endif %}\n{% if file_count %}⚔️ 文件数 · {{ file_count }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if event_action %}⚔️ 事件动作 · {{ event_action }}{% endif %}\n{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if item_id %}⚔️ 项目 ID · {{ item_id }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ time_range or now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status or '媒体更新' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "媒体类型 · {{ media_type or '—' }}",
+              "媒体库 · {{ library_name or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "文件数",
+                "value": "{{ file_count or '—' }}"
+              },
+              {
+                "label": "总大小",
+                "value": "{{ total_size or '—' }}"
+              },
+              {
+                "label": "质量摘要",
+                "value": "{{ quality or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if event_action %}⚔️ 事件动作 · {{ event_action }}{% endif %}\n{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if item_id %}⚔️ 项目 ID · {{ item_id }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ item_id }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "media_library_delete",
+      "name": "媒体删除",
+      "parent_type": "media_library",
+      "template": {
+        "title": "🧭 QUEST·媒体移除",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}媒体删除·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if media_type %}⚔️ 媒体类型 · {{ media_type }}{% endif %}\n{% if library_name %}⚔️ 媒体库 · {{ library_name }}{% endif %}\n{% if event_action %}⚔️ 事件动作 · {{ event_action }}{% endif %}\n{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status or '媒体删除' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "媒体类型 · {{ media_type or '—' }}",
+              "媒体库 · {{ library_name or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "事件动作",
+                "value": "{{ event_action or '—' }}"
+              },
+              {
+                "label": "媒体状态",
+                "value": "{{ status or '—' }}"
+              },
+              {
+                "label": "质量摘要",
+                "value": "{{ quality or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ item_id }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "emby_user_authenticated",
+      "name": "用户登录成功",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "🧭 QUEST·登录通过",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}用户登录成功·任务委托{{ tg_bold_end }}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if device_name %}⚔️ 设备 · {{ device_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if occurred_at %}⚔️ 事件发生时间 · {{ occurred_at }}{% endif %}\n{% if severity %}⚔️ 严重级别 · {{ severity }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '用户登录成功' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "用户 · {{ user_name or '—' }}",
+              "设备 · {{ device_name or '—' }}",
+              "Emby 实例名称 · {{ emby_instance_name or '—' }}",
+              "事件发生时间 · {{ occurred_at or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "严重级别",
+                "value": "{{ severity or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "emby_user_authentication_failed",
+      "name": "用户登录失败",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "🧭 QUEST·登录失败",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}用户登录失败·任务委托{{ tg_bold_end }}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if device_name %}⚔️ 设备 · {{ device_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if severity %}⚔️ 严重级别 · {{ severity }}{% endif %}\n{% if occurred_at %}⚔️ 事件发生时间 · {{ occurred_at }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '用户登录失败' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "用户 · {{ user_name or '—' }}",
+              "设备 · {{ device_name or '—' }}",
+              "Emby 实例名称 · {{ emby_instance_name or '—' }}",
+              "严重级别 · {{ severity or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "事件发生时间",
+                "value": "{{ occurred_at or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "emby_user_locked_out",
+      "name": "用户被锁定",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "🧭 QUEST·账号锁定",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}用户被锁定·任务委托{{ tg_bold_end }}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if severity %}⚔️ 严重级别 · {{ severity }}{% endif %}\n{% if occurred_at %}⚔️ 事件发生时间 · {{ occurred_at }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '用户被锁定' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "用户 · {{ user_name or '—' }}",
+              "Emby 实例名称 · {{ emby_instance_name or '—' }}",
+              "严重级别 · {{ severity or '—' }}",
+              "事件发生时间 · {{ occurred_at or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "emby_user_created",
+      "name": "用户已创建",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "🧭 QUEST·新建用户",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}用户已创建·任务委托{{ tg_bold_end }}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if device_name %}⚔️ 设备 · {{ device_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if occurred_at %}⚔️ 事件发生时间 · {{ occurred_at }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '用户已创建' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "用户 · {{ user_name or '—' }}",
+              "设备 · {{ device_name or '—' }}",
+              "Emby 实例名称 · {{ emby_instance_name or '—' }}",
+              "事件发生时间 · {{ occurred_at or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "emby_user_deleted",
+      "name": "用户已删除",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "🧭 QUEST·删除用户",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}用户已删除·任务委托{{ tg_bold_end }}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if severity %}⚔️ 严重级别 · {{ severity }}{% endif %}\n{% if occurred_at %}⚔️ 事件发生时间 · {{ occurred_at }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '用户已删除' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "用户 · {{ user_name or '—' }}",
+              "Emby 实例名称 · {{ emby_instance_name or '—' }}",
+              "严重级别 · {{ severity or '—' }}",
+              "事件发生时间 · {{ occurred_at or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "emby_user_password_changed",
+      "name": "用户密码更改",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "🧭 QUEST·密码变更",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}用户密码更改·任务委托{{ tg_bold_end }}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if device_name %}⚔️ 设备 · {{ device_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if occurred_at %}⚔️ 事件发生时间 · {{ occurred_at }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '用户密码更改' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "用户 · {{ user_name or '—' }}",
+              "设备 · {{ device_name or '—' }}",
+              "Emby 实例名称 · {{ emby_instance_name or '—' }}",
+              "事件发生时间 · {{ occurred_at or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "emby_user_policy_updated",
+      "name": "用户策略更新",
+      "parent_type": "emby_security",
+      "template": {
+        "title": "🧭 QUEST·权限变更",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}用户策略更新·任务委托{{ tg_bold_end }}\n{% if user_name %}⚔️ 用户 · {{ user_name }}{% endif %}\n{% if emby_instance_name %}⚔️ Emby 实例名称 · {{ emby_instance_name }}{% endif %}\n{% if severity %}⚔️ 严重级别 · {{ severity }}{% endif %}\n{% if occurred_at %}⚔️ 事件发生时间 · {{ occurred_at }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '用户策略更新' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "用户 · {{ user_name or '—' }}",
+              "Emby 实例名称 · {{ emby_instance_name or '—' }}",
+              "严重级别 · {{ severity or '—' }}",
+              "事件发生时间 · {{ occurred_at or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if notification_title %}⚔️ 通知原始标题 · {{ notification_title }}{% endif %}\n{% if description %}⚔️ 事件说明 · {{ description }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·打开 Emby",
+                "action": "callback_data",
+                "value": "cmd:emby",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "library_organize_success",
+      "name": "整理完成",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "🧭 QUEST·整理完成",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}整理完成·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if action_text %}⚔️ 整理动作 · {{ action_text }}{% endif %}\n{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if file_count %}⚔️ 文件数 · {{ file_count }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if wash_status %}⚔️ 洗版状态 · {{ wash_status }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if source_path %}⚔️ 源路径 · {{ source_path }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if detail_msg %}⚔️ 整理详情 · {{ detail_msg }}{% endif %}\n{% if wash_reason %}⚔️ 洗版原因 · {{ wash_reason }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ time_range or now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status or '整理完成' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "整理动作 · {{ action_text or '—' }}",
+              "媒体状态 · {{ status or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "文件数",
+                "value": "{{ file_count or '—' }}"
+              },
+              {
+                "label": "总大小",
+                "value": "{{ total_size or '—' }}"
+              },
+              {
+                "label": "洗版状态",
+                "value": "{{ wash_status or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if source_path %}⚔️ 源路径 · {{ source_path }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if detail_msg %}⚔️ 整理详情 · {{ detail_msg }}{% endif %}\n{% if wash_reason %}⚔️ 洗版原因 · {{ wash_reason }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看存储",
+                "action": "callback_data",
+                "value": "cmd:storage",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "library_organize_skip",
+      "name": "整理跳过",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "🧭 QUEST·整理跳过",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}整理跳过·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if action_text %}⚔️ 整理动作 · {{ action_text }}{% endif %}\n{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if file_count %}⚔️ 文件数 · {{ file_count }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if wash_status %}⚔️ 洗版状态 · {{ wash_status }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if skip_reason %}⚔️ 跳过原因 · {{ skip_reason }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if source_path %}⚔️ 源路径 · {{ source_path }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if detail_msg %}⚔️ 整理详情 · {{ detail_msg }}{% endif %}\n{% if wash_reason %}⚔️ 洗版原因 · {{ wash_reason }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ time_range or now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status or '整理跳过' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "整理动作 · {{ action_text or '—' }}",
+              "媒体状态 · {{ status or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "文件数",
+                "value": "{{ file_count or '—' }}"
+              },
+              {
+                "label": "总大小",
+                "value": "{{ total_size or '—' }}"
+              },
+              {
+                "label": "洗版状态",
+                "value": "{{ wash_status or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if skip_reason %}⚔️ 跳过原因 · {{ skip_reason }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if source_path %}⚔️ 源路径 · {{ source_path }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if detail_msg %}⚔️ 整理详情 · {{ detail_msg }}{% endif %}\n{% if wash_reason %}⚔️ 洗版原因 · {{ wash_reason }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看存储",
+                "action": "callback_data",
+                "value": "cmd:storage",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "library_organize_fail",
+      "name": "整理失败",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "🧭 QUEST·整理失败",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}整理失败·任务委托{{ tg_bold_end }}\n{% if action_text %}⚔️ 整理动作 · {{ action_text }}{% endif %}\n{% if status %}⚔️ 媒体状态 · {{ status }}{% endif %}\n{% if title %}⚔️ 标题 · {{ title }}{% endif %}\n{% if show_name %}⚔️ 剧名 · {{ show_name }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if failure_count %}⚔️ 失败项数 · {{ failure_count }}{% endif %}\n{% if listed_failure_count %}⚔️ 列出失败数 · {{ listed_failure_count }}{% endif %}\n{% if omitted_failure_count %}⚔️ 省略失败数 · {{ omitted_failure_count }}{% endif %}\n{% if details_truncated %}⚔️ 明细已截断 · {{ details_truncated }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if source_path %}⚔️ 源路径 · {{ source_path }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if detail_msg %}⚔️ 整理详情 · {{ detail_msg }}{% endif %}\n{% for item in failure_items %}⚔️ {{ loop.index }}. {{ item.file_name or item.name }}{% if item.reason %} · {{ item.reason }}{% endif %}{% if item.quality %} · {{ item.quality }}{% endif %}{% if not loop.last %}\n{% endif %}{% else %}⚔️ 暂无失败项{% endfor %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ time_range or now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status or '整理失败' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "整理动作 · {{ action_text or '—' }}",
+              "媒体状态 · {{ status or '—' }}",
+              "标题 · {{ title or '—' }}",
+              "剧名 · {{ show_name or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "文件名",
+                "value": "{{ file_name or '—' }}"
+              },
+              {
+                "label": "失败项数",
+                "value": "{{ failure_count or '—' }}"
+              },
+              {
+                "label": "列出失败数",
+                "value": "{{ listed_failure_count or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if omitted_failure_count %}⚔️ 省略失败数 · {{ omitted_failure_count }}{% endif %}\n{% if details_truncated %}⚔️ 明细已截断 · {{ details_truncated }}{% endif %}\n{% if source_path %}⚔️ 源路径 · {{ source_path }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if detail_msg %}⚔️ 整理详情 · {{ detail_msg }}{% endif %}\n{% for item in failure_items %}⚔️ {{ loop.index }}. {{ item.file_name or item.name }}{% if item.reason %} · {{ item.reason }}{% endif %}{% if item.quality %} · {{ item.quality }}{% endif %}{% if not loop.last %}\n{% endif %}{% else %}⚔️ 暂无失败项{% endfor %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看存储",
+                "action": "callback_data",
+                "value": "cmd:storage",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "library_quality_scan",
+      "name": "质量扫描",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "🧭 QUEST·质量扫描",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}质量扫描·任务委托{{ tg_bold_end }}\n{% if task_name %}⚔️ 任务名 · {{ task_name }}{% endif %}\n{% if task_type %}⚔️ 任务类型 · {{ task_type }}{% endif %}\n{% if total_count %}⚔️ 总数 · {{ total_count }}{% endif %}\n{% if normal_count %}⚔️ 正常数 · {{ normal_count }}{% endif %}\n{% if problem_count %}⚔️ 问题数 · {{ problem_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if elapsed_seconds %}⚔️ 耗时秒数 · {{ elapsed_seconds }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '质量扫描' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "任务名 · {{ task_name or '—' }}",
+              "任务类型 · {{ task_type or '—' }}",
+              "总数 · {{ total_count or '—' }}",
+              "正常数 · {{ normal_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "问题数",
+                "value": "{{ problem_count or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              },
+              {
+                "label": "耗时",
+                "value": "{{ elapsed or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if elapsed_seconds %}⚔️ 耗时秒数 · {{ elapsed_seconds }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看存储",
+                "action": "callback_data",
+                "value": "cmd:storage",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "library_missing_scan",
+      "name": "缺集扫描",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "🧭 QUEST·缺集扫描",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}缺集扫描·任务委托{{ tg_bold_end }}\n{% if task_name %}⚔️ 任务名 · {{ task_name }}{% endif %}\n{% if task_type %}⚔️ 任务类型 · {{ task_type }}{% endif %}\n{% if total_count %}⚔️ 总数 · {{ total_count }}{% endif %}\n{% if normal_count %}⚔️ 正常数 · {{ normal_count }}{% endif %}\n{% if problem_count %}⚔️ 问题数 · {{ problem_count }}{% endif %}\n{% if listed_result_count %}⚔️ 列出结果数 · {{ listed_result_count }}{% endif %}\n{% if omitted_result_count %}⚔️ 省略结果数 · {{ omitted_result_count }}{% endif %}\n{% if results_truncated %}⚔️ 结果已截断 · {{ results_truncated }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% for item in result_items %}⚔️ {{ loop.index }}. {{ item.series_name }} · 缺 {{ item.missing_count or '—' }} 集{% if item.missing_episodes %} · {{ item.missing_episodes }}{% endif %}{% if item.instance_name %} · {{ item.instance_name }}{% endif %}{% if not loop.last %}\n{% endif %}{% else %}⚔️ 暂无缺集结果{% endfor %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '缺集扫描' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "任务名 · {{ task_name or '—' }}",
+              "任务类型 · {{ task_type or '—' }}",
+              "总数 · {{ total_count or '—' }}",
+              "正常数 · {{ normal_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "问题数",
+                "value": "{{ problem_count or '—' }}"
+              },
+              {
+                "label": "列出结果数",
+                "value": "{{ listed_result_count or '—' }}"
+              },
+              {
+                "label": "省略结果数",
+                "value": "{{ omitted_result_count or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if results_truncated %}⚔️ 结果已截断 · {{ results_truncated }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% for item in result_items %}⚔️ {{ loop.index }}. {{ item.series_name }} · 缺 {{ item.missing_count or '—' }} 集{% if item.missing_episodes %} · {{ item.missing_episodes }}{% endif %}{% if item.instance_name %} · {{ item.instance_name }}{% endif %}{% if not loop.last %}\n{% endif %}{% else %}⚔️ 暂无缺集结果{% endfor %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看存储",
+                "action": "callback_data",
+                "value": "cmd:storage",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "strm_generate",
+      "name": "STRM 生成",
+      "parent_type": "library_organize",
+      "template": {
+        "title": "🧭 QUEST·STRM生成",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}STRM 生成·任务委托{{ tg_bold_end }}\n{% if show_name %}⚔️ 剧名 · {{ show_name }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if file_count %}⚔️ 文件数 · {{ file_count }}{% endif %}\n{% if aggregation_count %}⚔️ 聚合数 · {{ aggregation_count }}{% endif %}\n{% if strm_root %}⚔️ 目录树根 · {{ strm_root }}{% endif %}\n{% if strm_tree_line_count %}⚔️ 目录树行数 · {{ strm_tree_line_count }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if strm_path %}⚔️ STRM 完整路径 · {{ strm_path }}{% endif %}\n{% for item in strm_tree_items %}{{ item }}{% if not loop.last %}\n{% endif %}{% else %}⚔️ 暂无目录树{% endfor %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ time_range or now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or 'STRM 生成' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "剧名 · {{ show_name or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "文件数 · {{ file_count or '—' }}",
+              "聚合数 · {{ aggregation_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "目录树根",
+                "value": "{{ strm_root or '—' }}"
+              },
+              {
+                "label": "目录树行数",
+                "value": "{{ strm_tree_line_count or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if strm_path %}⚔️ STRM 完整路径 · {{ strm_path }}{% endif %}\n{% for item in strm_tree_items %}{{ item }}{% if not loop.last %}\n{% endif %}{% else %}⚔️ 暂无目录树{% endfor %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看存储",
+                "action": "callback_data",
+                "value": "cmd:storage",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "share_receive",
+      "name": "分享转存",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·分享接收",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}分享转存·任务委托{{ tg_bold_end }}\n{% if operation_type %}⚔️ 操作类型 · {{ operation_type }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if transfer_source %}⚔️ 操作来源 · {{ transfer_source }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '分享转存' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "操作类型 · {{ operation_type or '—' }}",
+              "文件名 · {{ file_name or '—' }}",
+              "操作来源 · {{ transfer_source or '—' }}",
+              "成功数 · {{ success_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "失败数",
+                "value": "{{ failed_count or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              },
+              {
+                "label": "耗时",
+                "value": "{{ elapsed or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看分享",
+                "action": "callback_data",
+                "value": "cmd:share",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "offline_download",
+      "name": "离线下载",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·离线下载",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}离线下载·任务委托{{ tg_bold_end }}\n{% if operation_type %}⚔️ 操作类型 · {{ operation_type }}{% endif %}\n{% if url_count %}⚔️ 链接数 · {{ url_count }}{% endif %}\n{% if transfer_source %}⚔️ 操作来源 · {{ transfer_source }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '离线下载' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "操作类型 · {{ operation_type or '—' }}",
+              "链接数 · {{ url_count or '—' }}",
+              "操作来源 · {{ transfer_source or '—' }}",
+              "成功数 · {{ success_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "失败数",
+                "value": "{{ failed_count or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              },
+              {
+                "label": "耗时",
+                "value": "{{ elapsed or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看任务",
+                "action": "callback_data",
+                "value": "cmd:offline",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "tg_auto_transfer",
+      "name": "TG 自动转存",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·自动转存",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}TG 自动转存·任务委托{{ tg_bold_end }}\n{% if operation_type %}⚔️ 操作类型 · {{ operation_type }}{% endif %}\n{% if source_name %}⚔️ 来源名称 · {{ source_name }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or 'TG 自动转存' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "操作类型 · {{ operation_type or '—' }}",
+              "来源名称 · {{ source_name or '—' }}",
+              "文件名 · {{ file_name or '—' }}",
+              "成功数 · {{ success_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "失败数",
+                "value": "{{ failed_count or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              },
+              {
+                "label": "耗时",
+                "value": "{{ elapsed or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看任务",
+                "action": "callback_data",
+                "value": "cmd:offline",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "tg_auto_offline",
+      "name": "TG 自动离线",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·自动离线",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}TG 自动离线·任务委托{{ tg_bold_end }}\n{% if operation_type %}⚔️ 操作类型 · {{ operation_type }}{% endif %}\n{% if source_name %}⚔️ 来源名称 · {{ source_name }}{% endif %}\n{% if url_count %}⚔️ 链接数 · {{ url_count }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or 'TG 自动离线' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "操作类型 · {{ operation_type or '—' }}",
+              "来源名称 · {{ source_name or '—' }}",
+              "链接数 · {{ url_count or '—' }}",
+              "成功数 · {{ success_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "失败数",
+                "value": "{{ failed_count or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              },
+              {
+                "label": "耗时",
+                "value": "{{ elapsed or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看任务",
+                "action": "callback_data",
+                "value": "cmd:offline",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "tg_video_download",
+      "name": "TG 视频下载",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·视频下载",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}TG 视频下载·任务委托{{ tg_bold_end }}\n{% if operation_type %}⚔️ 操作类型 · {{ operation_type }}{% endif %}\n{% if source_name %}⚔️ 来源名称 · {{ source_name }}{% endif %}\n{% if file_name %}⚔️ 文件名 · {{ file_name }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or 'TG 视频下载' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "操作类型 · {{ operation_type or '—' }}",
+              "来源名称 · {{ source_name or '—' }}",
+              "文件名 · {{ file_name or '—' }}",
+              "总大小 · {{ total_size or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "成功数",
+                "value": "{{ success_count or '—' }}"
+              },
+              {
+                "label": "失败数",
+                "value": "{{ failed_count or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看任务",
+                "action": "callback_data",
+                "value": "cmd:offline",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "account_migration",
+      "name": "多号云迁移",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·账号迁移",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}多号云迁移·任务委托{{ tg_bold_end }}\n{% if operation_type %}⚔️ 操作类型 · {{ operation_type }}{% endif %}\n{% if scanned_count %}⚔️ 扫描数 · {{ scanned_count }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if skipped_count %}⚔️ 跳过数 · {{ skipped_count }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if transfer_source %}⚔️ 操作来源 · {{ transfer_source }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '多号云迁移' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "操作类型 · {{ operation_type or '—' }}",
+              "扫描数 · {{ scanned_count or '—' }}",
+              "成功数 · {{ success_count or '—' }}",
+              "失败数 · {{ failed_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "跳过数",
+                "value": "{{ skipped_count or '—' }}"
+              },
+              {
+                "label": "总大小",
+                "value": "{{ total_size or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if transfer_source %}⚔️ 操作来源 · {{ transfer_source }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看迁移",
+                "action": "callback_data",
+                "value": "cmd:migration",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "ed2k_task",
+      "name": "ED2K 任务",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·ED2K任务",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}ED2K 任务·任务委托{{ tg_bold_end }}\n{% if title %}⚔️ 标题 · {{ title }}{% endif %}\n{% if media_type %}⚔️ 媒体类型 · {{ media_type }}{% endif %}\n{% if file_count %}⚔️ 文件数 · {{ file_count }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if transfer_source %}⚔️ 操作来源 · {{ transfer_source }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or 'ED2K 任务' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题 · {{ title or '—' }}",
+              "媒体类型 · {{ media_type or '—' }}",
+              "文件数 · {{ file_count or '—' }}",
+              "总大小 · {{ total_size or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "成功数",
+                "value": "{{ success_count or '—' }}"
+              },
+              {
+                "label": "失败数",
+                "value": "{{ failed_count or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if elapsed %}⚔️ 耗时 · {{ elapsed }}{% endif %}\n{% if transfer_source %}⚔️ 操作来源 · {{ transfer_source }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看任务",
+                "action": "callback_data",
+                "value": "cmd:offline",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "media_auto_share",
+      "name": "媒体自动分享",
+      "parent_type": "file_transfer",
+      "template": {
+        "title": "🧭 QUEST·自动分享",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}媒体自动分享·任务委托{{ tg_bold_end }}\n{% if title %}⚔️ 标题 · {{ title }}{% endif %}\n{% if media_type %}⚔️ 媒体类型 · {{ media_type }}{% endif %}\n{% if year %}⚔️ 年份 · {{ year }}{% endif %}\n{% if file_count %}⚔️ 文件数 · {{ file_count }}{% endif %}\n{% if total_size %}⚔️ 总大小 · {{ total_size }}{% endif %}\n{% if quality %}⚔️ 质量摘要 · {{ quality }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "quality_comments": {
+          "customized": true,
+          "dolby_vision": "Dolby Vision 稀有战利品：动态光影属性已解锁。",
+          "hdr": "HDR 稀有战利品：高动态属性已解锁。",
+          "4k": "4K 稀有战利品：2160P 细节属性已解锁。",
+          "1080p": "1080P 实用战利品：清晰与负载属性平衡。"
+        },
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '媒体自动分享' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题 · {{ title or '—' }}",
+              "媒体类型 · {{ media_type or '—' }}",
+              "年份 · {{ year or '—' }}",
+              "文件数 · {{ file_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "总大小",
+                "value": "{{ total_size or '—' }}"
+              },
+              {
+                "label": "质量摘要",
+                "value": "{{ quality or '—' }}"
+              },
+              {
+                "label": "成功数",
+                "value": "{{ success_count or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if quality_comment %}⚔️ 画质点评 · {{ quality_comment }}{% endif %}\n{% if target_path %}⚔️ 目标路径 · {{ target_path }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看分享",
+                "action": "callback_data",
+                "value": "cmd:share",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "account_cookie_invalid",
+      "name": "Cookie 失效",
+      "parent_type": "account_status",
+      "template": {
+        "title": "🧭 QUEST·Cookie失效",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}Cookie 失效·任务委托{{ tg_bold_end }}\n{% if account_name %}⚔️ 账号名 · {{ account_name }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if status_message %}⚔️ 账号状态 · {{ status_message }}{% endif %}\n{% if status_type %}⚔️ 账号事件 · {{ status_type }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or 'Cookie 失效' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "账号名 · {{ account_name or '—' }}",
+              "状态文本 · {{ status_text or '—' }}",
+              "账号状态 · {{ status_message or '—' }}",
+              "账号事件 · {{ status_type or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看账号",
+                "action": "callback_data",
+                "value": "cmd:accounts",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "account_switched",
+      "name": "账号切换",
+      "parent_type": "account_status",
+      "template": {
+        "title": "🧭 QUEST·账号切换",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}账号切换·任务委托{{ tg_bold_end }}\n{% if account_name %}⚔️ 账号名 · {{ account_name }}{% endif %}\n{% if operation_type %}⚔️ 操作类型 · {{ operation_type }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if status_message %}⚔️ 账号状态 · {{ status_message }}{% endif %}\n{% if status_type %}⚔️ 账号事件 · {{ status_type }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '账号切换' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "账号名 · {{ account_name or '—' }}",
+              "操作类型 · {{ operation_type or '—' }}",
+              "状态文本 · {{ status_text or '—' }}",
+              "账号状态 · {{ status_message or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "账号事件",
+                "value": "{{ status_type or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看账号",
+                "action": "callback_data",
+                "value": "cmd:accounts",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "account_checkin",
+      "name": "115 签到",
+      "parent_type": "account_status",
+      "template": {
+        "title": "🧭 QUEST·账号签到",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}115 签到·任务委托{{ tg_bold_end }}\n{% if account_name %}⚔️ 账号名 · {{ account_name }}{% endif %}\n{% if points %}⚔️ 获得积分 · {{ points }}{% endif %}\n{% if total_points %}⚔️ 总积分 · {{ total_points }}{% endif %}\n{% if checkin_count %}⚔️ 签到次数 · {{ checkin_count }}{% endif %}\n{% if checkin_points %}⚔️ 累计签到积分 · {{ checkin_points }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if status_message %}⚔️ 账号状态 · {{ status_message }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '115 签到' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "账号名 · {{ account_name or '—' }}",
+              "获得积分 · {{ points or '—' }}",
+              "总积分 · {{ total_points or '—' }}",
+              "签到次数 · {{ checkin_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "累计签到积分",
+                "value": "{{ checkin_points or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              },
+              {
+                "label": "账号状态",
+                "value": "{{ status_message or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看签到",
+                "action": "callback_data",
+                "value": "cmd:checkin",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "dianying_checkin",
+      "name": "癫影签到",
+      "parent_type": "account_status",
+      "template": {
+        "title": "🧭 QUEST·观影签到",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}癫影签到·任务委托{{ tg_bold_end }}\n{% if account_name %}⚔️ 账号名 · {{ account_name }}{% endif %}\n{% if points %}⚔️ 获得积分 · {{ points }}{% endif %}\n{% if total_points %}⚔️ 总积分 · {{ total_points }}{% endif %}\n{% if checkin_count %}⚔️ 签到次数 · {{ checkin_count }}{% endif %}\n{% if checkin_points %}⚔️ 累计签到积分 · {{ checkin_points }}{% endif %}\n{% if status_text %}⚔️ 状态文本 · {{ status_text }}{% endif %}\n{% if status_message %}⚔️ 账号状态 · {{ status_message }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ status_text or '癫影签到' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "账号名 · {{ account_name or '—' }}",
+              "获得积分 · {{ points or '—' }}",
+              "总积分 · {{ total_points or '—' }}",
+              "签到次数 · {{ checkin_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "累计签到积分",
+                "value": "{{ checkin_points or '—' }}"
+              },
+              {
+                "label": "状态文本",
+                "value": "{{ status_text or '—' }}"
+              },
+              {
+                "label": "账号状态",
+                "value": "{{ status_message or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看签到",
+                "action": "callback_data",
+                "value": "cmd:checkin",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "container_update_check",
+      "name": "容器更新检查",
+      "parent_type": "container_update",
+      "template": {
+        "title": "🧭 QUEST·更新检查",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}容器更新检查·任务委托{{ tg_bold_end }}\n{% if update_phase %}⚔️ 更新阶段 · {{ update_phase }}{% endif %}\n{% if container_count %}⚔️ 容器数 · {{ container_count }}{% endif %}\n{% if available_count %}⚔️ 可更新数 · {{ available_count }}{% endif %}\n{% if current_count %}⚔️ 当前数 · {{ current_count }}{% endif %}\n{% if check_error_count %}⚔️ 检查失败数 · {{ check_error_count }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '容器更新检查' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "更新阶段 · {{ update_phase or '—' }}",
+              "容器数 · {{ container_count or '—' }}",
+              "可更新数 · {{ available_count or '—' }}",
+              "当前数 · {{ current_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "检查失败数",
+                "value": "{{ check_error_count or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·检查更新",
+                "action": "callback_data",
+                "value": "cmd:update",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "container_update_result",
+      "name": "容器更新结果",
+      "parent_type": "container_update",
+      "template": {
+        "title": "🧭 QUEST·更新结果",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}容器更新结果·任务委托{{ tg_bold_end }}\n{% if update_phase %}⚔️ 更新阶段 · {{ update_phase }}{% endif %}\n{% if trigger %}⚔️ 触发方式 · {{ trigger }}{% endif %}\n{% if container_count %}⚔️ 容器数 · {{ container_count }}{% endif %}\n{% if success_count %}⚔️ 成功数 · {{ success_count }}{% endif %}\n{% if failed_count %}⚔️ 失败数 · {{ failed_count }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '容器更新结果' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "更新阶段 · {{ update_phase or '—' }}",
+              "触发方式 · {{ trigger or '—' }}",
+              "容器数 · {{ container_count or '—' }}",
+              "成功数 · {{ success_count or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "失败数",
+                "value": "{{ failed_count or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·检查更新",
+                "action": "callback_data",
+                "value": "cmd:update",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "container_update_test",
+      "name": "容器通知测试",
+      "parent_type": "container_update",
+      "template": {
+        "title": "🧭 QUEST·更新测试",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}容器通知测试·任务委托{{ tg_bold_end }}\n{% if update_phase %}⚔️ 更新阶段 · {{ update_phase }}{% endif %}\n{% if test_message %}⚔️ 测试说明 · {{ test_message }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or '容器通知测试' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "更新阶段 · {{ update_phase or '—' }}",
+              "测试说明 · {{ test_message or '—' }}",
+              "稳定事件代码 · {{ event_code or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "更新阶段",
+                "value": "{{ update_phase or '—' }}"
+              },
+              {
+                "label": "测试说明",
+                "value": "{{ test_message or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·检查更新",
+                "action": "callback_data",
+                "value": "cmd:update",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "dian115_self_update",
+      "name": "Dian115 自更新",
+      "parent_type": "container_update",
+      "template": {
+        "title": "🧭 QUEST·项目更新",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}Dian115 自更新·任务委托{{ tg_bold_end }}\n{% if update_phase %}⚔️ 更新阶段 · {{ update_phase }}{% endif %}\n{% if update_success %}⚔️ 更新成功 · {{ update_success }}{% endif %}\n{% if current_version %}⚔️ 当前版本 · {{ current_version }}{% endif %}\n{% if build_channel %}⚔️ 构建通道 · {{ build_channel }}{% endif %}\n{% if build_commit %}⚔️ 构建提交 · {{ build_commit }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or 'Dian115 自更新' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "更新阶段 · {{ update_phase or '—' }}",
+              "更新成功 · {{ update_success or '—' }}",
+              "当前版本 · {{ current_version or '—' }}",
+              "构建通道 · {{ build_channel or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "构建提交",
+                "value": "{{ build_commit or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if details %}⚔️ 附加详情 · {{ details }}{% endif %}\n{% if error_message %}⚔️ 错误信息 · {{ error_message }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·检查更新",
+                "action": "callback_data",
+                "value": "cmd:update",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "proxy_health_daily_report",
+      "name": "Clash 监控日报",
+      "parent_type": "proxy_health",
+      "template": {
+        "title": "🧭 QUEST·代理日报",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}Clash 监控日报·任务委托{{ tg_bold_end }}\n{% if day %}⚔️ 报表日期 · {{ day }}{% endif %}\n{% if request_count %}⚔️ 请求数 · {{ request_count }}{% endif %}\n{% if failure_count %}⚔️ 失败项数 · {{ failure_count }}{% endif %}\n{% if success_rate_percent %}⚔️ 成功率百分比 · {{ success_rate_percent }}{% endif %}\n{% if switch_count %}⚔️ 切换次数 · {{ switch_count }}{% endif %}\n{% if auto_switch_count %}⚔️ 自动切换数 · {{ auto_switch_count }}{% endif %}\n{% if manual_switch_count %}⚔️ 手动切换数 · {{ manual_switch_count }}{% endif %}\n{% if upload_size %}⚔️ 上传量 · {{ upload_size }}{% endif %}\n{% if download_size %}⚔️ 下载量 · {{ download_size }}{% endif %}\n{% if total_traffic_size %}⚔️ 总流量 · {{ total_traffic_size }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or 'Clash 监控日报' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "报表日期 · {{ day or '—' }}",
+              "请求数 · {{ request_count or '—' }}",
+              "失败项数 · {{ failure_count or '—' }}",
+              "成功率百分比 · {{ success_rate_percent or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "切换次数",
+                "value": "{{ switch_count or '—' }}"
+              },
+              {
+                "label": "自动切换数",
+                "value": "{{ auto_switch_count or '—' }}"
+              },
+              {
+                "label": "手动切换数",
+                "value": "{{ manual_switch_count or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if upload_size %}⚔️ 上传量 · {{ upload_size }}{% endif %}\n{% if download_size %}⚔️ 下载量 · {{ download_size }}{% endif %}\n{% if total_traffic_size %}⚔️ 总流量 · {{ total_traffic_size }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看监控",
+                "action": "callback_data",
+                "value": "cmd:monitor",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "proxy_health_test_report",
+      "name": "Clash 测试报告",
+      "parent_type": "proxy_health",
+      "template": {
+        "title": "🧭 QUEST·代理测试",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}Clash 测试报告·任务委托{{ tg_bold_end }}\n{% if day %}⚔️ 报表日期 · {{ day }}{% endif %}\n{% if request_count %}⚔️ 请求数 · {{ request_count }}{% endif %}\n{% if failure_count %}⚔️ 失败项数 · {{ failure_count }}{% endif %}\n{% if success_rate_percent %}⚔️ 成功率百分比 · {{ success_rate_percent }}{% endif %}\n{% if switch_count %}⚔️ 切换次数 · {{ switch_count }}{% endif %}\n{% if auto_switch_count %}⚔️ 自动切换数 · {{ auto_switch_count }}{% endif %}\n{% if manual_switch_count %}⚔️ 手动切换数 · {{ manual_switch_count }}{% endif %}\n{% if upload_size %}⚔️ 上传量 · {{ upload_size }}{% endif %}\n{% if download_size %}⚔️ 下载量 · {{ download_size }}{% endif %}\n{% if total_traffic_size %}⚔️ 总流量 · {{ total_traffic_size }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ notification_type or 'Clash 测试报告' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "报表日期 · {{ day or '—' }}",
+              "请求数 · {{ request_count or '—' }}",
+              "失败项数 · {{ failure_count or '—' }}",
+              "成功率百分比 · {{ success_rate_percent or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "切换次数",
+                "value": "{{ switch_count or '—' }}"
+              },
+              {
+                "label": "自动切换数",
+                "value": "{{ auto_switch_count or '—' }}"
+              },
+              {
+                "label": "手动切换数",
+                "value": "{{ manual_switch_count or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if upload_size %}⚔️ 上传量 · {{ upload_size }}{% endif %}\n{% if download_size %}⚔️ 下载量 · {{ download_size }}{% endif %}\n{% if total_traffic_size %}⚔️ 总流量 · {{ total_traffic_size }}{% endif %}\n{% if content %}⚔️ 业务正文 · {{ content }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看监控",
+                "action": "callback_data",
+                "value": "cmd:monitor",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ event_code }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "subscribe_added",
+      "name": "添加订阅",
+      "parent_type": "subscribe",
+      "template": {
+        "title": "🧭 QUEST·新增订阅",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}添加订阅·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if media_type %}⚔️ 媒体类型 · {{ media_type }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if channel %}⚔️ 订阅渠道 · {{ channel }}{% endif %}\n{% if needed_episodes %}⚔️ 待补集 · {{ needed_episodes }}{% endif %}\n{% if rating %}⚔️ 评分 · {{ rating }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ title_year or '添加订阅' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "媒体类型 · {{ media_type or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "订阅渠道 · {{ channel or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "待补集",
+                "value": "{{ needed_episodes or '—' }}"
+              },
+              {
+                "label": "评分",
+                "value": "{{ rating or '—' }}"
+              },
+              {
+                "label": "类型标签",
+                "value": "{{ genres or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看订阅",
+                "action": "callback_data",
+                "value": "cmd:sub",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ notification_type }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "subscribe_landed",
+      "name": "订阅完成",
+      "parent_type": "subscribe",
+      "template": {
+        "title": "🧭 QUEST·订阅完成",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}订阅完成·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if media_type %}⚔️ 媒体类型 · {{ media_type }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if landed_via %}⚔️ 入库来源 · {{ landed_via }}{% endif %}\n{% if landed_tag %}⚔️ 资源质量 · {{ landed_tag }}{% endif %}\n{% if rating %}⚔️ 评分 · {{ rating }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ title_year or '订阅完成' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "媒体类型 · {{ media_type or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "入库来源 · {{ landed_via or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "资源质量",
+                "value": "{{ landed_tag or '—' }}"
+              },
+              {
+                "label": "评分",
+                "value": "{{ rating or '—' }}"
+              },
+              {
+                "label": "类型标签",
+                "value": "{{ genres or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看订阅",
+                "action": "callback_data",
+                "value": "cmd:sub",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ notification_type }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "subscribe_partial",
+      "name": "订阅部分完成",
+      "parent_type": "subscribe",
+      "template": {
+        "title": "🧭 QUEST·部分完成",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}订阅部分完成·任务委托{{ tg_bold_end }}\n{% if title_year %}⚔️ 标题年份 · {{ title_year }}{% endif %}\n{% if season_episode %}⚔️ 季集 · {{ season_episode }}{% endif %}\n{% if needed_episodes %}⚔️ 待补集 · {{ needed_episodes }}{% endif %}\n{% if covered_episodes %}⚔️ 已覆盖集 · {{ covered_episodes }}{% endif %}\n{% if landed_via %}⚔️ 入库来源 · {{ landed_via }}{% endif %}\n{% if landed_tag %}⚔️ 资源质量 · {{ landed_tag }}{% endif %}\n{% if rating %}⚔️ 评分 · {{ rating }}{% endif %}\n{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ title_year or '订阅部分完成' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "标题年份 · {{ title_year or '—' }}",
+              "季集 · {{ season_episode or '—' }}",
+              "待补集 · {{ needed_episodes or '—' }}",
+              "已覆盖集 · {{ covered_episodes or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "入库来源",
+                "value": "{{ landed_via or '—' }}"
+              },
+              {
+                "label": "资源质量",
+                "value": "{{ landed_tag or '—' }}"
+              },
+              {
+                "label": "评分",
+                "value": "{{ rating or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if genres %}⚔️ 类型标签 · {{ genres }}{% endif %}\n{% if overview %}⚔️ 简介 · {{ overview }}{% endif %}\n{% if actors %}⚔️ 演员 · {{ actors }}{% endif %}\n{% if directors %}⚔️ 导演 · {{ directors }}{% endif %}\n{% if tmdb_link %}⚔️ TMDB 文字链接 · {{ tmdb_link }}{% endif %}\n{% if imdb_link %}⚔️ IMDb 文字链接 · {{ imdb_link }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看订阅",
+                "action": "callback_data",
+                "value": "cmd:sub",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ notification_type }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    },
+    {
+      "key": "plugin_notification_message",
+      "name": "插件任务结果",
+      "parent_type": "plugin_notification",
+      "template": {
+        "title": "🧭 QUEST·插件消息",
+        "text": "{{ tg_bold_start }}冒险者任务簿{{ tg_bold_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。\n━━ QUEST LOG ━━\n{{ tg_bold_start }}插件任务结果·任务委托{{ tg_bold_end }}\n{% if plugin_name %}⚔️ 插件名称 · {{ plugin_name }}{% endif %}\n{% if level_icon %}⚔️ 级别图标 · {{ level_icon }}{% endif %}\n{% if level_text %}⚔️ 级别文字 · {{ level_text }}{% endif %}\n{% if plugin_title %}⚔️ 插件标题 · {{ plugin_title }}{% endif %}\n{% if job_ref %}⚔️ 任务引用 · {{ job_ref }}{% endif %}\n{% if event_code %}⚔️ 稳定事件代码 · {{ event_code }}{% endif %}\n{{ tg_expandable_quote_start }}打开任务全记录\n{% if plugin_body %}⚔️ 插件正文 · {{ plugin_body }}{% endif %}{{ tg_expandable_quote_end }}\n⚔️ CHECKPOINT · {{ now }}\n━━ QUEST LOG ━━\n{{ tg_bold_start }}任务簿已更新，准备迎接下一段旅程。{{ tg_bold_end }}",
+        "customized": true,
+        "render_mode": "rich_blocks",
+        "image_mode": "auto",
+        "rich_blocks": [
+          {
+            "type": "heading",
+            "size": 2,
+            "text": "🧭 冒险者任务簿"
+          },
+          {
+            "type": "paragraph",
+            "text": "{{ tg_italic_start }}⚔️ 任务状态 · {{ level_text or '插件任务结果' }}{{ tg_italic_end }}\n新的目标与进度已经写入任务簿，结算结果等待查阅。"
+          },
+          {
+            "type": "list",
+            "ordered": true,
+            "items": [
+              "插件名称 · {{ plugin_name or '—' }}",
+              "级别图标 · {{ level_icon or '—' }}",
+              "级别文字 · {{ level_text or '—' }}",
+              "插件标题 · {{ plugin_title or '—' }}"
+            ]
+          },
+          {
+            "type": "fields",
+            "columns": 2,
+            "rows": [
+              {
+                "label": "任务引用",
+                "value": "{{ job_ref or '—' }}"
+              },
+              {
+                "label": "稳定事件代码",
+                "value": "{{ event_code or '—' }}"
+              }
+            ]
+          },
+          {
+            "type": "details",
+            "summary": "⚔️ 打开任务全记录",
+            "open": false,
+            "blocks": [
+              {
+                "type": "paragraph",
+                "text": "{% if plugin_body %}⚔️ 插件正文 · {{ plugin_body }}{% endif %}"
+              }
+            ]
+          },
+          {
+            "type": "buttons",
+            "buttons": [
+              {
+                "text": "QUEST·查看日志",
+                "action": "callback_data",
+                "value": "cmd:logs",
+                "style": "danger"
+              },
+              {
+                "text": "⚔️ 复制编号",
+                "action": "copy_text",
+                "value": "{{ job_ref }}",
+                "style": "success"
+              }
+            ]
+          },
+          {
+            "type": "paragraph",
+            "text": "任务簿已更新，准备迎接下一段旅程。\n⚔️ CHECKPOINT · {{ tg_time_now }}"
+          }
+        ]
+      }
+    }
+  ]
+}

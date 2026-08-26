@@ -1,82 +1,122 @@
-# Dian115 Telegram 通知模板参考包
+# Dian115 Telegram 通知模板参考库
 
-这里提供 10 套可以直接导入 Dian115 的 Telegram 通知模板。每套模板都覆盖当前 39 个独立通知事件，保留事件自身的变量契约，不使用通用业务模板，也不添加事件契约之外的身份字段。
+这里提供 **20 套全新、可直接导入**的 Telegram 通知模板：
 
-## 十套风格
+- 10 套 `classic_html` 普通富文本模板，适合需要兼容旧 Telegram 客户端的用户。
+- 10 套 `rich_blocks` 模板，面向 Telegram Bot API 10.3 Rich Message。
+- 每套都覆盖当前 **40 个独立通知事件**，整包可导入，也可只选择部分事件。
+- 所有包均使用 `dian115-notify-template-package` v2，不携带私有图片地址。
 
-| 文件 | 风格 | 富文本组合 | 适合场景 |
+## 选择协议
+
+通知设置中的“发送协议”由用户明确选择，系统不会猜测接收者的 Telegram 客户端版本。
+
+| 你的需求 | 发送协议 | 建议模板 |
+| --- | --- | --- |
+| 兼容旧客户端 | `classic_html` | `classic-*` |
+| 使用 Bot API 10.3 结构化富消息 | `rich_message` | `rich-*` |
+| Rich API 明确拒绝时仍需保证通知可读 | `rich_message` | Rich 模板使用自带的经典文本投影回退 |
+
+`rich-*` 模板在通道选择 `classic_html` 时也可导入和预览，但发送时会按经典格式投影，不会调用 `sendRichMessage`。
+
+## 普通富文本：10 套
+
+这一组使用 Telegram HTML 能力：粗体、斜体、下划线、行内代码、剧透、引用、可折叠引用等。每套的栏目名、句式、收尾、符号和 emoji 都按风格重写。
+
+| 下载 | 风格 | 排版特征 | 适合场景 |
 | --- | --- | --- | --- |
-| `notify-templates-formal-report.json` | 正式运维报告 | 下划线 + 粗体 + 引用 | 管理员频道、审计留档 |
-| `notify-templates-cinema-premiere.json` | 影院首映 | 斜体 + 粗体 + 引用 | 电影/剧集媒体频道 |
-| `notify-templates-cyber-terminal.json` | 赛博终端 | 代码块 + 行内代码 + 粗体 | 自动化任务、技术监控 |
-| `notify-templates-weird-lab.json` | 实验室玩梗 | 剧透 + 引用 + 可折叠引用 | 有趣但不丢信息的频道 |
-| `notify-templates-minimal-editorial.json` | 极简编辑 | 粗体 + 斜体 + 引用 | 低噪音、留白排版 |
-| `notify-templates-noir-casefile.json` | 黑色侦探档案 | 斜体 + 粗体 + 可折叠引用 | 深色主题、悬疑频道 |
-| `notify-templates-retro-arcade.json` | 复古街机 | 粗体 + 行内代码 + 剧透 | 游戏化、任务流频道 |
-| `notify-templates-neon-dashboard.json` | 霓虹仪表盘 | 下划线 + 粗体 + 代码块 + 引用 | 高密度监控频道 |
-| `notify-templates-classical-scroll.json` | 古典札记 | 斜体 + 粗体 + 引用 | 中文文化、收藏频道 |
-| `notify-templates-cozy-lounge.json` | 家庭影院 | 粗体 + 斜体 + 引用 | 家庭媒体库、客厅 Emby |
+| [影视库首映](./notify-templates-classic-cinema-library.json) | 影院场记 | 斜体场刊、片库分段、放映收尾 | 影视库、Emby 家庭影院 |
+| [机器人调度](./notify-templates-classic-robot-dispatch.json) | 机器人回执 | 代码标题、系统分隔、ACK 收尾 | 自动化、任务队列 |
+| [搞笑小喇叭](./notify-templates-classic-comedy-radio.json) | 轻松搞笑 | 剧透标题、口语栏目、不丢正事 | 朋友群、轻松频道 |
+| [运维执行摘要](./notify-templates-classic-ops-briefing.json) | 正式运维 | 下划线标识、执行结论、审计语气 | 管理员、运维审计 |
+| [极简留白手记](./notify-templates-classic-minimal-note.json) | 极简编辑 | 短标题、低噪音、克制分隔 | 高频通知、小屏阅读 |
+| [家庭客厅](./notify-templates-classic-cozy-home.json) | 温和管家 | 家庭语气、舒缓提醒、客厅收尾 | 家庭服务器、共享 Emby |
+| [侦探案卷](./notify-templates-classic-detective-file.json) | 黑色案卷 | 线索、案情、结案层次 | 安全通知、错误追踪 |
+| [复古街机](./notify-templates-classic-retro-arcade.json) | 8-bit 任务卡 | 代码块、关卡语气、SAVE 收尾 | 游戏化任务频道 |
+| [古典纪事](./notify-templates-classic-classical-chronicle.json) | 中式简牍 | 卷目、细目、入档句式 | 收藏库、中文文化主题 |
+| [新闻编辑部](./notify-templates-classic-newsroom-wire.json) | 即时快讯 | 核心先行、追加报道、时间线 | 多事件播报频道 |
 
-每套包都包含相同的 39 个 key，因此可以整包导入，也可以在导入预览中只勾选需要的事件。风格差异不仅是换 emoji：每套都使用不同的标题层级、富文本块、分隔符和收尾语。模板正文仍保留媒体、质量、路径、状态、账号和任务等真实可用变量。
+## Rich Message：10 套
 
-## 导入方式
+这一组的每个事件都使用 `rich_blocks`，不是只更换 emoji。10 套模板采用 10 种不同块顺序和信息密度，并按主题组合：
 
-1. 打开 Dian115 的「通知设置 → Telegram 推送 → 推送模板设计器」。
-2. 选择「导入模板」，上传任意一个 JSON 文件。
-3. 在预览中检查模板名称、标题和正文，只勾选要导入的通知类型。
-4. 确认导入后，按需继续在设计器中调整文案、变量和富文本格式。
+- Rich 短标题、字段表、业务列表、分隔线和可折叠详情；
+- 每个事件自身的核心数据，例如影视标题、播放用户、设备、账号、任务状态、计数或路径；
+- `failure_items`、`result_items`、`strm_tree_items` 结构化数组的逐项展示；
+- `tg_time_now` 生成的 Telegram 本地化时间；
+- 自动媒体图片所生成的 Rich `<figure>` 布局；
+- 按事件跳转到 Emby、存储、任务、账号、更新、监控或订阅等功能的 `tg-button-row`，以及稳定编号复制按钮；
+- 完整的经典文本投影，用于经典协议预览或 Rich API 明确错误后的发送回退。
 
-导入包的格式标识为 `dian115-notify-template-package`，版本为 `1`。每条模板使用 `customized: true` 和 `image_mode: "auto"`，不携带默认图片地址。
+| 下载 | 风格 | Rich 布局重点 | 适合场景 |
+| --- | --- | --- | --- |
+| [指挥中心](./notify-templates-rich-command-center.json) | 运行指挥台 | 三列密集字段先行、默认展开日志 | 综合管理频道 |
+| [星际任务](./notify-templates-rich-space-mission.json) | 航程遥测 | 状态导语、编号遥测列表、轨道字段 | 科幻、沉浸式主题 |
+| [臻选首映礼](./notify-templates-rich-luxury-premiere.json) | 高级影院 | 首映导语、三列宾客卡、折叠场记 | 高质量影视库 |
+| [AI 运营官](./notify-templates-rich-ai-operator.json) | AI 解析面板 | 输入字段、嵌套推理标题、结论高亮 | 自动化与 AI 服务 |
+| [数据实验室](./notify-templates-rich-data-laboratory.json) | 实验观测 | 三列参数、编号指标、折叠样本 | 测试、质量与扫描 |
+| [综艺庆典](./notify-templates-rich-variety-festival.json) | 开麦现场 | 高亮开场、业务节目单、后台详情 | 搞笑、鲜明群聊 |
+| [霓虹网格](./notify-templates-rich-neon-grid.json) | 赛博信号板 | 字段先行、霓虹标题、信号列表 | 技术监控频道 |
+| [博物档案馆](./notify-templates-rich-museum-archive.json) | 长期典藏 | 单列目录卡、展开档案、编号沿革 | 历史留档、低频重要事件 |
+| [冒险任务簿](./notify-templates-rich-adventure-quest.json) | 任务结算 | 编号进度、结果字段、任务日志 | 游戏化运营频道 |
+| [静谧仪表盘](./notify-templates-rich-calm-dashboard.json) | 克制工作台 | 单句结论、四项字段、默认收起详情 | 高频、低干扰频道 |
+
+## 导入方法
+
+1. 下载一个 JSON 模板包。
+2. 打开 Dian115 的“通知设置 → Telegram 推送”。
+3. 先选择需要的发送协议：“经典 HTML”或“Rich Message”。
+4. 进入模板设计器，选择“导入模板”并上传 JSON。
+5. 在导入预览中勾选需要覆盖的事件，确认后保存。
+6. 发送测试消息，确认当前 Telegram 频道的字体、图片和按钮效果。
+
+## 自定义边界
+
+模板导入后，除变量表达式和控制语句外，所有用户可见的文字与 emoji 都可以自定义。包括：
+
+- 标题文案、栏目名、提示语、收尾语；
+- 所有 emoji、分隔符、字段标签；
+- 粗体、斜体、高亮、引用等格式；
+- Rich Blocks 的标题、表格、列表、折叠区和按钮文案；
+- Dolby Vision、HDR、4K、1080P 四档画质点评。
+
+需要保留的是 `{{ ... }}` / `{% ... %}` 中的变量、条件和循环；按钮的 `action` / `value` 也应使用系统允许的动作。除此之外，模板文案没有锁死内容。每个事件拥有独立的变量合同，导入器会拒绝未知变量、错误配对的富文本控制符和非法 Rich Blocks。
+
+### 标题长度
+
+这 20 套模板的通知标题均为静态短标题，最长 **16 个可见字符**；Rich 标题块也只使用简短的静态栏目名。影视名、用户名、路径、错误文本等可变长字段全部放在正文、字段表或折叠详情中，避免 Telegram 会话列表和通知横幅的标题失控。
+
+自定义标题时建议继续保持在 18 个字符以内，不要在标题中插入 `title`、`show_name`、`target_path`、`error`等无固定长度的变量。
 
 ## 图片策略
 
-- 模板文件不会暴露默认图片 URL，也不会携带 `image_url` 字段。
-- 发送时由 Dian115 后端决定图片：有 TMDB 媒体图时使用媒体图；没有 TMDB 图时使用该通知类型的默认图；用户选择自定义图片时使用已通过预览校验的链接；用户选择无图片时发送纯文本。
-- 参考包中的 `image_mode: "auto"` 适合直接导入。导入后仍可对每个通知单独选择自动、指定图片或无图片。
-- TMDB 和 IMDb 只使用文字超链变量（`tmdb_link`、`imdb_link`），不会把原始长 URL 打进正文。
+- 所有模板均使用 `image_mode: "auto"`。
+- 模板包不包含 `image_url`，不会暴露私有默认图链接。
+- 有 TMDB 图片时优先使用媒体图；否则由当前通知事件的图片策略决定。
+- Rich 协议下，自动图片会进入 Rich Message 媒体布局；经典协议下使用兼容的图文发送。
 
-## 变量写法
+## 覆盖的 40 个事件
 
-模板使用 Jinja 风格表达式：
+- 播放：`playback_start`、`playback_stop`
+- 媒体库：`media_library_add`、`media_library_update`、`media_library_delete`
+- Emby 账户安全：`emby_user_authenticated`、`emby_user_authentication_failed`、`emby_user_locked_out`、`emby_user_created`、`emby_user_deleted`、`emby_user_password_changed`、`emby_user_policy_updated`
+- 整理与扫描：`library_organize_success`、`library_organize_skip`、`library_organize_fail`、`library_quality_scan`、`library_missing_scan`、`strm_generate`
+- 文件操作：`share_receive`、`offline_download`、`tg_auto_transfer`、`tg_auto_offline`、`tg_video_download`、`account_migration`、`ed2k_task`、`media_auto_share`
+- 账号：`account_cookie_invalid`、`account_switched`、`account_checkin`、`dianying_checkin`
+- 容器与项目更新：`container_update_check`、`container_update_result`、`container_update_test`、`dian115_self_update`
+- 代理健康：`proxy_health_daily_report`、`proxy_health_test_report`
+- 订阅：`subscribe_added`、`subscribe_landed`、`subscribe_partial`
+- 插件：`plugin_notification_message`
 
-```text
-{{ title }}
-{% if season_episode %} · {{ season_episode }}{% endif %}
-```
+## 校验结果
 
-可选字段应把整行放进条件中：
+发布前已使用当前 Dian115 后端完成：
 
-```text
-{% if overview %}{{ tg_expandable_quote_start }}{{ overview }}{{ tg_expandable_quote_end }}{% endif %}
-{% if tmdb_link or imdb_link %}🔎 {% if tmdb_link %}{{ tmdb_link }}{% endif %}{% if tmdb_link and imdb_link %} · {% endif %}{% if imdb_link %}{{ imdb_link }}{% endif %}{% endif %}
-```
-
-不要在模板中添加当前事件变量列表以外的业务变量；导入器会按事件契约拒绝未知变量。
-
-### Telegram 富文本变量
-
-所有事件都可以使用这些成对变量（开始和结束必须配对）：
-
-| 用途 | 变量 |
-| --- | --- |
-| 粗体 | `tg_bold_start` / `tg_bold_end` |
-| 斜体、下划线、删除线 | `tg_italic_start` / `tg_italic_end`、`tg_underline_start` / `tg_underline_end`、`tg_strike_start` / `tg_strike_end` |
-| 剧透 | `tg_spoiler_start` / `tg_spoiler_end` |
-| 行内代码、代码块 | `tg_code_start` / `tg_code_end`、`tg_pre_start` / `tg_pre_end` |
-| 引用、可折叠引用 | `tg_quote_start` / `tg_quote_end`、`tg_expandable_quote_start` / `tg_expandable_quote_end` |
-| 换行、空行 | `tg_newline`、`tg_blankline` |
-
-块级变量只能放在正文，不能放进标题；开始/结束变量必须按顺序配对。长路径、简介和错误详情优先使用 `tg_pre_*` 或 `tg_expandable_quote_*`，分享码可使用 `tg_spoiler_*`。
-
-### 媒体链接
-
-有 TMDB/IMDb 身份的事件提供 `tmdb_link` 和 `imdb_link`。它们已经是文字超链，例如直接写 `{{ tmdb_link }}` 会显示为可点击的「TMDB」文字；不要改用 `tmdb_url` 或 `imdb_url`，以免把长地址显示给用户。剧集链接指向整部剧，而不是季图或集图。
-
-### 画质点评
-
-支持画质点评的事件（播放开始、播放结束、入库新增/更新/删除、整理完成、整理跳过、媒体自动分享）都附带四档可编辑文案：`dolby_vision`、`hdr`、`4k`、`1080p`。模板正文通过 `{{ quality_comment }}` 显示匹配当前媒体的点评，默认文案可以在设计器中修改或清空。
-
-## 覆盖的通知事件
-
-播放：`playback_start`、`playback_stop`；媒体库：`media_library_add`、`media_library_update`、`media_library_delete`；Emby 账户安全：`emby_user_authenticated`、`emby_user_authentication_failed`、`emby_user_locked_out`、`emby_user_created`、`emby_user_deleted`、`emby_user_password_changed`、`emby_user_policy_updated`；文件整理：`library_organize_success`、`library_organize_skip`、`library_organize_fail`、`library_quality_scan`、`library_missing_scan`、`strm_generate`；文件操作：`share_receive`、`offline_download`、`tg_auto_transfer`、`tg_auto_offline`、`tg_video_download`、`account_migration`、`ed2k_task`、`media_auto_share`；账号状态：`account_cookie_invalid`、`account_switched`、`account_checkin`、`dianying_checkin`；容器：`container_update_check`、`container_update_result`、`container_update_test`、`dian115_self_update`；代理：`proxy_health_daily_report`、`proxy_health_test_report`；订阅：`subscribe_added`、`subscribe_landed`、`subscribe_partial`。
-
+- 20 个 JSON 包语法校验；
+- 800 个模板的导入归一化和事件变量合同校验；
+- 800 个样例上下文渲染；
+- 经典 Telegram HTML 预览校验；
+- 400 个 Rich 模板的各类标题、字段表、折叠、业务列表、按钮和本地化时间合同校验；
+- 三类结构化数组循环、8 类画质点评引用和 10 种 Rich 布局指纹校验；
+- 标题静态化和 18 字符上限校验；
+- 每包 40 事件、无重复 key、无 `image_url` 的可移植性校验。
