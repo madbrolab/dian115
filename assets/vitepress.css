@@ -271,3 +271,6 @@ dialog { color: var(--text-1); }.search-dialog { width: min(560px, calc(100% - 3
   .docs-points, .docs-plugin-grid, .docs-actions, .docs-donation { grid-template-columns: 1fr; }
   .docs-donation img { width: min(200px,100%); }
 }
+
+/* Keep plugin release labels quiet so the plugin name remains the visual anchor. */
+.docs-plugin h3 small { margin-left: 5px; color: var(--text-3); font-size: 10px; font-weight: 700; white-space: nowrap; }
