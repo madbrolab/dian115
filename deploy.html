@@ -1,27 +1,78 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="DIAN115 Docker 与 Compose 部署指南。"><title>部署指南 · DIAN115</title><link rel="icon" href="assets/brand-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/vitepress.css?v=2"></head>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="DIAN115 完整 Docker、Compose、FlareSolverr 与首次启动指南。"><title>部署指南 · DIAN115</title><link rel="icon" href="assets/brand-mark.svg" type="image/svg+xml"><link rel="stylesheet" href="assets/vitepress.css?v=3"></head>
 <body class="docs-page"><div class="reading-progress" id="readingProgress"></div>
-<header class="vp-nav"><div class="nav-inner"><a class="brand" href="index.html" aria-label="DIAN115 Wiki 首页"><img src="assets/brand-logo.svg" alt="DIAN115"></a><button class="search-trigger" id="searchTrigger" type="button" aria-label="搜索文档"><span class="icon">⌕</span><span>搜索文档</span><kbd>Ctrl K</kbd></button><nav class="desktop-nav" aria-label="主导航"><a href="guide.html">指南</a><a href="features.html">功能</a><a href="screenshots.html">界面预览</a><a class="active" href="deploy.html">部署</a></nav><div class="nav-actions"><span class="version-select">v3.8.82</span><button class="icon-button" id="themeToggle" type="button" aria-label="切换主题">☼</button><a class="github-link" href="https://github.com/madbrolab/dian115" target="_blank" rel="noreferrer" aria-label="GitHub">◉</a><button class="menu-button" id="menuButton" type="button" aria-label="打开菜单">☰</button></div></div></header>
-<div class="mobile-panel" id="mobilePanel" aria-label="移动端导航"><a href="guide.html">指南</a><a href="features.html">功能</a><a href="screenshots.html">界面预览</a><a href="deploy.html">部署</a></div>
-<div class="docs-shell"><aside class="docs-sidebar" id="docsSidebar"><nav aria-label="Sidebar Navigation"><div class="sidebar-group"><p class="sidebar-group-title">开始使用</p><a class="sidebar-link" href="index.html">Wiki 首页</a><a class="sidebar-link" href="guide.html">快速开始</a><a class="sidebar-link" href="guide.html#architecture">系统架构</a></div><div class="sidebar-group"><p class="sidebar-group-title">部署与配置</p><a class="sidebar-link active" href="deploy.html">部署指南</a><a class="sidebar-link" href="#compose">Compose 配置</a><a class="sidebar-link" href="configure.html">路径与权限</a><a class="sidebar-link" href="#acceptance">首次验收</a></div><div class="sidebar-group"><p class="sidebar-group-title">日常功能</p><a class="sidebar-link" href="features.html#discover">探索发现</a><a class="sidebar-link" href="features.html#subscriptions">媒体订阅</a><a class="sidebar-link" href="features.html#organize">媒体整理</a><a class="sidebar-link" href="features.html#strm">STRM / 虚拟影库</a><a class="sidebar-link" href="features.html#library">我的媒体</a></div><div class="sidebar-group"><p class="sidebar-group-title">资源与运维</p><a class="sidebar-link" href="configure.html#accounts">115 账号</a><a class="sidebar-link" href="features.html#pt">PT 站点</a><a class="sidebar-link" href="features.html#plugins">插件中心</a><a class="sidebar-link" href="reference.html#tasks">任务队列</a><a class="sidebar-link" href="reference.html#cache">缓存与更新</a></div><div class="sidebar-group"><p class="sidebar-group-title">附加</p><a class="sidebar-link" href="notification-templates.html">通知模板</a><a class="sidebar-link" href="support.html">问题排查</a></div></nav></aside>
-<main class="docs-content"><button class="sidebar-toggle" id="sidebarToggle" type="button" aria-expanded="false">☰ 文档目录</button><div class="docs-breadcrumb"><a href="index.html">DIAN115</a><span>/</span><span>部署与配置</span></div><p class="docs-kicker">DEPLOYMENT</p><h1>部署指南</h1><p class="docs-lead">使用 Docker Compose 在 Linux 主机、NAS 或 Unraid 上启动 DIAN115。先准备持久化目录，再选择网络模式和路径映射。</p>
-<section><h2 id="requirements">环境准备</h2><p>推荐使用 2 核 CPU、2 GB 以上内存和 Docker Engine 24+。媒体整理和元数据任务越多，所需内存越高。</p><div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>项目</th><th>建议</th><th>说明</th></tr></thead><tbody><tr><td>操作系统</td><td>Linux amd64 / arm64</td><td>生产契约以 Linux Docker 为准。</td></tr><tr><td>存储</td><td>SSD 配置目录</td><td>将 <code>/config</code> 放在稳定、可写且会备份的卷上。</td></tr><tr><td>网络</td><td>host 或桥接</td><td>同机访问 CloudDrive2 时优先考虑 host 网络。</td></tr></tbody></table></div></section>
-<section><h2 id="compose">Compose 配置</h2><p>把下面内容保存为 <code>docker-compose.yml</code>，将宿主机路径替换成实际目录。</p><div class="docs-code"><div class="docs-code-head"><span>docker-compose.yml</span><button class="docs-copy" type="button" data-copy="composeCode">复制</button></div><pre id="composeCode"><code>services:
+<header class="vp-nav"><div class="nav-inner"><a class="brand" href="index.html"><img src="assets/brand-logo.svg" alt="DIAN115"></a><button class="search-trigger" id="searchTrigger" type="button" aria-label="搜索文档"><span class="icon">⌕</span><span>搜索文档</span><kbd>Ctrl K</kbd></button><nav class="desktop-nav"><a href="guide.html">指南</a><a href="features.html">功能</a><a href="screenshots.html">界面预览</a><a class="active" href="deploy.html">部署</a></nav><div class="nav-actions"><span class="version-select">v3.8.82</span><button class="icon-button" id="themeToggle" type="button" aria-label="切换主题">☼</button><a class="github-link" href="https://github.com/madbrolab/dian115" target="_blank" rel="noreferrer">◉</a><button class="menu-button" id="menuButton" type="button">☰</button></div></div></header>
+<div class="mobile-panel" id="mobilePanel"><a href="guide.html">指南</a><a href="features.html">功能</a><a href="integrations.html">扩展</a><a href="operations.html">运维</a></div>
+<div class="docs-shell">
+<aside class="docs-sidebar" id="docsSidebar"><nav aria-label="Sidebar Navigation">
+<div class="sidebar-group"><p class="sidebar-group-title">开始使用</p><a class="sidebar-link" href="index.html">Wiki 首页</a><a class="sidebar-link" href="guide.html">快速开始</a><a class="sidebar-link" href="guide.html#architecture">系统架构</a></div>
+<div class="sidebar-group"><p class="sidebar-group-title">部署与配置</p><a class="sidebar-link active" href="deploy.html">完整部署指南</a><a class="sidebar-link" href="#compose-host">Host Compose</a><a class="sidebar-link" href="#compose-bridge">桥接 Compose</a><a class="sidebar-link" href="#flaresolverr">FlareSolverr</a><a class="sidebar-link" href="configure.html">完整配置流程</a></div>
+<div class="sidebar-group"><p class="sidebar-group-title">功能手册</p><a class="sidebar-link" href="features.html">核心媒体功能</a><a class="sidebar-link" href="integrations.html">资源与插件</a><a class="sidebar-link" href="operations.html">运维与扩展</a><a class="sidebar-link" href="screenshots.html">全部截图</a></div>
+<div class="sidebar-group"><p class="sidebar-group-title">参考与支持</p><a class="sidebar-link" href="reference.html">参考手册</a><a class="sidebar-link" href="notification-templates.html">通知模板</a><a class="sidebar-link" href="support.html">捐赠、激活与排障</a></div>
+</nav></aside>
+<main class="docs-content"><button class="sidebar-toggle" id="sidebarToggle" type="button">☰ 文档目录</button><div class="docs-breadcrumb"><a href="index.html">DIAN115</a><span>/</span><span>部署与配置</span></div><p class="docs-kicker">COMPLETE DEPLOYMENT</p><h1>部署指南</h1><p class="docs-lead">恢复原 Wiki 的完整部署内容：路径与持久化、Host 和桥接两套 Compose、端口说明、FlareSolverr、首次启动验收以及更新回滚。</p>
+<span id="compose" aria-hidden="true"></span>
+
+<section><h2 id="prepare">部署前准备</h2><div class="docs-grid"><article class="docs-card"><h3>Docker 环境</h3><p>Linux 主机、Docker Engine 与 Compose v2。主服务默认 <code>8095</code>，Emby 代理 <code>8098</code>，Navidrome 代理 <code>4534</code>；<code>6060</code> 仅供内网调试。</p></article><article class="docs-card"><h3>持久化目录</h3><p><code>/config</code> 保存数据库、配置与缓存；使用 AI 工具时持久化 <code>/dian115AI</code>，用于长期记忆与工作文件。更新前优先备份整个 <code>/config</code>。</p></article><article class="docs-card"><h3>路径可见性</h3><p>推荐使用 <code>/media</code> 与 <code>/CloudNAS:shared</code>。DIAN115、CloudDrive2 与 Emby 对同一媒体的容器路径必须一致或可转换。</p></article><article class="docs-card"><h3>可选 Docker Socket</h3><p><code>/var/run/docker.sock</code> 只供 DianCupLite 自动更新和镜像管理；不用相关功能即可删除，不需要特权模式或宿主机根目录映射。</p></article></div><div class="docs-tip"><b>!</b><p><strong>先决定路径，后创建规则。</strong>整理、STRM、Emby、Navidrome 和文件管理共同引用路径。部署后再改变映射，容易造成规则失效、重复扫描或路径无法匹配。</p></div><div class="docs-flow"><span><b>115 网盘</b>资源与账号</span><span><b>CloudDrive2</b>挂载与目录树</span><span><b>DIAN115</b>发现、订阅、整理</span><span><b>Emby / Navi</b>媒体服务</span><span><b>播放端</b>302 / 本地代理</span></div></section>
+
+<section><h2 id="compose-host">Docker Compose：Host 网络</h2><p>Linux、NAS 与 Unraid 优先使用 Host 网络。Host 网络直接占用宿主机端口，因此不要同时保留 <code>ports</code>。</p><div class="docs-code"><div class="docs-code-head"><span>docker-compose.yml · 推荐 Host 网络</span><button class="docs-copy" type="button" data-copy="hostCompose">复制</button></div><pre id="hostCompose"><code>services:
   dian115:
-    image: madbrolab/dian115:latest
+    image: madbrolab/dian115
     container_name: dian115
     restart: unless-stopped
     network_mode: host
     volumes:
-      - ./config:/config
-      - ./media:/media
-      - ./CloudNAS:/CloudNAS:shared
+      - ~/config:/config
+      - ~/dian115AI:/dian115AI
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/media:/media
+      - ~/CloudNAS:/CloudNAS:shared</code></pre></div><div class="docs-tip"><b>i</b><p>管理后台通常访问 <code>http://服务器IP:8095</code>。Docker Socket 和 <code>/dian115AI</code> 都是按功能选用，但 <code>/config</code> 必须持久化。</p></div></section>
+
+<section><h2 id="compose-bridge">Docker Compose：桥接网络</h2><p>不支持 Host 网络或需要反向代理统一入口时，使用桥接网络并显式映射端口。桥接与 Host 两种写法二选一。</p><div class="docs-code"><div class="docs-code-head"><span>docker-compose.yml · 桥接网络</span><button class="docs-copy" type="button" data-copy="bridgeCompose">复制</button></div><pre id="bridgeCompose"><code>services:
+  dian115:
+    image: madbrolab/dian115
+    container_name: dian115
+    restart: unless-stopped
+    ports:
+      - "8095:8095"
+      - "8098:8098"
+      - "4534:4534"
+    volumes:
+      - ~/config:/config
+      - ~/dian115AI:/dian115AI
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/media:/media
+      - ~/CloudNAS:/CloudNAS:shared
     environment:
-      TZ: Asia/Shanghai</code></pre></div><div class="docs-tip"><b>!</b><p>如果使用桥接网络，请显式映射控制台端口，并让容器通过宿主机局域网地址访问 CloudDrive2，不要把 <code>127.0.0.1</code> 当成宿主机。</p></div></section>
-<section><h2 id="start-container">启动容器</h2><p>在 Compose 文件所在目录运行：</p><div class="docs-code"><div class="docs-code-head"><span>shell</span><button class="docs-copy" type="button" data-copy="startCode">复制</button></div><pre id="startCode"><code>docker compose pull
+      - PORT=8095
+      - TZ=Asia/Shanghai
+      # - DIAN115_HTTP_PROXY=http://代理服务器IP:7890</code></pre></div>
+<div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>项目</th><th>默认值</th><th>用途与注意</th></tr></thead><tbody><tr><td>主服务</td><td><code>8095</code></td><td>Web 管理、API 与插件入口，可用 <code>PORT</code> 修改。</td></tr><tr><td>Emby 代理</td><td><code>8098</code></td><td>反向代理与播放重定向；页面改端口后 Compose 映射也要同步。</td></tr><tr><td>Navidrome 代理</td><td><code>4534</code></td><td>不用音乐代理时无需暴露。</td></tr><tr><td>调试端口</td><td><code>6060</code></td><td>pprof / 调试，仅在明确排障时向内网开放。</td></tr><tr><td>数据目录</td><td><code>/config</code></td><td>数据库默认位于 <code>/config/dian115.db</code>，必须持久化。</td></tr><tr><td>媒体 / CD2</td><td><code>/media</code>、<code>/CloudNAS</code></td><td>与 Emby、CD2 路径保持一致；CloudNAS 保留 <code>:shared</code>。</td></tr></tbody></table></div>
+<div class="docs-code"><div class="docs-code-head"><span>启动与检查</span><button class="docs-copy" type="button" data-copy="startCommands">复制</button></div><pre id="startCommands"><code>docker compose pull
 docker compose up -d
-docker compose ps</code></pre></div><p>看到容器状态为 <code>Up</code> 后，在浏览器访问 <code>http://服务器IP:8095</code>。首次进入会显示管理员初始化页面。</p></section>
-<section><h2 id="acceptance">首次验收</h2><ol><li>设置管理员密码，确认页面能正常刷新。</li><li>打开配置中心，确认 <code>/config</code> 中已经生成配置文件。</li><li>在账号管理中完成一次 115 登录，并检查账号状态。</li><li>创建一个测试任务，确认任务队列能看到执行状态和日志。</li><li>重启容器后再次登录，确认设置和账号没有丢失。</li></ol><div class="docs-tip"><b>✓</b><p>验收建议使用一个小文件或单集内容。不要在首次启动时直接运行全量媒体整理。</p></div></section>
-<section><h2 id="upgrade">升级与回滚</h2><p>升级前先备份 <code>config</code> 目录。拉取新镜像后执行 <code>docker compose up -d</code>，如果需要回滚，把镜像标签固定到上一版本再重新启动。</p><p>升级后优先检查任务队列、账号状态和媒体库扫描，不要只看容器进程是否为 <code>Up</code>。</p></section>
-<div class="docs-bottom"><div class="docs-edit"><span>最后更新：2026-08-30</span><a href="https://github.com/madbrolab/dian115/tree/gh-pages" target="_blank" rel="noreferrer">在 GitHub 上编辑此页 ↗</a></div><nav class="docs-pager" aria-label="Pager"><a href="guide.html"><small>上一页</small><b>← 快速开始</b></a><a href="configure.html"><small>下一页</small><b>路径与配置 →</b></a></nav></div></main><aside class="docs-toc"><p class="docs-toc-title">On this page</p><ol class="toc-list"></ol></aside></div>
-<footer class="vp-footer docs-footer"><div class="page-width footer-inner"><div><a class="brand footer-brand" href="index.html"><img src="assets/brand-logo.svg" alt="DIAN115"></a><p>DIAN115 用户 Wiki · 部署 · 配置 · 使用 · 维护</p></div><div class="footer-links"><a href="https://github.com/madbrolab/dian115" target="_blank" rel="noreferrer">GitHub</a><a href="notification-templates.html">通知模板</a><a href="index.html">Wiki 首页</a></div></div><div class="page-width copyright">Released for the DIAN115 community · 静态文档页面</div></footer><dialog class="search-dialog" id="searchDialog"><form method="dialog"><div class="dialog-head"><strong>搜索文档</strong><button value="close" aria-label="关闭">×</button></div><input id="searchInput" type="search" placeholder="输入模块、功能或关键词…" autocomplete="off"><div class="search-results" id="searchResults"></div></form></dialog><script src="assets/vitepress.js?v=2"></script></body></html>
+docker compose ps
+docker compose logs --tail=200 dian115</code></pre></div></section>
+
+<section><h2 id="flaresolverr">FlareSolverr 过盾工具</h2><p>UIndex 等资源站可能触发 Cloudflare 验证。只有使用这类站点时才需要单独部署 FlareSolverr，然后在系统设置的基础或代理配置中填写服务地址并测试。</p><div class="docs-code"><div class="docs-code-head"><span>docker-compose.yml · FlareSolverr</span><button class="docs-copy" type="button" data-copy="flareCompose">复制</button></div><pre id="flareCompose"><code>services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    ports:
+      - "8191:8191"
+    environment:
+      - LOG_LEVEL=info
+      - LOG_FILE=none
+      - LOG_HTML=false
+      - CAPTCHA_SOLVER=none
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./flaresolverr:/config</code></pre></div><div class="docs-table-wrap"><table class="docs-table"><thead><tr><th>部署关系</th><th>DIAN115 中填写</th><th>说明</th></tr></thead><tbody><tr><td>同一 Compose 桥接网络</td><td><code>http://flaresolverr:8191</code></td><td>推荐，容器名可直接解析。</td></tr><tr><td>DIAN115 使用 Host，同一宿主机</td><td><code>http://127.0.0.1:8191</code> 或服务器 IP</td><td>只有同机 Host 网络才适合 127.0.0.1。</td></tr><tr><td>部署在不同机器</td><td><code>http://FlareSolverr机器IP:8191</code></td><td>确认防火墙放行，尽量只允许内网访问。</td></tr></tbody></table></div><div class="docs-tip"><b>!</b><p>桥接网络中的 <code>127.0.0.1</code> 只指向 DIAN115 容器自己，不代表宿主机或 FlareSolverr。首次请求启动浏览器环境可能较慢，<code>8191</code> 不要暴露公网。</p></div></section>
+
+<section><h2 id="acceptance">首次启动与验收</h2><ol class="docs-sequence"><li><span><strong>打开管理界面</strong>访问 <code>http://主机IP:8095</code>。首次使用会要求设置管理员密码，没有需要猜测的默认密码。</span></li><li><span><strong>完成授权激活</strong>如果授权守卫提示激活，填写收到的 License Key；发码与核对方式见“捐赠、激活与排障”。</span></li><li><span><strong>立即完成安全设置</strong>设置强密码，需要外部访问时启用两步验证。OpenAPI Key 只在确实使用 Webhook、Madby 或外部 API 时创建。</span></li><li><span><strong>检查容器内路径</strong>文件管理应能看到 <code>/CloudNAS</code> 与 <code>/media</code>；看不到时先修正 Compose，不要继续创建整理或 STRM 规则。</span></li><li><span><strong>观察日志与状态</strong>确认容器没有反复重启，数据库位于 <code>/config</code>，端口没有冲突，页面能正常刷新。</span></li></ol><div class="docs-tip"><b>✓</b><p>最小验收标准：重启后管理员密码、激活状态和配置仍在；文件管理能浏览映射目录；仪表板没有持续性的数据库或权限错误。</p></div></section>
+
+<section><h2 id="upgrade">更新与回滚前检查</h2><ul><li>备份宿主机的 <code>config</code> 目录，其中包含主数据库、分库、缓存索引与运行设置。</li><li>使用 GitHub AI 工具时，同时备份 <code>dian115AI</code> 工作区内尚未推送的改动。</li><li>更新前结束重要整理、分享、秒传、字幕或容器更新任务，避免中途重启。</li><li>常规更新使用 <code>docker compose pull</code> 与 <code>docker compose up -d</code>，完成后检查健康状态与最近日志。</li></ul></section>
+<div class="docs-bottom"><div class="docs-edit"><span>已恢复原 Wiki 完整部署内容 · 2026-08-30</span><a href="https://github.com/madbrolab/dian115/tree/gh-pages" target="_blank">在 GitHub 上编辑此页 ↗</a></div><nav class="docs-pager"><a href="guide.html"><small>上一页</small><b>← 快速开始</b></a><a href="configure.html"><small>下一页</small><b>完整配置流程 →</b></a></nav></div>
+</main><aside class="docs-toc"><p class="docs-toc-title">On this page</p><ol class="toc-list"></ol></aside></div>
+<footer class="vp-footer docs-footer"><div class="page-width footer-inner"><div><a class="brand footer-brand" href="index.html"><img src="assets/brand-logo.svg" alt="DIAN115"></a><p>DIAN115 用户 Wiki · 部署 · 配置 · 使用 · 维护</p></div><div class="footer-links"><a href="features.html">功能手册</a><a href="support.html">捐赠与激活</a><a href="index.html">Wiki 首页</a></div></div></footer>
+<dialog class="search-dialog" id="searchDialog"><form method="dialog"><div class="dialog-head"><strong>搜索文档</strong><button value="close">×</button></div><input id="searchInput" type="search" placeholder="输入模块、功能或关键词…"><div class="search-results" id="searchResults"></div></form></dialog><script src="assets/vitepress.js?v=3"></script></body></html>

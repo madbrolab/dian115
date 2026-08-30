@@ -61,6 +61,8 @@
     ["部署指南", "Docker、Compose、端口与首次验收", "deploy.html"],
     ["路径与配置", "115、CloudDrive2、Emby 与目录规范", "configure.html"],
     ["功能总览", "探索、订阅、整理、播放代理与插件", "features.html"],
+    ["资源与插件", "文件管理、账号池、PT 站点、12 个插件和卫星发布树", "integrations.html"],
+    ["运维与扩展", "容器更新、缓存、门户、音乐、AI 和常用能力", "operations.html"],
     ["界面截图", "DIAN115 各模块真实界面预览", "screenshots.html"],
     ["参考手册", "端口、路径、环境变量与维护命令", "reference.html"],
     ["问题排查", "常见故障、日志与升级建议", "support.html"],
