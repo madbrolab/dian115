@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 932 168" role="img" aria-labelledby="title desc">
+  <title id="title">DIAN115</title>
+  <desc id="desc">DIAN115 horizontal logo for the red theme.</desc>
+  <g transform="scale(.84)">
+    <path fill="#FFF7F7" fill-rule="evenodd" d="M20 0h68c69 0 112 39 112 100S157 200 88 200H20C9 200 0 191 0 180V20C0 9 9 0 20 0Zm26 34v132h42c47 0 76-24 76-66s-29-66-76-66H46Z"/>
+    <path fill="#E72D2D" d="m77 67 58 33-58 33V67Z"/>
+  </g>
+  <g transform="translate(212 4)">
+    <path fill="#FFF7F7" d="M0 0h30v160H0z"/>
+    <path fill="#FFF7F7" fill-rule="evenodd" d="m72 160 51-160h28l50 160h-35l-12-40h-39l-12 40H72Zm52-69h21l-10-38-11 38Z"/>
+    <path fill="#FFF7F7" d="M235 160V0h35l50 102V0h31v160h-34L267 58v102h-32Z"/>
+    <path fill="#E72D2D" d="M394 160V55l-26 18V34l39-34h23v160h-36Z"/>
+    <path fill="#E72D2D" d="M495 160V55l-26 18V34l39-34h23v160h-36Z"/>
+    <path fill="#E72D2D" d="M594 0h110v31h-76v30h33c37 0 59 19 59 50 0 32-24 49-63 49h-64v-31h59c20 0 31-6 31-19 0-12-10-19-28-19h-61V0Z"/>
+  </g>
+</svg>

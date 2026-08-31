@@ -1,0 +1,44 @@
+{
+  "name": "DIAN-115",
+  "short_name": "DIAN-115",
+  "description": "115 网盘媒体自动化控制中心",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "any",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["entertainment", "multimedia", "utilities"],
+  "theme_color": "#1a1c2e",
+  "background_color": "#1a1c2e",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "ico.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "总览",
+      "short_name": "总览",
+      "url": "./overview",
+      "icons": [{ "src": "ico.png", "sizes": "256x256", "type": "image/png" }]
+    },
+    {
+      "name": "探索发现",
+      "short_name": "探索",
+      "url": "./automation/discovery",
+      "icons": [{ "src": "ico.png", "sizes": "256x256", "type": "image/png" }]
+    }
+  ]
+}

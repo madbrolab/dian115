@@ -16,6 +16,17 @@
   const lightboxImage = document.querySelector("#lightboxImage");
   const lightboxCaption = document.querySelector("#lightboxCaption");
 
+  const createDemoLink = () => {
+    const link = document.createElement("a");
+    link.className = "demo-nav-link";
+    link.href = "demo/#/overview";
+    link.textContent = "在线演示";
+    link.setAttribute("aria-label", "打开 DIAN115 在线演示");
+    return link;
+  };
+  document.querySelector(".desktop-nav")?.append(createDemoLink());
+  mobilePanel?.prepend(createDemoLink());
+
   const savedTheme = (() => {
     try { return localStorage.getItem("dian115-docs-theme"); } catch { return null; }
   })();

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">DIAN115 app icon</title>
+  <desc id="desc">DIAN115 D and play mark on a dark rounded square.</desc>
+  <rect x="8" y="8" width="240" height="240" rx="58" fill="#24344F"/>
+  <g transform="translate(38 38) scale(.9)">
+    <path fill="#FFFFFF" fill-rule="evenodd" d="M20 0h68c69 0 112 39 112 100S157 200 88 200H20C9 200 0 191 0 180V20C0 9 9 0 20 0Zm26 34v132h42c47 0 76-24 76-66s-29-66-76-66H46Z"/>
+    <path fill="#5B9CF6" d="m77 67 58 33-58 33V67Z"/>
+  </g>
+</svg>
