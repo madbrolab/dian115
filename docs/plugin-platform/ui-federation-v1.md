@@ -91,7 +91,15 @@ export default defineConfig({
 
 `@originjs/vite-plugin-federation` 的生产端默认生成 ESM remote entry，不要添加只适用于消费端 remote 配置的顶层 `format`。三个 shared 必须使用 `singleton: true` 和 `generate: false`。示例中的局部 `as any` 只用于绕过当前 Federation 插件缺少 `singleton` 字段的 TypeScript 声明，不会改变生成配置。插件不能打包自己的第二份 Vue/Naive UI/Lucide。宿主返回的 Federation descriptor 会明确列出 `shared: ["vue", "naive-ui", "@lucide/vue"]`。
 
-不要从 CDN 动态加载框架或可执行脚本；可执行构建产物必须全部进入签名包。页面可以渲染包内、HTTP、HTTPS、`data:` 和 `blob:` 图片，也可以发出普通浏览器请求。普通请求受 CORS、混合内容、Cookie 策略和页面生命周期约束；需要宿主代理、托管凭据、后台运行、审计或可靠重试时，应通过 action 进入 process，再由 `host.call` 请求。
+不要从 CDN 动态加载框架或可执行脚本；可执行构建产物必须全部进入签名包。页面可以渲染包内、HTTP、HTTPS、`data:` 和 `blob:` 图片，也可以发出普通浏览器请求。普通请求受 CORS、混合内容、Cookie 策略和页面生命周期约束；需要宿主代理、托管凭据、后台运行、审计或可靠重试时，应通过 action 进入 WASM runtime，再由 `host.call` 请求。
+
+### 大量封面与调用调度
+
+原生 `loading="lazy"` 只控制浏览器图片加载，不能限制插件提前发出的 action。使用 Broker 返回图片时，建议以实际滚动容器为 IntersectionObserver 的 root，在图片进入可视区域后排队；移出视口时取消尚未执行的任务并释放图片引用。滚动中暂停，停稳后仅补小批请求，例如每批 4 张、请求间隔 900 毫秒。保留单张重试和手动加载入口，避免无休止地重试坏图。
+
+单并发插件的封面、自动刷新和订阅应共用调用队列；用户操作优先于自动刷新和封面。取消前端等待不代表宿主已经取消执行，正在执行的调用必须等实际 Promise 完成才释放队列槽。组件卸载时关闭等待队列，避免继续向已离开的页面回传数据。不要反复拉取相同的完整 state 补丁。
+
+按图片来源合并请求，分别限制缓存条目数和字节数，并限制图片像素。优先向上游请求缩略图；可用 `Range` 减少传输，但不能假定上游一定遵守，完整性、截断标记和实际大小仍须检查。通过 action 返回 data URL 时，Base64 约增加三分之一体积；例如将二进制封面限制为 128 KiB，可为 256 KiB 的运行时业务 JSON 响应限额留下余量。Host Call 的 8 MiB 正文上限和 WASM 的 16 MiB 帧上限不是页面 action 的输出预算。
 
 ## 3. 组件 TypeScript 契约
 
