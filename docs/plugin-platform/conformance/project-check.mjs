@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { validateRuntime } from './runtime-check.mjs'
 
 const args = process.argv.slice(2)
 const valueOf = (name, fallback) => {
@@ -46,7 +47,11 @@ requireText(manifest.publisher?.key_id, 'manifest.publisher.key_id', 128)
 requireText(manifest.compatibility?.dian115, 'manifest.compatibility.dian115', 80)
 requireText(manifest.compatibility?.plugin_api, 'manifest.compatibility.plugin_api', 40)
 
-if (!['process','wasm'].includes(manifest.runtime?.kind) || !['dian115:process@1','dian115:wasm@1'].includes(manifest.runtime?.protocol)) fail('runtime must be process or wasm with a supported protocol')
+try {
+  validateRuntime(manifest.runtime, readJSON(resolve(conformanceRoot, '..', 'manifest.schema.json'), 'manifest schema'))
+} catch (error) {
+  fail(error.message)
+}
 requireText(manifest.runtime?.entry, 'manifest.runtime.entry', 240)
 if (manifest.ui?.mode !== 'federation') fail('ui.mode must be federation')
 for (const field of ['entry', 'assets_root', 'module']) requireText(manifest.ui?.federation?.[field], `manifest.ui.federation.${field}`, 240)

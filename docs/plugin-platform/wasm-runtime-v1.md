@@ -33,7 +33,9 @@ dian115_handle(ptr: i32, length: i32) -> i64
 
 ## 配额和生命周期
 
-`memory_mb`（4–512 MiB）、`timeout_ms`、`background_timeout_ms`、`max_concurrency`（1–16）由 manifest 声明。超时会取消 guest context；崩溃按 `restart_policy: on-failure` 受监督重启，关闭时先发送 `runtime.shutdown`，超时后终止 worker。WASM worker 只读挂载插件 package，持久化数据通过 Host Storage 保存。
+`memory_mb`（4–512 MiB）、`timeout_ms`（100–120000 毫秒）、`background_timeout_ms`（1000–3600000 毫秒）、`max_concurrency`（1–16）由 manifest 声明。`startup_timeout_ms` 和 `shutdown_timeout_ms` 均为 1000–60000 毫秒。前台 action 超时上限为 120 秒，后台 job 可单独设置更长预算；不要将后台预算写入 `timeout_ms`。越界清单会在安装时被拒绝，构包前应运行 `conformance/project-check.mjs`。
+
+超时会取消 guest context；崩溃按 `restart_policy: on-failure` 受监督重启，关闭时先发送 `runtime.shutdown`，超时后终止 worker。WASM worker 只读挂载插件 package，持久化数据通过 Host Storage 保存。
 
 ## Telegram 入站消息
 

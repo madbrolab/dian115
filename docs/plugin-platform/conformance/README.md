@@ -4,7 +4,7 @@
 
 ## 验证范围
 
-`project-check.mjs` 会在构包前检查 Manifest、市场条目、权限格式、三项前端 singleton 依赖、Federation 入口，以及 WASM magic（或 legacy process 的静态 Linux ELF）。它只使用 Node.js 标准库：
+`project-check.mjs` 会在构包前检查 Manifest、市场条目、权限格式、三项前端 singleton 依赖、Federation 入口，以及 WASM magic（或 legacy process 的静态 Linux ELF）。它通过 `runtime-check.mjs` 读取公开 `manifest.schema.json`，核对 runtime 协议配对、字段、超时、内存和并发范围。前台 `timeout_ms` 上限为 120000 毫秒，不能使用后台预算或浏览器传输上限代替。工具只使用 Node.js 标准库，分发时保留相邻脚本及 schema：
 
 ```bash
 node docs/plugin-platform/conformance/project-check.mjs \
@@ -19,6 +19,8 @@ node docs/plugin-platform/conformance/project-check.mjs \
 ```bash
 node docs/plugin-platform/conformance/openapi-check.mjs
 ```
+
+运行 `node --test docs/plugin-platform/conformance/runtime-check.test.mjs` 可验证超时越界回归：180000 毫秒的前台 action 必须被拒绝，120000 毫秒前台 action 与 300000 毫秒后台 job 的组合允许通过。
 
 `runtime-smoke.mjs` 会：
 
