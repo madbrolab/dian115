@@ -1,6 +1,6 @@
 # DIAN115 Host Call v2
 
-`host.call` 是 process 插件唯一的网络与宿主业务入口。它同时承载：
+`host.call` 是 WASM 和兼容 process 插件的网络与宿主业务入口。WASM 使用 `dian115.host_call` / `host_read` 导入承载下述业务请求，外层封装见 [WASM 协议](wasm-runtime-v1.md)。它同时承载：
 
 - 安装时批准的 DIAN115 本地 Host API；
 - 任意 HTTP/HTTPS 网站或本地服务请求。
@@ -343,3 +343,14 @@ lowercase_hex(SHA256(body))
 文件 Host API 会对输入和输出路径做额外过滤。禁止访问 `/config` 和 Linux 系统路径，包括 `/app`、`/bin`、`/boot`、`/dev`、`/etc`、`/home`、`/lib*`、`/proc`、`/root`、`/run`、`/sbin`、`/srv`、`/sys`、`/tmp`、`/usr`、`/var` 等。合法媒体挂载通常位于 `/data`、`/media`、`/mnt` 或配置的 CD2 挂载前缀，但是否可用仍由宿主文件管理器配置决定。
 
 路径保护同时应用于请求路径、规范化路径、符号链接解析结果、返回数据和已保存目录监控源。错误不会向插件暴露真实受保护路径。
+
+## 8. 指定实例和集数的订阅流程
+
+1. 读取 `/api/plugin-host/emby/instances`，让用户选择已配置凭据的实例；可将选择保存到本插件 Host Storage，不修改宿主默认。实例被停用、删除或移除凭据时要求重新选择，不能悄悄换库。
+2. 使用 `/api/tmdb/search?q=...` 确认 TV 候选，再读取 `/api/tmdb/tv/:id` 的 `seasons`。不能用同名电影或搜索第一项直接创建订阅。第 0 季为特别篇，总集数未知时应提示用户。
+3. 调用 `GET /api/plugin-host/emby/episodes?proxy_id=7&tmdb_id=123&season=2&total_episodes=8`。返回实例、TMDB、季、修正后总集数、`covered_episodes`、`needed_episodes` 和 `complete`。该接口严格匹配 TMDB 与季并读取所选实例；上游失败或分页不完整返回错误，不能显示为“全部缺失”。legacy 实例 ID 为 0 时省略 `proxy_id`。
+4. 确认后创建 `POST /api/subscribe/pool/intents`，传同一 `proxy_id`、`tmdb_id`、`media_type: "tv"`、`season`、`total_episodes`。自动追更使用 `episode_scope_mode: "follow"`；固定范围使用 `episode_scope_mode: "fixed"` 和 `initial_needed_episodes: "1-3,5"`。集数可以包含已公布但尚未播出的集，范围仍需在有效总集数内。普通插件请求不传 `library_snapshot_provided`，不需要 `library_id`。
+5. 宿主在创建前再次读取覆盖并从固定目标扣除已有集，然后才允许搜索排队。例如目标 `1-3`、已有 `1,3`，实际只补 `2`；空范围、非法范围或全部已有不会创建新记录。自动模式沿用宿主的补缺/洗版规则。未指定资源源时沿用宿主配置，仍受宿主订阅开关、资源源与授权条件限制。
+6. 只在收到 `code: "ok"` 和正数 `data.id` 后显示创建成功。保存该 ID，取消时调用对应 DELETE 并等待确认；网络超时不能当作未创建，必须查询宿主记录再决定是否重试。每次新的用户操作使用新幂等键，同一次重试保留原键。
+
+缺集能力必须以运行宿主的 API 目录为准。旧宿主没有 `/api/plugin-host/emby/episodes` 时应提示升级，不能退化为跳过媒体库核对。排期可使用 TV 详情的 `next_episode_to_air`；缺少该字段表示没有已公布的下一集信息。

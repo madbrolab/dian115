@@ -204,7 +204,7 @@ const emit = defineEmits<{
 
 普通浏览器网络能力不会替代 Host Call：跨域请求仍受 CORS，HTTPS 管理页加载 HTTP 资源仍受 mixed-content 规则，浏览器请求也没有宿主代理优先、托管凭据、后台生命周期、安装实例审计或重试语义。需要这些能力时必须通过 `api.invokeAction` 进入 process，再由 `host.call` 请求。
 
-组件与宿主仍通过带随机 channel 的 `postMessage` bridge 执行 `getState`、`invokeAction`、`refresh` 和 `close`。宿主只接受来自当前 iframe window、正确 source 标识和 channel 的消息。bridge 每次调用 30 秒超时，iframe 高度由 `ResizeObserver` 上报并限制在 320-100000 px。
+组件与宿主仍通过带随机 channel 的 `postMessage` bridge 执行 `getState`、`invokeAction`、`refresh` 和 `close`。宿主只接受来自当前 iframe window、正确 source 标识和 channel 的消息。普通 bridge 调用 30 秒超时；`invokeAction` 使用 Manifest `runtime.timeout_ms`（限定在 30–300 秒）再加 10 秒传输余量，管理端请求上限为 310 秒。超时不代表写操作已撤销，应根据业务 ID 或重新查询状态核对，避免重复提交。iframe 高度由 `ResizeObserver` 上报并限制在 320-100000 px。
 
 bridge 消息在发送前按 JSON 往返复制。props、action input、state 和 action result 必须可由 `JSON.stringify`/`JSON.parse` 无损传递；不要传函数、DOM 节点、循环引用、`BigInt`、`Symbol`、`Map`、`Set`、Vue ref/reactive proxy 或类实例。二进制数据使用 Base64 字符串，时间使用 ISO 8601 字符串。
 

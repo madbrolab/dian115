@@ -209,6 +209,13 @@ x-dian115-host-apis:
       description: 列出可供插件选择的已启用 Emby 实例，不返回服务器地址或 API Key。
       host_credentials: true
     - method: GET
+      path: /api/plugin-host/emby/episodes
+      category: emby
+      risk: read
+      title: 读取 Emby 缺集
+      description: 按实例、TMDB 剧集和季数读取已有集与缺集，不返回地址、密钥或路径。
+      host_credentials: true
+    - method: GET
       path: /api/plugin-host/emby/stats
       category: emby
       risk: read
@@ -1269,6 +1276,44 @@ paths:
         '400':
           $ref: '#/components/responses/HostError'
         default:
+          $ref: '#/components/responses/HostError'
+  /api/plugin-host/emby/episodes:
+    get:
+      tags: [Direct Host APIs]
+      summary: 读取 Emby 缺集
+      description: 严格读取所选实例的 TMDB 剧集和季数。total_episodes 为 TMDB 季总集数，宿主应用集数修正规则；查询失败不会返回整季全缺。返回快照仅供预览，创建固定范围订阅时宿主重新检测覆盖情况。
+      operationId: directHost_pluginEmbyEpisodes
+      x-dian115-category: emby
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/EmbyProxyID'
+        - name: tmdb_id
+          in: query
+          required: true
+          schema: {type: integer, minimum: 1, maximum: 2147483647}
+        - name: season
+          in: query
+          schema: {type: integer, minimum: 0, maximum: 1000, default: 1}
+        - name: total_episodes
+          in: query
+          required: true
+          schema: {type: integer, minimum: 1, maximum: 10000}
+      responses:
+        '200':
+          description: 所选实例的季覆盖快照
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginEmbyEpisodeCoverage'
+        '400':
+          $ref: '#/components/responses/HostError'
+        '409':
+          $ref: '#/components/responses/HostError'
+        '502':
+          $ref: '#/components/responses/HostError'
+        '503':
           $ref: '#/components/responses/HostError'
   /api/plugin-host/emby/stats:
     get:
@@ -3080,6 +3125,18 @@ components:
         retry_count: {type: integer, minimum: 0}
         created_at: {type: string, format: date-time}
         updated_at: {type: string, format: date-time}
+    PluginEmbyEpisodeCoverage:
+      type: object
+      additionalProperties: false
+      required: [proxy_id, tmdb_id, season, total_episodes, covered_episodes, needed_episodes, complete]
+      properties:
+        proxy_id: {type: integer, format: int64, minimum: 0}
+        tmdb_id: {type: integer, minimum: 1}
+        season: {type: integer, minimum: 0}
+        total_episodes: {type: integer, minimum: 1, maximum: 10000}
+        covered_episodes: {type: string}
+        needed_episodes: {type: string}
+        complete: {type: boolean}
     PoolIntentCreateRequest:
       type: object
       additionalProperties: false
@@ -3098,7 +3155,9 @@ components:
           items: {type: string}
         total_episodes: {type: integer, minimum: 0}
         initial_covered_episodes: {type: string}
-        initial_needed_episodes: {type: string}
+        initial_needed_episodes:
+          type: string
+          description: 固定范围订阅（episode_scope_mode=fixed）不提交 library_snapshot_provided 时，宿主先读取所选实例媒体库，再从目标中扣除已有集，最后创建并启动搜索。范围为空、越界或全部已存在时不创建订阅。
         library_snapshot_provided: {type: boolean}
         episode_scope_mode: {type: string, enum: [follow, fixed]}
     PoolIntentEpisodesRequest:
@@ -3260,6 +3319,18 @@ components:
         id: {type: integer}
         name: {type: string}
         original_name: {type: string}
+        original_language: {type: string}
+        next_episode_to_air:
+          description: 下一集播出信息；无已公布排期时省略此字段。
+          type: object
+          additionalProperties: true
+          required: [id, season_number, episode_number, air_date, name]
+          properties:
+            id: {type: integer}
+            season_number: {type: integer, minimum: 0}
+            episode_number: {type: integer, minimum: 0}
+            air_date: {type: string}
+            name: {type: string}
         overview: {type: string}
         poster_path: {type: string}
         backdrop_path: {type: string}

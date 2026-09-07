@@ -224,7 +224,9 @@ At runtime, call `GET /api/plugin-host/emby/instances`, let the user choose an `
 {"method":"GET","path":"/api/plugin-host/emby/items?proxy_id=2&type=Movie&q=Dune&limit=20&offset=0"}
 ```
 
-The item result includes IDs, titles, overview, year, rating, genres, provider IDs, series/episode numbers, dates and image-presence hints. It intentionally excludes the Emby URL, API Key, filesystem paths, media sources, user data, sessions, devices and logs. There are no Emby mutations in the plugin catalog. See the five `PluginEmby*` operations and exact schemas in [OpenAPI](openapi-v1.yaml), and use `offset`/`limit` pagination up to 50 items per call.
+The item result includes IDs, titles, overview, year, rating, genres, provider IDs, series/episode numbers, dates and image-presence hints. It intentionally excludes the Emby URL, API Key, filesystem paths, media sources, user data, sessions, devices and logs. There are no Emby mutations in the plugin catalog. See the six `PluginEmby*` operations and exact schemas in [OpenAPI](openapi-v1.yaml), and use `offset`/`limit` pagination up to 50 items per call.
+
+For episode subscriptions, also declare `GET /api/plugin-host/emby/episodes`. Confirm the TMDB TV identity and season (including season 0), then pass `proxy_id`, `tmdb_id`, `season` and `total_episodes` to preview coverage. A failed library read is an error, never proof that every episode is missing. Store the user's preferred instance in plugin storage; this does not change the host default. Create the intent with the same instance and season. For a fixed user target, send `episode_scope_mode: "fixed"` and `initial_needed_episodes: "1-3,5"`; the host subtracts live owned episodes before starting work. Do not send `library_snapshot_provided` to bypass the library scan. See the complete flow in [Host Call v2](host-call-v2.md#8-指定实例和集数的订阅流程).
 
 ## 6. Telegram
 
