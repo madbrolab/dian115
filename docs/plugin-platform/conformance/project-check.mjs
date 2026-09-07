@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { validateRuntime } from './runtime-check.mjs'
+import { validateRuntime, validateJobSchedules } from './runtime-check.mjs'
 
 const args = process.argv.slice(2)
 const valueOf = (name, fallback) => {
@@ -49,6 +49,7 @@ requireText(manifest.compatibility?.plugin_api, 'manifest.compatibility.plugin_a
 
 try {
   validateRuntime(manifest.runtime, readJSON(resolve(conformanceRoot, '..', 'manifest.schema.json'), 'manifest schema'))
+  validateJobSchedules(manifest.jobs)
 } catch (error) {
   fail(error.message)
 }

@@ -20,7 +20,7 @@ node docs/plugin-platform/conformance/project-check.mjs \
 node docs/plugin-platform/conformance/openapi-check.mjs
 ```
 
-运行 `node --test docs/plugin-platform/conformance/runtime-check.test.mjs` 可验证超时越界回归：180000 毫秒的前台 action 必须被拒绝，120000 毫秒前台 action 与 300000 毫秒后台 job 的组合允许通过。
+运行 `node --test docs/plugin-platform/conformance/runtime-check.test.mjs` 可验证超时和任务间隔回归：180000 毫秒的前台 action 必须被拒绝，120000 毫秒前台 action 与 300000 毫秒后台 job 的组合允许通过。`project-check.mjs` 同时检查五字段数值 cron，拒绝一分钟任务及小时边界处不足五分钟的间隔；`*/5 * * * *` 可用于最短周期任务。
 
 `runtime-smoke.mjs` 会：
 

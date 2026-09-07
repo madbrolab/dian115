@@ -238,6 +238,8 @@ stdio 是全双工的。宿主可能并发发起最多 `runtime.max_concurrency`
 
 ## 7. Scheduled job 调用
 
+`default_schedule` 使用五字段数值 cron（分钟、小时、月内日、月、星期），支持通配符、列表、升序范围和步长。分钟集合中任意相邻触发点（包含跨整点的间隔）不得少于 5 分钟；例如 `*/5 * * * *` 合法，`* * * * *` 不合法。月内日和星期不可同时限制。此调度规则同样适用于 WASM job。
+
 Manifest job：
 
 ```json
