@@ -92,3 +92,5 @@ UI 使用宿主同一套 Vue 3、Naive UI 和 `@lucide/vue` singleton。示例�
 - Host API、网络路由、Telegram 注册和文件操作都与公开文档一致。
 
 黑盒联调通过不等于插件获得了未声明权限；最终安装仍由宿主重新校验签名、Manifest、权限、静态 ELF、UI 和运行时状态。
+
+安装包校验与运行响应校验必须分别执行。安装成功只说明包、权限和入口符合要求；发布前还应把真实模块的 state/action/job 返回值送入宿主验收，检查状态枚举、256 KiB 业务 JSON 上限以及 state 的版本/ETag。尤其要覆盖 action 返回 `ok`、job 返回 `succeeded` 的拒绝用例，并用大数据量检查分页是否完整。只在 mock bridge 中读取 `result.state`，或只检查 JSON-RPC 没有 error，无法发现这些协议不兼容。

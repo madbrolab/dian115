@@ -35,6 +35,10 @@ Guest 可根据当前操作设置更小的本地响应预算；在 `host_call` �
 
 或 `{"error":{"code":-32602,"message":"..."}}`。`op` 包括 `state`、`action`、`job` 和 `event`；事件的 topic 必须先在 manifest 声明并拥有 `events.subscribe` 能力。状态响应需要稳定的 `state_version` 和强 ETag，重复的 `invocation_id` 使用宿主持久化投递账本重放。
 
+Action 的业务结果 `status` 仅允许 `succeeded`、`failed`、`accepted` 或 `skipped`；`ok` 不合法，会触发 `runtime_protocol_error`。定时 job 只接受 `accepted` 或 `skipped`，不能直接复用返回 `succeeded` 的 action 结果。JSON-RPC 封套成功不代表其中的业务结果已符合宿主协议。
+
+大量排期或列表应在插件自己的 action 输入、输出中定义分页契约；宿主不会自动分页或截断业务 JSON。每页应留足封套余量，后续页携带同一数据版本，前端仅在完整版本读取成功后替换现有数据。不要在结果中重复附带已包含于 state 的同一批记录。
+
 ## 配额和生命周期
 
 `memory_mb`（4–512 MiB）、`timeout_ms`（100–120000 毫秒）、`background_timeout_ms`（1000–3600000 毫秒）、`max_concurrency`（1–16）由 manifest 声明。`startup_timeout_ms` 和 `shutdown_timeout_ms` 均为 1000–60000 毫秒。前台 action 超时上限为 120 秒，后台 job 可单独设置更长预算；不要将后台预算写入 `timeout_ms`。越界清单会在安装时被拒绝，构包前应运行 `conformance/project-check.mjs`。
