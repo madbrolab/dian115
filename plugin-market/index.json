@@ -1,6 +1,110 @@
 {
   "$schema": "./index.schema.json",
-  "plugins": [],
+  "plugins": [
+    {
+      "id": "douban115",
+      "name": "豆瓣订阅中心",
+      "version": "1.0.9",
+      "description": "自动将豆瓣榜单与「想看」列表加入 dian115 订阅，并同步 Emby 观影记录到豆瓣。",
+      "author": "oOStanOo",
+      "homepage": "https://github.com/oOStanOo/dian115-plugins",
+      "icon_url": "assets/douban115.svg",
+      "package_url": "https://github.com/oOStanOo/dian115-plugins/releases/download/v1.0.9/douban115-1.0.9.d115p",
+      "sha256": "757a28f2eb2cc3f89464a102f891658bbd78cb577182d354b37a13652d0e756b",
+      "runtime": {
+        "kind": "wasm",
+        "protocol": "dian115:wasm@1",
+        "autostart": true,
+        "trust_level": "wasm-sandbox"
+      },
+      "permissions": {
+        "apis": [
+          {
+            "method": "GET",
+            "path": "/api/tmdb/search",
+            "reason": "按豆瓣榜单/想看条目标题搜索 TMDB 以解析媒体身份"
+          },
+          {
+            "method": "GET",
+            "path": "/api/tmdb/movie/:id",
+            "reason": "读取电影详情用于匹配豆瓣条目"
+          },
+          {
+            "method": "GET",
+            "path": "/api/tmdb/tv/:id",
+            "reason": "读取剧集详情用于匹配豆瓣条目"
+          },
+          {
+            "method": "GET",
+            "path": "/api/subscribe/pool/intents",
+            "reason": "查询现有订阅用于去重"
+          },
+          {
+            "method": "POST",
+            "path": "/api/subscribe/pool/intents",
+            "reason": "把豆瓣榜单/想看条目创建为聚合订阅"
+          },
+          {
+            "method": "GET",
+            "path": "/api/plugin-runtime/storage/:key",
+            "reason": "读取插件自己的配置与历史数据"
+          },
+          {
+            "method": "PUT",
+            "path": "/api/plugin-runtime/storage/:key",
+            "reason": "保存插件自己的配置与历史数据"
+          },
+          {
+            "method": "POST",
+            "path": "/api/notifications/plugin",
+            "reason": "推送订阅与同步结果通知"
+          }
+        ],
+        "network": [
+          {
+            "origin": "https://rsshub.ddsrem.com",
+            "methods": [
+              "GET"
+            ],
+            "proxy_mode": "system",
+            "reason": "读取豆瓣榜单 RSS 数据"
+          },
+          {
+            "origin": "https://www.douban.com",
+            "methods": [
+              "GET",
+              "POST"
+            ],
+            "proxy_mode": "system",
+            "reason": "读取豆瓣搜索与想看动态"
+          },
+          {
+            "origin": "https://movie.douban.com",
+            "methods": [
+              "GET",
+              "POST"
+            ],
+            "proxy_mode": "system",
+            "reason": "读取豆瓣想看列表并回写观看状态"
+          },
+          {
+            "origin": "https://m.douban.com",
+            "methods": [
+              "GET"
+            ],
+            "proxy_mode": "system",
+            "reason": "读取豆瓣移动页条目信息，并在标题匹配失败时取条目的原名/又名用于重新匹配 TMDB"
+          }
+        ]
+      },
+      "tags": [
+        "douban",
+        "emby",
+        "subscribe",
+        "automation"
+      ]
+    }
+  ],
   "repository": {
     "homepage": "https://github.com/madbrolab/dian115",
     "id": "madbrolab.dian115",
