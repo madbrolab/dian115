@@ -1,0 +1,155 @@
+{
+  "$schema": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/manifest.schema.json",
+  "schema_version": 1,
+  "id": "local.douban115",
+  "name": "豆瓣订阅中心",
+  "version": "1.0.8",
+  "description": "自动将豆瓣榜单与「想看」列表加入 dian115 订阅，并同步 Emby 观影记录到豆瓣。",
+  "default_locale": "zh-CN",
+  "publisher": {
+    "name": "Local Publisher",
+    "key_id": "ed25519:REPLACED_BY_PACKAGER",
+    "url": "https://example.com/plugins/douban115"
+  },
+  "compatibility": {
+    "dian115": ">=3.8.51 <5.0.0",
+    "plugin_api": "^2.0"
+  },
+  "runtime": {
+    "kind": "wasm",
+    "entry": "runtime/plugin.wasm",
+    "protocol": "dian115:wasm@1",
+    "startup_timeout_ms": 10000,
+    "shutdown_timeout_ms": 5000,
+    "timeout_ms": 120000,
+    "background_timeout_ms": 3600000,
+    "max_concurrency": 1,
+    "restart_policy": "on-failure",
+    "resident": true,
+    "memory_mb": 256
+  },
+  "permissions": {
+    "apis": [
+      {
+        "method": "GET",
+        "path": "/api/tmdb/search",
+        "reason": "按豆瓣榜单/想看条目标题搜索 TMDB 以解析媒体身份"
+      },
+      {
+        "method": "GET",
+        "path": "/api/tmdb/movie/:id",
+        "reason": "读取电影详情用于匹配豆瓣条目"
+      },
+      {
+        "method": "GET",
+        "path": "/api/tmdb/tv/:id",
+        "reason": "读取剧集详情用于匹配豆瓣条目"
+      },
+      {
+        "method": "GET",
+        "path": "/api/subscribe/pool/intents",
+        "reason": "查询现有订阅用于去重"
+      },
+      {
+        "method": "POST",
+        "path": "/api/subscribe/pool/intents",
+        "reason": "把豆瓣榜单/想看条目创建为聚合订阅"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plugin-runtime/storage/:key",
+        "reason": "读取插件自己的配置与历史数据"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/plugin-runtime/storage/:key",
+        "reason": "保存插件自己的配置与历史数据"
+      },
+      {
+        "method": "POST",
+        "path": "/api/notifications/plugin",
+        "reason": "推送订阅与同步结果通知"
+      }
+    ],
+    "network": [
+      {
+        "origin": "https://rsshub.ddsrem.com",
+        "methods": ["GET"],
+        "proxy_mode": "system",
+        "reason": "读取豆瓣榜单 RSS 数据"
+      },
+      {
+        "origin": "https://www.douban.com",
+        "methods": ["GET", "POST"],
+        "proxy_mode": "system",
+        "reason": "读取豆瓣搜索与想看动态"
+      },
+      {
+        "origin": "https://movie.douban.com",
+        "methods": ["GET", "POST"],
+        "proxy_mode": "system",
+        "reason": "读取豆瓣想看列表并回写观看状态"
+      },
+      {
+        "origin": "https://m.douban.com",
+        "methods": ["GET"],
+        "proxy_mode": "system",
+        "reason": "读取豆瓣移动页条目信息，并在标题匹配失败时取条目的原名/又名用于重新匹配 TMDB"
+      },
+      {
+        "origin": "http://127.0.0.1:3000",
+        "methods": ["GET"],
+        "proxy_mode": "direct",
+        "reason": "读取本机 CookieCloud（dian115 内置）中的豆瓣 Cookie；内网地址必须直连，否则会被宿主全局代理拦截"
+      },
+      {
+        "origin": "http://localhost:3000",
+        "methods": ["GET"],
+        "proxy_mode": "direct",
+        "reason": "读取本机 CookieCloud 中的豆瓣 Cookie（内网直连）"
+      },
+      {
+        "origin": "http://127.0.0.1:8088",
+        "methods": ["GET"],
+        "proxy_mode": "direct",
+        "reason": "读取本机 CookieCloud Server 默认端口中的豆瓣 Cookie（内网直连）"
+      },
+      {
+        "origin": "http://localhost:8088",
+        "methods": ["GET"],
+        "proxy_mode": "direct",
+        "reason": "读取本机 CookieCloud Server 默认端口中的豆瓣 Cookie（内网直连）"
+      },
+      {
+        "origin": "http://127.0.0.1:8080",
+        "methods": ["GET"],
+        "proxy_mode": "direct",
+        "reason": "读取本机 CookieCloud 常见端口中的豆瓣 Cookie（内网直连）"
+      },
+      {
+        "origin": "http://localhost:8080",
+        "methods": ["GET"],
+        "proxy_mode": "direct",
+        "reason": "读取本机 CookieCloud 常见端口中的豆瓣 Cookie（内网直连）"
+      }
+    ]
+  },
+  "ui": {
+    "mode": "federation",
+    "icon": "frontend/icon.svg",
+    "federation": {
+      "entry": "frontend/dist/assets/remoteEntry.js",
+      "assets_root": "frontend/dist/assets",
+      "module": "./AppPage"
+    }
+  },
+  "homepage": "https://example.com/plugins/douban115",
+  "repository": "https://example.com/source/douban115",
+  "license": "MIT",
+  "tags": [
+    "douban",
+    "emby",
+    "subscribe",
+    "automation"
+  ]
+}

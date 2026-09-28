@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#2E7D32"/>
+  <rect x="14" y="16" width="36" height="32" rx="5" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <line x1="14" y1="26" x2="50" y2="26" stroke="#ffffff" stroke-width="3"/>
+  <circle cx="22" cy="21" r="1.6" fill="#ffffff"/>
+  <text x="32" y="40" text-anchor="middle" font-family="PingFang SC, sans-serif" font-size="15" font-weight="700" fill="#ffffff">豆</text>
+</svg>

@@ -1,0 +1,32 @@
+{
+  "name": "dian115-douban115",
+  "private": true,
+  "version": "1.0.8",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build:ui": "vue-tsc --noEmit && vite build",
+    "build:preview": "vite build --config vite.preview.config.ts",
+    "build:runtime": "node scripts/build-runtime.mjs",
+    "build": "npm run build:ui && npm run build:runtime",
+    "check": "node ${DIAN115_CONFORMANCE:-../../conformance}/project-check.mjs --manifest manifest.template.json --market market-entry.template.json --build-root build --require-build",
+    "package": "node scripts/package.mjs",
+    "release": "npm run build && npm run check && npm run package"
+  },
+  "peerDependencies": {
+    "@lucide/vue": "^1.16.0",
+    "naive-ui": "^2.38.0",
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@lucide/vue": "^1.16.0",
+    "@originjs/vite-plugin-federation": "^1.4.1",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "naive-ui": "^2.38.0",
+    "typescript": "^5.0.0",
+    "vite": "^6.4.3",
+    "vue": "^3.4.0",
+    "vue-tsc": "^2.0.0",
+    "yazl": "^3.3.1"
+  }
+}
