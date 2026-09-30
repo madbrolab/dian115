@@ -1,0 +1,19 @@
+{
+  "id": "/music/",
+  "name": "DIAN115 Music",
+  "short_name": "Music",
+  "description": "属于你的私人音乐播放器：专辑、收藏、歌单与同步歌词。",
+  "start_url": "/music/",
+  "scope": "/music/",
+  "display": "standalone",
+  "background_color": "#fbfbfd",
+  "theme_color": "#f8f8fa",
+  "lang": "zh-CN",
+  "orientation": "any",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    { "src": "/music/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/music/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "prefer_related_applications": false
+}
