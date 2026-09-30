@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="referrer" content="no-referrer" />
+    <title>DIAN115 Music 演示</title>
+    <script>
+      // 正式部署时音乐服务根地址会跳到 /music/。演示站把播放页放在上一级目录，
+      // 这里保留同样的地址形态，方便助手按 `${base}/music/?embedded=1` 打开。
+      location.replace('../index.html' + location.search + location.hash)
+    </script>
+    <noscript><meta http-equiv="refresh" content="0;url=../index.html"></noscript>
+  </head>
+  <body></body>
+</html>
