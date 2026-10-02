@@ -100,11 +100,21 @@ export async function saveSettings(patch) {
   return next
 }
 
+// Cloud metadata endpoints have no legitimate reason to be a user's DIAN115
+// server and are the classic SSRF pivot point, so they stay blocked even
+// though this field otherwise intentionally allows LAN/localhost addresses.
+const BLOCKED_HOSTS = new Set(['169.254.169.254', 'metadata.google.internal', 'fd00:ec2::254'])
+
 // Drop trailing slashes so `${base}${path}` is always well formed.
 export function normalizeBaseUrl(raw) {
   const value = String(raw || '').trim().replace(/\/+$/, '')
   if (!value) return ''
   if (!/^https?:\/\//i.test(value)) return ''
+  try {
+    if (BLOCKED_HOSTS.has(new URL(value).hostname.toLowerCase())) return ''
+  } catch {
+    return ''
+  }
   return value
 }
 
