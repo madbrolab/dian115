@@ -88,15 +88,26 @@ export const DEFAULT_SETTINGS = {
   updateCookies: false,
 }
 
+// The API key is kept out of chrome.storage.local (persisted to disk in
+// plaintext) and stored in chrome.storage.session instead, which is
+// memory-only and cleared when the browser closes.
 export async function loadSettings() {
-  const stored = await chrome.storage.local.get('settings')
-  return { ...DEFAULT_SETTINGS, ...(stored && stored.settings ? stored.settings : {}) }
+  const [stored, session] = await Promise.all([
+    chrome.storage.local.get('settings'),
+    chrome.storage.session.get('apiKey'),
+  ])
+  const base = { ...DEFAULT_SETTINGS, ...(stored && stored.settings ? stored.settings : {}) }
+  return { ...base, apiKey: (session && session.apiKey) || '' }
 }
 
 export async function saveSettings(patch) {
   const current = await loadSettings()
   const next = { ...current, ...patch }
-  await chrome.storage.local.set({ settings: next })
+  const { apiKey, ...rest } = next
+  await Promise.all([
+    chrome.storage.local.set({ settings: rest }),
+    chrome.storage.session.set({ apiKey: apiKey || '' }),
+  ])
   return next
 }
 
