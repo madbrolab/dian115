@@ -18,7 +18,7 @@
 
 高级版与 S.O. 均可使用门户与数据运维。高级版最多 10 个门户小号、3 个 Emby 代理实例；S.O. 无该门户人数上限，最多 6 个代理实例，并拥有独立 Telegram 群组管理机器人。
 
-授权获取显示官方此前发布的捐赠收款码，由官方 @succt 确认类型、金额、获取方式和有效期。通知教程引导用户在当前设计器中查看事件与可用变量，并分别验证 Telegram、企业微信与微信 ClawBot。
+授权获取显示官方此前发布的捐赠收款码。依据项目所有者 2026-10-08 的明确说明，个人版（高级版）捐赠 199 元、S.O. 版捐赠 499 元，直接扫码并在付款备注填写邮箱即可，无需提前联系；@succt 作为异常与问题支持入口。版本卡片、首页捐赠区与授权指南保持一致。通知教程引导用户在当前设计器中查看事件与可用变量，并分别验证 Telegram、企业微信与微信 ClawBot。
 
 CD2 与路径教程依据当前配置引导核对：CD2 的 CloudNAS 使用 shared；DIAN115 与 Emby 使用 rslave，媒体目标路径保持一致；挂载点名称 CloudDrive，源目录 /，API Token 提供文件读写权限；保存 CD2 API 设置后自动读取 /CloudNAS/CloudDrive。部署示例为独立编写，参考 CloudDrive2 官方 Docker Hub 的 FUSE、Host 网络和配置持久化说明（https://hub.docker.com/r/cloudnas/clouddrive2）。
 

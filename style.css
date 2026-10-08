@@ -174,13 +174,103 @@ html[data-offscreen=true] .hero-art *,html[data-offscreen=true] .hero-atmosphere
 @media(max-width:360px) {.hero h1 {font-size:44px}.hero-art {height:450px;min-height:450px}.hero .eyebrow {font-size:12px;letter-spacing:.6px}.scene-caption #posterMeta {max-width:170px}.scene-caption strong {font-size:20px}.scene-controls {gap:5px}.scene-controls .icon-button {width:27px;height:27px}.scene-label {font-size:12px;left:0;letter-spacing:.8px}.hero-actions {gap:15px}.hero-actions .button {padding-inline:15px}.brand small {font-size:11px}.feature-tab {font-size:13px;padding-inline:10px}.music-mini {left:8px;gap:9px}.setup-step {gap:8px;padding:12px 8px}.setup-step b {font-size:13px}.setup-step small {font-size:12px}.donation-qr {width:210px}.license-actions {gap:17px}}
 @media(max-width:650px) {.guide-table {font-size:14px}.guide-table thead {display:none}.guide-table tbody,.guide-table tr,.guide-table td {display:block;width:100%}.guide-table tr {border:1px solid var(--line);margin-bottom:15px;border-radius:4px;overflow:hidden}.guide-table td {border:0;padding:13px 16px;background:var(--bg)}.guide-table td+td {border-top:1px solid var(--line)}.guide-table td::before {content:attr(data-label);display:block;font-size:12px;color:var(--accent);margin-bottom:5px}}
 .license-seal small {max-width:80px;text-align:center;line-height:1.5;letter-spacing:.6px}
+/* Donation amounts are visible before scanning, and the QR itself stays still. */
+.edition-price {display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 15px;margin-top:26px;position:relative;z-index:2}
+.edition-price>span {font-size:13px;color:var(--muted)}
+.edition-price strong {grid-column:1;font-size:48px;font-weight:500;line-height:1.3;letter-spacing:-2px;color:var(--ink)}
+.edition-price strong small {font-size:23px;vertical-align:top;line-height:2;margin-right:7px;letter-spacing:0;color:var(--accent)}
+.edition-price a {grid-column:2;grid-row:1/3;display:flex;align-items:center;gap:8px;padding:10px 0;font-size:14px;color:var(--accent)}
+.edition-price a .icon {width:16px;height:16px;transition:translate .4s var(--ease)}
+.edition-price a:hover .icon {translate:0 4px}
+.donation-prices {display:flex;flex-wrap:wrap;gap:12px;margin-top:22px}
+.donation-prices>div {flex:1;min-width:150px;padding:17px 19px;background:var(--accent-soft);border:1px solid var(--line);border-radius:5px;display:grid;gap:5px}
+.donation-prices span {font-size:14px;color:var(--muted)}
+.donation-prices strong {font-size:32px;font-weight:500;line-height:1.4;color:var(--ink);letter-spacing:-1px}
+.donation-prices small {font-size:12px;color:var(--muted);line-height:1.7}
+.reader-donation>div {min-width:0;flex:1}.reader-donation .donation-prices>div {min-width:120px;padding:12px 14px}
+#donate {scroll-margin-top:155px}#donate:target {animation:donationFocus 1.8s var(--ease)}
+
+/* Light follows interaction across the homepage, with staggered details on entry. */
+.chapter {isolation:isolate}
+.chapter::after {content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 82% 35%,color-mix(in srgb,var(--accent) 6%,transparent),transparent 58%);animation:chapterLight 12s ease-in-out infinite alternate}
+.chapter:nth-child(even)::after {animation-delay:-6s;background-position:30% 70%}
+.motion-card {position:relative;isolation:isolate;--spot-x:50%;--spot-y:20%;--spot-strength:.15}
+.card-light {position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(400px circle at var(--spot-x) var(--spot-y),color-mix(in srgb,var(--accent) 15%,transparent),transparent 70%);opacity:var(--spot-strength);transition:opacity .6s;z-index:0}
+.motion-card:hover {--spot-strength:1}
+.portal-directory .card-light {z-index:-1}
+.button,.icon-button,.feature-tab,.portal-filter,.copy-code {position:relative;isolation:isolate}
+.interaction-ripple {position:absolute;inset:0;z-index:3;border-radius:inherit;pointer-events:none;overflow:hidden}
+.interaction-ripple::after {content:'';position:absolute;left:var(--ripple-x);top:var(--ripple-y);width:var(--ripple-size);height:var(--ripple-size);border-radius:50%;background:radial-gradient(circle,transparent 40%,#c6ddff30 70%,transparent 72%);animation:interactionRing .65s var(--ease) both}
+.js-motion .motion-part {opacity:0;translate:0 16px;transition:opacity .75s var(--part-delay,0ms),translate 1s var(--part-delay,0ms) var(--ease)}
+.js-motion .in-view .motion-part {opacity:1;translate:0 0}
+.js-motion .reveal:not(.section-heading) {transition-duration:1s,1.15s,.85s}
+.setup-step[aria-selected=true] b {animation:captionEnter .55s var(--ease)}
+.setup-step[aria-selected=true] .icon {animation:nodePulse 5s ease-in-out infinite}
+.portal-tile.selected>.icon {animation:portalIcon 3.5s ease-in-out infinite}
+.feature-item:hover .item-num {color:var(--accent);translate:2px 0;transition:translate .4s,color .4s}
+.motion-card:hover .demo-title>.icon {rotate:-12deg;transition:rotate .5s var(--ease)}
+.mobile-menu:not([hidden]) {animation:menuUnfold .5s var(--ease) both;transform-origin:top right}
+.mobile-menu a {animation:detailEnter .55s var(--ease) both;animation-delay:var(--menu-delay,0ms)}
+.poster-gloss::after {content:'';position:absolute;inset:-20% -70%;background:linear-gradient(110deg,transparent 42%,#ffffff16 48%,#ffffff28 50%,transparent 56%);transform:translateX(-65%);animation:posterSweep 10s ease-in-out infinite}
+.cinema-poster:not(.active) .poster-gloss::after {animation:none;opacity:0}
+.scene-grid {animation:gridDrift 14s linear infinite}
+.orbital-line {animation:orbitLight 14s ease-in-out infinite alternate}
+.scene-label i {animation:livePulse 3s ease-in-out infinite}
+
+/* Guides and search open in layers, then reverse before leaving the top layer. */
+dialog[open] {animation:modalEnter .62s var(--ease) both;transform-origin:50% 35%}
+dialog[open]::backdrop {animation:backdropEnter .5s ease both}
+dialog[open].is-closing {animation:modalLeave .26s ease both;pointer-events:none}
+dialog[open].is-closing::backdrop {animation:backdropLeave .26s ease both}
+.reader-toolbar {overflow:hidden;background:linear-gradient(105deg,var(--surface),var(--raised),var(--surface));background-size:200% 100%;animation:toolbarLight 12s ease-in-out infinite}
+.reader-progress {position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--line);pointer-events:none}
+.reader-progress span {display:block;width:100%;height:100%;background:var(--accent);box-shadow:0 0 10px var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .2s linear}
+.reader-content.doc-enter>.eyebrow,.reader-content.doc-enter>h1,.reader-content.doc-enter>.reader-lead {animation:readerHeading .7s var(--reader-delay,0ms) var(--ease) both}
+.reader-dialog[open] .reader-toc strong {animation:readerHeading .65s .12s var(--ease) both}
+.reader-dialog[open] .reader-toc a {position:relative;animation:tocEnter .65s var(--reader-delay,0ms) var(--ease) both;transition:color .35s,translate .35s var(--ease);padding-left:10px}
+.reader-toc a::before {content:'';position:absolute;left:0;top:12px;bottom:12px;width:2px;background:var(--accent);scale:1 0;transition:scale .4s var(--ease)}
+.reader-toc a.current {color:var(--accent)}.reader-toc a.current::before {scale:1 1}.reader-toc a:hover {translate:3px 0}
+.js-motion .reader-reveal {opacity:0;translate:0 22px;transition:opacity .65s var(--reader-delay,0ms) var(--ease),translate .85s var(--reader-delay,0ms) var(--ease)}
+.js-motion .reader-reveal.reader-visible {opacity:1;translate:0 0}
+.reader-section h2 {position:relative;padding-left:13px}
+.reader-section h2::before {content:'';position:absolute;left:0;top:8px;bottom:8px;width:2px;background:var(--accent);scale:1 0;transform-origin:top;transition:scale .7s .15s var(--ease)}
+.reader-visible h2::before {scale:1 1}
+.code-block {transition:border-color .4s,box-shadow .5s}.code-block:hover {border-color:color-mix(in srgb,var(--accent) 60%,var(--line));box-shadow:0 5px 25px var(--shadow)}
+.guide-table tbody tr {transition:background .3s}.guide-table tbody tr:hover {background:var(--accent-soft)}
+.search-dialog[open] .search-head,.search-dialog[open] input,.search-dialog[open] .search-foot {animation:readerHeading .65s .08s var(--ease) both}
+.search-dialog[open] input {animation-delay:.14s}.search-dialog[open] .search-foot {animation-delay:.2s}
+.search-result {animation:searchResult .55s var(--result-delay,0ms) var(--ease) both;transition:background .25s,translate .4s var(--ease)}
+.search-result:hover {translate:3px 0}.search-result.active>.icon:last-child {translate:3px -2px;transition:translate .4s var(--ease)}
+.motion-paused::after,.motion-paused *::before,.motion-paused *::after {animation-play-state:paused!important}
+
+@keyframes chapterLight {from {opacity:.25} to {opacity:1}}
+@keyframes interactionRing {from {opacity:1;transform:translate(-50%,-50%) scale(.05)} to {opacity:0;transform:translate(-50%,-50%) scale(1)}}
+@keyframes portalIcon {0%,100% {translate:0 0;filter:drop-shadow(0 0 0 transparent)} 50% {translate:0 -3px;filter:drop-shadow(0 0 8px var(--accent))}}
+@keyframes menuUnfold {from {opacity:0;transform:translateY(-10px) scale(.97);clip-path:inset(0 0 85%)} to {opacity:1;transform:none;clip-path:inset(0)}}
+@keyframes posterSweep {0%,45% {transform:translateX(-65%)} 70%,100% {transform:translateX(65%)}}
+@keyframes gridDrift {to {background-position:60px 35px,60px 35px}}
+@keyframes orbitLight {from {opacity:.35;translate:0 -8px} to {opacity:.9;translate:0 8px}}
+@keyframes modalEnter {from {opacity:0;transform:perspective(1200px) translateY(40px) rotateX(3deg) scale(.95)} to {opacity:1;transform:none}}
+@keyframes modalLeave {from {opacity:1;transform:none} to {opacity:0;transform:translateY(20px) scale(.97)}}
+@keyframes backdropEnter {from {opacity:0} to {opacity:1}}
+@keyframes backdropLeave {from {opacity:1} to {opacity:0}}
+@keyframes readerHeading {from {opacity:0;translate:0 20px} to {opacity:1;translate:0 0}}
+@keyframes tocEnter {from {opacity:0;translate:-12px 0} to {opacity:1;translate:0 0}}
+@keyframes searchResult {from {opacity:0;translate:0 12px} to {opacity:1;translate:0 0}}
+@keyframes toolbarLight {0%,100% {background-position:0% 50%} 50% {background-position:100% 50%}}
+@keyframes donationFocus {0%,100% {box-shadow:0 0 0 0 transparent} 35% {box-shadow:0 0 0 1px var(--accent),0 0 45px color-mix(in srgb,var(--accent) 16%,transparent)}}
+@media(max-width:650px) {.edition-price strong {font-size:44px}.donation-prices>div {min-width:120px;padding:15px 13px}.donation-prices strong {font-size:29px}.reader-donation .donation-prices {gap:8px}.reader-donation .donation-prices>div {min-width:105px;padding:12px}.reader-donation .donation-prices strong {font-size:27px}.reader-section h2 {padding-left:11px}}
+
 html[data-motion=quiet] {scroll-behavior:auto}
 html[data-motion=quiet] *,html[data-motion=quiet] *::before,html[data-motion=quiet] *::after {animation:none!important;transition:none!important}
+html[data-motion=quiet] dialog::backdrop {animation:none!important;transition:none!important}
 html[data-motion=quiet] .reveal {opacity:1!important;transform:none!important;filter:none!important}
+html[data-motion=quiet] .motion-part,html[data-motion=quiet] .reader-reveal {opacity:1!important;translate:0 0!important}
+html[data-motion=quiet] .reader-section h2::before {scale:1 1}
 html[data-motion=quiet] .section-heading h2 {clip-path:none!important;transform:none!important}
 html[data-motion=quiet] .section-heading p {opacity:1!important;transform:none!important}
 html[data-motion=quiet] .poster-stage {transform:none}
 html[data-motion=quiet] .scene-timeline span {width:60%}
 html[data-motion=quiet] .equalizer i {transform:scaleY(.55)}
 html[data-motion=quiet] .watch-screen {transform:rotateZ(-3deg)}
-@media(prefers-reduced-motion:reduce) {html {scroll-behavior:auto}*,*::before,*::after {animation:none!important;transition:none!important}.js-motion .reveal {opacity:1;transform:none;filter:none}.js-motion .section-heading.reveal h2 {clip-path:none;transform:none}.js-motion .section-heading.reveal p {opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce) {html {scroll-behavior:auto}*,*::before,*::after,dialog::backdrop {animation:none!important;transition:none!important}.js-motion .reveal {opacity:1;transform:none;filter:none}.js-motion .section-heading.reveal h2 {clip-path:none;transform:none}.js-motion .section-heading.reveal p {opacity:1;transform:none}.motion-part,.reader-reveal {opacity:1!important;translate:0 0!important}}

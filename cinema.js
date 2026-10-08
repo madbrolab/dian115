@@ -76,6 +76,30 @@
   const duplicate = ribbon.firstElementChild.cloneNode(true);
   duplicate.setAttribute('aria-hidden', 'true'); ribbon.append(duplicate);
 
+  // Keep pointer light and click feedback local to the actual interactive surface.
+  document.querySelectorAll('.workflow,.edition-card,.donation-card,.demo-card,.portal-directory').forEach(card=>{
+    card.classList.add('motion-card');
+    const light=document.createElement('span');light.className='card-light';light.setAttribute('aria-hidden','true');card.append(light);
+    let frame=0;
+    card.addEventListener('pointermove',e=>{
+      if(!full()||!fine.matches||frame)return;
+      frame=requestAnimationFrame(()=>{const r=card.getBoundingClientRect();card.style.setProperty('--spot-x',(e.clientX-r.left)+'px');card.style.setProperty('--spot-y',(e.clientY-r.top)+'px');frame=0;});
+    });
+    card.addEventListener('pointerleave',()=>{cancelAnimationFrame(frame);frame=0;card.style.removeProperty('--spot-x');card.style.removeProperty('--spot-y');});
+  });
+  document.querySelectorAll('.workflow,.edition-card,.donation-copy,.portal-intro-grid,.demo-card,.personal-routines').forEach(group=>{
+    const boundary=group.closest('.reveal');if(!boundary)return;
+    [...group.children].filter(el=>!el.classList.contains('card-light')).forEach((el,i)=>{el.classList.add('motion-part');el.style.setProperty('--part-delay',Math.min(i*65,325)+'ms');});
+  });
+  document.querySelectorAll('.mobile-menu a').forEach((el,i)=>el.style.setProperty('--menu-delay',i*30+'ms'));
+  document.addEventListener('pointerdown',e=>{
+    if(!full())return;
+    const button=e.target.closest('.button,.icon-button,.feature-tab,.portal-filter,.copy-code');if(!button)return;
+    const r=button.getBoundingClientRect(),ripple=document.createElement('span');ripple.className='interaction-ripple';ripple.setAttribute('aria-hidden','true');
+    ripple.style.setProperty('--ripple-x',(e.clientX-r.left)+'px');ripple.style.setProperty('--ripple-y',(e.clientY-r.top)+'px');ripple.style.setProperty('--ripple-size',Math.max(r.width,r.height)*2+'px');button.append(ripple);
+    ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});setTimeout(()=>ripple.remove(),750);
+  },{passive:true});
+
   const personal = $('.personal-art');
   let pending = false;
   function scrollScene() {
