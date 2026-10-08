@@ -7,10 +7,10 @@
   <meta name="description" content="DIAN115 用户 WIKI。探索 115 影音自动化、媒体整理、配置教程、个人使用、S.O.、用户门户与在线演示。">
   <title>DIAN115 · 让热爱，进入正片</title>
   <link rel="icon" href="assets/brand-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css">
-  <script src="content.js" defer></script>
-  <script src="app.js" defer></script>
-  <script src="cinema.js" defer></script>
+  <link rel="stylesheet" href="style.css?v=20261008-guide2">
+  <script src="content.js?v=20261008-guide2" defer></script>
+  <script src="app.js?v=20261008-guide2" defer></script>
+  <script src="cinema.js?v=20261008-guide2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">跳到页面内容</a>
@@ -37,7 +37,7 @@
         <div class="poster-stage" id="posterStage">
           <button class="cinema-poster" data-poster="0" type="button" aria-label="选择银翼杀手 2049" aria-pressed="false"><img src="assets/blade-runner.jpg" alt="银翼杀手 2049 电影海报" width="500" height="750"><span class="poster-gloss"></span></button>
           <button class="cinema-poster" data-poster="1" type="button" aria-label="选择降临" aria-pressed="false"><img src="assets/arrival.jpg" alt="降临电影海报" width="500" height="750"><span class="poster-gloss"></span></button>
-          <button class="cinema-poster active" data-poster="2" type="button" aria-label="选择星际穿越" aria-pressed="true"><img src="assets/interstellar.jpg" alt="星际穿越电影海报" width="500" height="750" fetchpriority="high"><span class="poster-gloss"></span><span class="poster-play" aria-hidden="true"><span data-icon="play"></span></span></button>
+          <button class="cinema-poster active" data-poster="2" type="button" aria-label="选择星际穿越" aria-pressed="true"><img src="assets/interstellar.jpg" alt="星际穿越电影海报" width="500" height="750" fetchpriority="high"><span class="poster-gloss"></span></button>
           <button class="cinema-poster" data-poster="3" type="button" aria-label="选择沙丘 2" aria-pressed="false"><img src="assets/dune.jpg" alt="沙丘 2 电影海报" width="500" height="750"><span class="poster-gloss"></span></button>
           <button class="cinema-poster" data-poster="4" type="button" aria-label="选择盗梦空间" aria-pressed="false"><img src="assets/inception.jpg" alt="盗梦空间电影海报" width="500" height="750"><span class="poster-gloss"></span></button>
         </div>
@@ -71,7 +71,8 @@
     <section class="chapter section-width" id="setup" data-chapter="配置教程">
       <div class="section-heading reveal"><span class="eyebrow">03 / GET CONNECTED</span><h2>你的第一场放映，<br>从四个步骤开始。</h2><p>部署、连接、建库、自动化。让第一部作品顺利播放。</p></div>
       <div class="setup-layout reveal"><div class="setup-steps" id="setupSteps" role="tablist" aria-label="配置步骤"></div><div class="setup-detail" id="setupDetail" role="tabpanel" aria-live="polite"></div></div>
-      <div class="path-note reveal"><span data-icon="link"></span><p><strong>路径一致，连接才顺畅。</strong> DIAN115、挂载服务与 Emby 需要看到对应的媒体目录。首次用小目录验证识别、输出和播放。</p><button type="button" data-doc="connections" aria-label="查看连接教程"><span data-icon="arrow-up-right"></span></button></div>
+      <div class="path-note reveal"><span data-icon="link"></span><p><strong>路径一致，连接才顺畅。</strong> CD2 用 shared 发布挂载，DIAN115 与 Emby 用 rslave 接收；媒体目录在两个容器中保持同一路径。</p><button type="button" data-doc="paths" aria-label="查看路径搭配教程"><span data-icon="arrow-up-right"></span></button></div>
+      <div class="setup-extra-guides reveal"><button type="button" data-doc="cd2"><span data-icon="cloud"></span><span><b>部署 CloudDrive2</b><small>FUSE、共享挂载、API Token 与自动读取</small></span><span data-icon="arrow-up-right"></span></button><button type="button" data-doc="paths"><span data-icon="link"></span><span><b>三套容器，路径怎么搭</b><small>宿主机 → CD2 → DIAN115 / Emby</small></span><span data-icon="arrow-up-right"></span></button><button type="button" data-doc="flaresolverr"><span data-icon="shield"></span><span><b>部署 FlareSolverr</b><small>资源站验证、服务地址与连接测试</small></span><span data-icon="arrow-up-right"></span></button></div>
     </section>
     <section class="chapter personal-section" id="personal" data-chapter="个人使用">
       <div class="section-width personal-layout">
@@ -89,6 +90,7 @@
     </section>
     <section class="chapter license-section" id="license" data-chapter="授权码获取">
       <div class="section-width license-layout reveal"><div class="license-seal" aria-hidden="true"><span data-icon="key"></span><small>YOUR ACCESS KEY</small></div><div><span class="eyebrow">06 / MAKE IT YOURS</span><h2>下一场，属于你。</h2><p>联系官方 @succt，说明使用场景，<br>确认授权类型与获取方式，收到密钥后完成激活。</p><div class="license-actions"><a class="button button-dark magnetic" href="https://t.me/succt" target="_blank" rel="noopener noreferrer">获取授权 <span data-icon="arrow-up-right"></span></a><button type="button" class="text-link" data-doc="license">授权与激活指南 <span data-icon="arrow-right"></span></button></div></div><a class="community-link" href="https://t.me/dian115group" target="_blank" rel="noopener noreferrer"><span data-icon="users"></span><b>好故事，一起聊。</b><span>加入 Telegram 交流群</span><span data-icon="arrow-up-right"></span></a></div>
+      <div class="section-width donation-card reveal"><div class="donation-qr"><img src="assets/payment-qr.png" alt="DIAN115 官方捐赠收款二维码" width="525" height="502" loading="lazy"><a href="assets/payment-qr.png" target="_blank" rel="noopener noreferrer">打开二维码原图 <span data-icon="arrow-up-right"></span></a></div><div class="donation-copy"><span class="eyebrow">SUPPORT DIAN115</span><h3>支持项目，也支持更好的影音生活。</h3><ol><li>捐赠前联系 @succt，确认授权类型、金额与发码规则。</li><li>使用二维码完成捐赠，在付款备注中填写可正常收信的邮箱。</li><li>收到 License Key 后，在首次启动的激活页面填写；未收到时联系官方核对。</li></ol><a class="text-link" href="https://t.me/succt" target="_blank" rel="noopener noreferrer">联系 @succt <span data-icon="arrow-up-right"></span></a></div></div>
     </section>
     <section class="chapter section-width" id="portal" data-chapter="门户功能">
       <div class="section-heading reveal"><span class="eyebrow">07 / A PLACE FOR EVERYONE</span><h2>你管理收藏。<br>他们，享受自己的放映室。</h2><p>独立的用户入口，清晰的管理员工作台。<br>从一场电影，延伸到一段相互分享的日常。</p></div>

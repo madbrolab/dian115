@@ -48,8 +48,6 @@
   }
   posters.forEach((poster, i) => {
     poster.addEventListener('click', () => select(i));
-    // A shared overlay follows whichever poster is in the spotlight.
-    if (!poster.querySelector('.poster-play')) poster.append($('.poster-play').cloneNode(true));
   });
   $('#posterPrev').addEventListener('click', () => select(active - 1));
   $('#posterNext').addEventListener('click', () => select(active + 1));

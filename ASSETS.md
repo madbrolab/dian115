@@ -14,3 +14,5 @@
 | `soul.jpg` | 心灵奇旅 | https://image.tmdb.org/t/p/w500/hm58Jw4Lw8OIeECIq5qyPYhAeRJ.jpg |
 
 可在 `index.html` 与 `app.js` 更换海报，在 `cinema.js` 更换对应影片名称、年份、类别和光影色。
+
+`payment-qr.png` 为项目官方此前发布的捐赠二维码，按用户要求恢复，文件未经重新生成、裁切或修改。来源：https://raw.githubusercontent.com/madbrolab/dian115/cb2c08d67004c9aed53221e28e58cd272824fcd7/assets/payment-qr.png 。
