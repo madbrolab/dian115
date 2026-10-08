@@ -3,6 +3,44 @@ window.DIAN_WIKI = {
   version: '4.0.96',
   demo: 'https://madbrolab.github.io/dian115/demo/',
   codeSamples: {
+    'dian-host-compose': {label:'compose.yml · Host 网络（推荐）',text:`services:
+  dian115:
+    image: madbrolab/dian115:latest
+    container_name: dian115
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PORT=8095
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./config:/config
+      - ./dian115AI:/dian115AI
+      # 替换为自己的宿主机目录
+      - /mnt/user/media:/媒体库
+      - /mnt/cache/CloudNAS:/CloudNAS:rslave`},
+    'dian-start': {label:'启动与检查 · 在 compose.yml 所在目录执行',text:`mkdir -p config dian115AI
+docker compose pull dian115
+docker compose up -d dian115
+docker compose ps
+docker compose logs --tail=200 dian115`},
+    'dian-bridge-compose': {label:'compose.yml · 桥接网络（备选）',text:`services:
+  dian115:
+    image: madbrolab/dian115:latest
+    container_name: dian115
+    restart: unless-stopped
+    ports:
+      - "8095:8095"
+      - "8098:8098" # 第一个 Emby 代理实例，按实际配置调整
+      # - "4534:4534" # 使用音乐服务时按实际配置启用
+    environment:
+      - PORT=8095
+      - TZ=Asia/Shanghai
+    volumes:
+      - ./config:/config
+      - ./dian115AI:/dian115AI
+      # 替换为自己的宿主机目录
+      - /mnt/user/media:/媒体库
+      - /mnt/cache/CloudNAS:/CloudNAS:rslave`},
     'cd2-compose': {label:'compose.cd2.yml · CloudDrive2',text:`services:
   clouddrive2:
     image: cloudnas/clouddrive2:latest
@@ -39,18 +77,20 @@ volumes:
 volumes:
   - /mnt/cache/CloudNAS:/CloudNAS:rslave
   - /mnt/user/media:/媒体库`},
-    'flaresolverr-compose': {label:'追加到 DIAN115 的 Compose · 同一网络',text:`services:
+    'flaresolverr-compose': {label:'追加到 compose.yml · 供同机 Host 模式访问',text:`services:
   # 保留原有 dian115 服务，将下面服务加入同一份文件
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:8191:8191"
     environment:
       - LOG_LEVEL=info
       - TZ=Asia/Shanghai
     volumes:
       - ./flaresolverr:/config
-    # 同一 Compose 默认网络通过服务名访问，无需映射端口`},
+    # DIAN115 使用 Host 网络时填写 http://127.0.0.1:8191`},
     'flaresolverr-start': {label:'启动 FlareSolverr',text:`docker compose up -d flaresolverr
 docker compose logs --tail=100 flaresolverr`},
     'flaresolverr-remote': {label:'独立部署时追加端口 · 使用实际内网 IP',text:`# 追加到 flaresolverr 服务，替换为这台主机的实际内网 IP
@@ -130,7 +170,7 @@ ports:
     ['STRM 助手','批量替换 STRM 内容，支持正则与捕获组，先预览命中再执行。','strm-helper']
   ],
   setup: [
-    {title:'准备与部署',short:'先给收藏一个家',text:'先部署 CloudDrive2，规划 shared / rslave 挂载与媒体目录，再启动 DIAN115。使用需验证的资源站时，按需加入 FlareSolverr。',doc:'deploy'},
+    {title:'准备与部署',short:'先给收藏一个家',text:'Linux / NAS 优先推荐 Host 网络。先部署 CloudDrive2，规划 shared / rslave 挂载与媒体目录，再用推荐的 Host 配置启动 DIAN115。使用需验证的资源站时，按需加入 FlareSolverr。',doc:'deploy'},
     {title:'账号与连接',short:'接通你的云端',text:'初始化管理员与授权，添加 115 主账号。配置 CD2 地址与 API Token，自动读取 /CloudNAS/CloudDrive，并选择主账号实际对应的云盘。',doc:'connections'},
     {title:'媒体与规则',short:'把第一部作品归好档',text:'接入 Emby，先在小目录验证识别、分类与命名。生成少量 STRM，确认扫描与播放；再开启实时或定时同步。',doc:'first-library'},
     {title:'自动化与扩展',short:'让日常变得更轻松',text:'按需加入 PT、下载器、订阅、通知、音乐与 AI。共享给其他用户时，再配置门户、访问线路与邀请码。',doc:'automation'}
@@ -147,7 +187,7 @@ ports:
     calendar:{title:'追剧日历',kicker:'COMING NEXT',lead:'下一集什么时候来，在日历里一目了然。',sections:[['按日期回访订阅','日历展示订阅剧集的播出与更新计划，帮助区分尚未播出、未找到资源、下载未完成和入库缺集。'],['排查更新状态','先确认订阅是否启用与季集范围，再查看资源搜索、下载器和整理队列。播出日期不等于已经拥有可入库资源。']]},
     organize:{title:'媒体整理',kicker:'A PLACE FOR EVERYTHING',lead:'文件名、身份和版本，逐步整理成一份可靠的收藏。',sections:[['识别与刮削','使用词表与文件 / 路径证据提取标题、年份、季集和技术字段；TMDB 确认媒体身份，ffprobe 提供流信息。可按条件使用 AI 辅助识别。'],['路径与执行方式','本地规则支持本地到本地的移动或硬链接，硬链接需要同一文件系统；CD2 规则的源和目标均位于挂载根下，由服务执行移动。不要把混合路径当成同一种规则。'],['版本决策','单一版本可跳过、按大小覆盖或评分洗版；多版共存可全部保留或在 4K、DV、HDR、1080P 等槽位内竞争。历史记录保留决策结果。'],['先验证，再扩展','用少量文件测试识别、命名、分类、字幕联动与版本规则。确认输出和历史后再扩大范围；第一次调试保留源文件更容易核对。']]},
     strm:{title:'STRM 与虚拟影库',kicker:'LIGHTWEIGHT LIBRARY',lead:'用轻量文件，为云端内容建立稳定的播放入口。',sections:[['目录树与 STRM','STRM 规则维护源目录树、输出路径、链接模式与同步状态。先全量建树，再小范围生成文件；Emby 扫描输出，播放请求交给对应代理或重定向链路。'],['同步与清理','支持全量、增量、实时或定时同步，孤立清理移除已不存在的输出。反向代理场景下，生成链接使用的外部地址必须能被播放端访问。'],['虚拟影库','虚拟影库可以解析外部 115 分享或已有 P1 标记，预览支持的媒体并输出跨实例使用的虚拟文件。冲突策略包括跳过、覆盖或添加序号；使用前核对输出目录。'],['旧库迁移','已有 Emby 库时，先保留目录树和媒体画像，完成路径匹配、Madby / FFP 接入，再生成新 STRM 与扫描新库。']]},
-    'my-media':{title:'我的媒体与 Emby',kicker:'YOUR COLLECTION',lead:'从媒体视角回访收藏，补齐缺集，选择准确的分享范围。',sections:[['媒体工作区','浏览电影、剧集与已有版本，查看媒体统计、缺集与质量状态，选择 Emby 实例和媒体库。'],['精确分享','按电影版本、剧集季度、单集和字幕选择范围，支持 115 链接、ED2K、Telegram、癫影或秘享短码。真实分享依赖文件树中的 115 身份和可转换的 Emby 路径。'],['多实例代理','配置各实例后端、API Key、播放线路与路径转换。高级版最多 3 个 Emby 代理实例，S.O. 最多 6 个；具体端口应与部署映射一致。']]},
+    'my-media':{title:'我的媒体与 Emby',kicker:'YOUR COLLECTION',lead:'从媒体视角回访收藏，补齐缺集，选择准确的分享范围。',sections:[['媒体工作区','浏览电影、剧集与已有版本，查看媒体统计、缺集与质量状态，选择 Emby 实例和媒体库。'],['精确分享','按电影版本、剧集季度、单集和字幕选择范围，支持 115 链接、ED2K、Telegram、癫影或秘享短码。真实分享依赖文件树中的 115 身份和可转换的 Emby 路径。'],['多实例代理','配置各实例后端、API Key、播放线路与路径转换。高级版最多 3 个 Emby 代理实例，S.O. 最多 6 个。Host 网络直接使用各实例设置的宿主机端口；桥接网络则需逐个映射对应端口。']]},
     files:{title:'文件管理',kicker:'KEEP IT IN ORDER',lead:'把人工整理需要的最后几步，也放在同一个地方。',sections:[['浏览与基础操作','容器可见目录支持面包屑、书签、列表 / 网格、排序与批量选择。提供上传、下载、预览、新建、改名、复制、移动与删除。'],['媒体操作','可执行识别、原地刮削、批量改名，或交给已启用整理规则；选中内容可生成秘享码。先确认当前路径、规则和任务范围。'],['目录边界','操作以容器中的实际路径为准。直接删除会作用于真实文件，不能把本地删除当作 115 回收站。']]},
     accounts:{title:'115 账号配置',kicker:'CONNECTED TO YOUR CLOUD',lead:'账号、目录和连接状态，分别管理才更清楚。',sections:[['主账号池','扫码添加、检查、刷新、编辑与激活账号。活跃主账号供全局客户端使用，支持自动切换、QPS、签到、空间与 VIP 状态查看。'],['备用 CK 与用途','备用 CK 独立于活跃主账号，不参与主账号自动切换、签到和全局目录配置。只有明确支持备用池的功能会使用它。'],['目录策略','分别设置转存、离线、秘享接收与来源默认目录。为主账号选择真实对应的 CD2 云盘，避免跨账号目录错配。'],['常见运维','检查 Cookie 有效性，按需要设置安全码，维护分享记录与回收站。首次接入后通过小范围任务验证目录 CID。']]},
     pt:{title:'PT 与下载管理',kicker:'RESOURCE SOURCES',lead:'认证、搜索和下载，一层一层接通。',sections:[['站点配置','维护站点类型、域名、认证、代理、超时、搜索与 RSS。可以刷新上传、下载、分享率、等级、魔力和做种数据。'],['下载器','连接 qBittorrent 或 Transmission，确认 WebUI、账号、默认客户端、保存路径与任务标签。先手动提交一个测试任务。'],['自动化接入','搜索结果可进入订阅策略，RSS 用于持续匹配。PT 刷流会主动添加和删除任务，应在站点与下载器验证后按需求开启。']]},
@@ -171,11 +211,11 @@ ports:
     cache:{title:'缓存与数据运维',kicker:'A RELIABLE MEMORY',lead:'复用有价值的信息，也看见系统的实时变化。',sections:[['缓存中心','包括 TMDB、115 分享、链接黑名单、链接状态绑定、虚拟缓存、TG 分享、离线链接与 FFP-cache。缓存减少重复请求，但不能替代账号、来源和路径配置。'],['FFP','以 SHA1 复用容器、媒体流、章节与技术信息。本地优先、远端命中写回，低完整度信息避免覆盖更完整的记录。'],['数据运维','高级版和 S.O. 可使用数据运维入口，观察实时播放、在线会话、实例与使用趋势，并转到门户账号管理。']]},
     container:{title:'DianCupLite 容器管理',kicker:'CARE FOR THE SYSTEM',lead:'把容器维护也纳入可查看的工作流。',sections:[['状态、镜像与更新','查看容器资源和镜像，检查远端更新，通过队列手动或定时执行更新。支持启动、停止与重启等运维操作。'],['部署依赖','容器管理需要部署时提供受控的 Docker 访问。普通媒体功能不依赖此项；请按自己的部署方案配置 socket proxy 或相应权限。'],['更新前','备份 /config，结束重要任务，再更新关键服务。升级后核对连接、配置与最近日志。']]},
     settings:{title:'系统设置',kicker:'MAKE IT YOURS',lead:'连接、安全与规则，共同决定系统如何工作。',sections:[['网盘文件服务','当前设置支持 CD2 与 AURA，分别保存地址、令牌和挂载根。选择服务并检查目录在 DIAN115 内实际可读。'],['网络与安全','配置 TMDB 服务与图片地址、HTTP 代理、FlareSolverr、安全密码、两步验证与 OpenAPI Key。桥接网络内的 127.0.0.1 指向容器自身。'],['词表与 AI','维护识别替换、制作组、分类词表和 AI 提供商池。媒体整理、网页助手和字幕使用位置可以分别选模型。']]},
-    deploy:{title:'部署 DIAN115',kicker:'GET CONNECTED',lead:'先部署挂载服务，把三套容器的路径接好，再启动你的影音空间。',sections:[['部署前','准备 Linux / NAS、Docker Engine 和 Compose v2。先部署 CD2，确认 /dev/fuse 可用和宿主机支持共享挂载，再为 DIAN115 与 Emby 规划一致的目录。AURA 用户可按自身部署方案连接文件服务。',{guides:['cd2','paths']}],['目录与持久化','/config 保存账号、授权和配置；/dian115AI 保存 AI 工作区。示例将 /mnt/user/media 映射为 /媒体库，将 /mnt/cache/CloudNAS 映射为 /CloudNAS:rslave；这两项在 Emby 中保持一致。所有路径都可替换，但要同步修改相关容器与规则。'],['最小 Compose','下方提供独立编写的运行示例，使用已发布镜像。按实际 Emby 代理实例映射端口；挂载传播仍需要 CD2 与宿主机共同支持。'],['FlareSolverr 按需部署','使用 UIndex 等需要 Cloudflare 验证的来源时，额外部署 FlareSolverr，再在系统设置的“FlareSolverr 过盾设置”填写地址、保存并测试。普通网盘挂载与播放不依赖它。',{guides:['flaresolverr']}],['首次启动','运行 docker compose pull 与 docker compose up -d，访问 http://服务器IP:8095。初始化管理员密码并激活授权；连接 CD2、自动读取挂载点，再从文件管理确认挂载目录可读。'],['验收与备份','测试小范围整理、STRM 输出与 Emby 播放，确认 CD2 重启后目录仍可见。升级前备份完整 /config；AI 工作区有内容时一同备份。']],code:'compose'},
+    deploy:{title:'部署 DIAN115',kicker:'GET CONNECTED',lead:'Linux / NAS 优先推荐 Host 网络。接好挂载与媒体目录，让你的影音空间顺利启动。',sections:[['部署前','准备 Linux / NAS、Docker Engine 和 Compose v2。先部署 CD2，确认 /dev/fuse 可用和宿主机支持共享挂载，再为 DIAN115 与 Emby 规划一致的目录。AURA 用户可按自身部署方案连接文件服务。',{guides:['cd2','paths']}],['推荐部署：Host 网络','将下方配置保存为 compose.yml，按实际目录修改 volumes。network_mode: host 让 DIAN115 直接使用宿主机网络，无需添加 ports。Web 管理端默认 8095，Emby 代理与音乐服务使用各自在页面中配置的端口；多个实例应设置不同端口。',{code:'dian-host-compose'}],['目录与持久化','/config 保存账号、授权和配置；/dian115AI 保存 AI 工作区。示例将 /mnt/user/media 映射为 /媒体库，将 /mnt/cache/CloudNAS 映射为 /CloudNAS:rslave；这两项在 Emby 中保持一致。Host 网络处理网络连接，shared / rslave 处理文件挂载传播，两项都需要正确配置。',{guides:['paths']}],['启动与初始化','在 compose.yml 所在目录执行下方命令，访问 http://服务器IP:8095。初始化管理员密码并激活授权；连接 CD2、自动读取挂载点，再从文件管理确认挂载目录可读。',{code:'dian-start'}],['FlareSolverr 按需接入','使用 UIndex 等需要 Cloudflare 验证的来源时，再部署 FlareSolverr。按教程将同机服务的 8191 映射到宿主机 127.0.0.1，在系统设置的“FlareSolverr 过盾设置”填写 http://127.0.0.1:8191，保存并测试。普通网盘挂载与播放不依赖它。',{guides:['flaresolverr']}],['备选部署：桥接网络','需要 Docker 网络隔离时，可用下方完整配置替换 Host 配置，仍保存为 compose.yml。桥接模式不设置 network_mode: host，需要逐个映射实际使用的代理和音乐端口。127.0.0.1 指向 DIAN115 容器自身；同一桥接网络的 FlareSolverr 使用 http://flaresolverr:8191，CD2 等其他服务按实际内网地址连接。',{code:'dian-bridge-compose'}],['验收与备份','测试小范围整理、STRM 输出与 Emby 播放，确认 CD2 重启后目录仍可见。升级前备份完整 /config；AI 工作区有内容时一同备份。']]},
     cd2:{title:'CloudDrive2 部署与接入',kicker:'CONNECT YOUR CLOUD',lead:'从容器启动到自动读取挂载点，让云盘目录真正可用。',sections:[['1. 准备 Linux / NAS 主机','确认系统支持 FUSE，存在 /dev/fuse，并准备持久化的 CD2 配置目录与云盘挂载目录。下方示例使用宿主机 /mnt/cache/CloudNAS；按自己的 NAS 路径调整。示例采用 CD2 官方支持的 Host 网络与 FUSE 权限配置。',{code:'cd2-compose'}],['2. 启动 CD2','将示例保存为 compose.cd2.yml，创建目录后启动。打开 http://服务器IP:19798，注册或登录 CD2，添加自己的 115 账号。Host 网络不再使用 ports 映射；19798 是这台宿主机上的 CD2 入口。',{code:'cd2-start'}],['3. 确认共享挂载传播','CD2 的 /CloudNAS 使用 :shared；宿主机上的对应挂载点也要支持 shared / rshared。若容器启动提示挂载未共享，先检查宿主机传播属性。下方命令用于普通 Linux 的独立挂载点示例；NAS 的持久化方式按系统设置，宿主机重启后也要验证。',{code:'mount-check'}],['4. 配置 CloudDrive 挂载与 Token','在 CD2 的挂载设置中，挂载点名称使用 CloudDrive，源目录选择根目录 /，启用启动时自动挂载，挂载在 /CloudNAS 下。创建供 DIAN115 使用的 API Token，至少允许文件读取、创建、修改与删除。'],['5. 在 DIAN115 连接 CD2','进入系统设置 → 网盘文件服务，选 CD2，填写如 http://192.168.1.10:19798/ 的 API 地址与 Token。保存后点击“自动读取”，确认挂载路径类似 /CloudNAS/CloudDrive。这里使用 DIAN115 容器内看到的路径，不填宿主机 /mnt/cache/CloudNAS。'],['6. 关联主账号与验证','进入账号配置，添加 115 主账号，选中它实际对应的 CD2 云盘。云盘名称使用 CD2 中的真实名称，如 115open；目录从正确云盘的根开始选择。最后检查文件管理能浏览该云盘，再创建整理和 STRM 规则。',{guides:['paths','connections']}]]},
     paths:{title:'CD2、DIAN115 与 Emby 路径搭配',kicker:'ONE DIRECTORY TREE',lead:'同一份文件，在宿主机和各容器里分别叫什么，一次说清。',sections:[['1. 两个共享目录，三套容器','云盘挂载目录用来接收 CD2 的 FUSE 子挂载；媒体目录用来保存整理输出或本地 STRM。CD2 发布挂载，DIAN115 与 Emby 接收挂载。DIAN115 和 Emby 的宿主机来源、容器目标路径保持一致。',{code:'shared-mounts'}],['2. 路径对照表','左侧是宿主机目录，右侧才是程序配置要填写的容器路径。:shared 与 :rslave 是卷挂载选项，不是路径名称的一部分。',{table:{headers:['位置 / 用途','示例路径或配置','在哪里使用'],rows:[['宿主机云盘目录','/mnt/cache/CloudNAS','CD2、DIAN115、Emby 的 volumes 左侧'],['CD2 发布挂载','/CloudNAS:shared','CD2 的 volumes 右侧'],['DIAN115 / Emby 接收','/CloudNAS:rslave','两个容器的 volumes 右侧'],['CD2 自动读取挂载点','/CloudNAS/CloudDrive','DIAN115 → 系统设置 → 网盘文件服务'],['主账号云盘名称','115open（示例）','账号配置中选择真实 CD2 云盘'],['云盘中的电影目录','/CloudNAS/CloudDrive/115open/电影','文件管理 / 规则的本地挂载路径示例'],['宿主机媒体输出','/mnt/user/media','DIAN115 与 Emby 的 volumes 左侧'],['容器媒体输出','/媒体库/strm','DIAN115 的 STRM 输出与 Emby 扫描目录']]}}],['3. shared 与 rslave 为什么不同','CD2 使用 shared 将云盘子挂载传播到宿主机。DIAN115 与 Emby 使用 rslave 接收宿主机的挂载变化，CD2 重启后重建的子挂载也能继续看见。宿主机传播未配置时，单独写 :rslave 无法解决问题。修改 volumes 后需要重新创建容器。'],['4. 挂载点、云盘名与目录不要混用','/CloudNAS 是容器卷根；/CloudNAS/CloudDrive 是自动读取的挂载点；115open 是 CD2 的云盘名称。真实云盘名以自己的 CD2 为准。CD2 API 的目录选择器和本地文件选择器可能显示不同前缀，应使用对应入口选择目录。'],['5. 从 STRM 输出到 Emby 扫描','例如 DIAN115 把 STRM 输出到 /媒体库/strm，Emby 也将这个目录作为媒体库目录。容器中的 /媒体库/strm 实际对应宿主机 /mnt/user/media/strm。若已有 Emby 路径不同，先配置路径转换并检查匹配，再扫描，避免重复条目。'],['6. 按配置引导逐步验收','先对齐三套 Compose → 在 CD2 挂载根目录并生成 Token → DIAN115 保存 CD2 地址并自动读取 → 添加 115 主账号并选云盘 → 配置整理与 STRM → 首次全量同步 → 在我的媒体控制中心接入 Emby。先用一部作品确认读取、输出和播放，再扩大范围。']]},
-    flaresolverr:{title:'FlareSolverr 部署与配置',kicker:'CONNECT RESOURCE SOURCES',lead:'需要 Cloudflare 验证的资源站，多接好一个服务。',sections:[['什么时候需要','UIndex 等来源可能触发 Cloudflare 验证。遇到此类验证时部署 FlareSolverr，由它提供浏览器处理能力；普通 115、CD2 与 Emby 连接无需因此额外配置。验证能否成功还取决于资源站当时的限制。'],['同一 Compose 部署','把下方服务加入 DIAN115 的 Compose 文件，保留已有 dian115 配置。两个服务都使用默认桥接网络时，可以直接通过 http://flaresolverr:8191 访问；自定义网络时，将它们接入同一个网络。',{code:'flaresolverr-compose'}],['启动与查看状态','保存 Compose 后启动服务并查看日志。首次请求需要启动浏览器环境，可能比后续请求慢。',{code:'flaresolverr-start'}],['在 DIAN115 配置','进入系统设置 → FlareSolverr 过盾设置，服务地址填写 http://flaresolverr:8191，点击保存 FlareSolverr 设置，再点击测试连接。确认测试成功后，回到对应来源重新搜索。地址在界面保存，不使用其他服务的代理地址替代。'],['独立部署或 Host 网络','如果 FlareSolverr 与 DIAN115 不在同一个 Docker 网络，使用 FlareSolverr 主机的实际内网 IP 并发布 8191 端口。DIAN115 使用 Host 且与服务同机时才可使用 http://127.0.0.1:8191；桥接网络里的 127.0.0.1 指向 DIAN115 容器自身。',{code:'flaresolverr-remote'}],['连接失败时','依次检查容器是否运行、服务地址与端口、网络可达性、日志和来源状态。8191 仅供自己的实例或内网访问；连接测试通过只能说明服务可达，不保证所有站点验证都能成功。']]},
-    connections:{title:'连接账号与服务',kicker:'CONNECT THE PIECES',lead:'让一条最小链路真正连通，再逐步添加服务。',sections:[['管理员与授权','完成首次密码初始化与 License Key 激活，确认重启后状态仍保留。'],['CD2 部署与路径','先在 CD2 设置 CloudDrive 根目录挂载与 API Token；DIAN115 与 Emby 的 /CloudNAS 使用 rslave，媒体目录保持同一路径。',{guides:['cd2','paths']}],['CD2 或 AURA','在系统设置 → 网盘文件服务选择 CD2，保存 API 地址与 Token，点击自动读取，确认返回 /CloudNAS/CloudDrive。使用 AURA 时切换为 AURA 并按实际服务配置。'],['115 主账号','扫码添加并选为活跃账号，选择它真实对应的 CD2 云盘；分别设置转存、离线、秘享接收目录。'],['FlareSolverr','需 Cloudflare 验证的来源在系统设置配置 FlareSolverr 服务地址、保存并测试。同一 Compose 网络可使用 http://flaresolverr:8191。',{guides:['flaresolverr']}],['Emby','在我的媒体 → 控制中心添加 Emby 后端、API Key 与代理端口。确认媒体目录与 DIAN115 一致；需要时配置路径转换。先验证库统计、单个条目与播放，再开启大范围扫描。'],['已有媒体库迁移','已有媒体库时先构建目录树但不生成 STRM；读取 Emby 媒体画像、检查路径匹配、接入 Madby 并上报 FFP，最后切换新 STRM。']]},
+    flaresolverr:{title:'FlareSolverr 部署与配置',kicker:'CONNECT RESOURCE SOURCES',lead:'跟随推荐的 Host 部署方式，接通需要 Cloudflare 验证的资源站。',sections:[['什么时候需要','UIndex 等来源可能触发 Cloudflare 验证。遇到此类验证时部署 FlareSolverr，由它提供浏览器处理能力；普通 115、CD2 与 Emby 连接无需因此额外配置。验证能否成功还取决于资源站当时的限制。'],['推荐搭配：DIAN115 Host + 同机 FlareSolverr','将下方 flaresolverr 服务合并到 compose.yml 的 services 下，保留已有 dian115 服务，只保留一个 services 根节点。DIAN115 使用 network_mode: host；FlareSolverr 保留默认桥接网络，通过 127.0.0.1:8191:8191 将接口提供给同机 DIAN115。',{code:'flaresolverr-compose'}],['启动与查看状态','在 compose.yml 所在目录保存并启动服务，查看日志。首次请求需要启动浏览器环境，可能比后续请求慢。',{code:'flaresolverr-start'}],['在 DIAN115 配置','按上方推荐搭配部署后，进入系统设置 → FlareSolverr 过盾设置，服务地址填写 http://127.0.0.1:8191，点击保存 FlareSolverr 设置，再点击测试连接。确认测试成功后，回到对应来源重新搜索。地址在界面保存。'],['备选：同一桥接网络','DIAN115 与 FlareSolverr 都在同一 Compose 桥接网络时，服务地址改为 http://flaresolverr:8191，可移除 FlareSolverr 的 ports 映射。自定义网络时将两个服务接入同一网络。桥接容器中的 127.0.0.1 指向容器自身；DIAN115 使用 Host 时不能按 Docker 服务名访问这个桥接服务。'],['不同机器或不同 Docker 网络','用下方 ports 替换示例中的本机端口映射，绑定 FlareSolverr 主机的实际内网 IP。在 DIAN115 中填写 http://FlareSolverr主机IP:8191。',{code:'flaresolverr-remote'}],['连接失败时','依次检查容器是否运行、服务地址与端口、网络可达性、日志和来源状态。8191 仅供自己的实例或内网访问；连接测试通过只能说明服务可达，不保证所有站点验证都能成功。']]},
+    connections:{title:'连接账号与服务',kicker:'CONNECT THE PIECES',lead:'让一条最小链路真正连通，再逐步添加服务。',sections:[['管理员与授权','完成首次密码初始化与 License Key 激活，确认重启后状态仍保留。'],['CD2 部署与路径','先在 CD2 设置 CloudDrive 根目录挂载与 API Token；DIAN115 与 Emby 的 /CloudNAS 使用 rslave，媒体目录保持同一路径。',{guides:['cd2','paths']}],['CD2 或 AURA','在系统设置 → 网盘文件服务选择 CD2，保存 API 地址与 Token，点击自动读取，确认返回 /CloudNAS/CloudDrive。使用 AURA 时切换为 AURA 并按实际服务配置。'],['115 主账号','扫码添加并选为活跃账号，选择它真实对应的 CD2 云盘；分别设置转存、离线、秘享接收目录。'],['FlareSolverr','需 Cloudflare 验证的来源在系统设置配置 FlareSolverr 服务地址、保存并测试。推荐的 DIAN115 Host + 同机端口映射方案使用 http://127.0.0.1:8191；两个服务都在同一桥接网络时使用 http://flaresolverr:8191。',{guides:['flaresolverr']}],['Emby','在我的媒体 → 控制中心添加 Emby 后端、API Key 与代理端口。确认媒体目录与 DIAN115 一致；需要时配置路径转换。Host 直接使用实例配置的端口，桥接模式需对应映射。先验证库统计、单个条目与播放，再开启大范围扫描。'],['已有媒体库迁移','已有媒体库时先构建目录树但不生成 STRM；读取 Emby 媒体画像、检查路径匹配、接入 Madby 并上报 FFP，最后切换新 STRM。']]},
     'first-library':{title:'建立第一份媒体库',kicker:'YOUR FIRST COLLECTION',lead:'从一部作品开始，确认每个细节都如预期。',sections:[['准备测试目录','选择一个小目录，确认源与目标模式一致，输出对 Emby 可见。'],['测试整理规则','核对媒体识别、TMDB、命名、分类、字幕和版本策略。先保留被过滤或替换的源文件。'],['生成与播放','同步目录树，少量生成 STRM，扫描 Emby。确认路径转换、播放地址与对应账号生效。'],['开启同步','验证成功后选择定时或实时模式，观察任务队列和日志，再扩大到更多目录。']]},
     automation:{title:'开启自动化',kicker:'LET IT FLOW',lead:'给自动化一个可靠的起点。',sections:[['资源来源','先验证下载器连接、目录和任务，再接入 PT 认证、搜索、RSS、TG 或癫影。'],['订阅策略','设置电影 / 剧集的质量方案与来源优先级，创建一个订阅并观察搜索、下载 / 转存、后处理、整理的独立结果。'],['消息通知','验证渠道与接收对象，再启用事件模板和静默时段。Telegram、企业微信、微信各自保存。'],['扩展能力','按需启用音乐、AI、字幕或机器人。准备多人服务时，最后配置门户、权限、访问线路与邀请码。']]},
     personal:{title:'个人与家庭使用',kicker:'YOUR OWN LITTLE CINEMA',lead:'为喜欢的故事，留出更多时间。',sections:[['一个轻量起点','一个主账号、一套连接、一条小范围规则、一次成功播放，就能验证个人使用链路。'],['每日回访','探索喜欢的电影，订阅追看的剧集，在日历看更新。整理完成后从 Emby 或你的播放端回访收藏。'],['把偏好写成规则','按分辨率、质量、语言或多版槽位配置收藏方式，用规则减少每次手动判断。'],['音乐与助手','音乐中心收藏专辑与歌单，点点帮助解释系统状态；重要进展通过你常用的通知渠道送达。'],['家人也能轻松使用','门户提供独立的用户入口。高级版支持最多 10 个门户小号；管理员维护共享账号或配置独享模式，用户使用自己的权限范围。']]},

@@ -37,4 +37,4 @@ Ctrl / Cmd K 搜索指南，Esc 关闭阅读器。指南支持 `#guide/organize`
 
 适用 DIAN115 v4.0.96。个人版（高级版）最多 10 个门户小号、3 个 Emby 代理实例；S.O. 无该门户人数上限，最多 6 个代理实例，并支持独立群组管理机器人与推送助手。推送助手仅 S.O. 可用，最多 500 个绑定账号，与门户用户名额分开计算。捐赠金额为个人版 199 元、S.O. 版 499 元。按对应金额扫码捐赠，付款备注邮箱即可；遇到问题时可联系 @succt。授权有效期与附加功能以收到的密钥为准。
 
-配置指南包含 CloudDrive2 的 Linux Docker 部署、FUSE 与共享挂载、API Token 与自动读取，以及 CD2 / DIAN115 / Emby 的路径对照和 FlareSolverr 接入。授权章节与指南均显示官方捐赠二维码，支持打开原图。
+配置指南优先推荐 Linux / NAS 的 Host 网络部署，提供可直接复制的完整 Compose、启动命令和桥接网络备选。包含 CloudDrive2 的 FUSE 与共享挂载、API Token 与自动读取、CD2 / DIAN115 / Emby 路径对照，以及适用于 Host 和桥接网络的 FlareSolverr 地址配置。授权章节与指南均显示官方捐赠二维码，支持打开原图。

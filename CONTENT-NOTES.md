@@ -22,6 +22,8 @@
 
 CD2 与路径教程依据当前配置引导核对：CD2 的 CloudNAS 使用 shared；DIAN115 与 Emby 使用 rslave，媒体目标路径保持一致；挂载点名称 CloudDrive，源目录 /，API Token 提供文件读写权限；保存 CD2 API 设置后自动读取 /CloudNAS/CloudDrive。部署示例为独立编写，参考 CloudDrive2 官方 Docker Hub 的 FUSE、Host 网络和配置持久化说明（https://hub.docker.com/r/cloudnas/clouddrive2）。
 
-FlareSolverr 示例参考官方 Compose（https://github.com/FlareSolverr/FlareSolverr/blob/master/docker-compose.yml），在 DIAN115 界面保存服务地址并测试，区分同网络服务名与跨网络主机 IP。仅做静态文档和浏览器验证，没有启动、构建或拉取容器。
+部署指南按项目所有者要求优先推荐 DIAN115 的 Host 网络，完整配置使用 network_mode: host，不添加 ports；桥接模式作为备选单独展示。两种模式保留相同的持久化与 rslave 目录配置，网络模式与文件挂载传播分别说明。
+
+FlareSolverr 示例参考官方 Compose（https://github.com/FlareSolverr/FlareSolverr/blob/master/docker-compose.yml）。推荐搭配为 DIAN115 使用 Host，同机 FlareSolverr 保留桥接并将接口映射到 127.0.0.1:8191，DIAN115 使用 http://127.0.0.1:8191。两个服务均在同一桥接网络时使用 http://flaresolverr:8191；跨机器或跨网络时改为实际内网 IP 与对应端口映射。在 DIAN115 界面保存服务地址并测试。仅做静态文档和浏览器验证，没有启动、构建或拉取容器。
 
 静态站点仅包含独立编写的页面、内容与媒体素材，不包含主项目前后端源码、凭据或发布产物。开发读取资料保存在工作目录，不随网站打包。

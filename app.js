@@ -67,7 +67,7 @@
 
   const setupSteps=$('#setupSteps'),setupDetail=$('#setupDetail');
   data.setup.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.className='setup-step';b.id='setup-step-'+i;b.dataset.step=i;b.setAttribute('role','tab');b.setAttribute('aria-controls','setupDetail');b.innerHTML='<span>0'+(i+1)+'</span><div><b>'+s.title+'</b><small>'+s.short+'</small></div>';setupSteps.append(b);});
-  const chips=[['Docker Compose','/config','/媒体库'],['115','CD2 / AURA','Emby'],['识别与命名','STRM','播放验证'],['订阅与来源','通知','用户门户']];
+  const chips=[['Host 网络 · 推荐','/config','/媒体库'],['115','CD2 / AURA','Emby'],['识别与命名','STRM','播放验证'],['订阅与来源','通知','用户门户']];
   function setup(index,animate=true){const n=Number(index),s=data.setup[n];if(!s)return;$$('button',setupSteps).forEach(b=>b.setAttribute('aria-selected',String(Number(b.dataset.step)===n)));setupDetail.setAttribute('aria-labelledby','setup-step-'+n);setupDetail.innerHTML='<div class="'+(animate?'switch-enter':'')+'"><span class="eyebrow">STEP 0'+(n+1)+' / DIAN115</span><h3>'+s.short+'</h3><p>'+s.text+'</p><div class="setup-chips">'+chips[n].map(c=>'<span>'+c+'</span>').join('')+'</div></div><button type="button" class="text-link" data-doc="'+s.doc+'">阅读这一步的完整教程 '+icon('arrow-right')+'</button><span class="setup-number" aria-hidden="true">0'+(n+1)+'</span>';}
   setup(0,false);setupSteps.addEventListener('click',e=>{const b=e.target.closest('button');if(b)setup(b.dataset.step);});arrowTabs(setupSteps,b=>setup(b.dataset.step));
 
@@ -80,24 +80,6 @@
   function portalRender(filter,animate=true){portalFilter=filter;$$('button',portalFilters).forEach(b=>b.setAttribute('aria-selected',String(b.dataset.filter===filter)));const items=data.portal.filter(p=>filter==='all'||p.group===filter);portalGrid.setAttribute('aria-labelledby','portal-filter-'+filter);portalGrid.innerHTML=items.map((p,i)=>'<button type="button" class="portal-tile '+(animate?'switch-enter':'')+'" style="animation-delay:'+Math.min(i*.025,.25)+'s" data-portal="'+p.id+'">'+icon(portalIcons[p.id])+'<span>'+p.title+'</span></button>').join('');portalSelect(items.some(p=>p.id===portalSelected)?portalSelected:items[0].id);}
   portalRender('all',false);portalFilters.addEventListener('click',e=>{const b=e.target.closest('button');if(b)portalRender(b.dataset.filter);});portalGrid.addEventListener('click',e=>{const b=e.target.closest('button');if(b)portalSelect(b.dataset.portal);});arrowTabs(portalFilters,b=>portalRender(b.dataset.filter));
 
-  const compose=`services:
-  dian115:
-    image: madbrolab/dian115:latest
-    container_name: dian115
-    restart: unless-stopped
-    ports:
-      - "8095:8095"
-      # 每个 Emby 代理实例映射对应端口
-      - "8098:8098"
-    volumes:
-      - ./config:/config
-      - ./dian115AI:/dian115AI
-      # 替换为自己的宿主机目录
-      - /mnt/user/media:/媒体库
-      - /mnt/cache/CloudNAS:/CloudNAS:rslave
-    environment:
-      - PORT=8095
-      - TZ=Asia/Shanghai`;
   const reader=$('#readerDialog'),readerContent=$('#readerContent'),readerToc=$('#readerToc');let lastMainHash='#top',activeDoc='';
   const dialogTimers=new WeakMap();
   function openDialog(d){clearTimeout(dialogTimers.get(d));dialogTimers.delete(d);d.classList.remove('is-closing');if(!d.open)d.showModal();}
@@ -114,7 +96,6 @@
   function codeBlock(label,value){return '<div class="code-block"><span class="code-label">'+escape(label)+'</span><button type="button" class="copy-code">复制配置</button><pre><code>'+escape(value)+'</code></pre></div>';}
   function guideSection([title,text,extra],i){let html='<section class="reader-section" id="reader-section-'+i+'"><h2>'+escape(title)+'</h2><p>'+escape(text)+'</p>';if(extra?.code){const sample=data.codeSamples[extra.code];if(sample)html+=codeBlock(sample.label,sample.text);}if(extra?.table){const t=extra.table;html+='<div class="guide-table-wrap"><table class="guide-table"><thead><tr>'+t.headers.map(h=>'<th scope="col">'+escape(h)+'</th>').join('')+'</tr></thead><tbody>'+t.rows.map(row=>'<tr>'+row.map((cell,j)=>'<td data-label="'+escape(t.headers[j])+'">'+escape(cell)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';}if(extra?.guides)html+='<div class="guide-related">'+extra.guides.map(id=>'<button type="button" class="button button-outline" data-doc="'+id+'">'+escape(data.docs[id].title)+icon('arrow-right')+'</button>').join('')+'</div>';return html+'</section>';}
   function showDoc(id,updateHash=true){const d=data.docs[id];if(!d)return;activeDoc=id;if(updateHash&&!location.hash.startsWith('#guide/'))lastMainHash=location.hash||'#top';readerToc.innerHTML='<strong>本页内容</strong>'+d.sections.map(([title],i)=>'<a href="#reader-section-'+i+'">'+escape(title)+'</a>').join('');readerContent.innerHTML='<span class="eyebrow">'+d.kicker+'</span><h1 id="readerTitle">'+escape(d.title)+'</h1><p class="reader-lead">'+escape(d.lead)+'</p>'+d.sections.map(guideSection).join('');
-    if(d.code){readerContent.insertAdjacentHTML('beforeend','<div class="code-block"><span class="code-label">docker-compose.yml</span><button type="button" class="copy-code">复制配置</button><pre><code>'+escape(compose)+'</code></pre></div><div class="code-block"><span class="code-label">启动与检查</span><button type="button" class="copy-code">复制命令</button><pre><code>docker compose pull\ndocker compose up -d\ndocker compose ps\ndocker compose logs --tail=200 dian115</code></pre></div>');}
     if(d.pluginList)readerContent.insertAdjacentHTML('beforeend','<div class="reader-plugin-list">'+data.plugins.map(([title,desc,route])=>'<article><h3>'+title+'</h3><p>'+desc+'</p><a class="text-link" href="'+data.demo+'#/resources/plugins/'+route+'" target="_blank" rel="noopener noreferrer">打开演示入口 '+icon('arrow-up-right')+'</a></article>').join('')+'</div>');
     if(d.portalList)readerContent.insertAdjacentHTML('beforeend','<div class="reader-plugin-list">'+data.portal.map(p=>'<article><h3>'+p.title+'</h3><p>'+p.desc+'</p></article>').join('')+'</div>');
     if(d.donation)readerContent.insertAdjacentHTML('beforeend','<div class="reader-donation"><a href="assets/payment-qr.png" target="_blank" rel="noopener noreferrer"><img src="assets/payment-qr.png" alt="DIAN115 官方捐赠收款二维码" width="525" height="502"><span>打开二维码原图 ↗</span></a><div><h2>捐赠支持 DIAN115</h2><div class="donation-prices"><div><span>个人版</span><strong>¥199</strong></div><div><span>S.O. 版</span><strong>¥499</strong></div></div><p>按对应金额扫码捐赠，付款备注填写可正常收信的邮箱，通过该邮箱接收授权码；收到 License Key 后即可激活。</p></div></div>');
