@@ -34,7 +34,7 @@ function readForm() {
     autoListProbe: el('autoListProbe').checked,
     localConfirmThreshold: Math.max(1, Math.min(100, Number(el('localConfirmThreshold').value || DEFAULT_SETTINGS.localConfirmThreshold))),
     confirmBytes: Math.max(0, confirmGb) * GB,
-    pollSeconds: Math.max(30, Math.min(3600, Number(el('pollSeconds').value || DEFAULT_SETTINGS.pollSeconds))),
+    pollSeconds: Math.max(60, Math.min(3600, Number(el('pollSeconds').value || DEFAULT_SETTINGS.pollSeconds))),
     notifyOnQueued: el('notifyOnQueued').checked,
     notifyOnComplete: el('notifyOnComplete').checked,
     notifyOnFailed: el('notifyOnFailed').checked,

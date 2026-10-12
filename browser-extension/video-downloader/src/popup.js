@@ -15,9 +15,13 @@ let runtimeId = ''
 let currentTab = null
 let lastPreview = null
 let lastFormats = []
+let pendingId = ''
 
 function send(message) {
-  return new Promise((resolve) => chrome.runtime.sendMessage(message, (response) => resolve(response || { ok: false })))
+  return new Promise((resolve) => chrome.runtime.sendMessage(message, (response) => {
+    const error = chrome.runtime.lastError
+    resolve(error ? { ok: false, message: error.message || '扩展连接中断，请重试' } : (response || { ok: false, message: '扩展未返回结果，请重试' }))
+  }))
 }
 
 function toast(text) {
@@ -30,10 +34,11 @@ function toast(text) {
 function statusTag(status) {
   const label = STATUS_LABELS[status] || status
   const cls = status === 'completed' ? 'ok' : (status === 'failed' || status === 'cancelled' ? 'fail' : (status === 'paused' || status === 'interrupted' ? 'warn' : ''))
-  return `<span class="tag ${cls}">${label}</span>`
+  return `<span class="tag ${cls}">${escapeHtml(label)}</span>`
 }
 
 function renderPending(pending) {
+  pendingId = pending ? pending.id : ''
   const card = el('pending-card')
   if (!pending) {
     card.hidden = true
@@ -200,7 +205,7 @@ function renderPreview(preview, probe) {
   if (Array.isArray(preview.items) && preview.items.length) {
     list.innerHTML = preview.items.slice(0, 30).map((item) => `
       <li>
-        <span class="idx">${Number(item.index || 0) + 1}</span>
+        <span class="idx">${Number(item.index || 0)}</span>
         <span class="grow ellipsis">${escapeHtml(item.title || item.url || '')}</span>
         <span class="muted">${formatDuration(item.duration)}</span>
       </li>`).join('') + (preview.playlist_truncated ? '<li><span class="idx">…</span><span class="grow muted">列表已截断，仅显示前若干项</span></li>' : '')
@@ -257,6 +262,7 @@ el('push-page').addEventListener('click', async () => {
   const res = await send({ type: 'push', urls: [currentTab.url], probe: 'quick', formatId: selectedFormatId() })
   if (res && res.pending) toast('需要确认后才会开始下载')
   else if (res && res.ok) toast('已加入下载队列')
+  else toast((res && res.message) || '推送失败')
   await loadState()
 })
 
@@ -285,14 +291,14 @@ el('preview-close').addEventListener('click', () => {
 })
 
 el('pending-confirm').addEventListener('click', async () => {
-  const res = await send({ type: 'confirm' })
-  toast(res && res.ok ? '已确认，开始下载' : '确认失败')
+  const res = await send({ type: 'confirm', pendingId })
+  toast(res && res.pending ? '列表或确认条件发生变化，请重新确认' : (res && res.ok ? '已确认，开始下载' : ((res && res.message) || '确认失败')))
   await loadState()
 })
 
 el('pending-cancel').addEventListener('click', async () => {
-  await send({ type: 'cancel' })
-  toast('已取消')
+  const res = await send({ type: 'cancel', pendingId })
+  toast(res && res.ok ? '已取消' : ((res && res.message) || '取消失败'))
   await loadState()
 })
 
@@ -325,6 +331,7 @@ let accounts115 = []
 let detected115 = { kind: 'unknown', link: '', label: '' }
 let browse115 = { kind: 'share', stack: [{ cid: '0', name: '115 根目录' }] }
 let push115Polling = null
+let dirRequest = 0
 
 function accountKey(account) {
   return `${account.mode || 'main'}:${Number(account.id) || 0}`
@@ -394,6 +401,11 @@ async function load115() {
   const response = await send({ type: 'accounts115' })
   accounts115 = response && response.ok && Array.isArray(response.accounts) ? response.accounts : []
   fillAccounts(response && response.defaultAccount)
+  if (push115.accountId && accountKey(currentAccount()) !== accountKey({ mode: push115.accountMode, id: push115.accountId })) {
+    push115.shareCid = ''; push115.shareName = ''
+    push115.offlineCid = ''; push115.offlineName = ''
+    setStatus('原账号已不可用，请为当前账号重新选择目录。', 'bad')
+  }
   if (!accounts115.length) setStatus(response && response.message ? response.message : '读不到 115 账号，请先在 DIAN115 的账号配置里添加并启用。', 'bad')
   renderPush115()
 }
@@ -422,11 +434,13 @@ function renderDirList(dirs) {
 }
 
 async function loadDirs115() {
+  const request = ++dirRequest
   const account = currentAccount()
   const current = browse115.stack[browse115.stack.length - 1]
   el('p115-path').textContent = browse115.stack.map((item) => item.name).join(' / ')
   el('p115-dirs').innerHTML = '<div class="muted">正在读取…</div>'
   const res = await send({ type: 'dirs115', cid: current.cid, accountMode: account.mode, accountId: account.id })
+  if (request !== dirRequest) return
   if (!res || !res.ok) {
     el('p115-dirs').innerHTML = '<div class="muted">' + escapeHtml((res && res.message) || '读取目录失败') + '</div>'
     return
@@ -478,7 +492,7 @@ async function pushLink115() {
     }
     if (record.status === 'failed' || record.status === 'rejected') {
       clearInterval(push115Polling); push115Polling = null
-      setStatus(record.error || record.error_code || '115 处理失败', 'bad')
+      setStatus(record.error_message || record.error_code || '115 处理失败', 'bad')
       return
     }
     if (attempts >= 20) {
@@ -489,6 +503,10 @@ async function pushLink115() {
 }
 
 el('p115-account').addEventListener('change', () => {
+  push115.shareCid = ''; push115.shareName = ''
+  push115.offlineCid = ''; push115.offlineName = ''
+  browse115.stack = [{ cid: '0', name: '115 根目录' }]
+  renderPush115()
   if (!el('p115-browser').hidden) void loadDirs115()
 })
 el('p115-share-browse').addEventListener('click', () => openBrowser115('share'))
@@ -502,6 +520,10 @@ el('p115-up').addEventListener('click', () => {
 el('p115-close').addEventListener('click', () => { el('p115-browser').hidden = true })
 el('p115-choose').addEventListener('click', () => {
   const current = browse115.stack[browse115.stack.length - 1]
+  if (String(current.cid) === '0') {
+    setStatus('请选择根目录下的具体目录。', 'bad')
+    return
+  }
   if (browse115.kind === 'share') {
     push115.shareCid = String(current.cid)
     push115.shareName = current.name
@@ -541,4 +563,4 @@ void (async () => {
   await load115()
   void loadState()
 })()
-setInterval(() => void loadState(), 5000)
+setInterval(() => void send({ type: 'refresh' }).then(() => loadState()), 5000)

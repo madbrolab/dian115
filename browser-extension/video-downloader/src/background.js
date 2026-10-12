@@ -31,7 +31,33 @@ const MENU_LINK = 'dian115-push-link'
 const MENU_SELECTION = 'dian115-push-selection'
 const MENU_PUSH115 = 'dian115-push-115'
 
-const MAX_TRACKED = 30
+const MAX_TRACKED = 1000
+let trackedUpdates = Promise.resolve()
+let pollPromise = null
+let confirmationPromise = null
+let pendingUpdates = Promise.resolve()
+
+function updatePending(change) {
+  const operation = pendingUpdates.then(async () => {
+    const stored = await chrome.storage.local.get('pendingPush')
+    const next = change(stored.pendingPush)
+    if (next) await chrome.storage.local.set({ pendingPush: next })
+    else await chrome.storage.local.remove('pendingPush')
+  })
+  pendingUpdates = operation.catch(() => {})
+  return operation
+}
+
+function updateTracked(change) {
+  const operation = trackedUpdates.then(async () => {
+    const latest = await getTracked()
+    const next = change(latest)
+    await chrome.storage.local.set({ tracked: next })
+    return next
+  })
+  trackedUpdates = operation.catch(() => {})
+  return operation
+}
 
 // ---------------------------------------------------------------- lifecycle
 
@@ -59,6 +85,12 @@ async function bootstrap() {
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local' || !changes.settings) return
   void schedulePoll()
+  const previous = changes.settings.oldValue
+  const next = changes.settings.newValue
+  if (previous && next && previous.baseUrl !== next.baseUrl) {
+    void updateTracked(() => []).then(() => refreshBadge())
+    void updatePending(() => null)
+  }
 })
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -158,6 +190,8 @@ async function startPush115(rawValue, options = {}) {
     link: detected.link,
     source: options.source || '浏览器扩展',
     targetCid,
+    accountMode: options.accountMode || defaults.accountMode,
+    accountId: options.accountId ?? defaults.accountId,
   })
   if (!submit.ok) {
     await notify('115 推送失败', submit.message || 'DIAN115 返回了错误。')
@@ -182,7 +216,7 @@ async function pollExternalPush(settings, requestId, timeoutSeconds = 60) {
     const status = String(record.status || '')
     if (status === 'succeeded') return { ok: true, status, record, message: '已完成：' + (record.target_path || record.link_display || '') }
     if (status === 'failed' || status === 'rejected') {
-      return { ok: false, status, record, message: record.error || record.error_code || '115 处理失败' }
+      return { ok: false, status, record, message: record.error_message || record.error_code || '115 处理失败' }
     }
     await new Promise((resolve) => setTimeout(resolve, 3000))
   }
@@ -219,14 +253,14 @@ async function startPush(rawUrls, options = {}) {
       body: {
         url: urls[0],
         probe,
-        mode: settings.mode,
+        destination_id: settings.destinationId || undefined,
         ...(settings.cookieProfileId ? { cookie_profile_id: settings.cookieProfileId } : {}),
       },
       timeoutMs: 180000,
     })
     if (!res.ok) {
       await notify('推送失败：无法预检', res.message || 'DIAN115 返回了错误。')
-      return { ok: false, code: res.code }
+      return { ok: false, code: res.code, message: res.message || '视频预检失败' }
     }
     preview = res.data && res.data.result ? res.data.result : null
   }
@@ -238,7 +272,13 @@ async function startPush(rawUrls, options = {}) {
       confirmToken: preview.confirm_token || '',
       reason: 'local',
       formatId,
+      settings,
+      cookieSync,
     })
+  }
+
+  if (!preview && urls.length > Number(settings.localConfirmThreshold || 5)) {
+    return openConfirmation({ urls, preview: { total_items: urls.length }, formatId, settings, cookieSync })
   }
 
   return await submitBatch(urls, preview, settings, '', cookieSync, formatId)
@@ -254,7 +294,7 @@ function needsLocalConfirmation(settings, preview) {
   return false
 }
 
-async function submitBatch(urls, preview, settings, confirmToken, cookieSync = null, formatId = '') {
+async function submitBatch(urls, preview, settings, confirmToken, cookieSync = null, formatId = '', submission = {}) {
   const body = {
     urls,
     mode: settings.mode,
@@ -277,7 +317,7 @@ async function submitBatch(urls, preview, settings, confirmToken, cookieSync = n
   const res = await dianFetch(settings, '/tasks', {
     method: 'POST',
     body,
-    idempotencyKey: newIdempotencyKey(),
+    idempotencyKey: submission.idempotencyKey || newIdempotencyKey(),
     timeoutMs: 60000,
   })
 
@@ -295,29 +335,33 @@ async function submitBatch(urls, preview, settings, confirmToken, cookieSync = n
       expiresAt: info.confirm_expires_at || '',
       reason: 'server',
       formatId,
+      settings,
+      cookieSync,
     })
   }
 
   if (!res.ok) {
     await notify('推送失败', res.message || 'DIAN115 返回了错误。')
-    return { ok: false, code: res.code }
+    return { ok: false, code: res.code, message: res.message }
   }
 
   const result = (res.data && res.data.result) || {}
   await trackTasks(result, urls)
-  await chrome.storage.local.remove('pendingPush')
+  if (submission.pendingId) {
+    await updatePending(current => current && current.id !== submission.pendingId ? current : null)
+  }
   const accepted = Number(result.accepted || 0)
   const duplicates = Number(result.duplicates || 0)
   if (settings.notifyOnQueued) {
     const parts = [`已加入 ${accepted} 个任务`]
-    if (duplicates > 0) parts.push(`其中 ${duplicates} 个已存在，未重复创建`)
+    if (duplicates > 0) parts.push(`${duplicates} 个已存在，未重复创建`)
     if (Number(result.rejected || 0) > 0) parts.push(`${result.rejected} 个被拒绝`)
     if (cookieSync && cookieSync.ok) parts.push(`已同步站点 CK ${cookieSync.count} 条`)
     if (cookieSync && cookieSync.ok === false) parts.push('站点 CK 同步失败：' + (cookieSync.message || '未知错误'))
-    await notify('已推送到 DIAN115', parts.join('，'))
+    await notify(accepted > 0 || duplicates > 0 ? '已推送到 DIAN115' : '视频推送未入队', parts.join('，'))
   }
   await refreshBadge()
-  return { ok: true, accepted, duplicates }
+  return { ok: accepted > 0 || duplicates > 0, accepted, duplicates, rejected: Number(result.rejected || 0), message: accepted > 0 || duplicates > 0 ? '' : '没有任务加入队列，请检查目标目录、下载选项和队列余量' }
 }
 
 /**
@@ -343,16 +387,19 @@ async function syncSiteCookies(settings, pageUrl) {
 
 async function openConfirmation(pending) {
   const record = {
-    id: 'pending-' + Date.now(),
+    id: newIdempotencyKey(),
+    idempotencyKey: newIdempotencyKey(),
     urls: pending.urls,
     preview: pending.preview || {},
     confirmToken: pending.confirmToken || '',
     expiresAt: pending.expiresAt || '',
     reason: pending.reason || '',
     formatId: pending.formatId || '',
+    settings: pending.settings,
+    cookieSync: pending.cookieSync || null,
     createdAt: Date.now(),
   }
-  await chrome.storage.local.set({ pendingPush: record })
+  await updatePending(() => record)
   const total = Number(record.preview.total_items || record.urls.length || 1)
   const bytes = Number(record.preview.estimated_bytes || 0)
   const message = [
@@ -361,7 +408,7 @@ async function openConfirmation(pending) {
     `队列剩余 ${Number(record.preview.queue_free || 0)} 个名额`,
   ].filter(Boolean).join('，') + '。确认后开始下载。'
   try {
-    await chrome.notifications.create(CONFIRM_NOTIFICATION, {
+      await chrome.notifications.create(CONFIRM_NOTIFICATION + ':' + record.id, {
       type: 'basic',
       iconUrl: chrome.runtime.getURL('icons/icon128.png'),
       title: 'DIAN115 需要确认',
@@ -375,26 +422,33 @@ async function openConfirmation(pending) {
   return { ok: true, pending: true, total }
 }
 
-async function resolvePending(approve) {
+async function resolvePending(approve, expectedId) {
+  if (confirmationPromise) return { ok: false, code: 'confirmation_busy', message: '正在提交确认，请等待结果' }
+  confirmationPromise = resolvePendingOnce(approve, expectedId).finally(() => { confirmationPromise = null })
+  return confirmationPromise
+}
+
+async function resolvePendingOnce(approve, expectedId) {
   const stored = await chrome.storage.local.get('pendingPush')
   const pending = stored.pendingPush
   if (!pending) return { ok: false, code: 'no_pending' }
-  await chrome.notifications.clear(CONFIRM_NOTIFICATION).catch(() => {})
+  if (expectedId && expectedId !== pending.id) return { ok: false, code: 'pending_changed', message: '待确认的推送已变化，请刷新后重新确认' }
+  await chrome.notifications.clear(CONFIRM_NOTIFICATION + ':' + pending.id).catch(() => {})
   if (!approve) {
-    await chrome.storage.local.remove('pendingPush')
+    await updatePending(current => current && current.id !== pending.id ? current : null)
     return { ok: true, cancelled: true }
   }
-  const settings = await loadSettings()
-  return await submitBatch(pending.urls, pending.preview, settings, pending.confirmToken, null, pending.formatId || '')
+  const settings = pending.settings || await loadSettings()
+  return await submitBatch(pending.urls, pending.preview, settings, pending.confirmToken, pending.cookieSync, pending.formatId || '', { pendingId: pending.id, idempotencyKey: pending.idempotencyKey })
 }
 
 chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
-  if (notificationId !== CONFIRM_NOTIFICATION) return
-  void resolvePending(buttonIndex === 0)
+  if (!notificationId.startsWith(CONFIRM_NOTIFICATION + ':')) return
+  void resolvePending(buttonIndex === 0, notificationId.slice(CONFIRM_NOTIFICATION.length + 1))
 })
 
 chrome.notifications.onClicked.addListener((notificationId) => {
-  if (notificationId === CONFIRM_NOTIFICATION) {
+  if (notificationId.startsWith(CONFIRM_NOTIFICATION + ':')) {
     void chrome.runtime.openOptionsPage().catch(() => {})
   }
 })
@@ -407,7 +461,7 @@ async function getTracked() {
 }
 
 async function trackTasks(result, urls) {
-  const tracked = await getTracked()
+  await updateTracked((tracked) => {
   const byId = new Map(tracked.map((item) => [String(item.id), item]))
   const batchId = result.batch_id || ''
   for (const task of result.tasks || []) {
@@ -416,6 +470,12 @@ async function trackTasks(result, urls) {
     const existing = byId.get(key)
     if (existing) {
       existing.batchId = existing.batchId || task.batch_id || batchId
+      if (ACTIVE_STATUSES.includes(task.status) && !ACTIVE_STATUSES.includes(existing.status)) existing.notifiedTerminal = false
+      existing.status = task.status || existing.status
+      existing.progress = Number(task.progress || 0)
+      existing.duplicate = !!task.duplicate
+      existing.misses = 0
+      existing.revision = newIdempotencyKey()
       continue
     }
     byId.set(key, {
@@ -429,38 +489,51 @@ async function trackTasks(result, urls) {
       createdAt: Date.now(),
       notifiedTerminal: false,
       misses: 0,
+      revision: newIdempotencyKey(),
     })
   }
   const merged = Array.from(byId.values())
-    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+    .sort((a, b) => Number(ACTIVE_STATUSES.includes(b.status)) - Number(ACTIVE_STATUSES.includes(a.status)) || (b.createdAt || 0) - (a.createdAt || 0))
     .slice(0, MAX_TRACKED)
-  await chrome.storage.local.set({ tracked: merged })
+  return merged
+  })
 }
 
 async function pollTracked() {
+  if (pollPromise) return pollPromise
+  pollPromise = pollTrackedOnce().finally(() => { pollPromise = null })
+  return pollPromise
+}
+
+async function pollTrackedOnce() {
   const settings = await loadSettings()
   if (!settings.baseUrl || !settings.apiKey) return
   const tracked = await getTracked()
   if (!tracked.length) return
 
-  let changed = false
   const finished = []
   const active = tracked.filter((item) => ACTIVE_STATUSES.includes(item.status))
-  for (const item of active) {
+  const storedCursor = await chrome.storage.local.get('pollCursor')
+  const cursor = active.length ? Number(storedCursor.pollCursor || 0) % active.length : 0
+  const selected = Array.from({ length: Math.min(30, active.length) }, (_, i) => active[(cursor + i) % active.length])
+  const fetched = new Map()
+  async function pollItem(item) {
     const res = await dianFetch(settings, '/tasks/' + encodeURIComponent(String(item.id)), { timeoutMs: 20000 })
     if (!res.ok) {
       if (res.status === 404) {
         item.misses = (item.misses || 0) + 1
-        changed = true
+        fetched.set(String(item.id), item)
+        if (item.misses >= 3) item.status = 'removed'
       }
-      continue
+      return
     }
     const task = (res.data && res.data.task) || null
-    if (!task) continue
+    if (!task) return
+    fetched.set(String(item.id), item)
+    item.misses = 0
     const nextStatus = task.status || item.status
     if (nextStatus !== item.status) {
       item.status = nextStatus
-      changed = true
       if (nextStatus === 'completed' || nextStatus === 'failed' || nextStatus === 'cancelled' || nextStatus === 'interrupted') {
         finished.push(item)
       }
@@ -468,27 +541,36 @@ async function pollTracked() {
     const nextProgress = Number(task.progress || 0)
     if (Math.abs(nextProgress - Number(item.progress || 0)) > 0.01) {
       item.progress = nextProgress
-      changed = true
     }
     if (task.title && task.title !== item.title) {
       item.title = task.title
-      changed = true
     }
     if (task.speed_bytes !== undefined) item.speedBytes = Number(task.speed_bytes || 0)
   }
+  for (let i = 0; i < selected.length; i += 5) await Promise.all(selected.slice(i, i + 5).map(pollItem))
+  await chrome.storage.local.set({ pollCursor: active.length ? (cursor + selected.length) % active.length : 0 })
 
-  if (changed) await chrome.storage.local.set({ tracked })
+  const notices = []
+  await updateTracked((latest) => {
+    return latest.map((item) => {
+      const update = fetched.get(String(item.id))
+      if (!update || item.revision !== update.revision) return item
+      const merged = { ...item, ...update }
+      if (finished.some((done) => String(done.id) === String(item.id)) && !item.notifiedTerminal) {
+        merged.notifiedTerminal = true
+        notices.push(merged)
+      }
+      return merged
+    })
+  })
 
-  for (const item of finished) {
-    if (item.notifiedTerminal) continue
-    item.notifiedTerminal = true
+  for (const item of notices) {
     if (item.status === 'completed' && settings.notifyOnComplete) {
       await notify('视频下载完成', truncate(item.title || item.url, 180))
     } else if (item.status === 'failed' && settings.notifyOnFailed) {
       await notify('视频下载失败', truncate(item.title || item.url, 180))
     }
   }
-  if (finished.length) await chrome.storage.local.set({ tracked })
   await refreshBadge()
 }
 
@@ -501,11 +583,11 @@ async function refreshBadge() {
 
 async function schedulePoll() {
   const settings = await loadSettings()
-  const seconds = Math.max(30, Number(settings.pollSeconds) || 20)
+  const seconds = Math.max(60, Number(settings.pollSeconds) || 60)
   await chrome.alarms.clear(POLL_ALARM)
   chrome.alarms.create(POLL_ALARM, {
-    periodInMinutes: Math.max(0.5, seconds / 60),
-    delayInMinutes: Math.max(0.5, seconds / 60),
+    periodInMinutes: seconds / 60,
+    delayInMinutes: seconds / 60,
   })
 }
 
@@ -523,7 +605,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         settings: { ...settings, apiKey: settings.apiKey ? maskKey(settings.apiKey) : '' },
         configured: !!(settings.baseUrl && settings.apiKey),
         tracked: Array.isArray(stored.tracked) ? stored.tracked : [],
-        pending: stored.pendingPush || null,
+        pending: stored.pendingPush ? { ...stored.pendingPush, settings: undefined } : null,
       })
       return
     }
@@ -537,7 +619,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const probe = (message && message.probe) || (settings.autoListProbe && looksLikePlaylistUrl(url) ? 'list' : 'quick')
       const res = await dianFetch(settings, '/quick', {
         method: 'POST',
-        body: { url, probe, mode: settings.mode, ...(settings.cookieProfileId ? { cookie_profile_id: settings.cookieProfileId } : {}) },
+        body: { url, probe, destination_id: settings.destinationId || undefined, ...(settings.cookieProfileId ? { cookie_profile_id: settings.cookieProfileId } : {}) },
         timeoutMs: 180000,
       })
       sendResponse({ ok: res.ok, code: res.code, message: res.message, preview: res.data && res.data.result ? res.data.result : null, probe })
@@ -556,6 +638,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const result = await startPush115((message && message.link) || '', {
         source: '浏览器扩展',
         targetCid: message && message.targetCid,
+        accountMode: message && message.accountMode,
+        accountId: message && message.accountId,
         deferPoll: true,
       })
       sendResponse(result || { ok: true })
@@ -585,11 +669,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return
     }
     if (type === 'confirm') {
-      sendResponse(await resolvePending(true))
+      sendResponse(await resolvePending(true, message && message.pendingId))
       return
     }
     if (type === 'cancel') {
-      sendResponse(await resolvePending(false))
+      sendResponse(await resolvePending(false, message && message.pendingId))
       return
     }
     if (type === 'refresh') {
@@ -598,13 +682,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       return
     }
     if (type === 'clearTracked') {
-      await chrome.storage.local.set({ tracked: [] })
+      await updateTracked(() => [])
       await refreshBadge()
       sendResponse({ ok: true })
       return
     }
     sendResponse({ ok: false, code: 'unknown_message' })
-  })()
+  })().catch((error) => sendResponse({ ok: false, code: 'extension_error', message: (error && error.message) || '扩展处理失败，请重试' }))
   return true
 })
 

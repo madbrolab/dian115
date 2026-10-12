@@ -68,6 +68,7 @@ export const STATUS_LABELS = {
   failed: '失败',
   cancelled: '已取消',
   interrupted: '已中断',
+  removed: '记录已移除',
 }
 
 export const DEFAULT_SETTINGS = {
@@ -80,7 +81,7 @@ export const DEFAULT_SETTINGS = {
   autoListProbe: true,
   localConfirmThreshold: 5,
   confirmBytes: 20 * 1024 * 1024 * 1024,
-  pollSeconds: 20,
+  pollSeconds: 60,
   notifyOnComplete: true,
   notifyOnFailed: true,
   notifyOnQueued: true,
@@ -104,8 +105,11 @@ export async function saveSettings(patch) {
 export function normalizeBaseUrl(raw) {
   const value = String(raw || '').trim().replace(/\/+$/, '')
   if (!value) return ''
-  if (!/^https?:\/\//i.test(value)) return ''
-  return value
+  try {
+    const url = new URL(value)
+    if (!['http:', 'https:'].includes(url.protocol) || !url.hostname || url.username || url.password || url.search || url.hash) return ''
+    return url.href.replace(/\/+$/, '')
+  } catch { return '' }
 }
 
 // buildApiUrl joins the configured server with one OpenAPI path. The prefix is
@@ -159,6 +163,7 @@ export async function dianFetch(settings, path, options = {}) {
       signal: controller.signal,
       cache: 'no-store',
       credentials: 'omit',
+      redirect: 'error',
     })
     const text = await response.text()
     let data = null
@@ -228,7 +233,7 @@ export function looksLikePlaylistUrl(raw) {
 
 export function hostOf(raw) {
   try {
-    return new URL(raw).host
+    return new URL(raw).hostname
   } catch {
     return ''
   }
@@ -265,7 +270,11 @@ export function truncate(text, max) {
 export async function collectSiteCookies(pageUrl) {
   const host = hostOf(pageUrl)
   if (!host) return { host: '', cookies: [] }
-  const list = await chrome.cookies.getAll({ url: pageUrl })
+  const lists = await Promise.all([
+    chrome.cookies.getAll({ url: pageUrl }),
+    chrome.cookies.getAll({ domain: host }),
+  ])
+  const list = Array.from(new Map(lists.flat().map(item => [JSON.stringify([item.domain, item.path, item.name]), item])).values())
   const cookies = (list || [])
     .filter((item) => item && item.name)
     .map((item) => ({
@@ -307,9 +316,13 @@ export async function fetch115Dirs(settings, cid, account) {
 }
 
 /** 提交一条 115 分享/磁力/ED2K 到外部推送插件，返回 request_id。 */
-export async function submitExternalPush(settings, { link, source, targetCid }) {
+export async function submitExternalPush(settings, { link, source, targetCid, accountMode, accountId }) {
   const body = { source: source || '浏览器扩展', link: String(link || '') }
   if (targetCid) body.target_cid = String(targetCid)
+  if (accountMode) {
+    body.account_mode = accountMode
+    body.account_id = Number(accountId) || 0
+  }
   const res = await dianFetch(settings, '', {
     prefix: PUSH115_PREFIX,
     method: 'POST',

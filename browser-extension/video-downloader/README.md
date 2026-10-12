@@ -2,7 +2,7 @@
 
 一个插件两条推送链路：视频页面（含节目单）推给 DIAN115 **视频下载器**；
 115 分享、磁力、ED2K 链接推给 DIAN115 **外部推送**插件完成转存或离线。
-扩展只调用主程序已经公开的 OpenAPI，不依赖账号登录，也不会读取或上传任何 Cookie。
+扩展只调用主程序已有的 OpenAPI，不依赖网页账号登录。默认不读取或上传 Cookie；手动开启站点 CK 同步后，只同步当前站点。
 
 > 「站点 CK」相关说明见下文：只有在设置里**手动开启**「推送时同时更新站点 CK」
 > 后，扩展才会读取并上传当前站点的 Cookie；默认关闭，关闭时不会读取任何 Cookie。
@@ -30,8 +30,7 @@ https://raw.githubusercontent.com/madbrolab/dian115/main/browser-extension/video
 
 1. 下载上面的 zip。
 2. 打开 `chrome://extensions`（Edge 为 `edge://extensions`），打开右上角“开发者模式”。
-3. 点击“加载已解压的扩展程序”，**直接选中刚下载的 zip**（Windows 的文件选择框里可以像文件夹一样点进 zip）。
-   如果浏览器提示缺少清单文件，就把 zip 解压后选择里面的 `video-downloader` 目录。
+3. 先将 zip 完整解压，再点击“加载已解压的扩展程序”，选择包含 `manifest.json` 的解压目录。
 4. 记下扩展卡片上显示的 ID。
 
 ## 在 DIAN115 一侧准备
@@ -134,7 +133,17 @@ DIAN115 的「视频下载器 → 站点 CK」用于需要登录的站点。除�
 
 ## 关于实时进度
 
-扩展的进度来自轮询 `GET /tasks/:id`（默认 20 秒一次，弹窗打开时 5 秒一次）。
+扩展的进度来自轮询 `GET /tasks/:id`（后台默认 60 秒一次，弹窗打开时 5 秒一次）。Chrome 102 的后台定时器最小间隔为一分钟。
 网页端使用的是 SSE（`/api/plugins/video-downloader/events`），但 MV3 的
 Service Worker 会被浏览器随时回收，长连接不可靠；弹窗里用 EventSource 又只能把
 OpenAPI Key 放进查询串，权衡后扩展保持轮询。
+
+## 1.2.4 逻辑修复
+
+预检字段与服务端严格校验保持一致；115 推送携带所选账号，切换账号后重新选目录。
+节目单按条目入队，显示本次实际处理数量；遇到探测或下载上限时显示截断提示。
+批量确认保留当时的模式、目标目录与格式，并绑定具体推送，旧确认按钮不能提交新推送。
+轮询和新推送同时发生时保留全部记录；没有任务加入时显示失败原因。
+站点 CK 保留原 Cookie 域名、路径和安全属性，只在用户开启同步时读取。
+
+开发回归检查：`node --experimental-vm-modules --test browser-extension/video-downloader/tests/logic.test.mjs`。
