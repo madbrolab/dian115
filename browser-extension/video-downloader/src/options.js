@@ -31,6 +31,7 @@ function readForm() {
     destinationId: el('destinationId').value.trim(),
     cookieProfileId: el('cookieProfileId').value.trim(),
     updateCookies: el('updateCookies').checked,
+    pageOverlay: el('pageOverlay').checked,
     autoListProbe: el('autoListProbe').checked,
     localConfirmThreshold: Math.max(1, Math.min(100, Number(el('localConfirmThreshold').value || DEFAULT_SETTINGS.localConfirmThreshold))),
     confirmBytes: Math.max(0, confirmGb) * GB,
@@ -56,6 +57,7 @@ function fillForm(settings) {
   fillDestinationOptions(settings.destinationId || '')
   el('cookieProfileId').value = settings.cookieProfileId || ''
   el('updateCookies').checked = settings.updateCookies === true
+  el('pageOverlay').checked = settings.pageOverlay !== false
   el('autoListProbe').checked = settings.autoListProbe !== false
   el('localConfirmThreshold').value = settings.localConfirmThreshold || DEFAULT_SETTINGS.localConfirmThreshold
   el('confirmGb').value = Math.round((Number(settings.confirmBytes || 0) / GB) * 10) / 10

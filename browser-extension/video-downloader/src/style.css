@@ -206,3 +206,7 @@ label.check { display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
 }
 
 .toast.show { opacity: .95; }
+
+.resource-list { max-height: 260px; overflow: auto; }
+.resource-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border, #e2e8f0); }
+.resource-row .grow { overflow-wrap: anywhere; }

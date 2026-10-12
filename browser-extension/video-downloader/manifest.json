@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DIAN115 推送助手",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "把视频页面推送到 DIAN115 视频下载器，把 115 分享、磁力、ED2K 链接交给外部推送插件处理。",
   "minimum_chrome_version": "102",
   "permissions": [
@@ -36,5 +36,18 @@
     "32": "icons/icon32.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "src/links.js",
+        "src/content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }

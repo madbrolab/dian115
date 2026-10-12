@@ -9,6 +9,9 @@ import {
   extractUrlsFromText,
   formatBytes,
   detectPushLink,
+  isExternalPushKind,
+  extractPushLinks,
+  uniquePushLinks,
   fetch115Accounts,
   fetch115Dirs,
   fetchExternalPushStatus,
@@ -22,6 +25,7 @@ import {
 } from './common.js'
 
 const POLL_ALARM = 'dian115-poll'
+const BATCH115_ALARM = 'dian115-batch115'
 const CONFIRM_NOTIFICATION = 'dian115-confirm'
 const STATUS_NOTIFICATION = 'dian115-status'
 
@@ -36,6 +40,11 @@ let trackedUpdates = Promise.resolve()
 let pollPromise = null
 let confirmationPromise = null
 let pendingUpdates = Promise.resolve()
+let batch115Promise = null
+let batch115Starting = Promise.resolve()
+let activeTabId = null
+let context115Value = ''
+let contextRevision = 0
 
 function updatePending(change) {
   const operation = pendingUpdates.then(async () => {
@@ -80,6 +89,7 @@ async function bootstrap() {
   await buildMenus()
   await schedulePoll()
   await refreshBadge()
+  void runBatch115()
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -95,6 +105,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === POLL_ALARM) void pollTracked()
+  if (alarm.name === BATCH115_ALARM) void runBatch115()
 })
 
 async function buildMenus() {
@@ -123,6 +134,7 @@ async function buildMenus() {
     id: MENU_PUSH115,
     title: '推送到 115（转存 / 离线）',
     contexts: ['page', 'link', 'selection'],
+    visible: false,
   })
 }
 
@@ -133,14 +145,25 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 async function handleMenuClick(info, tab) {
   if (info.menuItemId === MENU_PUSH115) {
     const candidate = info.linkUrl || info.selectionText || info.pageUrl || (tab && tab.url) || ''
-    await startPush115(candidate, { source: '右键菜单' })
+    const detected = detectPushLink(candidate)
+    await startPush115(isExternalPushKind(detected.kind) ? detected.link : context115Value, { source: '右键菜单' })
     return
   }
   if (info.menuItemId === MENU_LINK && info.linkUrl) {
+    if (isExternalPushKind(detectPushLink(info.linkUrl).kind)) { await startPush115(info.linkUrl, { source: '右键菜单' }); return }
     await startPush([info.linkUrl], { source: 'link' })
     return
   }
   if (info.menuItemId === MENU_SELECTION) {
+    const resources = uniquePushLinks(extractPushLinks(info.selectionText))
+    if (resources.length) {
+      if (resources.length === 1) await startPush115(resources[0].link, { source: '右键菜单' })
+      else {
+        const result = await startBatch115({ links: resources.map(item => item.link) })
+        await notify(result.ok ? '已开始批量推送' : '批量推送失败', result.ok ? '已接收 ' + result.total + ' 个资源链接，可在 DIAN115 外部推送中查看结果' : result.message)
+      }
+      return
+    }
     const urls = extractUrlsFromText(info.selectionText)
     if (!urls.length) {
       await notify('没有可推送的链接', '选中的文字里没有找到 http/https 链接。')
@@ -165,10 +188,10 @@ async function handleMenuClick(info, tab) {
  * 目标目录优先用调用方传入的（弹窗里临时选择的），否则用扩展里保存的默认值。
  */
 async function startPush115(rawValue, options = {}) {
-  const settings = await loadSettings()
+  const settings = options.settings || await loadSettings()
   if (!settings.baseUrl || !settings.apiKey) {
     await notify('尚未配置 DIAN115', '请先在扩展设置里填写服务器地址和 OpenAPI Key。', { openOptions: true })
-    return { ok: false, code: 'not_configured' }
+    return { ok: false, code: 'not_configured', message: '请先在扩展设置里填写服务器地址和 OpenAPI Key' }
   }
   const detected = detectPushLink(rawValue)
   if (detected.kind !== 'share115' && detected.kind !== 'magnet' && detected.kind !== 'ed2k') {
@@ -182,12 +205,13 @@ async function startPush115(rawValue, options = {}) {
     || (isShare ? defaults.shareCid : defaults.offlineCid)
     || '',
   ).trim()
-  if (!targetCid) {
+  if (!/^[1-9][0-9]*$/.test(targetCid)) {
     await notify('请先选择 115 目录', (isShare ? '转存' : '离线') + '目标目录未设置：打开扩展弹窗选一次并「保存为默认」即可。')
-    return { ok: false, code: 'target_missing' }
+    return { ok: false, code: 'target_missing', message: '请先在扩展弹窗选择账号及' + (isShare ? '转存' : '离线') + '目录，并保存为默认' }
   }
   const submit = await submitExternalPush(settings, {
     link: detected.link,
+    idempotencyKey: options.idempotencyKey,
     source: options.source || '浏览器扩展',
     targetCid,
     accountMode: options.accountMode || defaults.accountMode,
@@ -198,12 +222,92 @@ async function startPush115(rawValue, options = {}) {
     return { ok: false, code: 'submit_failed', message: submit.message }
   }
   if (options.deferPoll) {
-    return { ok: true, requestId: submit.requestId, kind: detected.kind, type: submit.type }
+    return { ok: true, requestId: submit.requestId, kind: detected.kind, type: submit.type, duplicate: submit.duplicate === true }
   }
   const finished = await pollExternalPush(settings, submit.requestId, 60)
   await notify(finished.ok ? '已推送到 115' : '115 推送失败', finished.message)
   return { ok: finished.ok, requestId: submit.requestId, message: finished.message }
 }
+
+async function serverIdentity(settings) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify([settings.baseUrl, settings.apiKey])))
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('')
+}
+
+function startBatch115(message) {
+  const operation = batch115Starting.then(async () => {
+    const settings = await loadSettings()
+    if (!settings.baseUrl || !settings.apiKey) return { ok: false, message: '请先配置 DIAN115 服务器和 OpenAPI Key' }
+    const stored = await chrome.storage.local.get('batch115')
+    if (stored.batch115?.status === 'running') return { ok: false, message: '已有批量推送正在处理，请等待完成' }
+    // The previous worker may still be clearing its alarm after persisting
+    // completion. Finish that cleanup before accepting the next batch.
+    if (batch115Promise) await batch115Promise
+    if (!Array.isArray(message.links) || message.links.length > 500) return { ok: false, message: '每批最多支持 500 个链接' }
+    const items = uniquePushLinks(message.links.flatMap(value => extractPushLinks(value)))
+    if (!items.length) return { ok: false, message: '没有有效的 115 分享、磁力或 ED2K 链接' }
+    const defaults = await loadPush115()
+    const targets = message.targets || defaults
+    const batch = { id: newIdempotencyKey(), status: 'running', identity: await serverIdentity(settings), links: items, cursor: 0, results: [], targets: { accountMode: targets.accountMode || 'main', accountId: Number(targets.accountId) || 0, shareCid: String(targets.shareCid || ''), offlineCid: String(targets.offlineCid || '') } }
+    await chrome.storage.local.set({ batch115: batch })
+    // The alarm resumes an interrupted MV3 worker; each POST has a persisted
+    // idempotency key, so resuming the last item cannot create a duplicate.
+    chrome.alarms.create(BATCH115_ALARM, { delayInMinutes: 1, periodInMinutes: 1 })
+    void runBatch115()
+    return { ok: true, batchId: batch.id, total: items.length }
+  })
+  batch115Starting = operation.catch(() => {})
+  return operation
+}
+
+function runBatch115() {
+  if (batch115Promise) return batch115Promise
+  batch115Promise = (async () => {
+    const stored = await chrome.storage.local.get('batch115')
+    const batch = stored.batch115
+    if (!batch || batch.status !== 'running') return
+    while (batch.cursor < batch.links.length) {
+      const settings = await loadSettings()
+      if (await serverIdentity(settings) !== batch.identity) {
+        batch.status = 'stopped'; batch.message = '服务器配置已变化，批量推送已停止，请重新提交剩余链接'; break
+      }
+      const item = batch.links[batch.cursor]
+      const targetCid = item.kind === 'share115' ? batch.targets.shareCid : batch.targets.offlineCid
+      const result = !/^[1-9][0-9]*$/.test(targetCid) ? { ok: false, message: '未设置' + (item.kind === 'share115' ? '转存' : '离线') + '目录' } : await startPush115(item.link, { ...batch.targets, settings, targetCid, deferPoll: true, source: '浏览器批量推送', idempotencyKey: batch.id + '-' + batch.cursor })
+      batch.results.push({ key: item.key, ...result })
+      batch.cursor++
+      await chrome.storage.local.set({ batch115: batch })
+    }
+    if (batch.status === 'running') batch.status = 'completed'
+    await chrome.storage.local.set({ batch115: batch })
+    await chrome.alarms.clear(BATCH115_ALARM)
+  })().catch(async () => {
+    // Preserve the saved cursor and retry safely on the alarm instead of
+    // abandoning an accepted batch when one API/storage operation fails.
+    chrome.alarms.create(BATCH115_ALARM, { delayInMinutes: 1, periodInMinutes: 1 })
+  }).finally(() => { batch115Promise = null })
+  return batch115Promise
+}
+
+function update115Menu(value) {
+  context115Value = value
+  contextRevision++
+  const external = isExternalPushKind(detectPushLink(value).kind)
+  chrome.contextMenus.update(MENU_PUSH115, { visible: external }, () => { void chrome.runtime.lastError })
+}
+
+// Reset a previously visible 115 action when moving to an unrelated video tab.
+chrome.tabs?.onActivated?.addListener(async info => {
+  activeTabId = info.tabId
+  update115Menu('')
+  const revision = contextRevision
+  const tab = await chrome.tabs.get(info.tabId).catch(() => null)
+  if (activeTabId !== info.tabId || contextRevision !== revision) return
+  update115Menu(tab && tab.url || '')
+})
+chrome.tabs?.onUpdated?.addListener((tabId, change, tab) => {
+  if (change.url && (tab?.active || tabId === activeTabId)) { activeTabId = tabId; update115Menu(change.url) }
+})
 
 /** 轮询外部推送结果；成功后返回目标路径，失败返回原因。 */
 async function pollExternalPush(settings, requestId, timeoutSeconds = 60) {
@@ -235,7 +339,7 @@ async function startPush(rawUrls, options = {}) {
       '请先在扩展设置里填写服务器地址和 OpenAPI Key。',
       { openOptions: true },
     )
-    return { ok: false, code: 'not_configured' }
+    return { ok: false, code: 'not_configured', message: '请先在扩展设置里填写服务器地址和 OpenAPI Key' }
   }
 
   let preview = null
@@ -247,7 +351,7 @@ async function startPush(rawUrls, options = {}) {
   }
   if (urls.length === 1) {
     const probe = options.probe
-      || (settings.autoListProbe && looksLikePlaylistUrl(urls[0]) ? 'list' : 'quick')
+      || (settings.autoListProbe !== false ? 'list' : 'quick')
     const res = await dianFetch(settings, '/quick', {
       method: 'POST',
       body: {
@@ -596,6 +700,31 @@ async function schedulePoll() {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   void (async () => {
     const type = message && message.type
+    // Page scripts receive only these narrow operations, never settings or keys.
+    if (_sender.tab && !['overlayState', 'push115Defaults', 'push115', 'push115Batch', 'batch115State', 'push115Status', 'context115'].includes(type)) {
+      sendResponse({ ok: false, code: 'page_operation_denied' }); return
+    }
+    if (type === 'overlayState') {
+      const settings = await loadSettings()
+      sendResponse({ ok: true, enabled: settings.pageOverlay !== false }); return
+    }
+    if (type === 'push115Batch') { sendResponse(await startBatch115(message)); return }
+    if (type === 'batch115State') {
+      const stored = await chrome.storage.local.get('batch115')
+      const batch = stored.batch115
+      sendResponse({ ok: true, batch: batch && (!message.batchId || message.batchId === batch.id) ? { id: batch.id, status: batch.status, total: batch.links.length, cursor: batch.cursor, results: batch.results, message: batch.message || '' } : null }); return
+    }
+    if (type === 'push115Defaults') {
+      const defaults = await loadPush115()
+      sendResponse({ ok: true, defaults }); return
+    }
+    if (type === 'context115') {
+      if (!_sender.tab || (_sender.tab.active !== false && (activeTabId === null || activeTabId === _sender.tab.id))) {
+        if (_sender.tab) activeTabId = _sender.tab.id
+        update115Menu(String(message.value || ''))
+      }
+      sendResponse({ ok: true }); return
+    }
     if (type === 'state') {
       const settings = await loadSettings()
       const stored = await chrome.storage.local.get(['tracked', 'pendingPush'])
@@ -616,13 +745,14 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse({ ok: false, code: 'no_url' })
         return
       }
-      const probe = (message && message.probe) || (settings.autoListProbe && looksLikePlaylistUrl(url) ? 'list' : 'quick')
+      const probe = (message && message.probe) || (settings.autoListProbe !== false ? 'list' : 'quick')
+      const cookieSync = settings.updateCookies ? await syncSiteCookies(settings, url) : null
       const res = await dianFetch(settings, '/quick', {
         method: 'POST',
         body: { url, probe, destination_id: settings.destinationId || undefined, ...(settings.cookieProfileId ? { cookie_profile_id: settings.cookieProfileId } : {}) },
         timeoutMs: 180000,
       })
-      sendResponse({ ok: res.ok, code: res.code, message: res.message, preview: res.data && res.data.result ? res.data.result : null, probe })
+      sendResponse({ ok: res.ok, code: res.code, message: res.message, preview: res.data && res.data.result ? res.data.result : null, probe, cookieSync })
       return
     }
     if (type === 'push') {

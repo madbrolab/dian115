@@ -1,3 +1,5 @@
+import './links.js'
+
 // Shared helpers for the DIAN115 video push extension.
 //
 // Everything here is dependency free so it can be imported from the MV3
@@ -35,25 +37,19 @@ export async function savePush115(patch) {
   return next
 }
 
-const SHARE115_RE = /https?:\/\/(?:share\.)?115(?:\.com|cdn\.com)\/[^\s<>"'【】《》[\]]+/i
-const MAGNET_RE = /magnet:\?[^\s<>"'【】《》[\]]+/i
-const ED2K_RE = /ed2k:\/\/[^\s<>"'【】《》[\]]+/i
+export const extractPushLinks = value => globalThis.Dian115Links.extract(value)
+export const uniquePushLinks = items => globalThis.Dian115Links.unique(items)
+export const isExternalPushKind = kind => globalThis.Dian115Links.isExternal(kind)
 
-/**
- * 识别一段文本/地址属于哪种推送：115 分享、磁力、ED2K 还是普通视频页面。
- * 返回 { kind, link, label }；kind 为 share115 | magnet | ed2k | video | unknown。
- */
 export function detectPushLink(value) {
   const text = String(value || '').trim()
-  if (!text) return { kind: 'unknown', link: '', label: '' }
-  let matched = text.match(SHARE115_RE)
-  if (matched) return { kind: 'share115', link: matched[0], label: '115 分享' }
-  matched = text.match(MAGNET_RE)
-  if (matched) return { kind: 'magnet', link: matched[0], label: '磁力' }
-  matched = text.match(ED2K_RE)
-  if (matched) return { kind: 'ed2k', link: matched[0], label: 'ED2K' }
-  if (/^https?:\/\//i.test(text)) return { kind: 'video', link: text, label: '视频页面' }
-  return { kind: 'unknown', link: text, label: '' }
+  const found = extractPushLinks(text)[0]
+  if (found) return found
+  try {
+    const url = new URL(text)
+    if (['http:', 'https:'].includes(url.protocol) && !url.username && !url.password) return { kind: 'video', link: text, label: '视频页面' }
+  } catch {}
+  return { kind: 'unknown', link: '', label: '' }
 }
 
 export const ACTIVE_STATUSES = ['queued', 'resolving', 'downloading', 'postprocessing', 'paused']
@@ -87,6 +83,7 @@ export const DEFAULT_SETTINGS = {
   notifyOnQueued: true,
   // 推送时同时把当前站点 Cookie 同步到 DIAN115（默认关闭，需用户显式开启）。
   updateCookies: false,
+  pageOverlay: true,
 }
 
 export async function loadSettings() {
@@ -316,7 +313,7 @@ export async function fetch115Dirs(settings, cid, account) {
 }
 
 /** 提交一条 115 分享/磁力/ED2K 到外部推送插件，返回 request_id。 */
-export async function submitExternalPush(settings, { link, source, targetCid, accountMode, accountId }) {
+export async function submitExternalPush(settings, { link, source, targetCid, accountMode, accountId, idempotencyKey }) {
   const body = { source: source || '浏览器扩展', link: String(link || '') }
   if (targetCid) body.target_cid = String(targetCid)
   if (accountMode) {
@@ -327,12 +324,13 @@ export async function submitExternalPush(settings, { link, source, targetCid, ac
     prefix: PUSH115_PREFIX,
     method: 'POST',
     body,
-    idempotencyKey: newIdempotencyKey(),
-    timeoutMs: 30000,
+    idempotencyKey: idempotencyKey || newIdempotencyKey(),
+    timeoutMs: 25000,
   })
-  if (!res.ok) return { ok: false, message: res.message || res.code || '推送失败' }
+  if (!res.ok) return { ok: false, httpStatus: res.status, message: res.message || res.code || '推送失败' }
   const data = res.data || {}
-  return { ok: true, requestId: data.request_id || '', status: data.status || 'queued', type: data.type || '' }
+  if (!data.request_id) return { ok: false, message: '服务器未返回推送编号，请检查外部推送接口' }
+  return { ok: true, requestId: data.request_id, status: data.status || 'queued', type: data.type || '', duplicate: data.duplicate === true }
 }
 
 /** 查询外部推送的执行结果。 */

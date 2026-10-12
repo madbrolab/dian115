@@ -4,6 +4,7 @@ import vm from 'node:vm'
 import test from 'node:test'
 
 const commonSource = await readFile(new URL('../src/common.js', import.meta.url), 'utf8')
+const linksSource = await readFile(new URL('../src/links.js', import.meta.url), 'utf8')
 const backgroundSource = await readFile(new URL('../src/background.js', import.meta.url), 'utf8')
 const copy = value => structuredClone(value)
 
@@ -13,6 +14,7 @@ async function extension(fetchHandler, initial = {}) {
   const event = name => ({ addListener: fn => { listeners[name] = fn } })
   const requests = []
   const cookieReads = []
+  const menuUpdates = []
   const chrome = {
     storage: { local: {
       get: async keys => Object.fromEntries((Array.isArray(keys) ? keys : [keys]).map(key => [key, copy(state[key])])),
@@ -21,23 +23,26 @@ async function extension(fetchHandler, initial = {}) {
     }, onChanged: event('storage') },
     runtime: { id: 'test-extension', onInstalled: event('installed'), onStartup: event('startup'), onMessage: event('message'), getURL: path => path, openOptionsPage: async () => {} },
     alarms: { onAlarm: event('alarm'), clear: async () => {}, create: () => {} },
-    contextMenus: { onClicked: event('menu'), removeAll: async () => {}, create: () => {} },
+    contextMenus: { update: (id, options, callback) => { menuUpdates.push({ id, ...options }); callback?.() }, onClicked: event('menu'), removeAll: async () => {}, create: () => {} },
+    tabs: { onActivated: event('activated'), onUpdated: event('updated'), get: async () => ({ url: 'https://example.com' }) },
     notifications: { onButtonClicked: event('button'), onClicked: event('notification'), create: async () => {}, clear: async () => {} },
     action: { setBadgeBackgroundColor: async () => {}, setBadgeText: async () => {} },
     cookies: { getAll: async filter => { cookieReads.push(filter); return [{ name: 'SID', value: 'test', domain: '.example.com', path: '/', secure: true, httpOnly: true }] } },
   }
-  const context = vm.createContext({ chrome, URL, URLSearchParams, AbortController, setTimeout, clearTimeout, crypto: globalThis.crypto, fetch: async (url, options) => {
+  const context = vm.createContext({ chrome, URL, URLSearchParams, AbortController, setTimeout, clearTimeout, crypto: globalThis.crypto, TextEncoder, fetch: async (url, options) => {
     const request = { url, path: new URL(url).pathname, body: options.body ? JSON.parse(options.body) : null, options }
     requests.push(request)
     const result = await fetchHandler(request)
     return { ok: (result.status || 200) < 400, status: result.status || 200, text: async () => JSON.stringify(result.data || {}) }
   } })
   const common = new vm.SourceTextModule(commonSource, { context })
-  await common.link(() => { throw new Error('unexpected import') })
+  const links = new vm.SourceTextModule(linksSource, { context })
+  await links.link(() => { throw new Error('unexpected import') })
+  await common.link(() => links)
   const background = new vm.SourceTextModule(backgroundSource, { context })
   await background.link(() => common)
   await background.evaluate()
-  return { state, requests, cookieReads, common: common.namespace, send: message => new Promise(resolve => listeners.message(message, {}, resolve)) }
+  return { state, requests, cookieReads, menuUpdates, listeners, common: common.namespace, send: (message, sender = {}) => new Promise(resolve => listeners.message(message, sender, resolve)) }
 }
 
 const single = request => request.path.endsWith('/quick')
@@ -157,4 +162,123 @@ test('opt-in cookie collection preserves parent-domain and HTTP-only attributes'
   assert.equal(cookies[0].domain, '.example.com')
   assert.equal(cookies[0].httpOnly, true)
   assert.equal(cookies[0].secure, true)
+})
+
+
+test('automatic preflight lets the extractor classify an unhinted Bilibili anthology', async () => {
+  const app = await extension(request => request.path.endsWith('/quick') ? { data: { result: { probe: 'list', total_items: 2, items: [{ url: 'https://example.com/1' }, { url: 'https://example.com/2' }], queue_free: 100 } } } : single(request))
+  await app.send({ type: 'push', urls: ['https://www.bilibili.com/video/BV1wDhj6wEa8/'] })
+  assert.equal(app.requests[0].body.probe, 'list')
+  assert.equal(app.requests[1].body.playlist, true)
+})
+
+test('preview synchronizes opted-in site cookies before metadata extraction', async () => {
+  const app = await extension(request => request.path.endsWith('/cookies') ? { data: { profile: { id: 'bili' } } } : single(request), { settings: { baseUrl: 'https://dian.test', apiKey: 'test-key', updateCookies: true } })
+  const result = await app.send({ type: 'preview', url: 'https://www.example.com/watch' })
+  assert.equal(result.ok, true)
+  assert.ok(app.requests[0].path.endsWith('/cookies'))
+  assert.ok(app.requests[1].path.endsWith('/quick'))
+  assert.equal(result.cookieSync.ok, true)
+})
+
+test('page scripts cannot read settings or API keys', async () => {
+  const app = await extension(single)
+  const result = await new Promise(resolve => app.listeners.message({ type: 'state' }, { tab: { id: 1 } }, resolve))
+  assert.equal(result.code, 'page_operation_denied')
+  const overlay = await new Promise(resolve => app.listeners.message({ type: 'overlayState' }, { tab: { id: 1 } }, resolve))
+  assert.deepEqual(Object.keys(overlay).sort(), ['enabled', 'ok'])
+})
+
+test('client does not suppress a user pushing the same resource again', async () => {
+  const app = await extension(() => ({ data: { request_id: 'ep_new' } }), { push115: { accountMode: 'main', accountId: 1, offlineCid: '567' } })
+  const message = { type: 'push115', link: 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567' }
+  await app.send(message)
+  await app.send(message)
+  assert.equal(app.requests.length, 2)
+  assert.notEqual(app.requests[0].options.headers['Idempotency-Key'], app.requests[1].options.headers['Idempotency-Key'])
+})
+
+test('batch normalizes duplicate page links once and preserves all distinct resources', async () => {
+  const app = await extension(request => ({ data: { request_id: 'ep_' + app.requests.length } }), { push115: { accountMode: 'backup', accountId: 9, shareCid: '123', offlineCid: '567' } })
+  const result = await app.send({ type: 'push115Batch', links: ['https://115.com/s/abc123', 'https://115cdn.com/s/abc123?password=a1b2', 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567', 'magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=dup'] })
+  assert.equal(result.total, 2)
+  for (let i = 0; i < 100 && app.state.batch115.status === 'running'; i++) await new Promise(resolve => setTimeout(resolve, 1))
+  assert.equal(app.state.batch115.status, 'completed')
+  assert.equal(app.requests.length, 2)
+  assert.equal(app.requests[0].body.link, 'https://115.com/s/abc123?password=a1b2')
+  assert.equal(app.requests[0].body.target_cid, '123')
+  assert.equal(app.requests[1].body.target_cid, '567')
+  assert.equal(app.requests[1].body.account_id, 9)
+})
+
+test('root target is refused before submission', async () => {
+  const app = await extension(single)
+  const result = await app.send({ type: 'push115', link: 'https://115.com/s/abc123', targetCid: '0' })
+  assert.equal(result.code, 'target_missing')
+  assert.equal(app.requests.length, 0)
+})
+
+const settleBatch = async app => {
+  for (let i = 0; i < 200 && app.state.batch115?.status === 'running'; i++) await new Promise(resolve => setTimeout(resolve, 1))
+}
+
+test('an interrupted worker resumes the persisted item with the same idempotency key', async () => {
+  let release, began
+  const ready = new Promise(resolve => { began = resolve })
+  const app = await extension(() => { began(); return new Promise(resolve => { release = resolve }) }, { push115: { accountMode: 'main', accountId: 1, shareCid: '123' } })
+  await app.send({ type: 'push115Batch', links: ['https://115.com/s/resume'] })
+  await ready
+  const resumed = await extension(() => ({ data: { request_id: 'same-request', duplicate: true } }), copy(app.state))
+  resumed.listeners.alarm({ name: 'dian115-batch115' })
+  await settleBatch(resumed)
+  assert.equal(resumed.state.batch115.status, 'completed')
+  assert.equal(resumed.requests[0].options.headers['Idempotency-Key'], app.requests[0].options.headers['Idempotency-Key'])
+  release({ data: { request_id: 'same-request' } })
+  await settleBatch(app)
+})
+
+test('a busy batch is refused and server changes stop the remaining submissions', async () => {
+  let release, began
+  const ready = new Promise(resolve => { began = resolve })
+  const app = await extension(() => { began(); return new Promise(resolve => { release = resolve }) }, { push115: { accountMode: 'main', accountId: 1, shareCid: '123' } })
+  await app.send({ type: 'push115Batch', links: ['https://115.com/s/one111', 'https://115.com/s/two222'] })
+  await ready
+  assert.equal((await app.send({ type: 'push115Batch', links: ['https://115.com/s/three3'] })).ok, false)
+  app.state.settings.apiKey = 'changed-key'
+  release({ data: { request_id: 'first' } })
+  await settleBatch(app)
+  assert.equal(app.state.batch115.status, 'stopped')
+  assert.equal(app.requests.length, 1)
+  assert.equal(app.state.batch115.cursor, 1)
+})
+
+test('batch failures are recorded without abandoning the remaining links', async () => {
+  const app = await extension(request => request.body.link.endsWith('/one111') ? { status: 400, data: { message: '分享已失效' } } : { data: { request_id: 'second' } }, { push115: { accountMode: 'main', accountId: 1, shareCid: '123' } })
+  await app.send({ type: 'push115Batch', links: ['https://115.com/s/one111', 'https://115.com/s/two222'] })
+  await settleBatch(app)
+  assert.deepEqual(app.state.batch115.results.map(item => item.ok), [false, true])
+  assert.equal(app.state.batch115.cursor, 2)
+})
+
+test('115 context actions ignore background tabs and reset on active video navigation', async () => {
+  const app = await extension(single)
+  await app.send({ type: 'context115', value: 'https://115.com/s/one111' }, { tab: { id: 1, active: true } })
+  assert.equal(app.menuUpdates.at(-1).visible, true)
+  app.listeners.updated(2, { url: 'https://example.com/video' }, { active: false })
+  assert.equal(app.menuUpdates.at(-1).visible, true)
+  await app.listeners.activated({ tabId: 2 })
+  assert.equal(app.menuUpdates.at(-1).visible, false)
+  await app.send({ type: 'context115', value: 'https://115.com/s/one111' }, { tab: { id: 1, active: false } })
+  assert.equal(app.menuUpdates.at(-1).visible, false)
+})
+
+test('the next batch starts after previous alarm cleanup even when submitted immediately', async () => {
+  const app = await extension(() => ({ data: { request_id: 'new' } }), { push115: { accountMode: 'main', accountId: 1, shareCid: '123' } })
+  await app.send({ type: 'push115Batch', links: ['https://115.com/s/first1'] })
+  await settleBatch(app)
+  assert.equal((await app.send({ type: 'push115Batch', links: ['https://115.com/s/second'] })).ok, true)
+  await settleBatch(app)
+  assert.equal(app.state.batch115.status, 'completed')
+  assert.equal(app.requests.length, 2)
+  assert.equal(app.requests.at(-1).body.link, 'https://115.com/s/second')
 })

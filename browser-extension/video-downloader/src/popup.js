@@ -3,6 +3,8 @@ import {
   STATUS_LABELS,
   PUSH115_DEFAULTS,
   detectPushLink,
+  isExternalPushKind,
+  uniquePushLinks,
   formatBytes,
   formatDuration,
   hostOf,
@@ -16,6 +18,11 @@ let currentTab = null
 let lastPreview = null
 let lastFormats = []
 let pendingId = ''
+let pageLinks = []
+let batchLinks = []
+const bulkSelected = new Set()
+let bulkRunning = false
+let previewRequest = 0
 
 function send(message) {
   return new Promise((resolve) => chrome.runtime.sendMessage(message, (response) => {
@@ -156,6 +163,7 @@ function renderFormatOptions() {
   if (!list.length) {
     select.innerHTML = ''
     field.hidden = true
+    el('format-card').hidden = pageLinks.length < 2
     return
   }
   const previous = select.value
@@ -165,6 +173,7 @@ function renderFormatOptions() {
   const keep = list.some((item) => String(item.id) === previous) ? previous : String(list[0].id)
   select.value = keep
   field.hidden = false
+  el('format-card').hidden = false
 }
 
 /** 预览里选中的格式 id；没有下拉（未解析/无可用格式）时返回空串。 */
@@ -180,12 +189,12 @@ function renderPreview(preview, probe) {
     card.hidden = true
     return
   }
-  lastPreview = { preview, probe }
+  lastPreview = { preview, probe, url: currentTab?.url }
   lastFormats = Array.isArray(preview.formats) ? preview.formats : []
   el('preview-title').textContent = preview.title || '(未命名)'
   el('preview-probe').textContent = probe === 'list' ? '节目单' : '单个视频'
   const source = [preview.extractor, hostOf(preview.webpage_url || '')].filter(Boolean).join(' · ')
-  el('preview-source').textContent = source
+  el('preview-source').textContent = [source, preview.warning].filter(Boolean).join(' · ')
   if (preview.thumbnail) {
     const img = el('preview-thumb')
     img.src = preview.thumbnail
@@ -242,15 +251,20 @@ async function loadTab() {
 
 async function probe(probeName) {
   if (!currentTab || !currentTab.url) return
+  const request = ++previewRequest
+  const url = currentTab.url
   el('probe-list').disabled = true
   el('push-page').disabled = true
   try {
-    const res = await send({ type: 'preview', url: currentTab.url, probe: probeName })
+    const res = await send({ type: 'preview', url, probe: probeName })
+    if (request !== previewRequest || currentTab?.url !== url) return
     if (!res.ok) {
+      lastPreview = null; lastFormats = []; renderPreview(null); renderFormatOptions()
       toast(res.message || '预检失败')
       return
     }
-    renderPreview(res.preview, res.probe || probeName)
+    renderPreview(res.preview, res.preview?.probe || res.probe || probeName)
+    if (res.cookieSync?.ok === false) toast('站点登录态同步失败：' + res.cookieSync.message)
   } finally {
     el('probe-list').disabled = false
     el('push-page').disabled = false
@@ -259,7 +273,9 @@ async function probe(probeName) {
 
 el('push-page').addEventListener('click', async () => {
   if (!currentTab || !currentTab.url) return
-  const res = await send({ type: 'push', urls: [currentTab.url], probe: 'quick', formatId: selectedFormatId() })
+  el('push-page').disabled = true
+  const res = await send({ type: 'push', urls: [currentTab.url], probe: lastPreview?.url === currentTab.url ? lastPreview.probe : undefined, formatId: selectedFormatId() })
+  el('push-page').disabled = false
   if (res && res.pending) toast('需要确认后才会开始下载')
   else if (res && res.ok) toast('已加入下载队列')
   else toast((res && res.message) || '推送失败')
@@ -272,7 +288,7 @@ el('preview-push').addEventListener('click', async () => {
   if (!lastPreview || !currentTab) return
   const res = await send({
     type: 'push',
-    urls: [currentTab.url],
+    urls: [lastPreview.url],
     probe: lastPreview.probe,
     formatId: selectedFormatId(),
   })
@@ -288,6 +304,7 @@ el('preview-close').addEventListener('click', () => {
   el('preview-format').innerHTML = ''
   el('preview-format-field').hidden = true
   el('preview-card').hidden = true
+  renderFormatOptions()
 })
 
 el('pending-confirm').addEventListener('click', async () => {
@@ -305,6 +322,7 @@ el('pending-cancel').addEventListener('click', async () => {
 el('refresh').addEventListener('click', async () => {
   await send({ type: 'refresh' })
   await loadState()
+  await loadPageLinks()
 })
 
 el('clear').addEventListener('click', async () => {
@@ -322,6 +340,83 @@ el('mode').addEventListener('change', async () => {
   // 模式变了，可选格式也不同，按新模式重挑一遍。
   if (lastFormats.length) renderFormatOptions()
 })
+
+async function loadPageLinks() {
+  const current = detectPushLink(currentTab?.url || '')
+  let scanned = []
+  if (currentTab?.id && /^https?:\/\//i.test(currentTab.url || '')) {
+    scanned = await new Promise(resolve => {
+      chrome.tabs.sendMessage(currentTab.id, { type: 'pageLinks' }, response => {
+        const error = chrome.runtime.lastError
+        resolve(!error && response?.ok ? response.links || [] : [])
+      })
+    })
+  }
+  pageLinks = uniquePushLinks([...(isExternalPushKind(current.kind) ? [current] : []), ...scanned])
+  detected115 = pageLinks.find(item => item.key === detected115.key) || pageLinks[0] || { kind: 'unknown', link: '', label: '' }
+  el('video-controls').hidden = isExternalPushKind(current.kind)
+  const validPage = /^https?:\/\//i.test(currentTab?.url || '')
+  el('push-page').disabled = !validPage
+  el('probe-list').disabled = !validPage
+  el('batch-links').hidden = pageLinks.length < 2
+  el('batch-links').textContent = '↥ 批量推送 · ' + pageLinks.length
+  el('page-link-count').hidden = pageLinks.length < 2
+  el('page-link-count').textContent = '115 分享／磁力／ED2K：' + pageLinks.length + ' 个，已按内容去重'
+  const select = el('p115-link-select'); select.replaceChildren()
+  for (const item of pageLinks) {
+    const option = document.createElement('option'); option.value = item.key; option.textContent = item.label + ' · ' + truncate(item.title || item.link, 50); select.append(option)
+  }
+  select.value = detected115.key || ''
+  el('p115-link-field').hidden = pageLinks.length < 2
+  renderFormatOptions(); renderPush115()
+}
+
+function renderBulk() {
+  const host = el('bulk-list'); host.replaceChildren()
+  for (const item of batchLinks) {
+    const row = document.createElement('div'); row.className = 'resource-row'
+    const check = document.createElement('input'); check.type = 'checkbox'; check.checked = bulkSelected.has(item.key); check.disabled = bulkRunning
+    check.setAttribute('aria-label', '选择 ' + item.label)
+    check.addEventListener('change', () => { if (check.checked) bulkSelected.add(item.key); else bulkSelected.delete(item.key) })
+    const text = document.createElement('span'); text.className = 'grow small'; text.textContent = item.label + ' · ' + (item.title || item.link); text.title = item.link
+    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '删除'; remove.className = 'ghost tiny'; remove.disabled = bulkRunning
+    remove.addEventListener('click', () => { batchLinks = batchLinks.filter(link => link.key !== item.key); bulkSelected.delete(item.key); renderBulk() })
+    row.append(check, text, remove); host.append(row)
+  }
+  for (const id of ['bulk-select-all','bulk-unselect','bulk-delete','bulk-push-selected','bulk-push-all']) el(id).disabled = bulkRunning || !batchLinks.length
+}
+
+async function pushBulk(all) {
+  if (bulkRunning) return
+  const items = batchLinks.filter(item => all || bulkSelected.has(item.key))
+  if (!items.length) { toast('请先选择要推送的链接'); return }
+  const account = currentAccount()
+  bulkRunning = true; renderBulk()
+  const node = el('bulk-status'); node.hidden = false; node.textContent = '正在提交…'
+  const submitted = await send({ type: 'push115Batch', links: items.map(item => item.link), targets: { accountMode: account.mode, accountId: account.id, shareCid: push115.shareCid, offlineCid: push115.offlineCid } })
+  if (!submitted.ok) { node.textContent = submitted.message || '批量推送失败'; bulkRunning = false; renderBulk(); return }
+  while (true) {
+    const result = await send({ type: 'batch115State', batchId: submitted.batchId })
+    const batch = result.batch
+    if (!result.ok || !batch) break
+    const accepted = batch.results.filter(item => item.ok && !item.duplicate).length
+    const duplicates = batch.results.filter(item => item.ok && item.duplicate).length
+    const errors = batch.results.filter(item => !item.ok)
+    node.textContent = `已处理 ${batch.cursor}/${batch.total} · 已提交 ${accepted} · 已存在 ${duplicates} · 失败 ${errors.length}` + (batch.message ? '\n' + batch.message : '') + (errors.length ? '\n' + errors.map(item => item.message || '推送失败').join('；') : '')
+    if (batch.status !== 'running') break
+    await new Promise(resolve => setTimeout(resolve, 1000))
+  }
+  bulkRunning = false; renderBulk()
+}
+
+el('batch-links').addEventListener('click', () => { if (!bulkRunning) { batchLinks = [...pageLinks]; bulkSelected.clear(); renderBulk() } el('bulk-card').hidden = false })
+el('bulk-close').addEventListener('click', () => { el('bulk-card').hidden = true })
+el('bulk-select-all').addEventListener('click', () => { for (const item of batchLinks) bulkSelected.add(item.key); renderBulk() })
+el('bulk-unselect').addEventListener('click', () => { bulkSelected.clear(); renderBulk() })
+el('bulk-delete').addEventListener('click', () => { batchLinks = batchLinks.filter(item => !bulkSelected.has(item.key)); bulkSelected.clear(); renderBulk() })
+el('bulk-push-selected').addEventListener('click', () => void pushBulk(false))
+el('bulk-push-all').addEventListener('click', () => void pushBulk(true))
+el('p115-link-select').addEventListener('change', () => { detected115 = pageLinks.find(item => item.key === el('p115-link-select').value) || detected115; renderPush115() })
 
 // ----------------------------------------------------- 115 转存 / 离线
 
@@ -352,6 +447,7 @@ function setStatus(text, kind) {
 }
 
 function renderPush115() {
+  el('card-115').hidden = !isExternalPushKind(detected115.kind) && !pageLinks.length
   const kindNode = el('p115-kind')
   const linkNode = el('p115-link')
   if (kindNode) {
@@ -478,7 +574,7 @@ async function pushLink115() {
     setStatus((res && res.message) || '推送失败', 'bad')
     return
   }
-  setStatus('已提交，正在等待 115 处理…')
+  setStatus(res.duplicate ? '已存在，未重复创建；正在读取结果…' : '已提交，正在等待 115 处理…')
   if (push115Polling) clearInterval(push115Polling)
   let attempts = 0
   push115Polling = setInterval(async () => {
@@ -558,9 +654,9 @@ el('p115-save').addEventListener('click', async () => {
 
 void (async () => {
   await loadTab()
-  detected115 = detectPushLink((currentTab && currentTab.url) || '')
+  await loadPageLinks()
   renderPush115()
-  await load115()
+  if (!el('card-115').hidden) await load115()
   void loadState()
 })()
 setInterval(() => void send({ type: 'refresh' }).then(() => loadState()), 5000)

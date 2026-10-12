@@ -63,7 +63,7 @@
       </label>
       <label class="check">
         <input type="checkbox" id="autoListProbe">
-        <span>页面看起来像节目单时自动展开列表</span>
+        <span>交给站点提取器识别并展开节目单（单视频仍只推送一项）</span>
       </label>
       <label class="field">
         <span>多少条以上先让我确认</span>
@@ -89,6 +89,12 @@
         开启后，每次推送会把当前页面的站点 Cookie 一并发送到 DIAN115，用于刷新“站点 CK（登录态）”里对应的配置。
         关闭时不会读取、也不会发送任何 Cookie。仅建议在自己搭建的服务器上开启。
       </div>
+    </div>
+
+    <div class="card">
+      <h2>页面叠加层</h2>
+      <label class="check"><input type="checkbox" id="pageOverlay"><span>在 115 分享、磁力与 ED2K 链接旁显示推送图标</span></label>
+      <div class="small muted">自动去重；多个链接时显示批量按钮，可单选、多选、删除和推送全部。关闭后移除页面图标与浮层，仍可从扩展弹窗推送。</div>
     </div>
 
     <div class="card">

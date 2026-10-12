@@ -16,7 +16,7 @@
         <button class="ghost tiny" id="open-options" title="设置">设置</button>
       </div>
       <div class="small muted ellipsis" id="page-url"></div>
-      <div class="row" style="margin-top:10px">
+      <div class="row" id="video-controls" style="margin-top:10px">
         <select id="mode" class="grow" title="下载模式">
           <option value="video">视频</option>
           <option value="audio">仅音频</option>
@@ -24,6 +24,26 @@
         <button class="primary" id="push-page">推送</button>
         <button id="probe-list" title="先展开节目单再推送">节目单</button>
       </div>
+    </div>
+
+    <div class="card" id="format-card" hidden>
+      <div class="row between">
+        <h2>格式</h2>
+        <button class="ghost tiny" id="batch-links" hidden title="查看本页全部资源链接">↥ 批量推送</button>
+      </div>
+      <label class="field" id="preview-format-field" hidden>
+        <span class="small muted">视频格式</span>
+        <select id="preview-format"></select>
+      </label>
+      <div class="small muted" id="page-link-count" hidden></div>
+    </div>
+
+    <div class="card" id="bulk-card" hidden>
+      <div class="row between"><h2>批量推送列表</h2><button class="ghost tiny" id="bulk-close">收起</button></div>
+      <div class="row"><button class="tiny" id="bulk-select-all">全选</button><button class="tiny" id="bulk-unselect">取消选择</button><button class="tiny" id="bulk-delete">删除选中</button></div>
+      <div id="bulk-list" class="resource-list"></div>
+      <div class="actions"><button class="primary" id="bulk-push-selected">推送选中</button><button id="bulk-push-all">一键推送全部</button></div>
+      <div class="hint" id="bulk-status" hidden></div>
     </div>
 
     <div class="card banner" id="pending-card" hidden>
@@ -43,10 +63,6 @@
       <img class="preview-thumb" id="preview-thumb" hidden alt="">
       <div class="small muted" id="preview-source"></div>
       <div class="stats" id="preview-stats"></div>
-      <label class="field" id="preview-format-field" hidden style="margin:10px 0 0">
-        <span>格式</span>
-        <select id="preview-format"></select>
-      </label>
       <ul class="items" id="preview-items" hidden></ul>
       <div class="actions">
         <button class="primary" id="preview-push">加入下载队列</button>
@@ -65,12 +81,13 @@
       <div id="tasks"></div>
     </div>
 
-    <div class="card" id="card-115">
+    <div class="card" id="card-115" hidden>
       <div class="row between">
         <h2 class="grow">115 转存 / 离线</h2>
         <span class="tag" id="p115-kind">未识别</span>
       </div>
       <div class="small muted ellipsis" id="p115-link">当前页面不是 115 分享 / 磁力 / ED2K 链接</div>
+      <label class="field" id="p115-link-field" hidden><span>本页资源</span><select id="p115-link-select"></select></label>
       <label class="field">
         <span>使用账号</span>
         <select id="p115-account"></select>
