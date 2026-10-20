@@ -1,0 +1,10 @@
+{
+  "interstellar": {
+    "image": "https://image.tmdb.org/t/p/w1280/pbrkL804c8yAv3zBZR4QPEafpAR.jpg",
+    "file": "interstellar-backdrop.jpg"
+  },
+  "oppenheimer": {
+    "image": "https://image.tmdb.org/t/p/w1280/rLb2cwF3Pazuxaj0sRXQ037tGI1.jpg",
+    "file": "oppenheimer-backdrop.jpg"
+  }
+}

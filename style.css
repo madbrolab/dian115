@@ -274,3 +274,5 @@ html[data-motion=quiet] .scene-timeline span {width:60%}
 html[data-motion=quiet] .equalizer i {transform:scaleY(.55)}
 html[data-motion=quiet] .watch-screen {transform:rotateZ(-3deg)}
 @media(prefers-reduced-motion:reduce) {html {scroll-behavior:auto}*,*::before,*::after,dialog::backdrop {animation:none!important;transition:none!important}.js-motion .reveal {opacity:1;transform:none;filter:none}.js-motion .section-heading.reveal h2 {clip-path:none;transform:none}.js-motion .section-heading.reveal p {opacity:1;transform:none}.motion-part,.reader-reveal {opacity:1!important;translate:0 0!important}}
+
+.rave-demo-visual{display:flex;align-items:center;justify-content:center;gap:12px;overflow:hidden}.rave-demo-visual img{width:27%;height:78%;object-fit:cover;border-radius:7px;box-shadow:0 12px 24px #0005;transform:rotate(-8deg)}.rave-demo-visual img:nth-child(2){width:31%;height:auto;aspect-ratio:1;transform:rotate(7deg);z-index:1}.rave-demo-visual img:last-child{transform:rotate(12deg)}

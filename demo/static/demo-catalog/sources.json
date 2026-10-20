@@ -1,0 +1,295 @@
+{
+  "taylor-swift": {
+    "title": "Taylor Swift",
+    "page": "https://en.wikipedia.org/wiki/Taylor_Swift",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b1/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png/330px-Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_%283%29.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "taylor-swift.png",
+    "bytes": 203344
+  },
+  "stefanie-sun": {
+    "title": "Stefanie Sun",
+    "page": "https://en.wikipedia.org/wiki/Stefanie_Sun",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/%E5%AD%99%E7%87%95%E5%A7%BF_echo%E5%9B%9E%E5%A3%B0%E5%98%89%E5%B9%B4%E5%8D%8E_%283%29.jpg/330px-%E5%AD%99%E7%87%95%E5%A7%BF_echo%E5%9B%9E%E5%A3%B0%E5%98%89%E5%B9%B4%E5%8D%8E_%283%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "stefanie-sun.jpg",
+    "bytes": 23445
+  },
+  "adele": {
+    "title": "Adele",
+    "page": "https://en.wikipedia.org/wiki/Adele",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7c/Adele_2016.jpg/330px-Adele_2016.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "adele.jpg",
+    "bytes": 39788
+  },
+  "faye-wong": {
+    "title": "Faye Wong",
+    "page": "https://en.wikipedia.org/wiki/Faye_Wong",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fe/Faye_Wong_%28cropped%29.jpg/330px-Faye_Wong_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "faye-wong.jpg",
+    "bytes": 28801
+  },
+  "jay-chou": {
+    "title": "Jay Chou",
+    "page": "https://en.wikipedia.org/wiki/Jay_Chou",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9b/%E5%91%A8%E6%9D%B0%E5%80%AB_Jay_Chou_in_2026.jpg/330px-%E5%91%A8%E6%9D%B0%E5%80%AB_Jay_Chou_in_2026.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "jay-chou.jpg",
+    "bytes": 28167
+  },
+  "eason-chan": {
+    "title": "Eason Chan",
+    "page": "https://en.wikipedia.org/wiki/Eason_Chan",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/%E4%B8%8A%E6%B5%B7_%E5%92%AA%E5%92%95%E9%A2%81%E5%A5%96%E7%A4%BC%E7%BA%A2%E6%AF%AF_%281%29.jpg/330px-%E4%B8%8A%E6%B5%B7_%E5%92%AA%E5%92%95%E9%A2%81%E5%A5%96%E7%A4%BC%E7%BA%A2%E6%AF%AF_%281%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "eason-chan.jpg",
+    "bytes": 21577
+  },
+  "zendaya": {
+    "title": "Zendaya",
+    "page": "https://en.wikipedia.org/wiki/Zendaya",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/Zendaya-byPhilipRomano.jpg/330px-Zendaya-byPhilipRomano.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "zendaya.jpg",
+    "bytes": 39223
+  },
+  "christopher-nolan": {
+    "title": "Christopher Nolan",
+    "page": "https://en.wikipedia.org/wiki/Christopher_Nolan",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/ChristopherNolan-byPhilipRomano_%28cropped%29.jpg/330px-ChristopherNolan-byPhilipRomano_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "christopher-nolan.jpg",
+    "bytes": 31028
+  },
+  "timothee-chalamet": {
+    "title": "Timothée Chalamet",
+    "page": "https://en.wikipedia.org/wiki/Timoth%C3%A9e_Chalamet",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5c/Timoth%C3%A9e_Chalamet-63482_%28cropped%29.jpg/330px-Timoth%C3%A9e_Chalamet-63482_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "timothee-chalamet.jpg",
+    "bytes": 43576
+  },
+  "matthew-mcconaughey": {
+    "title": "Matthew McConaughey",
+    "page": "https://en.wikipedia.org/wiki/Matthew_McConaughey",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0d/Matthew_McConaughey_at_the_2025_Toronto_Film_Festival_%283x4_cropped%29.jpg/330px-Matthew_McConaughey_at_the_2025_Toronto_Film_Festival_%283x4_cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "matthew-mcconaughey.jpg",
+    "bytes": 40089
+  },
+  "anne-hathaway": {
+    "title": "Anne Hathaway",
+    "page": "https://en.wikipedia.org/wiki/Anne_Hathaway",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a5/AnneHathaway-byPhilipRomano-Crop.jpg/330px-AnneHathaway-byPhilipRomano-Crop.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "anne-hathaway.jpg",
+    "bytes": 38955
+  },
+  "denis-villeneuve": {
+    "title": "Denis Villeneuve",
+    "page": "https://en.wikipedia.org/wiki/Denis_Villeneuve",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/DVilleneuveRFH121024_%2812_of_23%29_%2854061976489%29_%28cropped%29.jpg/330px-DVilleneuveRFH121024_%2812_of_23%29_%2854061976489%29_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "denis-villeneuve.jpg",
+    "bytes": 20408
+  },
+  "cillian-murphy": {
+    "title": "Cillian Murphy",
+    "page": "https://en.wikipedia.org/wiki/Cillian_Murphy",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ed/Cillian_Murphy_at_the_London_premier_of_Steve_in_September_2025_%28cropped%29.jpg/330px-Cillian_Murphy_at_the_London_premier_of_Steve_in_September_2025_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "cillian-murphy.jpg",
+    "bytes": 48444
+  },
+  "hu-ge": {
+    "title": "Hu Ge",
+    "page": "https://en.wikipedia.org/wiki/Hu_Ge",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/HUGE20161211BJ.jpg/330px-HUGE20161211BJ.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "hu-ge.jpg",
+    "bytes": 22466
+  },
+  "tang-wei": {
+    "title": "Tang Wei",
+    "page": "https://en.wikipedia.org/wiki/Tang_Wei",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/1b/20250425_Tang_Wei_%E6%B1%A4%E5%94%AF_03.jpg/330px-20250425_Tang_Wei_%E6%B1%A4%E5%94%AF_03.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "tang-wei.jpg",
+    "bytes": 20456
+  },
+  "bbc-radio-3": {
+    "title": "BBC Radio 3",
+    "page": "https://en.wikipedia.org/wiki/BBC_Radio_3",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/BBC_Radio_3_2022.svg/330px-BBC_Radio_3_2022.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "bbc-radio-3.png",
+    "bytes": 9260
+  },
+  "kexp": {
+    "title": "KEXP",
+    "page": "https://en.wikipedia.org/wiki/KEXP",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/ef/KEXP_logo_2022_%28one-color%29.svg/330px-KEXP_logo_2022_%28one-color%29.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "kexp.png",
+    "bytes": 4196
+  },
+  "zhang-songwen": {
+    "title": "Zhang Songwen",
+    "page": "https://en.wikipedia.org/wiki/Zhang_Songwen",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/03/Zhang_Songwen_at_2026_Shanghai_International_Film_Festival_%28cropped%29.jpg/330px-Zhang_Songwen_at_2026_Shanghai_International_Film_Festival_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "zhang-songwen.jpg",
+    "bytes": 27176
+  },
+  "fip": {
+    "title": "FIP (radio station)",
+    "page": "https://en.wikipedia.org/wiki/FIP_(radio_station)",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/FIP_logo_2021.svg/330px-FIP_logo_2021.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "fip.png",
+    "bytes": 5333
+  },
+  "cctv1": {
+    "title": "CCTV-1",
+    "page": "https://en.wikipedia.org/wiki/CCTV-1",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f6/CCTV-1_Logo.svg/330px-CCTV-1_Logo.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "cctv1.png",
+    "bytes": 8248
+  },
+  "cctv9": {
+    "title": "CCTV-9",
+    "page": "https://en.wikipedia.org/wiki/CCTV-9",
+    "error": "no thumbnail"
+  },
+  "cctv5": {
+    "title": "CCTV-5",
+    "page": "https://en.wikipedia.org/wiki/CCTV-5",
+    "error": "no thumbnail"
+  },
+  "cctv6": {
+    "title": "CCTV-6",
+    "page": "https://en.wikipedia.org/wiki/CCTV-6",
+    "error": "no thumbnail"
+  },
+  "radio-paradise": {
+    "title": "radio-paradise",
+    "page": "https://radioparadise.com/favicon.ico",
+    "image": "https://radioparadise.com/favicon.ico",
+    "file": "radio-paradise.ico",
+    "bytes": 7406
+  },
+  "somafm": {
+    "title": "somafm",
+    "page": "https://somafm.com/favicon.ico",
+    "image": "https://somafm.com/favicon.ico",
+    "file": "somafm.ico",
+    "bytes": 15406
+  },
+  "wqxr": {
+    "title": "WQXR-FM",
+    "page": "https://en.wikipedia.org/wiki/WQXR-FM",
+    "error": "no thumbnail"
+  },
+  "cgtn": {
+    "title": "CGTN Documentary",
+    "page": "https://en.wikipedia.org/wiki/CGTN_Documentary",
+    "image": "https://thumb.wikimedia.org/wikipedia/en/thumb/2/24/CGTN_Documentary.svg/330px-CGTN_Documentary.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "cgtn.png",
+    "bytes": 6372
+  },
+  "nhk-world": {
+    "title": "NHK World-Japan",
+    "page": "https://en.wikipedia.org/wiki/NHK_World-Japan",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7b/NHK_World.svg/330px-NHK_World.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "nhk-world.png",
+    "bytes": 16223
+  },
+  "france24": {
+    "title": "France 24",
+    "page": "https://en.wikipedia.org/wiki/France_24",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/c1/France_24_logo_%282013%29.svg/330px-France_24_logo_%282013%29.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "france24.png",
+    "bytes": 20214
+  },
+  "bbc-news": {
+    "title": "BBC News (international TV channel)",
+    "page": "https://en.wikipedia.org/wiki/BBC_News_(international_TV_channel)",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a2/BBC_News_2022_%28Alt%29.svg/330px-BBC_News_2022_%28Alt%29.svg.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "bbc-news.png",
+    "bytes": 8483
+  },
+  "doraemon": {
+    "title": "Doraemon",
+    "page": "https://en.wikipedia.org/wiki/Doraemon",
+    "image": "https://upload.wikimedia.org/wikipedia/en/c/c8/Doraemon_volume_1_cover.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "doraemon.jpg",
+    "bytes": 88634
+  },
+  "one-piece": {
+    "title": "One Piece",
+    "page": "https://en.wikipedia.org/wiki/One_Piece",
+    "image": "https://upload.wikimedia.org/wikipedia/en/9/90/One_Piece%2C_Volume_61_Cover_%28Japanese%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "one-piece.jpg",
+    "bytes": 182705
+  },
+  "detective-conan": {
+    "title": "Case Closed",
+    "page": "https://en.wikipedia.org/wiki/Case_Closed",
+    "image": "https://upload.wikimedia.org/wikipedia/en/3/3f/Case_Closed_Volume_36.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "detective-conan.png",
+    "bytes": 190433
+  },
+  "frieren": {
+    "title": "Frieren",
+    "page": "https://en.wikipedia.org/wiki/Frieren",
+    "image": "https://upload.wikimedia.org/wikipedia/en/6/60/Frieren_Beyond_Journey%27s_End.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "frieren.jpg",
+    "bytes": 152297
+  },
+  "pride-prejudice": {
+    "title": "Pride and Prejudice",
+    "page": "https://en.wikipedia.org/wiki/Pride_and_Prejudice",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/17/PrideAndPrejudiceTitlePage.jpg/330px-PrideAndPrejudiceTitlePage.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "pride-prejudice.jpg",
+    "bytes": 47211
+  },
+  "slam-dunk": {
+    "title": "slam-dunk",
+    "page": "https://en.wikipedia.org/wiki/Slam_Dunk_%28manga%29",
+    "image": "https://upload.wikimedia.org/wikipedia/en/f/f7/Slam_Dunk_%28manga%29_1.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "slam-dunk.png",
+    "bytes": 152201
+  },
+  "spy-family": {
+    "title": "spy-family",
+    "page": "https://en.wikipedia.org/wiki/Spy_%C3%97_Family",
+    "image": "https://upload.wikimedia.org/wikipedia/en/5/51/Spy_Family_vol_1.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "spy-family.jpg",
+    "bytes": 83181
+  },
+  "sherlock-holmes": {
+    "title": "sherlock-holmes",
+    "page": "https://en.wikipedia.org/wiki/The_Adventures_of_Sherlock_Holmes",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/b/b9/Adventures_of_sherlock_holmes.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "sherlock-holmes.jpg",
+    "bytes": 27588
+  },
+  "little-prince": {
+    "title": "The Little Prince",
+    "page": "https://en.wikipedia.org/wiki/The_Little_Prince",
+    "image": "https://upload.wikimedia.org/wikipedia/en/0/05/Littleprince.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "little-prince.jpg",
+    "bytes": 78926
+  },
+  "alice-wonderland": {
+    "title": "alice-wonderland",
+    "page": "https://en.wikipedia.org/wiki/Alice%27s_Adventures_in_Wonderland",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a9/Alice%27s_Adventures_in_Wonderland_cover_%281865%29.jpg/500px-Alice%27s_Adventures_in_Wonderland_cover_%281865%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "alice-wonderland.jpg",
+    "bytes": 138400
+  },
+  "journey-west": {
+    "title": "journey-west",
+    "page": "https://en.wikipedia.org/wiki/Journey_to_the_West",
+    "image": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Evl53201b_pic.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled",
+    "file": "journey-west.jpg",
+    "bytes": 59547
+  },
+  "twenty-thousand-leagues": {
+    "title": "twenty-thousand-leagues",
+    "page": "https://en.wikipedia.org/wiki/Twenty_Thousand_Leagues_Under_the_Seas",
+    "image": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/10/Houghton_FC8_V5946_869ve_-_Verne%2C_frontispiece.jpg/500px-Houghton_FC8_V5946_869ve_-_Verne%2C_frontispiece.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail",
+    "file": "twenty-thousand-leagues.jpg",
+    "bytes": 175313
+  },
+  "cctv-logo": {
+    "title": "cctv-logo",
+    "page": "https://www.cctv.com/favicon.ico",
+    "image": "https://www.cctv.com/favicon.ico",
+    "file": "cctv-logo.ico",
+    "bytes": 1150
+  }
+}

@@ -1,0 +1,1 @@
+const c=[],d=[],e=[];function r(t){const a=e.find(o=>o.id===t),s=Math.floor(Date.now()/36e5)*3600;return(a?.shows||[]).map((o,n)=>({...o,start:s+n*3600,end:s+(n+1)*3600}))}export{d as a,e as b,r as c,c as d};

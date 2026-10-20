@@ -1,0 +1,1 @@
+const a="M5 5h13c6 0 9 3 9 8 0 4-2 6-5 8l6 7h-9l-8-10h6c3 0 4-1 4-4s-2-4-5-4h-4v18H5V5Z";function e(t){return"data:image/svg+xml,"+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#111416"/><path d="${a}" fill="${t}"/></svg>`)}export{a,e as r};

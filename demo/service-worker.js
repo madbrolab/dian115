@@ -1,9 +1,9 @@
 /* Runtime cache for the web application shell. API and streaming requests are
  * deliberately left to the network so credentials and live data stay fresh. */
 const CACHE_PREFIX = 'dian115-pwa-'
-const SHELL_CACHE = `${CACHE_PREFIX}shell-v1`
-const STATIC_CACHE = `${CACHE_PREFIX}static-v1`
-const FONT_CACHE = `${CACHE_PREFIX}font-v1`
+const SHELL_CACHE = `${CACHE_PREFIX}shell-v2`
+const STATIC_CACHE = `${CACHE_PREFIX}static-v2`
+const FONT_CACHE = `${CACHE_PREFIX}font-v2`
 const scopeUrl = new URL('./', self.registration.scope)
 const shellUrl = new URL('./index.html', scopeUrl).href
 

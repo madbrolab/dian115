@@ -16,3 +16,9 @@
 可在 `index.html` 与 `app.js` 更换海报，在 `cinema.js` 更换对应影片名称、年份、类别和光影色。
 
 `payment-qr.png` 为项目官方此前发布的捐赠二维码，按用户要求恢复，文件未经重新生成、裁切或修改。来源：https://raw.githubusercontent.com/madbrolab/dian115/cb2c08d67004c9aed53221e28e58cd272824fcd7/assets/payment-qr.png 。
+
+## 2026-10-21 新版 RAVE 演示素材
+
+`demo/static/demo-catalog/` 保存真实歌手和演职人员头像、专辑封面、频道标志、漫画卷封、经典书籍封面及少量影视横图。完整出处、作者与许可见该目录的 [CREDITS.md](demo/static/demo-catalog/CREDITS.md)、`sources.json`、`attributions.json` 与 `backdrop-sources.json`。图片按展示尺寸下载，本地托管，保留署名来源。
+
+专辑与歌曲资料取自 Apple iTunes Lookup API，原始资料和公开试听地址保存在 `music-metadata.json`。Demo 不包含完整歌曲、影视正片、漫画正文或有声书朗读；观看进度、评分、收藏和直播排期为演示状态。
