@@ -19,6 +19,8 @@
 
 ## 2026-10-21 新版 RAVE 演示素材
 
+RAVE 界面基于 [StreamVibe · Praha / Produce UI](https://www.figma.com/community/file/1294589591426976269)，按 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) 修改适配。修改包括中文本地化、媒体库与个人空间接入、内容类型扩展、主题及响应式布局适配。完整说明保存在 [RAVE-CREDITS.md](demo/static/RAVE-CREDITS.md) 与演示站素材说明中。
+
 `demo/static/demo-catalog/` 保存真实歌手和演职人员头像、专辑封面、频道标志、漫画卷封、经典书籍封面及少量影视横图。完整出处、作者与许可见该目录的 [CREDITS.md](demo/static/demo-catalog/CREDITS.md)、`sources.json`、`attributions.json` 与 `backdrop-sources.json`。图片按展示尺寸下载，本地托管，保留署名来源。
 
 专辑与歌曲资料取自 Apple iTunes Lookup API，原始资料和公开试听地址保存在 `music-metadata.json`。Demo 不包含完整歌曲、影视正片、漫画正文或有声书朗读；观看进度、评分、收藏和直播排期为演示状态。
