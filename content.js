@@ -1,6 +1,6 @@
-/* DIAN115 Wiki · 独立编写的公开使用指南。 */
+/* DIAN115 Wiki · 用户使用指南。 */
 window.DIAN_WIKI = {
-  "version": "5.0.27",
+  "version": "5.0.42",
   "demo": "https://madbrolab.github.io/dian115/demo/",
   "codeSamples": {
     "dian-host-compose": {
@@ -42,6 +42,42 @@ window.DIAN_WIKI = {
     "flaresolverr-remote": {
       "label": "独立部署时追加端口 · 使用实际内网 IP",
       "text": "# 追加到 flaresolverr 服务，替换为这台主机的实际内网 IP\nports:\n  - \"192.168.1.10:8191:8191\"\n# DIAN115 中填写 http://192.168.1.10:8191"
+    },
+    "database-postgresql-1": {
+      "label": "准备镜像、目录和数据库",
+      "text": "mkdir -p config dian115AI postgres-data"
+    },
+    "database-postgresql-2": {
+      "label": "保存 compose.yml",
+      "text": "services:\n  postgres:\n    image: postgres:18\n    container_name: dian115-postgres\n    restart: unless-stopped\n    environment:\n      POSTGRES_DB: dian115\n      POSTGRES_USER: dian115\n      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 填写数据库密码}\n    ports:\n      - \"127.0.0.1:15432:5432\"\n    volumes:\n      - ./postgres-data:/var/lib/postgresql\n\n  dian115:\n    image: ${DIAN115_IMAGE:?请填写支持 PostgreSQL 的镜像}\n    container_name: dian115\n    restart: unless-stopped\n    network_mode: host\n    environment:\n      PORT: \"8095\"\n      TZ: Asia/Shanghai\n      DIAN115_DB_DRIVER: pgsql\n      DIAN115_PG_DSN: ${DIAN115_PG_DSN:?请在 .env 填写数据库连接串}\n    volumes:\n      - ./config:/config\n      - ./dian115AI:/dian115AI\n      - /mnt/user/media:/媒体库\n      - /mnt/cache/CloudNAS:/CloudNAS:rslave\n"
+    },
+    "database-postgresql-3": {
+      "label": "填写 .env 连接配置",
+      "text": "# 两处密码必须相同。示例密码请自行替换；使用字母和数字可直接放入连接串。\nPOSTGRES_PASSWORD=ChangeThisPassword2026\nDIAN115_PG_DSN=postgres://dian115:ChangeThisPassword2026@127.0.0.1:15432/dian115?sslmode=disable\n# 已有指定镜像时，可填写完整镜像名；要求 v5.0.42 或更新且包含 PostgreSQL 支持。\nDIAN115_IMAGE=madbrolab/dian115:5.0.42\n"
+    },
+    "database-postgresql-4": {
+      "label": "填写已有数据库的连接串",
+      "text": "DIAN115_DB_DRIVER=pgsql\nDIAN115_PG_DSN=postgres://dian115:YourPassword@192.168.1.10:5432/dian115?sslmode=require"
+    },
+    "database-postgresql-5": {
+      "label": "启动并完成首次设置",
+      "text": "docker compose up -d postgres\ndocker compose up -d dian115\ndocker compose ps"
+    },
+    "database-migration-1": {
+      "label": "停止旧实例并备份配置目录",
+      "text": "docker compose stop dian115\ncp -a ./config \"./config-sqlite-backup-$(date +%Y%m%d-%H%M%S)\""
+    },
+    "database-migration-2": {
+      "label": "准备空目标库并修改连接配置",
+      "text": "docker compose up -d postgres"
+    },
+    "database-migration-3": {
+      "label": "生成并执行外部迁移脚本",
+      "text": "cat > migrate-to-pgsql.sh <<'SH'\n#!/bin/sh\nset -eu\ndocker compose stop dian115\ndocker compose run --rm --no-deps   --entrypoint /usr/local/bin/dian115-db   dian115 migrate --db /config/dian115.db\ndocker compose up -d dian115\nSH\nsh migrate-to-pgsql.sh"
+    },
+    "database-migration-4": {
+      "label": "已有外部脚本时的用法",
+      "text": "export DIAN115_PG_DSN='postgres://dian115:YourPassword@127.0.0.1:15432/dian115?sslmode=disable'\nsh migrate-sqlite-to-pgsql.sh --config /mnt/appdata/dian115/config --image madbrolab/dian115:5.0.42\ndocker compose up -d dian115"
     }
   },
   "groups": [
@@ -915,6 +951,17 @@ window.DIAN_WIKI = {
       "lead": "Linux / NAS 优先推荐 Host 网络。接好挂载与媒体目录，让你的影音空间顺利启动。",
       "sections": [
         [
+          "选择数据库",
+          "默认使用 SQLite。使用 PostgreSQL 时填写数据库类型和直接连接串；已有 SQLite 数据先迁移再启动。具体配置、迁移脚本和维护操作见下方教程。",
+          {
+            "guides": [
+              "database-postgresql",
+              "database-migration",
+              "database-maintenance"
+            ]
+          }
+        ],
+        [
           "部署前",
           "准备 Linux / NAS、Docker Engine 和 Compose v2。先部署 CD2，确认 /dev/fuse 可用和宿主机支持共享挂载，再为 DIAN115 与 Emby 规划一致的目录。AURA 用户可按自身部署方案连接文件服务。",
           {
@@ -1364,11 +1411,11 @@ window.DIAN_WIKI = {
     "demo": {
       "title": "在线 Demo",
       "kicker": "SEE IT FOR YOURSELF",
-      "lead": "亲自打开，感受每一个真实的功能入口。",
+      "lead": "体验 v5.0.42 管理端、用户门户与 RAVE 页面，所有操作使用独立演示数据。",
       "sections": [
         [
           "新版管理端",
-          "直接体验 v5.0.27 的管理端页面、当前导航与内置插件，包括 RAVE 和媒体库管理工具。演示填充媒体、账号、任务、规则、录制方案与用户假数据，首次进入默认深色。"
+          "直接体验 v5.0.42 的管理端页面、当前导航与内置插件，包括 RAVE 和媒体库管理工具。演示填充媒体、账号、任务、规则、录制方案与用户假数据，首次进入默认深色。"
         ],
         [
           "新版用户门户",
@@ -1530,6 +1577,143 @@ window.DIAN_WIKI = {
         [
           "独立演示",
           "公开 Demo 展示《航海王》《哆啦A梦》《名侦探柯南》等真实漫画的卷封、作者与简介，以及阅读器版式样例，支持单页、双页、方向与长条阅读，不连接书源、不保存正式账号记录。"
+        ]
+      ]
+    },
+    "database-postgresql": {
+      "title": "使用 PostgreSQL 新装 DIAN115",
+      "kicker": "数据库安装与维护",
+      "lead": "准备 PostgreSQL 数据库，在容器中填写数据库类型和连接串。首次启动自动建表；配置目录继续保存密钥、图片和其他本地文件。",
+      "manual": "/dian115/docs/database-postgresql/",
+      "sections": [
+        [
+          "准备镜像、目录和数据库",
+          "使用包含 PostgreSQL 支持的 DIAN115 v5.0.42 或更新镜像。下面示例将 PostgreSQL 18 与 DIAN115 部署在同一台 Linux / NAS，数据库只映射到本机 15432 端口。已有 PostgreSQL 服务的用户直接使用现有库地址、库名、用户名和密码，跳到“填写连接串”。/mnt/user/media 与 /mnt/cache/CloudNAS 替换为自己的媒体和挂载目录。",
+          {
+            "code": "database-postgresql-1"
+          }
+        ],
+        [
+          "保存 compose.yml",
+          "将以下内容保存为 compose.yml。DIAN115 使用 Host 网络；PostgreSQL 使用普通容器网络，通过宿主机 127.0.0.1:15432 连接。PostgreSQL 18 的持久化目录为 /var/lib/postgresql。已有数据库时仅保留 dian115 服务，保留原来的所有目录挂载。",
+          {
+            "code": "database-postgresql-2"
+          }
+        ],
+        [
+          "填写 .env 连接配置",
+          "在 compose.yml 同目录新建 .env，替换密码。POSTGRES_PASSWORD 用于首次创建 PostgreSQL 账号；DIAN115_PG_DSN 用于应用连接。两处密码必须一致。DSN 中的用户名、密码若含 @、:、/、?、#、% 等特殊字符，应先做 URL 百分号编码。例子中的 sslmode=disable 用于同机连接；远程 TLS 数据库按服务提供方要求填写 sslmode。",
+          {
+            "code": "database-postgresql-3"
+          }
+        ],
+        [
+          "填写已有数据库的连接串",
+          "DIAN115 的数据库配置只需 DIAN115_DB_DRIVER=pgsql 和 DIAN115_PG_DSN。连接串的格式为 postgres://用户名:密码@地址:端口/库名。Host 网络填写宿主机或数据库服务器地址；桥接模式下，只有同一 Docker 网络才能用 postgres 这样的服务名。下面是已有数据库的填写格式。",
+          {
+            "code": "database-postgresql-4"
+          }
+        ],
+        [
+          "启动并完成首次设置",
+          "在 compose.yml 所在目录启动。打开 http://服务器IP:8095，设置管理员密码并按页面完成授权。应用连接 PostgreSQL 后自动创建当前业务表。首次使用 PostgreSQL 不需要先创建 SQLite 数据或运行迁移命令。",
+          {
+            "code": "database-postgresql-5"
+          }
+        ],
+        [
+          "确认当前数据库",
+          "打开“系统设置 → 基础设置 → 数据库维护”。“当前数据库”应显示 PostgreSQL、已连接，并显示实际库名和版本。继续配置网盘服务、账号与媒体目录。/config 必须继续持久化，不能因使用 PostgreSQL 而删除。",
+          {}
+        ]
+      ]
+    },
+    "database-migration": {
+      "title": "把旧 SQLite 数据迁移到 PostgreSQL",
+      "kicker": "数据库安装与维护",
+      "lead": "停止旧实例，备份原配置目录，将当前业务数据迁入空的 PostgreSQL 数据库，再使用同一配置目录和 PostgreSQL 连接启动。历史废表、废列自动忽略。",
+      "manual": "/dian115/docs/database-migration/",
+      "sections": [
+        [
+          "停止旧实例并备份配置目录",
+          "在原 compose.yml 所在目录操作。先停止 DIAN115，再备份整个配置目录，包含所有 SQLite 分库、密钥和本地资源。示例的 ./config 要换成当前容器 /config 对应的真实宿主机目录；不要只复制 dian115.db。",
+          {
+            "code": "database-migration-1"
+          }
+        ],
+        [
+          "准备空目标库并修改连接配置",
+          "按“使用 PostgreSQL 新装 DIAN115”准备数据库。已有 PostgreSQL 时新建一个空数据库供此次迁移使用。在原 dian115 服务加入 DIAN115_DB_DRIVER=pgsql 和 DIAN115_PG_DSN，保留原来的所有 volumes、端口和其他配置。此时先不要启动 dian115。若新建同机 PostgreSQL，只启动 postgres 服务。",
+          {
+            "code": "database-migration-2"
+          }
+        ],
+        [
+          "生成并执行外部迁移脚本",
+          "下面命令会在当前目录生成 migrate-to-pgsql.sh 并执行。脚本复用 Compose 中的镜像、数据库连接和 /config 挂载，运行镜像内的迁移工具。逐表导入完成后显示 {\"backend\":\"pgsql\",\"ready\":true}，随后正常启动 DIAN115。脚本不要求访问项目源码。",
+          {
+            "code": "database-migration-3"
+          }
+        ],
+        [
+          "已有外部脚本时的用法",
+          "如果已经取得 migrate-sqlite-to-pgsql.sh，也可直接执行下列命令。--config 填原配置目录的 Linux 绝对路径；--image 填当前使用的镜像。连接串必须与启动后的 DIAN115 一致。同一 Docker 网络连接数据库时追加 --network 网络名；自定义主库文件名追加 --db 文件名。此方式完成后，手动执行 docker compose up -d dian115。",
+          {
+            "code": "database-migration-4"
+          }
+        ],
+        [
+          "迁移保留哪些数据",
+          "迁入当前业务使用的表和字段，保留记录 ID、自增序号与加密凭据，音乐数据转换为当前结构。历史废表、废列、旧索引和无关文件会忽略；未使用过的可选分库、表或升级字段按当前默认值初始化。原 SQLite 文件不会删除。",
+          {}
+        ],
+        [
+          "确认已经切换",
+          "登录后打开“系统设置 → 基础设置 → 数据库维护”，确认显示 PostgreSQL 与目标库名。查看账号、整理规则、任务和音乐等原有内容。迁移后新增数据写入 PostgreSQL，不会同步回原 SQLite。",
+          {}
+        ],
+        [
+          "连接或导入失败时处理",
+          "脚本发生真实连接或字段转换错误时会停止，并指出出错位置。修正对应地址、权限或数据问题后，换一个空目标库重新迁移。不要对已正常运行并产生新数据的 PostgreSQL 库重复执行导入。原配置目录及备份可供恢复旧 SQLite 实例使用；切回 SQLite 只能得到迁移前数据。",
+          {}
+        ]
+      ]
+    },
+    "database-maintenance": {
+      "title": "查看和维护当前数据库",
+      "kicker": "数据库安装与维护",
+      "lead": "在基础设置查看当前数据库，在系统诊断观察连接池与等待。PostgreSQL 维护按表整理可复用空间并更新查询统计，进度和结果在页面中展示。",
+      "manual": "/dian115/docs/database-maintenance/",
+      "sections": [
+        [
+          "查看实际数据库信息",
+          "打开“系统设置 → 基础设置 → 数据库维护”，查看数据库类型和连接状态。PostgreSQL 还显示库名、服务版本、数据库占用、业务表数量、连接数、缓存命中率、预估待回收记录与自动空间维护状态。点击“刷新数据库信息”重新读取。",
+          {}
+        ],
+        [
+          "查看占用较大的表",
+          "展开“查看占用较大的业务表”，按占用查看最多 20 张表，包含预估有效记录、待回收记录以及最近空间维护和统计更新时间。记录数来自 PostgreSQL 统计估算，不是实时逐行计数。",
+          {}
+        ],
+        [
+          "执行一次维护",
+          "点击“立即维护”，阅读本次范围后选择“开始维护”。任务在后台清理过期记录，再对 PostgreSQL 业务表执行普通 VACUUM (ANALYZE)。页面显示执行阶段、已处理表数、总表数、上次成功时间与结果摘要；有错误时显示对应原因。SQLite 使用自己的增量空间回收和检查点。",
+          {}
+        ],
+        [
+          "理解空间变化",
+          "PostgreSQL 普通维护会让删除记录占用的空间可被后续写入复用，并更新查询统计，数据库文件不一定缩小。应用不执行 VACUUM FULL。自动空间维护与手动维护可以并用，不需要每天反复点击。",
+          {}
+        ],
+        [
+          "从诊断页观察连接等待",
+          "打开“系统诊断 → 运行概览 → 数据库连接与等待”，查看 PostgreSQL 实际连接池的已打开、使用中、空闲和等待统计。点击“数据库维护”进入设置页操作。等待次数累计自本次进程启动；等待连接不等于消耗 CPU。",
+          {}
+        ],
+        [
+          "区分进程内存与数据库内存",
+          "诊断页的“手动释放内存”回收 DIAN115 进程内存。PostgreSQL 服务端缓存由数据库管理，不会被这个按钮清空。SQLite 与 PostgreSQL 的维护记录分别保留，切库后显示当前后端的记录。",
+          {}
         ]
       ]
     }

@@ -1,0 +1,1 @@
+import{A as s}from"./router-BgVKcGUp.js";const r=async a=>(await s.post("/resource-badges/match",{texts:a})).data.results,t=a=>a.replace("/api/resource-badges/","/api/user-portal/resource-badges/");export{r as m,t as p};
