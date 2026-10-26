@@ -13,7 +13,8 @@
   <a href="https://madbrolab.github.io/dian115/">用户 WIKI</a> ·
   <a href="https://madbrolab.github.io/dian115/demo/">在线 Demo</a> ·
   <a href="https://t.me/dian115group">Telegram 交流群</a> ·
-  <a href="docs/plugin-platform/README.md">插件开发文档</a>
+  <a href="docs/plugin-platform/README.md">插件开发文档</a> ·
+  <a href="tools/database-migration/README.md">SQLite → PostgreSQL 迁移</a>
 </p>
 
 <p align="center">
@@ -134,6 +135,15 @@ ports:
 | 云盘挂载根 | `/CloudNAS` | CD2 向 DIAN-115 与 Emby 提供的共享目录。 |
 
 CD2 使用 `/mnt/cache/CloudNAS:/CloudNAS:shared` 发布挂载，DIAN-115 与 Emby 使用 `/mnt/cache/CloudNAS:/CloudNAS:rslave` 接收挂载。宿主机也需支持相应的挂载传播。保存 CD2 API 设置后点击“自动读取”，确认挂载路径，例如 `/CloudNAS/CloudDrive`。
+
+### PostgreSQL 与旧 SQLite 数据迁移
+
+新装 PostgreSQL 直接配置数据库类型和连接串，参见[新装教程](https://madbrolab.github.io/dian115/docs/database-postgresql/)。已有 SQLite 数据的实例，先停止并备份完整配置目录，再使用公开脚本将业务数据导入空 PG 库，最后保留原目录并以 PG 连接启动。
+
+- [迁移脚本与详细使用教程](tools/database-migration/README.md)：配置目录、兼容镜像、空目标库、Host / Docker 网络、特殊密码、自定义参数、错误处理和回退。
+- [直接下载 Shell 脚本](https://raw.githubusercontent.com/madbrolab/dian115/main/tools/database-migration/migrate-sqlite-to-pgsql.sh)。
+
+脚本调用所选镜像内的迁移工具；先取得包含该工具的兼容镜像，具体发布状态和填写示例见教程。
 
 ### FlareSolverr：按需接入
 

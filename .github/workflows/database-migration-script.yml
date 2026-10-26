@@ -1,0 +1,27 @@
+name: Database migration user script
+
+on:
+  push:
+    paths:
+      - tools/database-migration/**
+      - .github/workflows/database-migration-script.yml
+  pull_request:
+    paths:
+      - tools/database-migration/**
+      - .github/workflows/database-migration-script.yml
+
+permissions:
+  contents: read
+
+jobs:
+  shell-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check Shell syntax
+        run: sh -n tools/database-migration/migrate-sqlite-to-pgsql.sh
+      - name: Test Docker arguments and failure handling without containers
+        run: node --test tools/database-migration/verify-migration-script.test.mjs
