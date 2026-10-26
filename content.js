@@ -72,12 +72,16 @@ window.DIAN_WIKI = {
       "text": "docker compose up -d postgres"
     },
     "database-migration-3": {
-      "label": "生成并执行外部迁移脚本",
-      "text": "cat > migrate-to-pgsql.sh <<'SH'\n#!/bin/sh\nset -eu\ndocker compose stop dian115\ndocker compose run --rm --no-deps   --entrypoint /usr/local/bin/dian115-db   dian115 migrate --db /config/dian115.db\ndocker compose up -d dian115\nSH\nsh migrate-to-pgsql.sh"
+      "label": "下载公开迁移脚本",
+      "text": "curl --fail --location 'https://raw.githubusercontent.com/madbrolab/dian115/main/tools/database-migration/migrate-sqlite-to-pgsql.sh' --output migrate-sqlite-to-pgsql.sh\nsh migrate-sqlite-to-pgsql.sh --help"
     },
     "database-migration-4": {
-      "label": "已有外部脚本时的用法",
-      "text": "export DIAN115_PG_DSN='postgres://dian115:YourPassword@127.0.0.1:15432/dian115?sslmode=disable'\nsh migrate-sqlite-to-pgsql.sh --config /mnt/appdata/dian115/config --image madbrolab/dian115:5.0.42\ndocker compose up -d dian115"
+      "label": "设置连接并运行一次迁移",
+      "text": "export DIAN115_PG_DSN='postgres://dian115:YourPassword@127.0.0.1:15432/dian115_pg?sslmode=disable'\nexport DIAN115_IMAGE='dian115-pgsql:local'\nsh migrate-sqlite-to-pgsql.sh --config /mnt/appdata/dian115/config --image \"$DIAN115_IMAGE\"\ndocker compose up -d dian115"
+    },
+    "database-migration-5": {
+      "label": "Docker 网络、特殊密码与自定义参数",
+      "text": "export DIAN115_PG_DSN='postgres://dian115:YourPassword@postgres:5432/dian115_pg?sslmode=disable'\nsh migrate-sqlite-to-pgsql.sh --config /mnt/appdata/dian115/config --image \"$DIAN115_IMAGE\" --network dian115-storage"
     }
   },
   "groups": [
@@ -1649,17 +1653,24 @@ window.DIAN_WIKI = {
           }
         ],
         [
-          "生成并执行外部迁移脚本",
-          "下面命令会在当前目录生成 migrate-to-pgsql.sh 并执行。脚本复用 Compose 中的镜像、数据库连接和 /config 挂载，运行镜像内的迁移工具。逐表导入完成后显示 {\"backend\":\"pgsql\",\"ready\":true}，随后正常启动 DIAN115。脚本不要求访问项目源码。",
+          "下载公开迁移脚本",
+          "在运行 DIAN115 的 Linux / NAS Docker 宿主机下载脚本。脚本调用所选镜像内的 /usr/local/bin/dian115-db，执行 migrate --db /config/dian115.db。请准备实际包含该工具的 v5.0.42 或更新兼容镜像；latest 名称不保证满足版本要求。只需 Docker，不需要项目源码或宿主机数据库客户端。完整参数、网络和失败恢复教程见 GitHub 的 tools/database-migration/README.md。 2026-10-27 核对时 Docker Hub 尚无 5.0.42 标签，不能直接按此标签拉取；示例 dian115-pgsql:local 表示已经取得的本地兼容镜像，请替换为实际名称。",
           {
             "code": "database-migration-3"
           }
         ],
         [
-          "已有外部脚本时的用法",
-          "如果已经取得 migrate-sqlite-to-pgsql.sh，也可直接执行下列命令。--config 填原配置目录的 Linux 绝对路径；--image 填当前使用的镜像。连接串必须与启动后的 DIAN115 一致。同一 Docker 网络连接数据库时追加 --network 网络名；自定义主库文件名追加 --db 文件名。此方式完成后，手动执行 docker compose up -d dian115。",
+          "设置连接并运行一次迁移",
+          "--config 填原容器 /config 对应的完整 Linux 宿主机目录；--image 填实际取得的兼容镜像，后续应用使用同一兼容版本。默认 host 网络适用于 Linux，同机 PG 填宿主机地址和映射端口。脚本逐表导入，最终输出 {\"backend\":\"pgsql\",\"ready\":true} 并提示迁移完成，再启动原应用。不要只看到部分表完成就启动；不需要报告或额外复验命令。",
           {
             "code": "database-migration-4"
+          }
+        ],
+        [
+          "Docker 网络、特殊密码与自定义参数",
+          "若 PG 通过同一 Docker 网络服务名访问，使用服务名和容器端口，并加 --network 网络名；后续 DIAN115 也加入该网络。桥接容器里的 127.0.0.1 指向容器自己。连接串内保留字符需百分号编码，例如密码 Demo@2026#1 写为 Demo%402026%231，数据库中仍设置原始密码。自定义主库名使用 --db 文件名；总时限默认 2h，较大迁移可通过 --timeout 6h 调整。",
+          {
+            "code": "database-migration-5"
           }
         ],
         [
@@ -1674,7 +1685,7 @@ window.DIAN_WIKI = {
         ],
         [
           "连接或导入失败时处理",
-          "脚本发生真实连接或字段转换错误时会停止，并指出出错位置。修正对应地址、权限或数据问题后，换一个空目标库重新迁移。不要对已正常运行并产生新数据的 PostgreSQL 库重复执行导入。原配置目录及备份可供恢复旧 SQLite 实例使用；切回 SQLite 只能得到迁移前数据。",
+          "连接或字段转换错误会停止脚本，并保留非零退出码。修正具体地址、权限或数据问题后，换新的空目标库重试；音乐分阶段导入失败时可能已留下部分目标数据，脚本不提供断点续传。原配置目录和备份保留，不要向已有新业务数据的 PG 库重复导入。需要回退时先停止 PG 模式实例，移除两个 PG 环境变量，使用原 SQLite 目录或备份启动；PG 新增数据不会自动写回 SQLite。",
           {}
         ]
       ]

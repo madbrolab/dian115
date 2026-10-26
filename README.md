@@ -42,3 +42,7 @@ Ctrl / Cmd K 搜索指南，Esc 关闭阅读器。指南支持 `#guide/organize`
 ## 在线使用文档
 
 `docs/` 按安装、账号、整理、订阅、音乐、通知、插件和维护分类，提供 116 篇操作说明、站内全文搜索、章节链接与配置复制。内容由内置教程整理，保留用户操作步骤与字段说明。
+
+## SQLite → PostgreSQL 迁移脚本
+
+[公开脚本与详细教程](https://github.com/madbrolab/dian115/tree/main/tools/database-migration) · [在线迁移教程](https://madbrolab.github.io/dian115/docs/database-migration/)。脚本调用兼容镜像内的数据迁移工具；下载位置、网络、备份、参数与失败恢复方法均在教程中说明。
