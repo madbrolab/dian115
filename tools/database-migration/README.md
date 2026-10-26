@@ -1,6 +1,6 @@
 # DIAN115：把 SQLite 旧数据迁移到 PostgreSQL
 
-此目录提供供用户在 Linux / NAS Docker 宿主机运行的迁移脚本。只需 Docker 和常见 Shell 命令，不需要项目源码、Go、Python、SQLite 命令行或宿主机上的 PostgreSQL 客户端。
+此目录提供供用户在 Linux / NAS Docker 宿主机运行的迁移脚本。只需 Docker 和常见 Shell 命令.
 
 - [下载迁移脚本](https://raw.githubusercontent.com/madbrolab/dian115/main/tools/database-migration/migrate-sqlite-to-pgsql.sh)
 - [在线使用文档](https://madbrolab.github.io/dian115/docs/database-migration/)
@@ -8,7 +8,6 @@
 
 **脚本调用所选 DIAN115 镜像内的 `/usr/local/bin/dian115-db`。镜像必须包含 PostgreSQL 支持及这个程序。教程对应 v5.0.42 起的迁移接口；请使用实际已取得、包含该工具的对应版本或本地镜像，不要仅凭 `latest` 名称判断版本。**
 
-**发布状态（2026-10-27 核对）：Docker Hub 尚无 `madbrolab/dian115:5.0.42` 标签。本文的 `dian115-pgsql:local` 仅是本地兼容镜像的填写示例，不是可拉取的官方标签。请先取得项目提供的、含迁移工具的兼容镜像，或等待对应版本发布；仅下载这个 Shell 脚本不能补齐镜像中的迁移程序。后续可用标签以实际发布为准。**
 
 新装没有旧 SQLite 数据时，直接配置 PostgreSQL 连接并启动 DIAN115，不运行本迁移脚本。
 
