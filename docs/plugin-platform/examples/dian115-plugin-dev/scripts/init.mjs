@@ -39,12 +39,10 @@ cli(() => {
     const go=readFileSync(resolve(stage,'go.mod'),'utf8').replace(/^module .+$/m,`module example.com/${pkg.name}`).replace('=> ../sdk','=> ./.dian115/examples/sdk')
     writeFileSync(resolve(stage,'go.mod'),go)
     // Import paths are rewritten only for known public template source files.
-    for (const name of ['AppPage.vue','preview-bridge.ts','actions.ts','background-job.ts']) {
+    for (const name of ['main.ts','AppPage.vue','preview-bridge.ts','actions.ts','background-job.ts']) {
       const path=resolve(stage,'src',name)
-      if (existsSync(path)) writeFileSync(path,readFileSync(path,'utf8').replaceAll("'../../sdk/ui'","'../.dian115/examples/sdk/ui'"))
+      if (existsSync(path)) writeFileSync(path,readFileSync(path,'utf8').replaceAll("'../../sdk/","'../.dian115/examples/sdk/"))
     }
-    let vite=readFileSync(resolve(stage,'vite.config.ts'),'utf8').replace("'dian115_complete_plugin_example'",JSON.stringify('dian115_'+id.replaceAll('.','_').replaceAll('-','_')))
-    writeFileSync(resolve(stage,'vite.config.ts'),vite)
     const main=resolve(stage,'src/main.ts');writeFileSync(main,readFileSync(main,'utf8').replaceAll("'example.complete-plugin'",JSON.stringify(id)))
     for (const file of ['build-runtime.mjs','package.mjs']) cpSync(resolve(kit,'examples/complete-plugin/scripts',file),resolve(stage,'scripts',file))
     cpSync(resolve(root,'assets/starter/scripts/sign.mjs'),resolve(stage,'scripts/sign.mjs'))

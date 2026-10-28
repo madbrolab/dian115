@@ -362,44 +362,29 @@
     "ui": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Plugin UI exposed as a signed Vue Module Federation page.",
       "required": [
         "mode",
-        "federation"
-      ],
-      "properties": {
-        "mode": {
-          "const": "federation"
-        },
-        "icon": {
-          "$ref": "#/$defs/packagePath"
-        },
-        "federation": {
-          "$ref": "#/$defs/federation"
-        }
-      }
-    },
-    "federation": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
         "entry",
         "assets_root"
       ],
       "properties": {
+        "mode": {
+          "const": "page"
+        },
         "entry": {
-          "$ref": "#/$defs/packagePath",
-          "description": "Signed ESM remoteEntry.js path inside assets_root."
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^[^\\\\]+\\.html$"
         },
         "assets_root": {
-          "$ref": "#/$defs/packagePath",
-          "description": "Directory containing remoteEntry.js and every imported JS/CSS asset."
-        },
-        "module": {
           "type": "string",
-          "pattern": "^\\./[A-Za-z][A-Za-z0-9_-]{0,79}$",
-          "default": "./AppPage",
-          "description": "Vue component expose loaded by the host. Defaults to ./AppPage when omitted."
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "icon": {
+          "type": "string",
+          "maxLength": 240
         }
       }
     },

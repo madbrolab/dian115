@@ -7,12 +7,12 @@ This directory is the complete public contract for third-party plugins. It is in
 
 Every plugin is one signed `.d115p` ZIP containing both parts below:
 
-- a signed Vue 3 Module Federation page using the host-provided Vue 3, Naive UI, and `@lucide/vue` packages;
+- a signed, self-contained HTML page with its own renderer and a framework-independent SDK connection;
 - a WASM reactor runtime (`dian115:wasm@1`) executed by the embedded container runtime.
 
-The UI is mandatory. Packages without `ui.mode=federation`, a signed Federation entry, and a valid WASM runtime are rejected. There is no native process runtime, remote runtime, extra plugin container, alternate UI format, or UI fallback protocol.
+The UI is mandatory. Packages without `ui.mode=page`, a signed HTML entry, and a valid WASM runtime are rejected. There is no native process runtime, remote runtime, extra plugin container, alternate UI format, or UI fallback protocol.
 
-The Federation document receives a full-width, zero-margin `html/body/#plugin-sandbox-root` baseline with `border-box` sizing. Keep the plugin root fluid (`width: 100%; max-width: 100%; min-width: 0`); do not rely on preview-only global CSS or a fixed body width. A desktop browser may still have a narrow plugin viewport while the host sidebar is open, so responsive layouts must wrap or switch to one column around 900-1000px.
+The plugin owns its HTML, CSS, framework providers, rendering and scrolling. The host displays the signed page in an isolated iframe and sends theme/state updates through the SDK; it does not resize to content or replace the page on browser error events. Package all required styles in the production entry and use relative asset URLs.
 
 WASM is executed by the main service inside the current Docker container without inherited host descriptors, sockets, secrets, or preopened host paths. Host files, watches, HTTP requests and DIAN115 business operations continue through `host.call`. HTTP targets may be internet, LAN, host, container, loopback, or other locally reachable services.
 
@@ -25,7 +25,7 @@ Read these files in order:
 3. [WASM runtime v1](wasm-runtime-v1.md): reactor ABI, broker imports, quotas, Telegram events and lifecycle.
 4. [Host Call v2](host-call-v2.md): local Host APIs, external HTTP/HTTPS, local services, proxy precedence, credentials, limits and errors.
 5. [数据存储与生命周期](storage-and-lifecycle.md)：存储位置、JSON 结构、CAS、升级与卸载清空。
-6. [Vue Federation UI v1](ui-federation-v1.md): build contract, component props, bridge API, opaque-origin isolation and managed storage and every stable theme variable.
+6. [Independent HTML page v1](ui-page-v1.md): build contract, SDK connection, bridge API, opaque-origin isolation and managed storage and every stable theme variable.
 7. [可恢复后台任务](job-recovery-v1.md)：检查点、只读上游核对与安全续跑。
 8. [OpenAPI](openapi-v1.yaml): exact request and response schemas for every approved local Host API. [宿主接口速查表](host-api-quick-reference.md) 按分类列出一页可看的全部 166 条接口。
 9. [Black-box conformance](conformance/README.md): manifest, market, WASM and public-surface checks without main-project source.
@@ -68,7 +68,7 @@ Administrators can import a plugin package directly from the Plugin Center's
 boundary as a market install:
 
 1. Select a `.d115p` file. The host stores it in a private, short-lived staging directory and returns a review token; the browser never receives a server filesystem path.
-2. The host validates ZIP limits, `manifest.json`, `integrity.json`, Ed25519 signature, the declared WASM runtime, Federation UI, and permissions before showing the review dialog.
+2. The host validates ZIP limits, `manifest.json`, `integrity.json`, Ed25519 signature, the declared WASM runtime, HTML UI, and permissions before showing the review dialog.
 3. After the administrator accepts the displayed permissions, the token is submitted to install. The host re-checks the token, expiry, SHA-256, consent digest, and package before starting the normal asynchronous install operation.
 
 The token expires after 15 minutes, is single-use, and is removed after install, cancellation, failure, or expiry. Local import does not create a market repository entry and does not bypass signature, integrity, UI, runtime, filesystem, network, Telegram, or permission checks. Installed records show `本地导入` as their source.

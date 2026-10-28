@@ -66,7 +66,10 @@ export interface PluginUIBridge {
   /** Persist invocationId before a side effect; reuse it with identical input on retry. */
   invokeAction(action: string, input?: unknown, invocationId?: string): Promise<RuntimeCallbackResponse>
   refresh(): Promise<Record<string, unknown>>
+  /** Explicit diagnostics only. Reporting never unmounts or reloads the page. */
+  reportError(stage: PluginUIErrorStage, reason: unknown, severity?: 'warning' | 'error'): Promise<string>
 }
+export type PluginUIErrorStage = 'ui_load' | 'ui_render' | 'ui_async' | 'ui_resource'
 export interface PluginPageProps {
   api: PluginUIBridge
   installationId: number
@@ -75,4 +78,12 @@ export interface PluginPageProps {
   runtimeState: Record<string, unknown>
   navKey: string
   themeContract: 'dian115-theme-v1'
+}
+export type PluginPageContext = Omit<PluginPageProps, 'api'>
+export interface PluginPageConnection {
+  readonly api: PluginUIBridge
+  readonly context: PluginPageContext
+  /** Receives current context immediately, then host state/theme updates. */
+  subscribe(listener: (context: PluginPageContext) => void): () => void
+  dispose(): void
 }

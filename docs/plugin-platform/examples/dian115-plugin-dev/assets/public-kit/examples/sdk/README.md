@@ -97,3 +97,7 @@ go test ./pluginjson -fuzz=FuzzAccessNeverPanics -fuzztime=5s
 Manifest 声明 recovery_handler 后，宿主在恢复时先进入只读 recover 回调；插件核对实际业务结果后返回 resume、complete 或 attention_required。页面用 api.jobs.resume(jobRef) 请求重新核对；应持久保留 job_ref，网络重试保留同一 start invocation ID。协议、封套与完整 Go 用法见 [可恢复任务](../../job-recovery-v1.md)，完整示例用 Host Storage 中的 operation_ref 证明写入是否已经完成。
 
 页面短动作可调用 `api.invokeAction(action, input, invocationId)`。业务需要安全重试时先持久保存调用编号和原输入，再提交；结果不确定仍复用同一请求，不省略编号换新调用。成功之后的界面刷新失败单独处理。完整示例的 actions.ts 展示该流程，预览桥提供有界的编号重放与冲突检查，预览记录仅存内存。
+
+## 独立页面 SDK
+
+`page.ts` 的 connectPluginPage 提供与宿主的连接，`ui.ts` 提供状态、动作、受管存储、任务、显式诊断和页面 context 类型。SDK 没有框架依赖，不挂载组件、不观察布局、不接管全局异常。页面自行打包依赖并创建 Provider；`message.ts` 约束 RPC 数据，`diagnostics.ts` 脱敏诊断。完整入口与主题说明见 [页面协议](../../ui-page-v1.md)。

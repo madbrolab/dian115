@@ -23,7 +23,7 @@ const manifestTemplatePath = join(root, 'manifest.template.json')
 const marketTemplatePath = join(root, 'market-entry.template.json')
 const buildRoot = join(root, 'build')
 const runtimePath = join(buildRoot, 'runtime', 'plugin.wasm')
-const uiAssetsRoot = join(buildRoot, 'frontend', 'dist', 'assets')
+const uiAssetsRoot = join(buildRoot, 'frontend', 'dist')
 const iconPath = join(root, 'frontend', 'icon.svg')
 const releasesRoot = join(root, 'releases')
 const keyPath = resolve(process.env.DIAN115_PLUGIN_SIGNING_KEY || join(root, 'developer-ed25519-private.pem'))
@@ -111,7 +111,7 @@ function zipPackage(outputPath, files) {
 }
 
 if (!existsSync(runtimePath)) throw new Error('Missing build/runtime/plugin.wasm; run npm run build first')
-if (!existsSync(uiAssetsRoot)) throw new Error('Missing build/frontend/dist/assets; run npm run build first')
+if (!existsSync(uiAssetsRoot)) throw new Error('Missing build/frontend/dist; run npm run build first')
 
 const privateKey = loadPrivateKey()
 const publicKey = rawPublicKey(privateKey)
@@ -129,7 +129,7 @@ const files = [
 ]
 
 for (const localPath of walk(uiAssetsRoot)) {
-  const path = `frontend/dist/assets/${packagePath(localPath, uiAssetsRoot)}`
+  const path = `frontend/dist/${packagePath(localPath, uiAssetsRoot)}`
   files.push({ path, data: readFileSync(localPath), executable: false })
 }
 

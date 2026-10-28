@@ -32,6 +32,7 @@ export function createPreviewBridge(state: Record<string, unknown>, declaredJobs
     return job
   }
   return {
+    async reportError(stage, reason, severity = 'error') { console[severity === 'warning' ? 'warn' : 'error']('[plugin-preview]', stage, reason); return 'diag_preview' },
     capabilities: { isolation: 'opaque-origin-v1', storage: 'host-ui-v1', jobs: true },
     storage: {
       async get<T>(key: string) { storageKey(key); return key in storage ? copy(storage[key]) as T : null },

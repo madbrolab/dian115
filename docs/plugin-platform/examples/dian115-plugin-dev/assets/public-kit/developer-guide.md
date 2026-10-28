@@ -4,10 +4,10 @@ This guide takes a plugin from source to an installable package. It is self-cont
 
 ## 1. Architecture
 
-A plugin has one supervised WASM runtime and one mandatory Vue page:
+A plugin has one supervised WASM runtime and one mandatory HTML page:
 
 ```text
-Vue Federation page (opaque-origin sandbox)
+HTML page (opaque-origin sandbox)
   -> getState / invokeAction
   -> DIAN115 runtime bridge
   -> runtime.invoke envelope over the reactor ABI
@@ -31,15 +31,7 @@ Copy [`examples/complete-plugin`](examples/complete-plugin/README.md), then chan
 - optional per-origin proxy preferences in `permissions.network`;
 - declared event topics and scheduled jobs.
 
-Build the UI with the same framework packages as the host:
-
-```text
-vue
-naive-ui
-@lucide/vue
-```
-
-They must be Federation singletons with `generate: false`. Do not bundle a private copy. The package must expose the module named by `ui.federation.module`, normally `./AppPage`.
+Build a self-contained HTML page. The example uses Vue, Naive UI and Lucide as ordinary bundled dependencies; other browser renderers can use the framework-independent SDK in `examples/sdk/page.ts`. Set Vite `base: './'`, call `connectPluginPage()` in the production entry, then mount your own application and providers. The host never mounts a component, shares a Vue instance or observes the document height. Read [the page contract](ui-page-v1.md).
 
 The runtime must be a reactor module built with a size-optimising toolchain. The
 Go standard compiler is not accepted: it links the complete Go runtime into the
@@ -122,13 +114,10 @@ The UI and runtime are both required:
     ]
   },
   "ui": {
-    "mode": "federation",
-    "icon": "frontend/icon.svg",
-    "federation": {
-      "entry": "frontend/dist/assets/remoteEntry.js",
-      "assets_root": "frontend/dist/assets",
-      "module": "./AppPage"
-    }
+    "mode": "page",
+    "entry": "frontend/dist/index.html",
+    "assets_root": "frontend/dist",
+    "icon": "frontend/icon.svg"
   },
   "events": ["files.changed"],
   "jobs": [
@@ -337,9 +326,9 @@ The remote Vue component receives:
 
 The bridge provides only `getState(view)`, `invokeAction(action, input)`, and `refresh()`. The component may emit `action`, `refresh`, or `close`. Use Naive UI for controls and `@lucide/vue` for icons. Style with the stable `--dian-*` variables so light/dark and configured host themes update without remounting.
 
-The page uses an opaque-origin sandbox and CSP. Signed Federation resources and theme providers work through anonymous CORS; native browser storage and direct fetch/XHR/WebSocket are blocked. Use the managed storage and job bridge, handle errors, and keep messages JSON serializable. See [UI isolation](ui-isolation-v1.md).
+The page uses an opaque-origin sandbox and CSP. Signed page resources load through anonymous CORS; the plugin owns its providers; native browser storage and direct fetch/XHR/WebSocket are blocked. Use the managed storage and job bridge, handle errors, and keep messages JSON serializable. See [UI isolation](ui-isolation-v1.md).
 
-The host resets the Federation document to a full-width, zero-margin `html/body/#plugin-sandbox-root` baseline and applies `border-box` sizing. Do not add a fixed body `max-width` or minimum width; make the component root `width: 100%; max-width: 100%; min-width: 0`. A desktop browser can still provide a narrow iframe when the host sidebar is open, so switch multi-column layouts to one column around 900-1000px and allow toolbars to wrap. Global CSS imported only by a standalone preview entry is not loaded for the Federation component.
+The production HTML entry loads all required CSS and owns its root/body layout. Use fluid widths and local scrolling for tables; the host provides a stable iframe viewport rather than a content-height feedback loop. Ordinary browser errors do not cause the host to destroy the page. Report selected real failures explicitly with api.reportError.
 
 ## 9. Package, sign and publish
 
@@ -348,7 +337,8 @@ The package root must contain:
 ```text
 manifest.json
 frontend/icon.svg                 # optional icon, UI itself is mandatory
-frontend/dist/assets/...          # mandatory signed Federation assets
+frontend/dist/index.html          # mandatory signed HTML entry
+frontend/dist/assets/...          # signed page scripts/styles/fonts
 runtime/plugin.wasm                # mandatory WASM reactor
 integrity.json
 signature.json
@@ -368,7 +358,7 @@ Publish the `.d115p` on HTTPS and add one entry to a market `index.json`. The ma
 
 ## 10. Local import behavior
 
-An administrator may also select the finished `.d115p` from the Plugin Center. This is an installation path, not a second package format: the host performs the same archive, manifest, integrity, signature, WASM runtime, Federation UI, and permission checks before presenting the consent dialog. The package must therefore be complete and signed even when it is not published in a market index.
+An administrator may also select the finished `.d115p` from the Plugin Center. This is an installation path, not a second package format: the host performs the same archive, manifest, integrity, signature, WASM runtime, HTML UI, and permission checks before presenting the consent dialog. The package must therefore be complete and signed even when it is not published in a market index.
 
 The inspect endpoint is `POST /api/plugin-center/v1/imports/inspect` with a multipart field named `package`. A successful response contains `import_token`, `expires_at`, `file_name`, and the same plugin permission snapshot shown by a market install. The administrator then submits `POST /api/plugin-center/v1/imports/{token}/install` with `permissions_accepted: true` and the returned `consent_digest`. The host revalidates every value and queues the normal `plugin_install` operation.
 
@@ -376,7 +366,7 @@ Import tokens are private, single-use, and expire after 15 minutes. The host del
 
 ## 11. Release checklist
 
-- UI is present, exposes the declared module, uses host singletons, and contains no unsigned remote scripts.
+- The HTML entry is present, connects using the public SDK, owns its providers, and loads packaged assets using relative URLs.
 - UI bridge props, action inputs and results are JSON-serializable; no functions, DOM nodes, cyclic objects, `BigInt` or Vue proxy objects cross the bridge.
 - Every UI asset and runtime file is covered by `integrity.json`.
 - WASM runtime entry has the WASM magic, exports `dian115_alloc`/`dian115_handle` and exports memory.

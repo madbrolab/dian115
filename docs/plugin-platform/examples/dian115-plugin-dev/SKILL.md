@@ -1,6 +1,6 @@
 ---
 name: dian115-plugin-dev
-description: 创建、修改、测试、排错和签名打包 DIAN115 第三方 .d115p 插件，使用公开 SDK、Vue Federation 和 WASM。适用于插件作者的独立项目；DIAN115 随主程序编译的内置功能不属于此流程。
+description: 创建、修改、测试、排错和签名打包 DIAN115 第三方 .d115p 插件，使用公开 SDK、独立 HTML 页面和 WASM。适用于插件作者的独立项目；DIAN115 随主程序编译的内置功能不属于此流程。
 ---
 
 # DIAN115 第三方插件开发
@@ -35,7 +35,7 @@ node <skill>/scripts/init.mjs --dir <new-directory> --id <publisher.plugin> --na
 
 ## 实现中始终保持的约束
 
-- 每个包同时包含签名 Vue 3 Federation 页面与 `dian115:wasm@1` WASM。UI 复用宿主 Vue/Naive UI/@lucide/vue singleton；业务网络经 action → WASM → Host Call。
+- 每个包同时包含签名 HTML 页面与 `dian115:wasm@1` WASM。页面用 SDK connectPluginPage 连接宿主，自行挂载应用和 Provider，不共享宿主框架实例；业务网络经 action → WASM → Host Call。
 - 公开契约和能力声明是接口依据。缺失能力要说明，不能猜私有端点、读取宿主数据库、取消 sandbox 或要求主项目源码。
 - 初始化和 state 查询不发送通知、不提交业务写入。页内变量/guest 全局变量会随页面或模块释放；恢复记录读取完毕后才允许相关写入。
 - 发送副作用前持久保存原输入与稳定 invocation ID；结果不确定时核对事实，重试复用原编号和幂等键。取消和卸载不能撤销已完成的外部业务。

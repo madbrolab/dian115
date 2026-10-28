@@ -54,9 +54,14 @@ try {
   fail(error.message)
 }
 requireText(manifest.runtime?.entry, 'manifest.runtime.entry', 240)
-if (manifest.ui?.mode !== 'federation') fail('ui.mode must be federation')
-for (const field of ['entry', 'assets_root', 'module']) requireText(manifest.ui?.federation?.[field], `manifest.ui.federation.${field}`, 240)
-if (!manifest.ui.federation.entry.startsWith(`${manifest.ui.federation.assets_root}/`)) fail('Federation entry must be below assets_root')
+if (manifest.ui?.mode !== 'page') fail('ui.mode must be page')
+for (const field of ['entry', 'assets_root']) {
+  const value = manifest.ui?.[field]
+  requireText(value, `manifest.ui.${field}`, 240)
+  if (value.startsWith('/') || value.includes('\\') || value.split('/').some(part => !part || part === '.' || part === '..')) fail(`manifest.ui.${field} must be a canonical package path`)
+}
+if (!manifest.ui.entry.endsWith('.html') || !manifest.ui.entry.startsWith(`${manifest.ui.assets_root}/`)) fail('HTML page entry must be below ui.assets_root')
+if (Object.keys(manifest.ui).some(key => !['mode','entry','assets_root','icon'].includes(key))) fail('Unknown UI declaration field')
 
 if (!isObject(manifest.permissions)) fail('manifest.permissions must be an object')
 if (!Array.isArray(manifest.permissions.apis) || manifest.permissions.apis.length > 512) fail('permissions.apis must be an array of at most 512 entries')
@@ -101,26 +106,8 @@ if (JSON.stringify(market.runtime) !== JSON.stringify({ kind: manifest.runtime.k
 if (JSON.stringify(market.permissions || {}) !== JSON.stringify(manifest.permissions || {})) fail('market permissions do not exactly match manifest')
 if ('capabilities' in market || 'account_access' in market) fail('market entry uses removed permission fields')
 
-const packageJSONPath = resolve(dirname(manifestPath), 'package.json')
-if (existsSync(packageJSONPath)) {
-  const packageJSON = readJSON(packageJSONPath, 'package.json')
-  for (const dependency of ['vue', 'naive-ui', '@lucide/vue']) {
-    if (!packageJSON.peerDependencies?.[dependency] || !packageJSON.devDependencies?.[dependency]) fail(`${dependency} must be a peerDependency and devDependency`)
-  }
-}
-
-const viteConfigPath = resolve(dirname(manifestPath), 'vite.config.ts')
-if (existsSync(viteConfigPath)) {
-  const viteConfig = readFileSync(viteConfigPath, 'utf8')
-  for (const dependency of ['vue', 'naive-ui', '@lucide/vue']) {
-    const escaped = dependency.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const declaration = new RegExp(`["']?${escaped}["']?\\s*:\\s*\\{[^}]*singleton\\s*:\\s*true[^}]*generate\\s*:\\s*false`, 's')
-    if (!declaration.test(viteConfig)) fail(`vite.config.ts must share ${dependency} as singleton with generate: false`)
-  }
-}
-
 const runtimePath = resolve(buildRoot, manifest.runtime.entry)
-const federationPath = resolve(buildRoot, manifest.ui.federation.entry)
+const pagePath = resolve(buildRoot, manifest.ui.entry)
 if (requireBuild || existsSync(buildRoot)) {
   if (!existsSync(runtimePath) || !statSync(runtimePath).isFile()) fail(`runtime build is missing: ${runtimePath}`)
   const moduleBytes = readFileSync(runtimePath)
@@ -142,9 +129,17 @@ if (requireBuild || existsSync(buildRoot)) {
   if (moduleBytes.length > wasmEntryMaxBytes) {
     fail(`runtime build is ${moduleBytes.length} bytes, above the ${wasmEntryMaxBytes} byte host budget`)
   }
-  if (!existsSync(federationPath) || !statSync(federationPath).isFile()) fail(`Federation entry is missing: ${federationPath}`)
-  const remoteEntry = readFileSync(federationPath, 'utf8')
-  if (!remoteEntry.includes('AppPage') && manifest.ui.federation.module === './AppPage') fail('Federation entry does not expose ./AppPage')
+  if (!existsSync(pagePath) || !statSync(pagePath).isFile()) fail(`HTML page entry is missing: ${pagePath}`)
+  const html = readFileSync(pagePath, 'utf8')
+  if (!/<html[\s>]|<!doctype\s+html/i.test(html)) fail('UI entry must be an HTML document')
+  const assetRoot = resolve(buildRoot, manifest.ui.assets_root)
+  for (const match of html.matchAll(/(?:src|href)=["']([^"'#]+)["']/gi)) {
+    const reference = match[1]
+    if (/^(?:https?:|data:|blob:|mailto:|tel:)/i.test(reference)) continue
+    if (reference.startsWith('/')) fail(`Page assets must use relative URLs: ${reference}`)
+    const asset = resolve(dirname(pagePath), reference.split(/[?#]/)[0])
+    if (!asset.startsWith(assetRoot + '/') || !existsSync(asset) || !statSync(asset).isFile()) fail(`Page asset is missing or outside assets_root: ${reference}`)
+  }
 }
 
 process.stdout.write(`Plugin project check: PASS (${manifest.id}@${manifest.version})\n`)

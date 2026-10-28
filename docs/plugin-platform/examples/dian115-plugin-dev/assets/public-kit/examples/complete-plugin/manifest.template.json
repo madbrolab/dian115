@@ -63,13 +63,10 @@
     ]
   },
   "ui": {
-    "mode": "federation",
-    "icon": "frontend/icon.svg",
-    "federation": {
-      "entry": "frontend/dist/assets/remoteEntry.js",
-      "assets_root": "frontend/dist/assets",
-      "module": "./AppPage"
-    }
+    "mode": "page",
+    "entry": "frontend/dist/index.html",
+    "assets_root": "frontend/dist",
+    "icon": "frontend/icon.svg"
   },
   "events": [
     "files.changed",

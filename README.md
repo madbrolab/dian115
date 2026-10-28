@@ -221,7 +221,7 @@ docker compose logs --tail=200 dian115
 
 ## 插件开发与规则贡献
 
-第三方插件开发以 [插件平台公开文档](docs/plugin-platform/README.md) 为准，包含协议、Schema、OpenAPI、Vue Federation UI 契约、完整示例和黑盒联调工具。插件开发使用公开契约，主程序源码保持私有。
+第三方插件开发以 [插件平台公开文档](docs/plugin-platform/README.md) 为准，包含协议、Schema、OpenAPI、独立 HTML 页面与 SDK 契约、完整示例和黑盒联调工具。插件开发使用公开契约，主程序源码保持私有。
 
 内置工具随主程序运行，第三方插件通过插件平台安装与管理。规则贡献请阅读 [贡献指南](CONTRIBUTING.md)；在线规则入口见 [online-rules](online-rules/README.md)。
 

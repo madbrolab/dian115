@@ -2,8 +2,8 @@
 
 本目录是一个可以直接构建、签名和发布的插件，而不是只有 UI 的片段。它演示：
 
-- 强制 Vue 3 Module Federation 页面；
-- 宿主 singleton 的 Vue 3、Naive UI 和 `@lucide/vue`；
+- 完整 HTML 页面及签名静态资源；
+- 插件自行打包的 Vue 3、Naive UI 和 `@lucide/vue`；
 - `dian115-theme-v1` 主题变量；
 - Go WASM reactor runtime（`dian115:wasm@1`）；
 - reactor ABI 上的 JSON-RPC 调用封套（`dian115_alloc`/`dian115_handle`）；
@@ -40,11 +40,11 @@ npm test
 npm run dev
 ```
 
-预览入口提供与宿主一致的 Naive UI Provider、主题变量，并复用公开 SDK 的桥接与 props 类型；正式包通过 Federation 加载 `./AppPage`，业务操作统一使用 `api`。
+同一入口在正式环境通过 SDK connectPluginPage 连接宿主，自行创建 Naive UI Provider 和 Vue 应用；开发独立窗口才使用 mock。主题变量由 SDK 同步，业务操作统一使用 api。
 
 本地 mock 支持 JSON 复制、页面存储键/额度、后台调用去重、取消和状态查询；页面偏好保存在内存，刷新预览页会重置。预览任务最多保留 128 条记录、16 个待完成回调，限额明确报错。外部地址动作返回示例 URL；通知、Host Storage、真实网络和目录监控需要安装到宿主验证，预览会明确返回 failed，不伪造成功。运行 npm test 可检查这些契约，mock 不能代替宿主集成验收。
 
-示例页使用宿主 Vue 3、Naive UI 和 `@lucide/vue` singleton，在不透明来源沙箱中运行。使用 `api.storage` 保存页面偏好，网络业务通过 action → WASM → Host Call；原生浏览器存储和直接 fetch 不可用。参见 [隔离与受管存储](../../ui-isolation-v1.md)。
+示例页独立加载自己的框架与组件，在不透明来源沙箱中运行，宿主不接管渲染或内容高度。使用 `api.storage` 保存页面偏好，网络业务通过 action → WASM → Host Call；原生浏览器存储和直接 fetch 不可用。参见 [隔离与受管存储](../../ui-isolation-v1.md)。
 
 UI 输出到 `build/frontend/dist/assets`，runtime 输出到 `build/runtime/plugin.wasm`。构包脚本会再次检查 WASM magic、ABI 和完整性。
 
@@ -98,7 +98,7 @@ releases/market-entry.generated.json
 
 1. `manifest.template.json` 中的 ID、名称、描述、版本、发布者、兼容范围、主页和仓库；
 2. `market-entry.template.json` 中的包 URL；本地开发可使用 `https://example.invalid/...` 占位符，管理员也可以直接从插件中心导入 `.d115p`；
-3. `vite.config.ts` 的 Federation name；
+3. `index.html`、`src/main.ts` 和页面组件的名称与内容；
 4. `runtime/main.go` 的 action/job/event 业务；
 5. `src/AppPage.vue` 的界面；
 6. Manifest 中准确的 Host API 和网络路由偏好。

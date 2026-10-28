@@ -1,12 +1,12 @@
 # UI 隔离、持久存储与后台调用
 
-当前 UI 特性标识为 `opaque-origin-v1`，存储标识为 `host-ui-v1`。运行时 UI 声明返回 isolation/storage，组件通过 `api.capabilities` 探测。WASM ABI 仍为 `dian115:wasm@1`。
+UI 入口协议见 [独立页面](ui-page-v1.md)。宿主不接管渲染、全局错误或内容尺寸。当前 UI 特性标识为 `opaque-origin-v1`，存储标识为 `host-ui-v1`。运行时 UI 声明返回 isolation/storage，组件通过 `api.capabilities` 探测。WASM ABI 仍为 `dian115:wasm@1`。
 
 ## 浏览器边界
 
-宿主 iframe 使用 `sandbox="allow-scripts allow-forms allow-popups allow-downloads"`，不授予 allow-same-origin、顶层导航或弹窗逃逸。每个文档有独立的不透明来源，不能访问父页面 DOM、宿主/其他插件的 localStorage、sessionStorage、IndexedDB、Cache API、Cookie 或 Service Worker。不要通过修改键名前缀来模拟隔离，也不要移除沙箱或退回同源加载。
+页面由完整签名 HTML 入口提供。宿主 iframe 使用 `sandbox="allow-scripts allow-forms allow-popups allow-downloads"`，不授予 allow-same-origin、顶层导航或弹窗逃逸。每个文档有独立的不透明来源，不能访问父页面 DOM、宿主/其他插件的 localStorage、sessionStorage、IndexedDB、Cache API、Cookie 或 Service Worker。不要通过修改键名前缀来模拟隔离，也不要移除沙箱或退回同源加载。
 
-宿主文档的 CSP 禁止直接 fetch/XHR/WebSocket、worker、子 frame、表单提交、object 和 base URL 修改。签名模块通过支持匿名 CORS 的静态能力地址加载；主题和 Vue/Naive UI/Lucide 共享依赖保持可用。图片、字体、媒体仍受 CSP、CORS 和混合内容规则约束。网络业务使用 action → WASM → Host Call。
+插件 HTML 文档的 CSP 禁止直接 fetch/XHR/WebSocket、子 frame、表单提交、object 和 base URL 修改，允许 Blob Worker。签名页面和静态资源通过支持匿名 CORS 的能力地址加载；SDK 同步主题变量，插件自行打包框架并建立 Provider。图片、字体、媒体仍受 CSP、CORS 和混合内容规则约束。网络业务使用 action → WASM → Host Call。
 
 postMessage 只接纳当前 frame window、source 和随机 channel；异步回复也核对原 frame/channel。插件不能在消息里选择其他 installation_id。每页同时最多 32 个未完成 RPC；JSON 消息最多 1 MiB，原有业务响应 256 KiB 限制不变。页面替换后不向新插件回复旧请求结果。
 
@@ -67,7 +67,7 @@ cancel 也可终止仍持有恢复记录的 failed/attention_required 任务，�
 | 方法与路径（共同前缀 `/api/plugin-center/v1/installations/:id/runtime`） | 作用 |
 | --- | --- |
 | GET `/ui-events` | SSE invalidate/status/revoked 信号，不携带业务数据 |
-| POST `/ui-errors` | 有界页面错误，返回 diagnostic_id，每安装每分钟最多 10 条 |
+| POST `/ui-errors` | 显式页面诊断，stage/detail/severity，返回 diagnostic_id，每安装每分钟最多 10 条 |
 | POST `/job-runs/:ref/resume` | 重新核对并恢复声明支持的任务，返回 202 job |
 | GET `/ui-storage/:key` | 返回 `{value}` |
 | PUT `/ui-storage/:key` | 请求 `{value}`，提交页面偏好 |
@@ -76,7 +76,7 @@ cancel 也可终止仍持有恢复记录的 failed/attention_required 任务，�
 | POST `/jobs/:job/runs` | 请求 `{invocation_id}`，202 返回 `{job,replayed}` |
 | GET `/job-runs/:ref` | 返回 `{job}` |
 | DELETE `/job-runs/:ref` | 请求取消，已完成任务返回现有记录 |
-| GET `/diagnostics` | 管理员读取最近结构化错误与当前 KV 用量，不开放给 guest |
+| GET `/diagnostics` | 管理员读取最近诊断、级别、发生时间与 KV 用量，不开放给 guest |
 
 ## 当前接入要求
 

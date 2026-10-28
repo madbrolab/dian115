@@ -10,7 +10,7 @@
 
 ## 生成项目结构
 
-- `src/AppPage.vue`：正式 Federation 页面。`src/main.ts` 仅为标有“本地模拟预览”的开发入口。
+- `index.html` 与 `src/main.ts`：正式页面入口，SDK 连接后自行挂载 `src/AppPage.vue`。只有开发模式独立窗口启用本地 mock，正式构建不带 mock。
 - `runtime/logic.go`：可本机单测的协议分发；`runtime/main.go`：WASM ABI 适配。
 - `manifest.template.json`、`market-entry.template.json`：相同身份、版本、权限。
 - `.dian115/`：随项目提交的固定公开契约、SDK、检查工具和来源锁。根 go.mod 使用本地 replace，无需导入宿主模块。

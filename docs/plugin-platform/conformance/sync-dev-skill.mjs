@@ -9,9 +9,9 @@ const check=process.argv.includes('--check')
 const hash=data=>createHash('sha256').update(data).digest('hex')
 const expected=new Map([['.gitattributes',Buffer.from('* -text\n')]])
 const add=(source,dest)=>{const path=resolve(platform,source);if(!lstatSync(path).isFile())throw Error('Expected a regular public source file: '+source);expected.set(dest,readFileSync(path))}
-const docs=['README.md','skill-installation.md','developer-guide.md','package-format-v1.md','wasm-runtime-v1.md','host-call-v2.md','storage-and-lifecycle.md','ui-federation-v1.md','ui-isolation-v1.md','job-recovery-v1.md','troubleshooting.md','publication-policy.md','host-api-quick-reference.md','openapi-v1.yaml','manifest.schema.json','integrity.schema.json','signature.schema.json','market-index.schema.json']
+const docs=['README.md','skill-installation.md','developer-guide.md','package-format-v1.md','wasm-runtime-v1.md','host-call-v2.md','storage-and-lifecycle.md','ui-page-v1.md','ui-isolation-v1.md','job-recovery-v1.md','troubleshooting.md','publication-policy.md','host-api-quick-reference.md','openapi-v1.yaml','manifest.schema.json','integrity.schema.json','signature.schema.json','market-index.schema.json']
 for(const file of docs)add(file,file)
-for(const file of ['README.md','verify-public-surface.mjs','project-check.mjs','runtime-check.mjs','openapi-check.mjs','generate-reference.mjs','openapi-check.test.mjs','runtime-check.test.mjs'])add('conformance/'+file,'conformance/'+file)
+for(const file of ['README.md','verify-public-surface.mjs','project-check.mjs','runtime-check.mjs','openapi-check.mjs','generate-reference.mjs','openapi-check.test.mjs','runtime-check.test.mjs','project-check.test.mjs'])add('conformance/'+file,'conformance/'+file)
 // Explicit public source inventory; never collect untracked local files or secrets.
 const sources=[
   "examples/complete-plugin/.gitignore",
@@ -50,7 +50,10 @@ const sources=[
   "examples/sdk/hostapi/storage_catalog_test.go",
   "examples/sdk/pluginjson/pluginjson.go",
   "examples/sdk/pluginjson/pluginjson_test.go",
-  "examples/sdk/ui.ts"
+  "examples/sdk/ui.ts",
+  "examples/sdk/page.ts",
+  "examples/sdk/message.ts",
+  "examples/sdk/diagnostics.ts"
 ]
 for(const file of sources)add(file,file)
 const openapi=expected.get('openapi-v1.yaml').toString('utf8')
@@ -70,6 +73,6 @@ if(check){
  for(const [file,data]of expected){mkdirSync(dirname(resolve(target,file)),{recursive:true});writeFileSync(resolve(target,file),data)}
  const result=spawnSync('git',['rev-parse','HEAD'],{cwd:platform,encoding:'utf8'});if(result.status!==0)throw Error('Cannot read public source revision')
  const files=Object.fromEntries(walk(resolve(skill,'assets')).map(p=>[relative(skill,p).split(sep).join('/'),hash(readFileSync(p))]).sort(([a],[b])=>a<b?-1:a>b?1:0))
- writeFileSync(resolve(skill,'contract-lock.json'),JSON.stringify({schema_version:1,skill:'dian115-plugin-dev',version:existsSync(resolve(skill,'contract-lock.json'))?JSON.parse(readFileSync(resolve(skill,'contract-lock.json'),'utf8')).version:'1.0.0',source_repository:'https://github.com/madbrolab/dian115',source_commit:result.stdout.trim(),api_count:entries.length,toolchain:{node:'20+',go:'1.25+',tinygo:'0.43.0',binaryen:'133'},files},null,2)+'\n')
+ writeFileSync(resolve(skill,'contract-lock.json'),JSON.stringify({schema_version:1,skill:'dian115-plugin-dev',version:existsSync(resolve(skill,'contract-lock.json'))?JSON.parse(readFileSync(resolve(skill,'contract-lock.json'),'utf8')).version:'1.0.0',source_repository:'https://github.com/madbrolab/dian115',source_commit:JSON.parse(readFileSync(resolve(skill,'contract-lock.json'),'utf8')).source_commit || result.stdout.trim(),api_count:entries.length,toolchain:{node:'20+',go:'1.25+',tinygo:'0.43.0',binaryen:'133'},files},null,2)+'\n')
 }
 process.stdout.write(`Skill public-kit ${check?'freshness':'sync'}: PASS (${expected.size} public files; ${entries.length} APIs)\n`)

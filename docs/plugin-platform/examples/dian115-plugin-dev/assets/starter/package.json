@@ -13,14 +13,8 @@
     "package": "node scripts/package.mjs",
     "release": "npm run build && npm run check && npm run package"
   },
-  "peerDependencies": {
-    "@lucide/vue": "^1.16.0",
-    "naive-ui": "^2.38.0",
-    "vue": "^3.4.0"
-  },
   "devDependencies": {
     "@lucide/vue": "^1.16.0",
-    "@originjs/vite-plugin-federation": "^1.4.1",
     "@types/yazl": "^3.3.0",
     "@vitejs/plugin-vue": "^5.2.4",
     "naive-ui": "^2.38.0",

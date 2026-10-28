@@ -122,7 +122,8 @@ Fork [madbrolab/dian115](https://github.com/madbrolab/dian115) 仓库到你的�
 manifest.json      # 插件清单
 integrity.json     # 完整性清单
 signature.json     # Ed25519 签名
-frontend/dist/assets/remoteEntry.js  # Vue Federation 入口
+frontend/dist/index.html           # 完整 HTML 页面入口
+frontend/dist/assets/...           # 页面脚本、样式和其他静态资源
 runtime/plugin.wasm  # WASM 运行时（唯一受支持）
 ```
 

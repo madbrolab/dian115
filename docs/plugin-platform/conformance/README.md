@@ -4,7 +4,7 @@
 
 ## 验证范围
 
-`project-check.mjs` 会在构包前检查 Manifest、市场条目、权限格式、三项前端 singleton 依赖、Federation 入口，以及运行时入口：WASM magic、是否由 Go 标准编译器构建、是否链接了 `encoding/json`、以及 2 MiB 体积上限。它通过 `runtime-check.mjs` 读取公开 `manifest.schema.json`，核对 runtime 协议、字段、超时、内存和并发范围。前台 `timeout_ms` 上限为 120000 毫秒，不能使用后台预算或浏览器传输上限代替。工具只使用 Node.js 标准库，分发时保留相邻脚本及 schema：
+`project-check.mjs` 会在构包前检查 Manifest、市场条目、权限格式、独立 HTML 入口、相对静态资源路径，以及运行时入口：WASM magic、是否由 Go 标准编译器构建、是否链接了 `encoding/json`、以及 2 MiB 体积上限。它通过 `runtime-check.mjs` 读取公开 `manifest.schema.json`，核对 runtime 协议、字段、超时、内存和并发范围。前台 `timeout_ms` 上限为 120000 毫秒，不能使用后台预算或浏览器传输上限代替。工具只使用 Node.js 标准库，分发时保留相邻脚本及 schema：
 
 ```bash
 node docs/plugin-platform/conformance/project-check.mjs \
@@ -47,14 +47,14 @@ WASM 产物与宿主 CPU 架构无关，构建机需要安装示例列出的 Tin
 
 ## UI 联调
 
-UI 使用宿主同一套 Vue 3、Naive UI 和 `@lucide/vue` singleton。示例的 `npm run dev` 提供本地 mock bridge，可验证组件 props、主题变量、图片、受管页面偏好、弹窗和错误状态；正式包在不透明来源 iframe sandbox 与 CSP 中运行，使用受管 api.storage；预览不能代替真实沙箱验证。宿主会提供零外边距、全宽的 `html/body/#plugin-sandbox-root` 和 `border-box` 基线，插件不要依赖预览入口的固定 body 宽度。弹窗仍受浏览器用户手势规则约束，直接 fetch/XHR/WebSocket 被 CSP 阻止，业务请求使用 Host Call。所有 bridge 值必须可由 `JSON.stringify`/`JSON.parse` 完整往返。
+UI 是完整 HTML 页面，使用 SDK page.ts 连接宿主，自行创建渲染器和组件 Provider。示例 npm run dev 在独立窗口提供开发 mock，正式包直接加载同一入口的生产产物。页面持久偏好使用 api.storage；原生浏览器存储与父页面访问隔离，业务网络走 Host Call。Blob Worker 可运行，页面错误由作者处理，宿主不监听全局错误或内容高度。预览不能代替真实宿主验收，所有 bridge 值必须可由 JSON 完整往返。
 
 ## 通过标准
 
 - `project-check.mjs` 退出码为 `0`，Manifest 中的每项 Host API 都通过公开目录核对；
 - WASM 入口包含标准 magic，并且声明了 `dian115:wasm@1` 协议；
 - `.d115p` 由示例 `scripts/package.mjs` 生成并能通过包格式、完整性和签名校验；
-- UI 暴露 Manifest 中声明的 Federation module，且所有静态资源进入签名包；
+- UI 提供 Manifest 中声明的完整 HTML 入口，且所有静态资源进入签名包；
 - `openapi-check.mjs` 和 `verify-public-surface.mjs` 都通过；
 - Host API、网络路由、Telegram 注册和文件操作都与公开文档一致。
 
@@ -74,7 +74,7 @@ node docs/plugin-platform/conformance/generate-reference.mjs --check
 
 速查表仅从公开 OpenAPI 生成，无需主项目源码。修改公开目录后运行 `generate-reference.mjs` 更新速查表。Manifest 的启动预算默认 30000 毫秒；示例显式设置 10000 毫秒，是示例选择而非平台默认值。示例默认不常驻。
 
-浏览器专项验收包括父页面/其他插件存储不可读、原生存储被阻止、受管偏好刷新保留、卸载重装为空、RPC 32 并发上限，以及真实 Federation 页面在沙箱中可渲染。见 [隔离协议](../ui-isolation-v1.md)。
+浏览器专项验收包括父页面/其他插件存储不可读、原生存储被阻止、受管偏好刷新保留、卸载重装为空、RPC 32 并发上限，以及真实完整 HTML 页面在沙箱中可渲染。见 [隔离协议](../ui-isolation-v1.md)。
 
 
 声明 jobs[].recovery_handler 时，project-check 同时校验其标识规则；真实恢复仍需覆盖只读核对、已完成跳过、检查点续跑、结果不确定停止和包变化拒绝。UI 联调应包含组件渲染异常、未处理 Promise、重试按钮、诊断编号和页面刷新信号。契约见 [可恢复任务](../job-recovery-v1.md)。

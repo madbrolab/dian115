@@ -8,7 +8,7 @@
 
 ```text
 manifest.json
-frontend/dist/assets/remoteEntry.js
+frontend/dist/index.html
 runtime/plugin.wasm                 # WASM reactor
 integrity.json
 signature.json
@@ -17,7 +17,7 @@ signature.json
 运行时必须是 `runtime.kind=wasm`，并且提供 `runtime/plugin.wasm`。原生进程运行时已经移除，
 `runtime.kind=process` 或 `runtime/plugin` 入口会被明确拒绝。
 
-可选文件包括 `frontend/icon.svg`、Federation 生成的其他 JS/CSS/字体和运行时所需的包内只读资源。
+可选文件包括 `frontend/icon.svg`、页面构建生成的其他 JS/CSS/字体和运行时所需的包内只读资源。
 
 硬限制：
 
@@ -104,13 +104,10 @@ ui
     ]
   },
   "ui": {
-    "mode": "federation",
-    "icon": "frontend/icon.svg",
-    "federation": {
-      "entry": "frontend/dist/assets/remoteEntry.js",
-      "assets_root": "frontend/dist/assets",
-      "module": "./AppPage"
-    }
+    "mode": "page",
+    "entry": "frontend/dist/index.html",
+    "assets_root": "frontend/dist",
+    "icon": "frontend/icon.svg"
   },
   "events": ["files.changed"],
   "jobs": [
@@ -203,17 +200,14 @@ WASM runtime 的 ABI、Host imports、配额和生命周期见 [WASM runtime v1]
 
 ```json
 {
-  "mode": "federation",
-  "icon": "frontend/icon.svg",
-  "federation": {
-    "entry": "frontend/dist/assets/remoteEntry.js",
-    "assets_root": "frontend/dist/assets",
-    "module": "./AppPage"
-  }
+  "mode": "page",
+    "entry": "frontend/dist/index.html",
+    "assets_root": "frontend/dist",
+    "icon": "frontend/icon.svg"
 }
 ```
 
-`entry` 必须位于 `assets_root/` 内，存在于 ZIP 且由完整性清单覆盖。`module` 省略时为 `./AppPage`，格式为 `./` 后跟 1-80 个字母/数字/下划线/连字符组成的暴露名。`icon` 可省略；填写时也必须存在并被完整性覆盖。
+`entry` 必须是位于 `assets_root/` 内的 `.html` 文件，存在于 ZIP 且由完整性清单覆盖。所有脚本、样式、图片和字体随包签名，资源 URL 使用相对路径。`icon` 可省略；填写时也必须存在并被完整性覆盖。
 
 UI 加载失败只显示错误状态与重试，不会切换到其他 UI 协议。
 
@@ -237,7 +231,7 @@ UI 加载失败只显示错误状态与重试，不会切换到其他 UI 协议�
   "algorithm": "sha256",
   "files": [
     {
-      "path": "frontend/dist/assets/remoteEntry.js",
+      "path": "frontend/dist/index.html",
       "size": 1234,
       "sha256": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     },
@@ -354,7 +348,7 @@ RFC8785-JCS(parse(integrity.json))
 
 ### 本地导入
 
-管理员也可以在插件中心直接选择本地 `.d115p` 文件。宿主先把文件放入受控临时目录，执行与市场安装完全相同的 ZIP、Manifest、完整性、签名、权限、Federation UI 和 WASM 运行时检查，再返回短期导入令牌供管理员查看权限。
+管理员也可以在插件中心直接选择本地 `.d115p` 文件。宿主先把文件放入受控临时目录，执行与市场安装完全相同的 ZIP、Manifest、完整性、签名、权限、HTML 页面 和 WASM 运行时检查，再返回短期导入令牌供管理员查看权限。
 
 确认安装时，宿主会再次验证令牌有效期、包 SHA-256、`consent_digest` 和包内容，然后复用同一异步安装、替换和回滚流程。令牌 15 分钟后过期且只能使用一次；成功、失败、取消或过期都会清理暂存包。本地导入不会创建市场条目，也不会绕过任何权限确认；安装记录的来源名称为“本地导入”。
 

@@ -30,7 +30,7 @@ test('complete template remains opt-in and imports the local public SDK',()=>{
  const dest=init('complete',['--template','complete','--version','2.1.0'])
  const manifest=json(resolve(dest,'manifest.template.json'));assert.ok(manifest.permissions.apis.length>0);assert.ok(manifest.jobs.length>0)
  assert.equal(manifest.version,'2.1.0')
- for(const file of ['AppPage.vue','actions.ts','background-job.ts','preview-bridge.ts'])assert.ok(!readFileSync(resolve(dest,'src',file),'utf8').includes("'../../sdk/ui'"))
+ for(const file of ['main.ts','AppPage.vue','actions.ts','background-job.ts','preview-bridge.ts'])assert.ok(!readFileSync(resolve(dest,'src',file),'utf8').includes("'../../sdk/ui'"))
  contract(dest)
 })
 test('corrupted or added installed resources fail before project creation',()=>{
@@ -65,7 +65,7 @@ test('signing requires an external absolute key and rejects symlink targets insi
 
 test('installed skill preserves snapshot bytes through Git autocrlf checkout',()=>{
  const repo=resolve(temp,'checkout-test');mkdirSync(repo);cpSync(root,resolve(repo,'skill'),{recursive:true})
- for(const args of [['init','-q'],['config','core.autocrlf','true'],['add','.'],['-c','user.name=Skill Test','-c','user.email=skill-test@example.invalid','commit','-qm','snapshot']]){
+ for(const args of [['init','-q'],['config','core.autocrlf','true'],['add','.'],['-c','user.name=bot','-c','user.email=bot@example.com','commit','-qm','snapshot']]){
   const result=spawnSync('git',args,{cwd:repo,encoding:'utf8'});assert.equal(result.status,0,result.stderr)
  }
  rmSync(resolve(repo,'skill'),{recursive:true});const checkout=spawnSync('git',['restore','.'],{cwd:repo,encoding:'utf8'});assert.equal(checkout.status,0,checkout.stderr)
