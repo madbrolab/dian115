@@ -33,7 +33,6 @@ const obsoleteContractPatterns = [
   { pattern: /movie[\s-]?pilot/i, label: 'forbidden reference-project name' },
   { pattern: new RegExp(['Direct', 'Response'].join('')), label: 'opaque OpenAPI response placeholder' },
   { pattern: /与对应主项目接口一致/, label: 'private-source response placeholder' },
-  { pattern: /opaque[- ]origin/i, label: 'removed opaque-origin UI model' },
   { pattern: /(?:declarative\s+UI|声明式\s*UI)/i, label: 'removed declarative UI model' },
   { pattern: /\/api\/pt\//i, label: 'removed PT plugin route' },
   { pattern: /[?&]query=Dune\b/, label: 'obsolete TMDB search parameter' },

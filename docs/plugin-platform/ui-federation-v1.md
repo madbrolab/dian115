@@ -91,7 +91,7 @@ export default defineConfig({
 
 `@originjs/vite-plugin-federation` 的生产端默认生成 ESM remote entry，不要添加只适用于消费端 remote 配置的顶层 `format`。三个 shared 必须使用 `singleton: true` 和 `generate: false`。示例中的局部 `as any` 只用于绕过当前 Federation 插件缺少 `singleton` 字段的 TypeScript 声明，不会改变生成配置。插件不能打包自己的第二份 Vue/Naive UI/Lucide。宿主返回的 Federation descriptor 会明确列出 `shared: ["vue", "naive-ui", "@lucide/vue"]`。
 
-不要从 CDN 动态加载框架或可执行脚本；可执行构建产物必须全部进入签名包。页面可以渲染包内、HTTP、HTTPS、`data:` 和 `blob:` 图片，也可以发出普通浏览器请求。普通请求受 CORS、混合内容、Cookie 策略和页面生命周期约束；需要宿主代理、托管凭据、后台运行、审计或可靠重试时，应通过 action 进入 WASM runtime，再由 `host.call` 请求。
+不要从 CDN 动态加载框架或可执行脚本；可执行构建产物必须全部进入签名包。页面可以渲染包内、HTTP、HTTPS、`data:` 和 `blob:` 图片，受 CSP、CORS 与混合内容规则约束。业务网络请求应通过 action 进入 WASM runtime，再由 `host.call` 请求；CSP 禁止直接 fetch/XHR/WebSocket。
 
 ### 大量封面与调用调度
 
@@ -106,56 +106,7 @@ export default defineConfig({
 远程模块 default export 必须是可渲染 Vue component。推荐 props/emit 类型：
 
 ```ts
-export interface PluginRuntimeSummary {
-  installation_id: number
-  runtime_kind: 'wasm' | string
-  entry?: string
-  timeout_ms: number
-  background_timeout_ms?: number
-  max_concurrency?: number
-  loaded?: boolean
-  health_status: 'healthy' | 'unhealthy' | 'unknown' | 'unbound'
-  health_error?: string
-  process_state?: string
-  pid?: number
-  started_at?: string
-  exited_at?: string
-  exit_code?: number
-  restart_count?: number
-}
-
-export interface RuntimeStateResponse {
-  state_version?: string
-  state?: Record<string, unknown>
-  not_modified?: boolean
-  etag?: string
-}
-
-export interface RuntimeCallbackResponse {
-  invocation_id?: string
-  replayed?: boolean
-  result?: {
-    status: 'succeeded' | 'failed' | 'accepted' | 'skipped'
-    [key: string]: unknown
-  }
-}
-
-export interface PluginHostBridge {
-  getState(view?: string): Promise<RuntimeStateResponse>
-  invokeAction(action: string, input?: unknown): Promise<RuntimeCallbackResponse>
-  refresh(): Promise<Record<string, unknown>>
-}
-
-export interface PluginPageProps {
-  api: PluginHostBridge
-  hostApi: PluginHostBridge
-  installationId: number
-  pluginId: string
-  runtime: PluginRuntimeSummary | null
-  runtimeState: Record<string, unknown>
-  navKey: 'main' | string
-  themeContract: 'dian115-theme-v1'
-}
+import type { PluginPageProps } from './sdk/ui'
 
 const props = defineProps<PluginPageProps>()
 const emit = defineEmits<{
@@ -165,15 +116,17 @@ const emit = defineEmits<{
 }>()
 ```
 
-运行时同时用 camelCase 和 Vue kebab-case 传递名称，因此 `<script setup>` 的 `runtimeState`、`themeContract` 和 `hostApi` 可正常接收。`api` 与 `hostApi` 是同一个冻结对象，提供兼容命名但不扩大权限。
+完整类型以 [公开 UI SDK](examples/sdk/ui.ts) 为准，包含 state/action 响应、受管存储、后台任务和页面 props。插件项目按 SDK 所在位置调整 import 路径；完整示例直接复用同一文件。
+
+宿主提供 `api`，并使用 `installationId`、`pluginId`、`runtime`、`runtimeState`、`navKey`、`themeContract` 这些 camelCase props；组件直接声明相同名称。
 
 ### 3.1 `getState(view)`
 
-直接请求指定 view 的 runtime state，并返回完整 `{state_version,state,etag}`。`view` 默认 `main`。页面自行调用时当前 bridge 不携带缓存 ETag；宿主页面的主状态轮询会使用 ETag。
+直接请求指定 view 的 runtime state，并返回完整 `{state_version,state,etag}`。`view` 默认 `main`。页面自行调用时当前 bridge 不携带缓存 ETag；宿主页面由刷新信号驱动的主状态读取使用 ETag，断线时有界刷新。
 
-### 3.2 `invokeAction(action, input)`
+### 3.2 `invokeAction(action, input, invocationId?)`
 
-调用插件 runtime 的 action。宿主生成 `inv_...` invocation ID，并附加当前浏览器 locale 和 IANA timezone。返回 wrapper：
+调用插件 runtime 的 action。可在第三个参数传入已持久保存的 `inv_...` 调用编号（最长 80 字符，遵循 runtime identifier 规则）；同一次业务重试必须复用原编号和相同输入。省略时宿主生成新编号，适合新的用户操作，不能据此重试结果不确定的写动作。宿主附加当前浏览器 locale 和 IANA timezone；同一编号的输入、动作或上下文变化返回冲突。返回 wrapper：
 
 ```json
 {
@@ -188,6 +141,8 @@ const emit = defineEmits<{
 
 页面必须处理 promise rejection，以及 result 的四种业务状态。完成后调用 `api.refresh()` 或 emit `refresh` 获取新 state。
 
+网络中断或超时保留原编号，先核对业务结果，重试仍使用原请求。动作已确认成功而随后的状态刷新失败时，只重试刷新，不能把它显示成动作失败。完整示例先写入受管 `action-intent.<action>`，确认响应后才删除；未确认时修改输入会明确拒绝，不生成新的写入意图。
+
 ### 3.3 `refresh()`
 
 强制宿主重新加载 `main` state，随后返回 state object（不是包含 ETag 的完整 envelope）。成功加载的新 state 也通过 prop 更新传入组件。
@@ -198,27 +153,23 @@ const emit = defineEmits<{
 - `action`：当前同样只触发刷新，不携带 action 名；调用业务 action 必须使用 `api.invokeAction`；
 - `close`：离开当前插件页面。
 
-## 4. 同源可信 UI 模型
+## 4. 沙箱 UI 与受管存储
 
-宿主使用普通同源 iframe 加载插件页面，不添加 `sandbox` 属性，也不为插件页附加额外的 CSP sandbox。插件 UI 因而是完整的浏览器发布者代码，可以：
+宿主使用不透明来源的 iframe sandbox 与 CSP 隔离插件页面。原生 localStorage、sessionStorage、IndexedDB、Cache API、Cookie 和父页面 DOM 不可访问，直接网络与 worker/子 frame 被限制。持久页面偏好使用异步 `api.storage.get/set/remove/clear`；业务数据使用 Host Storage。签名 Federation 组件及宿主共享依赖通过匿名 CORS 加载，主题契约保持不变。
 
-- 使用 `localStorage`、`sessionStorage`、IndexedDB、Cache API 和同源 Cookie 的浏览器默认行为；
-- 使用 `fetch`、XHR、WebSocket、EventSource 和其他正常浏览器网络能力；
-- 渲染包内、HTTP、HTTPS、`data:` 和 `blob:` 图片；
-- 提交表单、使用剪贴板等浏览器 API，并在用户手势中打开 HTTP/HTTPS 弹窗；
-- 使用同源页面能够访问的 DOM 和浏览器状态。
+详见 [UI 隔离、持久存储与后台调用](ui-isolation-v1.md)，包括额度、CAS、卸载清空、后台任务和当前接入要求。安装仍需信任发布者；浏览器沙箱不等于对所有 CPU/RSS 和上游副作用提供硬隔离。
 
-这不是 UI 权限隔离边界。管理员安装插件即表示信任签名发布者提供的 UI 和 runtime。插件不得把宿主浏览器状态、Cookie 或其他敏感数据发送到未获得管理员信任的目标。宿主不会通过 bridge 主动下发 Bot Token、115 Cookie、TMDB key、代理凭据或 CD2 凭据，但同源页面仍应被视为高信任代码。
+组件与宿主通过带随机 channel 的 `postMessage` bridge 执行 `getState`、`invokeAction`、`refresh` 和 `close`。宿主只接受当前 iframe window、正确 source 和 channel 的消息。前三种调用等待时间为：Manifest 前台执行预算 + 启动预算 + 60 秒编译槽及执行排队余量 + 10 秒传输余量，最大 250 秒；close 等其他调用为 30 秒。管理端 HTTP 310 秒保护不改变 Manifest 的 120 秒前台执行上限。超时不代表写操作已撤销，应复用原业务 ID 或查询结果，避免重复提交。iframe 高度限制为 320–100000 px。
 
-普通浏览器网络能力不会替代 Host Call：跨域请求仍受 CORS，HTTPS 管理页加载 HTTP 资源仍受 mixed-content 规则，浏览器请求也没有宿主代理优先、托管凭据、后台生命周期、安装实例审计或重试语义。需要这些能力时必须通过 `api.invokeAction` 进入插件 runtime，再由 `host.call` 请求。
+页面声明与 guest 是否驻留相互独立。首次打开或休眠后读取状态会按需唤醒，普通状态元数据查询不加载模块；空闲不表示崩溃。后台恢复期间页面保留外壳、显示安全说明并提供重试，页面关闭也不取消已经开始的宿主动作。
 
-组件与宿主仍通过带随机 channel 的 `postMessage` bridge 执行 `getState`、`invokeAction`、`refresh` 和 `close`。宿主只接受来自当前 iframe window、正确 source 标识和 channel 的消息。普通 bridge 调用 30 秒超时；`invokeAction` 根据 Manifest `runtime.timeout_ms` 计算等待时间，至少等待 30 秒，再加 10 秒传输余量。Manifest 前台超时合法范围为 100–120000 毫秒，因此有效清单的 bridge 等待上限为 130 秒。管理端 310 秒的传输保护上限不代表清单可以声明 300 秒的前台超时。超时不代表写操作已撤销，应根据业务 ID 或重新查询状态核对，避免重复提交。iframe 高度由 `ResizeObserver` 上报并限制在 320-100000 px。
-
-bridge 消息在发送前按 JSON 往返复制。props、action input、state 和 action result 必须可由 `JSON.stringify`/`JSON.parse` 无损传递；不要传函数、DOM 节点、循环引用、`BigInt`、`Symbol`、`Map`、`Set`、Vue ref/reactive proxy 或类实例。二进制数据使用 Base64 字符串，时间使用 ISO 8601 字符串。
+bridge 消息在发送前按 JSON 往返复制，最多 1 MiB，每页最多 32 个未完成 RPC。props、action input、state 和 action result 必须可由 `JSON.stringify`/`JSON.parse` 无损传递；不要传函数、DOM 节点、循环引用、`BigInt`、`Symbol`、`Map`、`Set`、Vue ref/reactive proxy 或类实例。二进制数据使用 Base64 字符串，时间使用 ISO 8601 字符串。
 
 宿主建立 Naive UI provider 栈：`NConfigProvider`、`NMessageProvider`、`NNotificationProvider`、`NDialogProvider`。远程组件可正常使用 `useMessage`、`useNotification` 和 `useDialog`。
 
 ### 4.1 用户手势弹窗契约
+
+弹窗继承沙箱，外部服务可能无法按普通窗口方式使用存储或表单；必须提供复制 URL、粘贴 code 等备用流程。
 
 需要异步生成地址时，插件必须在点击处理函数的第一步同步创建窗口，再等待 runtime action：
 
@@ -366,7 +317,7 @@ import { RefreshCw } from '@lucide/vue'
 
 const props = defineProps<{
   api: {
-    invokeAction(action: string, input?: unknown): Promise<any>
+    invokeAction(action: string, input?: unknown, invocationId?: string): Promise<any>
     refresh(): Promise<Record<string, unknown>>
   }
   runtimeState?: Record<string, unknown>
@@ -415,3 +366,15 @@ pre { overflow: auto; color: var(--dian-text-secondary); font-family: var(--dian
 ```
 
 完整构建和运行时交互见 [`examples/complete-plugin`](examples/complete-plugin/README.md)。
+
+
+### 受管 UI 扩展
+
+`api.capabilities` 包含 isolation、storage 和 jobs。`api.storage`、`api.jobs` 的完整类型与生命周期见 [隔离协议](ui-isolation-v1.md) 和 [SDK 类型](examples/sdk/ui.ts)。
+
+
+## 页面异常与恢复
+
+宿主为远程组件提供 Vue 错误边界，捕获渲染、未处理 Promise 与脚本错误，显示可重试入口；资源加载错误记录诊断而不直接销毁正常页面。错误在跨 frame 发送前移除凭据与签名资源 URL，父桥和后端再次限流、脱敏。相同错误去重，每页及每安装每分钟最多记录 10 条，诊断详情最多 3000 UTF-8 字节。插件仍应处理自己的业务异常，不能依赖未处理 Promise 作为正常控制流。
+
+在插件中心“错误诊断”查看同一 diagnostic_id，并可导出脱敏 JSON；导出只含版本、近期错误及存储用量，不读取或附带业务配置、检查点及凭据，不保留原始资源 URL。分享前仍应检查插件写入错误文本的业务内容。

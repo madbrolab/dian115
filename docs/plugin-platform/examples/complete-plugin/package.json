@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "test": "node --test preview-bridge.test.mjs background-job.test.mjs actions.test.mjs",
     "dev": "vite",
     "build:ui": "vue-tsc --noEmit && vite build",
     "build:runtime": "node scripts/build-runtime.mjs",

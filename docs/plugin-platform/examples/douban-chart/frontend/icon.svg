@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="豆瓣榜单订阅">
-  <rect width="64" height="64" rx="16" fill="#2eab5b"/>
-  <path fill="#fff" d="M20 16h24a4 4 0 0 1 4 4v24a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4m4 8v4h16v-4zm0 8v4h10v-4zm0 8v4h16v-4z"/>
-  <path fill="#fff" d="M40 34l3.2 6.2 6.8 1-4.9 4.8 1.2 6.8L40 50l-6.3 2.8 1.2-6.8-4.9-4.8 6.8-1z" opacity="0.9"/>
-</svg>

@@ -12,25 +12,26 @@
 - 在 manifest 的 `telegram` 段声明 1 个命令和 1 个关键词（最多各 3 个）。宿主在安装时登记路由，所以插件未加载时也能匹配消息；
 - 常驻模块模式（`runtime.resident`）：第二个模块实例运行不限时的 `resident` 主循环，定时把心跳写入 Host Storage，并在启动时发送带回调按钮的通知；
 - Telegram 回调按钮：通知和回复按钮携带 `callback_data`，点击后以 `telegram.callback` 事件回到插件，插件用 `answer`/`alert`/`reply` 应答并可持续多轮交互；
-- 用户点击触发的 `window.open()` 外部弹窗、图片渲染和浏览器存储；
+- 用户点击触发的 `window.open()` 外部弹窗、图片渲染和受管页面偏好存储；
 - 生成完整性清单、Ed25519 签名、包 SHA-256 和市场条目。
 
 ## 前置条件
 
 - Node.js 20+
 - npm
-- TinyGo 0.4x，以及 `wasm-opt`（Binaryen）在 `PATH` 上或通过 `WASMOPT` 指定
+- TinyGo 0.43.0、Binaryen 133（本示例已实测的工具链）；`wasm-opt` 在 `PATH` 上或通过 `WASMOPT` 指定
 
-宿主不接受 Go 标准编译器构建的模块，也拒绝链接 `encoding/json` 的模块：runtime 使用本目录自带的 `pluginjson` 做字段级读写。
+宿主不接受 Go 标准编译器构建的模块，也拒绝链接 `encoding/json` 的模块：runtime 使用相邻 [SDK](../sdk/README.md) 的 `pluginjson` 做字段级读写，并通过 `hostapi` 处理 Storage 和 HTTP 错误。
 
-WASM runtime 与宿主 CPU 架构无关；构建机可以是 Windows、macOS 或 Linux。
+WASM 产物与宿主 CPU 架构无关；构建环境须安装上述工具链。本示例已在 macOS x86_64 构建验证，宿主运行平台为 Linux。
 
 ## 构建
 
 ```bash
-npm install
+npm ci
 npm run build
 npm run check
+npm test
 ```
 
 本地预览 Vue 页面：
@@ -39,9 +40,11 @@ npm run check
 npm run dev
 ```
 
-预览入口提供与宿主一致的 Naive UI Provider 和主题变量，并使用本地 mock bridge；正式包仍通过 Federation 加载 `./AppPage`。
+预览入口提供与宿主一致的 Naive UI Provider、主题变量，并复用公开 SDK 的桥接与 props 类型；正式包通过 Federation 加载 `./AppPage`，业务操作统一使用 `api`。
 
-示例页必须由宿主提供的 Vue 3、Naive UI 和 `@lucide/vue` singleton 渲染。插件 UI 可以使用普通浏览器 `fetch`，但它受 CORS、混合内容和页面生命周期约束；需要宿主代理、托管凭据、后台运行、审计或稳定重试的业务请求应调用 action 进入插件 runtime，再由 `host.call` 访问宿主或外部服务。
+本地 mock 支持 JSON 复制、页面存储键/额度、后台调用去重、取消和状态查询；页面偏好保存在内存，刷新预览页会重置。预览任务最多保留 128 条记录、16 个待完成回调，限额明确报错。外部地址动作返回示例 URL；通知、Host Storage、真实网络和目录监控需要安装到宿主验证，预览会明确返回 failed，不伪造成功。运行 npm test 可检查这些契约，mock 不能代替宿主集成验收。
+
+示例页使用宿主 Vue 3、Naive UI 和 `@lucide/vue` singleton，在不透明来源沙箱中运行。使用 `api.storage` 保存页面偏好，网络业务通过 action → WASM → Host Call；原生浏览器存储和直接 fetch 不可用。参见 [隔离与受管存储](../../ui-isolation-v1.md)。
 
 UI 输出到 `build/frontend/dist/assets`，runtime 输出到 `build/runtime/plugin.wasm`。构包脚本会再次检查 WASM magic、ABI 和完整性。
 
@@ -104,13 +107,13 @@ releases/market-entry.generated.json
 
 ## 样例运行时说明
 
-runtime 保持一个并发读取循环。每个宿主请求单独处理，因此初始化和 invocation 内可以调用宿主 RPC。state 使用 `state-vN` 与匹配强 ETag；action 返回四种合法状态之一；job 只返回 `accepted/skipped`；Telegram event 返回严格的 `handled/reply`。
+runtime 是 reactor，宿主在一次调用内进入 ABI；guest 可以同步调用宿主 imports。服务实例串行执行，首次打开和闲置释放后都会重新初始化。state 使用 `state-vN` 与匹配强 ETag；action 返回四种合法状态之一；job 只返回 `accepted/skipped`；Telegram event 返回严格的 `handled/reply`。
 
 测试通知用 action invocation ID 派生 `Idempotency-Key`。目录监控同样使用稳定 key，topic 已在 Manifest events 中声明。`storage-demo` 展示 Host Storage 的 GET/PUT；`fetch-local` 接受 `http://127.0.0.1:8080/health` 或其他 HTTP/HTTPS 地址，由宿主网络 Broker 发出，宿主代理域名规则优先，非 HTTPS 不会被平台拦截。宿主消息解析仍然优先；只有未被宿主处理且命中 `/plugin_example` 或“完整插件示例”的消息才进入该 runtime。
 
-Telegram 路由在 `runtime.initialize` 中注册，而不是安装时写入 Manifest。注册被拒绝时只记录错误，插件仍可安装和运行；命令或关键词冲突不会覆盖宿主或其他插件。注册成功后，宿主最多将 3 个命令和 3 个关键词交给该插件，宿主没有处理的消息才会进入 `telegram.message` event。
+Telegram 路由在 Manifest 的 telegram 段声明，由宿主安装和启停流程协调；闲置释放保留路由。运行时 register/unregister 均被拒绝，host.telegram.list 可读取登记。宿主先处理自己的消息，随后才向匹配插件投递。
 
-常驻模块在 Manifest 中声明 `runtime.resident: true` 后启用：宿主用同一编译产物实例化第二个模块并向它发起一次不限时的 `resident` 调用，插件在其中运行主循环（示例每分钟向 Host Storage 写入一次心跳）。常驻模块与服务模块是两个独立实例、内存不共享，跨模块状态必须通过 Host Storage 等宿主服务交换；`resident` 调用返回错误视为崩溃，由监督器按 `restart_policy` 重启。
+**示例默认 `resident: false`**，不会启动额外模块、心跳或启动通知。常驻模块仅在 Manifest 中显式声明 `runtime.resident: true` 后启用：宿主用同一编译产物实例化第二个模块，在两个实例分别完成初始化后，向第二个实例发起一次不限时的 `resident` 调用，插件在其中运行主循环（示例每分钟向 Host Storage 写入一次心跳）。常驻模块与服务模块是两个独立实例、内存不共享，跨模块状态必须通过 Host Storage 等宿主服务交换；`resident` 调用返回或报错均视为循环停止，由监督器按 `restart_policy` 重启。
 
 回调按钮在按钮对象中用 `callback_data` 代替 `url`（二选一，最长 32 字节）。点击后宿主向创建该按钮的安装实例投递 `telegram.callback` 事件，事件需要在 Manifest `events` 中声明；插件返回 `handled`、`answer`（按钮提示，≤200 字符）、`alert` 和可选的 `reply`，`reply` 与 `telegram.message` 回复格式相同且同样支持回调按钮，可构成多轮交互。空响应视为静默确认。
 
@@ -121,3 +124,24 @@ Telegram 路由在 `runtime.initialize` 中注册，而不是安装时写入 Man
 `example.com`、示例插件 ID、发布者名称和市场 URL 都是占位符。不要把开发私钥或 `releases/` 提交到源码仓库。正式发布时必须使用长期稳定的发布者密钥和真实 HTTPS 包地址。
 
 插件开发只依赖 `docs/plugin-platform/` 的公开契约；主项目源码不会作为 SDK、联调包或发布附件提供。公共发布边界见 [`../../publication-policy.md`](../../publication-policy.md)。
+
+## 数据生命周期
+
+`storage-demo` 在同一有界配置值中保存本次 invocation ID 作为 operation_ref，重试先核对已保存的业务标记，确认已完成就直接返回成功，不用新的时间戳重新写入同一幂等请求。并发版本冲突应重新核对业务状态，不自动覆盖。配置存入 Host Storage，升级、重启和休眠保留；卸载清空，重装不恢复。state 中的演示计数只存在内存，每次重新加载会重置，不能作为正式业务数据。常驻心跳使用本次业务时间作唯一标识，不用重启后归零的计数生成幂等键；所有 Host Call 均检查目标 HTTP 状态。详见 [存储与生命周期](../../storage-and-lifecycle.md)。
+
+
+## 检查点与只读恢复示例
+
+refresh job 声明 recovery_handler: refresh-recover。受管后台执行先提交游标和进度，再用稳定 invocation ID 将完成标记保存到 jobs.refresh；恢复回调只 GET 该标记，已完成就返回 complete，不存在才返回 resume，查询失败则保留错误而不假定未完成。实际插件应替换为自己的上游事实核对与幂等业务步骤。普通 cron 回调没有后台 job_ref，继续保持轻量投递。
+
+页面提供启动、查询、“核对并恢复”和取消入口，持久保存任务引用和未确认的 start ID。首次挂载等引用恢复完成才开放启动；读取失败可显式重读，每次重试 start 都先持久保存原 ID。取消也可终止尚未核对的恢复记录。它不自动轮询；查询失败后使用同一引用重读，预览 mock 对真实恢复明确报错。详细限制见 [可恢复后台任务](../../job-recovery-v1.md)。WASM 初始化仅查询配置，不执行写入或通知；host.ui.invalidate 会向已打开页面合并推送刷新信号。
+
+`npm test` 覆盖预览桥和页面任务会话：恢复引用期间不能启动、存储失败重试先补写原 ID、丢失 start 响应时复用原 ID、显式取消后查询。测试不创建轮询器。
+
+## 动作重试与异常退出
+
+页面的 actions.ts 在动作提交前保存 `action-intent.<action>`，把稳定编号作为 `api.invokeAction` 的第三个参数。响应丢失或超时保留该记录，重试使用相同输入和编号；尚未确认时修改输入会被拒绝，应先核对上游业务事实。拿到响应后清除意图，后续状态刷新失败单独提示，避免把已成功动作误判为失败。预览桥最多保存 128 条内存动作回执，重复编号重放，改变请求拒绝；它不代替真实宿主的持久回执测试。
+
+清除意图的确认响应也可能丢失。示例保留已收到的动作结果并提示确认状态尚待核对，不把清理失败重新抛成业务失败；否则“清理已提交但响应丢失”可能导致下一次重试换用新编号。测试同时覆盖该窗口。
+
+后台任务的取消请求一旦落库，异常退出后也保持取消，不会因尚未收尾而自动续跑。`npm test` 另覆盖动作意图写入失败不提交、丢失响应后跨页面复用原编号、预览动作重放及冲突。

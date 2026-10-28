@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import {
   NAlert,
   NButton,
@@ -15,54 +15,49 @@ import {
 } from 'naive-ui'
 import { Bell, ExternalLink, FolderSearch, Globe2, HardDrive, RefreshCw, Save } from '@lucide/vue'
 import pluginIconURL from '../frontend/icon.svg'
+import type { PluginJob, PluginPageProps } from '../../sdk/ui'
+import { createBackgroundJobSession } from './background-job'
+import { invokeSavedAction } from './actions'
 
-interface RuntimeCallback {
-  invocation_id?: string
-  replayed?: boolean
-  result?: {
-    status?: 'succeeded' | 'failed' | 'accepted' | 'skipped'
-    message?: string
-    [key: string]: unknown
-  }
-}
-
-interface HostBridge {
-  getState(view?: string): Promise<{ state?: Record<string, unknown>; state_version?: string; etag?: string }>
-  invokeAction(action: string, input?: unknown): Promise<RuntimeCallback>
-  refresh(): Promise<Record<string, unknown>>
-}
-
-interface PluginRuntimeSummary {
-  health_status?: string
-  process_state?: string
-  pid?: number
-  [key: string]: unknown
-}
-
-const props = defineProps<{
-  api: HostBridge
-  hostApi?: HostBridge
-  installationId?: number
-  pluginId?: string
-  runtime?: PluginRuntimeSummary | null
-  runtimeState?: Record<string, unknown>
-  navKey?: string
-  themeContract?: string
-}>()
+const props = defineProps<PluginPageProps>()
 
 const message = useMessage()
 const busyAction = ref('')
 const watchPath = ref('')
 const localURL = ref('http://127.0.0.1:8080/health')
-const browserNote = ref(localStorage.getItem('complete-plugin.browser-note') || '')
-const state = computed(() => props.runtimeState || {})
+const browserNote = ref('')
+const backgroundJob = ref<PluginJob | null>(null)
+const jobBusy = ref(false)
+const jobReady = ref(false)
+const jobSession = createBackgroundJobSession(props.api, value => {
+  backgroundJob.value = value.job
+  jobBusy.value = value.busy
+  jobReady.value = value.ready
+})
+onMounted(async () => {
+  try {
+    browserNote.value = String(await props.api.storage.get('browser-note') || '')
+  }
+  catch (error: any) { message.error(String(error?.message || '读取页面偏好失败')) }
+  await backgroundOperation('restore')
+})
+const canResumeJob = computed(() => backgroundJob.value?.recovery_supported && ['failed','attention_required'].includes(backgroundJob.value.status) && (backgroundJob.value.recovery_attempt || 0) < 3)
+const canCancelJob = computed(() => backgroundJob.value?.cancellable && !backgroundJob.value.cancel_requested && (['queued', 'running'].includes(backgroundJob.value.status) || (backgroundJob.value.recovery_supported && ['failed', 'attention_required'].includes(backgroundJob.value.status))))
+async function backgroundOperation(op: 'start' | 'get' | 'resume' | 'cancel' | 'restore') {
+  try {
+    if (op === 'restore') await jobSession.restore()
+    else await jobSession.run(op)
+  } catch (error: any) { message.error(String(error?.message || '后台任务操作失败')) }
+}
+const state = computed(() => props.runtimeState)
 
-function saveBrowserNote() {
-  localStorage.setItem('complete-plugin.browser-note', browserNote.value)
-  message.success('已保存到浏览器 localStorage')
+async function saveBrowserNote() {
+  try { await props.api.storage.set('browser-note',browserNote.value);message.success('页面偏好已由宿主保存，卸载后清空') }
+  catch (error: any) { message.error(String(error?.message || '保存页面偏好失败')) }
 }
 
 async function openExternal() {
+  if (busyAction.value) return
   // Open synchronously from the click, then navigate after the runtime action resolves.
   const popup = window.open('about:blank', '_blank', 'popup,width=1080,height=760')
   if (!popup) {
@@ -71,10 +66,11 @@ async function openExternal() {
   }
   busyAction.value = 'external-link'
   try {
-    const response = await props.api.invokeAction('external-link', {})
-    const result = response.result || {}
+    const response = await invokeSavedAction(props.api, 'external-link', {})
+    const result = response.result
     const url = String(result.url || '')
     if (result.status === 'failed' || !/^https?:\/\//i.test(url)) throw new Error(String(result.message || '外部地址无效'))
+    if (response.confirmation_pending) message.warning('已收到动作结果，确认状态未保存；重试前请先核对业务结果')
     popup.location.replace(url)
   } catch (error: any) {
     popup.close()
@@ -85,13 +81,16 @@ async function openExternal() {
 }
 
 async function runAction(action: string, input: Record<string, unknown> = {}) {
+  if (busyAction.value) return
   busyAction.value = action
   try {
-    const response = await props.api.invokeAction(action, input)
-    const result = response.result || {}
+    const response = await invokeSavedAction(props.api, action, input)
+    const result = response.result
     if (result.status === 'failed') throw new Error(String(result.message || '插件动作失败'))
-    await props.api.refresh()
-    message.success(String(result.message || '操作完成'))
+    if (response.confirmation_pending) message.warning('已收到动作结果，确认状态未保存；重试前请先核对业务结果')
+    else message.success(String(result.message || '操作完成'))
+    try { await props.api.refresh() }
+    catch { message.warning('动作结果已返回，状态刷新失败，请稍后刷新页面') }
   } catch (error: any) {
     message.error(String(error?.message || '操作失败'))
   } finally {
@@ -116,7 +115,7 @@ async function createWatch() {
         <h2>完整插件示例</h2>
         <p>WASM 运行时、Host Call、目录监控、Telegram 与主题契约。</p>
       </div>
-      <NTag type="success" size="small">{{ themeContract || 'dian115-theme-v1' }}</NTag>
+      <NTag type="success" size="small">{{ themeContract }}</NTag>
     </header>
 
     <NAlert v-if="state.lastMessage" :type="state.lastStatus === 'failed' ? 'error' : 'info'" :bordered="false">
@@ -151,7 +150,7 @@ async function createWatch() {
         <img class="plugin-preview-image" :src="pluginIconURL" alt="完整插件示例图标">
         <div>
           <h3>图片与浏览器存储</h3>
-          <p>图片来自签名包；同源插件页可以使用 localStorage、sessionStorage 和 IndexedDB。</p>
+          <p>图片来自签名包；页面在独立沙箱中运行，持久偏好通过受管存储桥保存。</p>
         </div>
       </div>
       <NForm label-placement="top" @submit.prevent="saveBrowserNote">
@@ -160,7 +159,7 @@ async function createWatch() {
         </NFormItem>
         <NButton attr-type="submit">
           <template #icon><NIcon :component="Save" /></template>
-          保存到浏览器
+          保存页面偏好
         </NButton>
       </NForm>
     </section>
@@ -170,7 +169,7 @@ async function createWatch() {
         <NIcon :component="HardDrive" :size="20" />
         <div>
           <h3>Host Storage</h3>
-          <p>host-api-only 模式下使用同一接口保存插件私有状态，ETag 和幂等键由宿主保护。</p>
+          <p>通过 Host Storage 保存插件私有状态，ETag 和幂等键由宿主保护。</p>
         </div>
       </div>
       <NButton :loading="busyAction === 'storage-demo'" @click="runAction('storage-demo')">
@@ -193,6 +192,17 @@ async function createWatch() {
         </NFormItem>
         <NButton attr-type="submit" type="primary" :loading="busyAction === 'fetch-local'">通过宿主请求</NButton>
       </NForm>
+    </section>
+
+    <section class="tool-panel">
+      <h3>可恢复后台任务</h3>
+      <p>任务进入宿主统一队列。恢复先只读核对持久结果，再决定完成或从检查点续跑。</p>
+      <NButton v-if="!jobReady" :loading="jobBusy" @click="backgroundOperation('restore')">重新读取任务</NButton>
+      <NButton :loading="jobBusy" :disabled="!jobReady || jobBusy || backgroundJob?.status === 'queued' || backgroundJob?.status === 'running'" @click="backgroundOperation('start')">启动示例任务</NButton>
+      <NButton :disabled="!backgroundJob || jobBusy" @click="backgroundOperation('get')">查询任务</NButton>
+      <NButton :disabled="!canResumeJob || jobBusy" @click="backgroundOperation('resume')">核对并恢复</NButton>
+      <NButton :disabled="!canCancelJob || jobBusy" @click="backgroundOperation('cancel')">取消任务及后续恢复</NButton>
+      <p v-if="backgroundJob" role="status">{{ backgroundJob.job_ref }} · {{ backgroundJob.status }} · {{ backgroundJob.progress }}%</p>
     </section>
 
     <section class="watch-panel">

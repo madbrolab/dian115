@@ -39,7 +39,9 @@
     "network": [
       {
         "origin": "http://127.0.0.1:8080",
-        "methods": ["GET"],
+        "methods": [
+          "GET"
+        ],
         "proxy_mode": "system",
         "reason": "演示通过宿主 Broker 访问容器内或局域网本地服务"
       }

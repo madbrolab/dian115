@@ -1,89 +1,191 @@
-# DIAN115 WASM runtime v1
+# WASM 运行协议 v1
 
-插件包可以声明 `runtime.kind: "wasm"` 与 `runtime.protocol: "dian115:wasm@1"`。宿主在 DIAN115 容器内使用 wazero 托管模块，**只使用编译引擎**，没有解释器后备：同一段插件逻辑在任何部署上开销一致，不会因为宿主环境不同而慢一个数量级。宿主平台若无法运行编译引擎，加载插件会直接失败并给出明确原因，而不是悄悄降级。**每个插件使用自己的编译缓存**，插件被释放时缓存一起关闭——这是"空闲插件不占内存"能成立的前提；编译结果同时落盘，被释放的插件再次加载时读缓存而不是重新编译。模块没有宿主文件描述符、Socket、命令执行、环境密钥或预打开的宿主目录；需要文件、网络、通知、Telegram、状态和调度能力时，必须调用 Host API Broker。
+本协议定义 `dian115:wasm@1` reactor 与宿主的二进制 ABI、JSON 消息和生命周期。插件无需主项目源码。Manifest 使用 Plugin API v2；包签名、前端和 Host API 分别遵循对应公开文档。
 
-## 模块 ABI
+## 模块与 ABI
 
-WASM 必须是 reactor（不能导出 `_start`），导出自己的线性内存 `memory`，以及以下函数：
+模块导出名为 memory 的线性内存，以及下面两个函数：
 
 ```text
 dian115_alloc(size: i32) -> i32
 dian115_handle(ptr: i32, length: i32) -> i64
 ```
 
-`dian115_alloc` 返回可写入请求的内存地址。`dian115_handle` 接收 JSON 请求，返回值高 32 位是响应地址、低 32 位是响应长度。请求和响应均受 16 MiB 宿主帧上限约束，地址必须位于 guest memory 内。模块应复用或回收自己的缓冲区，宿主不会把 guest 指针解释为宿主地址。
+alloc 返回可写输入缓冲区地址，宿主复制完整 UTF-8 JSON 后调用 handle。handle 的 i64 高 32 位是输出地址，低 32 位是输出字节长度。所有地址和长度都必须位于 guest memory 内。宿主在返回前复制输出；输入和输出存活到本次调用结束即可，下次调用可以复用缓冲区。ABI 没有宿主调用的 free 函数，guest 应复用缓冲区或使用自己的有界分配策略。
 
-模块可选导入 `dian115.host_call(i32, i32) -> i32` 和 `dian115.host_read(i32, i32) -> i32`。前者提交 JSON-RPC Host API 请求并返回响应长度，后者把响应复制到 guest 提供的缓冲区；导入只能用于 `host.*` 方法。宿主会验证方法、安装权限、请求体、凭据引用、幂等键和输出大小。
+模块可以导入 WASI preview1 函数，以及命名空间 dian115 下的两个函数：
 
-帧上限不等于业务响应限额：页面 state/action 等运行时业务 JSON 仍限制为 256 KiB，Host Call 正文上限为 8 MiB。返回图片 data URL 时要计入 Base64 和 JSON 开销，不应把整张原图直接放进 action 结果。
-
-Guest 可根据当前操作设置更小的本地响应预算；在 `host_call` 返回长度后先检查，超限时不分配大缓冲区、不调用 `host_read`，直接返回可恢复的业务失败。该本地预算无需添加 Host Call JSON 字段。宿主仍可能已完成有界下载；这项检查主要避免大响应再次复制、JSON 解码及 Base64 解码造成 guest 内存峰值。循环处理图片时，应及时释放旧输出和解码缓冲区；GC 软目标应低于清单的线性内存硬限额，并以连续调用和失败后续操作验证内存恢复。
-
-## 调用封套
-
-宿主调用模块时发送：
-
-```json
-{"method":"runtime.invoke","params":{"envelope":{"op":"action","invocation_id":"inv_x","payload":{}},"background":false}}
+```text
+host_call(ptr: i32, length: i32) -> i32
+host_read(ptr: i32, capacity: i32) -> i32
 ```
 
-模块返回 JSON-RPC 封套：
+host_call 接受一个完整 JSON 请求，并返回响应字节数。guest 分配足够空间后调用 host_read；成功返回写入字节数并消费该响应。容量不足、内存越界或没有响应时返回 0。每实例只有一个待取响应，不得在读取前发起下一次 host_call；resident 与服务实例的响应缓冲相互独立。
+
+模块必须是 reactor，不得导出 `_start`。可使用 `_initialize` 做语言运行时初始化。Go 示例通过 TinyGo 的 WASI c-shared 模式构建，普通 Go 标准运行时和 `encoding/json` 不在可接受构包范围；公开 SDK 的 `pluginjson` 提供轻量 JSON 工具。
+
+## 消息封套
+
+宿主调用 guest：
 
 ```json
-{"result":{"status":"succeeded"}}
+{"method":"runtime.initialize","params":{"protocol":"dian115:wasm@1","plugin_id":"example.helper","plugin_version":"1.0.0","installation_id":1,"locale":"zh-CN","timezone":"Asia/Shanghai"}}
 ```
 
-或 `{"error":{"code":-32602,"message":"..."}}`。`op` 包括 `state`、`action`、`job` 和 `event`；事件的 topic 必须先在 manifest 声明并拥有 `events.subscribe` 能力。状态响应需要稳定的 `state_version` 和强 ETag，重复的 `invocation_id` 使用宿主持久化投递账本重放。
-
-Action 的业务结果 `status` 仅允许 `succeeded`、`failed`、`accepted` 或 `skipped`；`ok` 不合法，会触发 `runtime_protocol_error`。定时 job 只接受 `accepted` 或 `skipped`，不能直接复用返回 `succeeded` 的 action 结果。JSON-RPC 封套成功不代表其中的业务结果已符合宿主协议。
-
-大量排期或列表应在插件自己的 action 输入、输出中定义分页契约；宿主不会自动分页或截断业务 JSON。每页应留足封套余量，后续页携带同一数据版本，前端仅在完整版本读取成功后替换现有数据。不要在结果中重复附带已包含于 state 的同一批记录。
-
-## 配额和生命周期
-
-`memory_mb`（4–512 MiB）、`timeout_ms`（100–120000 毫秒）、`background_timeout_ms`（1000–3600000 毫秒）、`max_concurrency`（1–16）由 manifest 声明。`startup_timeout_ms` 和 `shutdown_timeout_ms` 均为 1000–60000 毫秒。前台 action 超时上限为 120 秒，后台 job 可单独设置更长预算；不要将后台预算写入 `timeout_ms`。越界清单会在安装时被拒绝，构包前应运行 `conformance/project-check.mjs`。
-
-## 构建要求
-
-宿主只接受用低占用工具链构建的模块：**Go 标准编译器被拒绝**，TinyGo / Rust / Zig / C 均可。原因是运行占用而不是审美——用同一份示例源码实测：
-
-| 构建方式 | 模块体积 | 启动后提交的线性内存 |
-| --- | --- | --- |
-| Go 标准编译器（wasip1，`-s -w`） | 3.3 MiB | 8 MiB |
-| TinyGo（`-target=wasi -buildmode=c-shared -opt=z`） | 0.6 MiB | 512 KiB |
-
-被拒绝的模块会在安装和打包阶段给出点名原因，不会只说"超限"。除此之外还有 2 MiB 的兜底上限，防止非 Go 但同样过大的模块混进来。TinyGo 需要 `wasm-opt`（Binaryen）在 `PATH` 上，或通过 `WASMOPT` 指定。
-
-**插件协议同时禁止链接 `encoding/json`。** 宿主会一直保留已加载插件的编译产物，所以一个重标准库的代价会乘到整个插件清单上：同一份示例源码用 `encoding/json` 时模块 1.4 MiB、每个加载中插件约 8 MiB，改用示例 SDK 里的 [pluginjson](examples/sdk/pluginjson/pluginjson.go) 做字段级读写后是 0.6 MiB / 3.5 MiB。宿主和 `project-check.mjs` 都会扫描模块并**按名字点名拒绝**，作者拿到的是"你链接了 encoding/json，请改用 pluginjson"，而不是一个体积超限。这项检查是开发者体验规则，不是安全边界；2 MiB 的兜底上限依然生效。TinyGo 需要 `wasm-opt`（Binaryen）在 `PATH` 上，或通过 `WASMOPT` 指定。
-
-超时会取消 guest context。单次调用失败（包括 guest trap、非法 host 请求和无效响应封套）只向该次调用返回错误，不会终止模块；只有连续 8 次调用失败才判定模块状态损坏并交给监督器按 `restart_policy: on-failure` 重启。模块默认加载在宿主进程内，不再为每个插件启动独立进程；宿主按需加载模块，并在长时间无人调用（默认 15 分钟）后释放它，下一次调用会自动重新加载，因此插件不应把“进程一直存在”当作前提。
-
-**不要依赖"进程一直在"来维持状态。** 定时 job、声明的事件订阅、文件监控和 Telegram 路由都由宿主持久化并驱动：到点、事件到达或消息匹配时，宿主才加载插件、调用、然后释放。所以这些插件都不需要常驻，宿主的插件内存占用跟着"同时活跃多少个"走，而不是"装了多少个"。**唯一**必须常驻的是声明了 `resident: true` 的插件——它自己在模块里跑后台循环，宿主无法在它没加载时替它做任何事。
-
-宿主对加载和回收有四个可调项，默认值适用于大多数部署：同时加载的插件数量上限 `DIAN115_PLUGIN_WASM_MAX_LOADED`（默认 16，超出按最久未使用释放，设为 `0` 表示不限制）；模块编译的并发上限 `DIAN115_PLUGIN_WASM_MAX_LOADS`（默认 4）；插件被调用过之后多久释放 `DIAN115_PLUGIN_WASM_IDLE_TIMEOUT`（默认 15 分钟，设为 `0` 表示永不释放）；开机预热过但一次都没被调用的插件多久释放 `DIAN115_PLUGIN_WASM_UNUSED_TIMEOUT`（默认 2 分钟）。编译结果按内容缓存在数据库同目录的 `plugin-compiled/` 下（wazero 自己再按版本和架构分子目录），所以被释放的插件再次被用到时是读缓存而不是重新编译：实测示例模块的重新加载从约 117 毫秒降到约 40 毫秒。该目录只影响加载速度，服务停止时可以安全删除。
-
-空闲实例还会收到 `runtime.ping` 活性探测，由宿主直接应答，插件无需实现。永久性的启动失败（入口缺失、ABI 不支持、拒绝初始化）不消耗重启预算；彻底失败的实例冷却 30 分钟后会自动获得一次新的重试机会。关闭时先发送 `runtime.shutdown`，超时后卸载模块。模块只读挂载插件 package，持久化数据通过 Host Storage 保存。
-
-## Telegram 入站消息
-
-插件在 manifest 的 `telegram` 段声明最多 3 个命令和 3 个关键词；宿主在安装和启用时登记这些路由，**不需要加载插件**。运行时注册（`host.telegram.register`）已不再支持。宿主先处理内置命令和已识别的链接，剩余文本按声明的路由匹配一个插件，然后按需加载该插件并发送 `telegram.message` 事件。事件只包含 `update_id`、`date`、`message_id`、`message_thread_id`、`chat_id`、`chat_type`、`user_id` 和文本，以及脱敏的匹配信息；Bot Token、原始 Update、用户名和附件不会进入插件。插件可返回纯文本或 HTML 回复、HTTPS 图片和受限按钮。按钮支持 `url` 或 `callback_data`（二选一）；携带 `callback_data` 的按钮被点击后，宿主向该安装实例投递 `telegram.callback` 事件，插件以 `answer`/`alert`/`reply` 应答，详见 host-call-v2.md 第 12 节。
-
-当前公开的入站交互渠道是 Telegram。`/api/notifications/plugin` 是插件发起的出站通知接口，不会把系统通知伪装成用户入站消息；新增渠道必须先定义独立的脱敏事件投影、身份范围、幂等键和回复校验。
-
-出站通知不受这条限制：宿主会把插件通知投递到**所有已配置的通道**（Telegram、企业微信、微信 ClawBot），但各通道能承载的能力不同。响应里的 `channels` 字段会报告每条通道保留和丢弃了什么——特别是 `callback_buttons`：只有 Telegram 能把按钮点击送回插件，另两条通道会丢弃它。**插件必须检查这个字段再决定交互方式**，不要假设按钮在所有通道都可用，详见 host-call-v2.md 第 2.4 节。
-
-## 网络地址
-
-manifest 中的 `permissions.network` 是安装时的用途和代理偏好说明，不是永久 allowlist。安装后插件页面可以通过 Host Storage 保存用户输入的 HTTP/HTTPS 地址并调用网络 Broker；未声明地址默认跟随宿主系统代理。Broker 仍执行 URL、重定向、凭据过滤、响应上限和审计，插件不能直接打开 Socket。用户应自行承担其添加的目标服务、凭据和数据风险。
-
-## 常驻模块（resident）
-
-manifest 声明 `"runtime": {"kind": "wasm", "resident": true}` 后，宿主会在服务模块之外用同一编译产物实例化第二个模块，并向它发起一次不限时的后台调用：
+guest 必须返回 result 或 error 之一：
 
 ```json
-{"op": "resident", "invocation_id": "resident", "payload": {}}
+{"result":{"ready":true,"protocol":"dian115:wasm@1"}}
 ```
 
-插件在这个调用里运行自己的主循环（定时器、轮询、长驻任务），通过 `host_call`/`host_read` 正常使用全部宿主能力，行为等同本机常驻模块，而不是"用户点击才运行"的沙箱。常驻调用返回错误视为崩溃，整个运行时被卸载并由监督器按 `restart_policy` 重启；正常返回只结束常驻循环，服务模块继续应答普通调用。常驻插件不会被空闲释放。
+```json
+{"error":{"code":-32602,"message":"invalid request"}}
+```
 
-宿主调用状态按模块实例隔离，常驻模块与服务模块可以并发发起 `host_call`，互不干扰。
+这里不是 stdio 流，也没有额外 JSON-RPC id。拒绝未知封套字段和尾随 JSON；error 与 result 不得同时出现。
+
+guest 调用宿主：
+
+```json
+{"method":"host.call","params":{"method":"GET","path":"/api/plugin-runtime/storage/settings","headers":{"accept":"application/json"}}}
+```
+
+读取成功响应为 `{result: ...}`。宿主方法被拒绝时 ABI 返回 `{error: "安全说明"}`；它与 guest 返回的结构化 RPC error 形状不同。目标 HTTP 的 404、412、429、500 等仍返回在 result 中的 status/body_base64，必须按 [Host Call](host-call-v2.md) 检查，不能只检查传输是否报错。
+
+## 初始化与停止
+
+每次模块加载都会调用 runtime.initialize。ready 必须为 true；protocol 可以省略，提供时必须匹配。guest 通过 Host Storage 读取持久状态，不能假设上次 guest 的全局变量仍存在。
+
+WASM 构造初始化（`_initialize`）及 `runtime.initialize` 只允许读取 Host API、查询能力和写诊断日志；业务写入、通知与检查点提交须在正式调用中执行，避免冷启动重复副作用。
+
+runtime.shutdown 参数包含 reason，允许返回 `{stopping:true}`。宿主有关闭预算，guest 必须及时释放工作。runtime.ping 由宿主对存活模块应答，不要求 guest 实现；它不是业务健康诊断的替代品。
+
+## 调用入口
+
+```json
+{"method":"runtime.invoke","params":{"envelope":{"op":"action","invocation_id":"inv_example123","payload":{"id":"refresh","input":{},"context":{"locale":"zh-CN","timezone":"Asia/Shanghai"}}},"background":false}}
+```
+
+op 分为 state、action、job、event，以及专门的 resident。服务实例一次执行一个 guest 调用；max_concurrency 影响接纳门限，不代表 guest 多线程执行。
+
+### 状态
+
+payload 为 `{view:"main",if_none_match?:"强 ETag"}`。完整返回：
+
+```json
+{"result":{"state_version":"state-v1","etag":"\"state-v1\"","state":{"enabled":true}}}
+```
+
+state_version 长 1–80 字符，使用字母数字及不连续、不位于首尾的点、短横线或下划线。ETag 必须是同版本的强 ETag；可省略，由宿主生成。未变化时仅在请求提供相同 ETag 的条件下返回 `{not_modified:true,etag:"原 ETag"}`。
+
+状态查询只允许只读 Host Call、能力查询和诊断日志；写入、通知、检查点提交与 host.ui.invalidate 均被拒绝，避免刷新信号产生自激循环。应读取小型快照，不能每次重新扫描完整网盘。guest 全局计数适合演示，正式业务状态应持久化。
+
+### 动作
+
+payload 包含 id、input 和 context。成功解析的业务返回必须包含以下 status 之一：succeeded、failed、accepted、skipped。`ok` 不合法。可附加 message、job_ref 等安全业务字段。
+
+```json
+{"result":{"status":"accepted","job_ref":"job_example","message":"任务已受理"}}
+```
+
+长操作通过现有 Host Job/业务任务能力提交，然后查询结果；不能只启动 guest 内存中的 goroutine 就承诺宿主重启后继续运行。重试同一动作使用原 invocation_id 和相同内容，防止不确定结果造成重复提交。
+
+### 定时任务
+
+payload 包含 id、handler、scheduled_for、trigger 和 attempt。任务必须在 Manifest jobs 中声明；使用数字五字段 cron，间隔至少五分钟。返回 status 只允许 accepted 或 skipped，`succeeded` 不合法。guest 自己的后续业务成功与调度投递被受理是不同状态。
+
+### 恢复核对
+
+声明 `jobs[].recovery_handler` 的后台调用支持持久检查点、宿主重启后的只读核对和安全续跑。`recover` 只能返回 `resume`、`complete` 或 `attention_required` 决策；完整封套、限制和示例见 [可恢复任务](job-recovery-v1.md)。
+
+### 事件
+
+payload 包含 id、topic、occurred_at 和 data，id 是稳定事件 ID。普通事件返回有界 JSON 对象；重复投递使用稳定事件 ID，插件业务必须幂等。Telegram 消息和按钮回调分别遵循 [Host Call](host-call-v2.md) 中的专门返回模型。
+
+Telegram 命令和关键词在 Manifest 声明，宿主在未加载 guest 时也可匹配并唤醒插件。host.telegram.list 可读取当前登记；运行时 `host.telegram.register` 和 `host.telegram.unregister` 不再支持，均被拒绝。停用和卸载撤销路由，闲置释放保留路由。
+
+## 宿主方法
+
+| 方法 | 用途 |
+| --- | --- |
+| host.call | 安装时批准的宿主 API 或 Broker HTTP/HTTPS |
+| host.log | 有界、脱敏、按安装归属的日志 |
+| host.capabilities | 宿主版本、公开目录、已授予和不可用接口、特性 |
+| host.telegram.list | Manifest 已登记的 Telegram 路由 |
+| host.ui.invalidate | 返回 accepted，并向当前安装已打开的页面合并推送刷新信号；无页面时不唤醒 guest |
+| host.job.current | 当前可恢复后台任务的引用、稳定业务 ID、检查点和核对阶段；普通调用返回 job:null |
+| host.job.checkpoint | 当前可恢复任务原子提交不超过 16 KiB 的 JSON 检查点及 0–100 进度；核对阶段拒绝 |
+
+支持 `host_call_timeout_ms` 特性的宿主允许每次 host.call 带 1–10000 毫秒 timeout_ms。先查询 capabilities，旧宿主不认识字段时省略；嵌套调用的执行期限不会超出外层调用。
+
+## 资源预算与错误
+
+| 层次 | 默认或上限 |
+| --- | --- |
+| WASM 文件 | 2 MiB |
+| 线性内存 | 每实例默认 64 MiB，允许 4–512 MiB |
+| 启动 | 默认 30 秒，允许 1–60 秒；另有编译槽等待预算 |
+| 前台执行 | 默认 30 秒，允许 0.1–120 秒 |
+| 后台执行 | 默认 5 分钟，允许 1 秒–1 小时 |
+| 等待执行 | 30 秒；已加载安装 pending 最多 32 |
+| ABI JSON 帧 | 16 MiB |
+| 解码后的 Host Call 正文 | 请求、响应各 8 MiB |
+| 普通业务输入、输出和持久回执 | 256 KiB |
+| Storage | 单值 256 KiB，每安装 16 MiB |
+| 宿主接纳 | 加载中及驻留安装默认最多 32；声明内存预算默认 1024 MiB，resident 按两个实例计费 |
+| 常驻 | 默认最多 2 个 resident 安装，不与普通调用共享长驻执行槽 |
+| 全局调用 | 最多 128 个等待/运行调用，执行最多 8 个；同一模块仍串行 |
+| 宿主后台任务 | 接纳 64 / 每安装 16；执行 8 / 每安装 2；排队 30 秒，执行最长 1 小时 |
+
+普通业务 JSON 保留不透明文本和业务标识，包括 `/`、`\`、以 `/` 开头的远端名称、插件路由、外部 cid/file_id 和分页 page_token；不根据这些内容推导路径或宿主数据库身份。宿主路径、内部 ID 和凭据在各 Host API 的权限及响应模型边界处理。通用业务校验限制 256 KiB、嵌套深度 64、值节点 16384，并拒绝明确凭据字段（如 password、access_token、authorization、cookie），不按包含 cookie 或以 _token 结尾的任意名称一律拒绝。限额作用于不同层次，不能用 8 MiB HTTP 正文限制推断页面 state 也允许 8 MiB。
+
+排队取消不会关闭健康模块。已经开始的动作使用宿主执行预算，页面断连不撤销它；实际超时会关闭 guest，以终止死循环，并通过监管器恢复。不能通过关闭执行期限保护来规避错误。
+
+| 机器码 | 含义与处理 |
+| --- | --- |
+| invocation_queue_full | 接纳门限已满，稍后使用相同业务 ID 重试 |
+| invocation_queue_timeout | 等待超时，本次没有进入 guest 执行 |
+| invocation_cancelled | 调用方在等待中取消 |
+| runtime_starting | 运行 generation 正在切换，可稍后重试 |
+| runtime_resource_limit | 宿主加载或声明内存预算不足；释放闲置插件、缩小声明或稍后重试，不消耗崩溃预算 |
+| runtime_backoff | 宿主正在退避恢复 |
+| runtime_package_invalid | 模块编译、ABI 或包入口无效，修复插件包后重装 |
+| runtime_failed | 暂停自动重启，检查原因并更新包或手动重启 |
+| runtime_timeout | guest 执行超时，需要核对副作用，不能盲目重提 |
+| runtime_protocol_error | 返回结构、枚举、版本或大小不符合协议 |
+
+暂时启动失败与运行故障共享有界重试预算；最多自动重启五次，带抖动退避。超过预算的暂时故障冷却 30 分钟后可由下次调用或常驻协调触发新预算；永久初始化拒绝不自动冷却恢复。业务失败和排队满不计作 guest 崩溃。
+
+## 常驻模式
+
+默认 resident 为 false，插件按需加载、空闲释放，调度、目录 watch 和 Telegram 路由由宿主管理。需要常驻主循环时才声明 resident 为 true；宿主创建第二个模块实例，两实例分别完成 runtime.initialize 后才进入 resident 调用。
+
+两实例不共享线性内存，持久交换使用 Host Storage。resident 返回或报错均视为循环停止并触发恢复；关闭时宿主中断循环。该调用没有普通前台执行期限，插件必须在阻塞式等待、可取消 Host Call 或合理睡眠中让出资源，不能使用忙轮询。
+
+## 持久数据
+
+数据位置、JSON 结构、CAS、升级迁移和卸载清空规则见 [插件数据存储与生命周期](storage-and-lifecycle.md)。卸载清空，重新安装为空配置；插件不得依赖旧的保留数据或浏览器残留恢复业务状态。
+
+调用回执按安装、调用种类和编号去重。并发相同编号只有一个执行者，其余收到可重试的 invocation_in_progress；已完成则重放原结果，相同编号改变请求返回 invocation_conflict。可重试回执重新接纳和保存结果均核对当前执行次数，旧执行迟到的成功或失败不能覆盖新执行；已进入终态的回执不再被旧结果改写。停用或卸载中的安装不能创建、重新接纳新回执，卸载后的迟到请求不能重新创建记录。
+
+## 宿主资源设置
+
+这些是宿主部署设置，不是 guest 的环境权限：
+
+| 环境变量 | 默认与行为 |
+| --- | --- |
+| DIAN115_PLUGIN_WASM_MAX_LOADED | 默认 16 个加载实例；0 取消数量上限，常驻和忙碌实例不会强行驱逐 |
+| DIAN115_PLUGIN_WASM_MAX_LOADS | 默认 4 个同时编译槽；至少 1 |
+| DIAN115_PLUGIN_WASM_IDLE_TIMEOUT | 默认 15 分钟；0 关闭闲置释放 |
+| DIAN115_PLUGIN_WASM_UNUSED_TIMEOUT | 默认 2 分钟；针对尚未服务过调用的预加载实例 |
+
+资源检查约每 2 分钟运行，释放时间不是精确计时承诺。编译缓存位于宿主数据目录，可重建；它不是业务数据。
+
+
+### 宿主资源开关
+
+DIAN115_PLUGIN_WASM_MAX_EXECUTIONS 默认 8（1–64），MAX_ACTIVE 默认 32（1–128），MEMORY_BUDGET_MB 默认 1024（1–65536），MAX_RESIDENT 默认 2（1–32），后三项同样使用 DIAN115_PLUGIN_WASM_ 前缀。MAX_LOADS 编译并发默认 4，允许 1–64；无效环境值回退默认。原 MAX_LOADED 仍是闲置/LRU 软目标，不取代加载准入门限。
+
+准入不足时先回收已经使用且没有待处理调用的普通闲置模块，不驱逐常驻或正在执行的工作；仍不足才返回 runtime_resource_limit。内存预算按 manifest 线性内存上限做加载前保守接纳估算，不是进程 RSS/cgroup 限额；编译缓存、Go heap 和正在关闭的旧代次也会占用资源，不能据此承诺 RSS 不超过该数值。减少 resident 和批量大小通常比抬高预算更合适。
+
+全局执行槽在拿到模块串行槽之后取得，因此单个插件不能用多条等待请求占满全部执行槽。显式宿主后台取消会传到执行中的 guest，普通浏览器断连仍不撤销已开始的动作。页面后台调用、任务恢复和检查点见 [UI 隔离与后台调用](ui-isolation-v1.md)。

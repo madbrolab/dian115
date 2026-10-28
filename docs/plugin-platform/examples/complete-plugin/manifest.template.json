@@ -12,7 +12,7 @@
     "url": "https://example.com/plugins"
   },
   "compatibility": {
-    "dian115": ">=3.8.51 <5.0.0",
+    "dian115": ">=5.0.46 <6.0.0",
     "plugin_api": "^2.0"
   },
   "runtime": {
@@ -26,7 +26,7 @@
     "max_concurrency": 1,
     "restart_policy": "on-failure",
     "memory_mb": 64,
-    "resident": true
+    "resident": false
   },
   "permissions": {
     "apis": [
@@ -93,6 +93,7 @@
     {
       "id": "refresh",
       "handler": "refresh",
+      "recovery_handler": "refresh-recover",
       "default_schedule": "*/15 * * * *",
       "allow_overlap": false
     }

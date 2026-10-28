@@ -14,10 +14,11 @@ node docs/plugin-platform/conformance/project-check.mjs \
   --require-build
 ```
 
-`openapi-check.mjs` 会核对公开 Host API 目录与全部 OpenAPI path operation，检查每项接口都有明确成功模型、400 错误体、写操作幂等键和可解析的组件引用：
+`openapi-check.mjs` 会核对公开 Host API 目录与全部 OpenAPI path operation，检查每项接口都有明确成功模型、400 错误体、写操作幂等键和可解析的组件引用，并拒绝重复路径或重复组件名，避免 YAML 解析时覆盖定义：
 
 ```bash
 node docs/plugin-platform/conformance/openapi-check.mjs
+node --test docs/plugin-platform/conformance/openapi-check.test.mjs
 ```
 
 运行 `node --test docs/plugin-platform/conformance/runtime-check.test.mjs` 可验证 runtime 契约回归：非 WASM 的 `runtime.kind` 必须被拒绝，错误的协议字符串必须被拒绝，180000 毫秒的前台 action 必须被拒绝，120000 毫秒前台 action 与 300000 毫秒后台 job 的组合允许通过。`project-check.mjs` 同时检查五字段数值 cron，拒绝一分钟任务及小时边界处不足五分钟的间隔；`*/5 * * * *` 可用于最短周期任务。
@@ -38,14 +39,15 @@ WASM 模块的真实调用语义（Host Call、配额、取消、Telegram 事件
 npm ci
 npm run build
 npm run check
+npm test
 node ../../conformance/project-check.mjs --manifest manifest.template.json --market market-entry.template.json --build-root build --require-build
 ```
 
-WASM 构建与 CPU 架构无关，不需要 WSL、Linux CI 或同架构容器。`npm run build` 会把 Vue UI 和 WASM runtime 写入 `build/`；`project-check.mjs` 只校验包内声明的入口与构建产物是否一致。
+WASM 产物与宿主 CPU 架构无关，构建机需要安装示例列出的 TinyGo/Binaryen 工具链。`npm run build` 会把 Vue UI 和 WASM runtime 写入 `build/`；`project-check.mjs` 只校验包内声明的入口与构建产物是否一致。
 
 ## UI 联调
 
-UI 使用宿主同一套 Vue 3、Naive UI 和 `@lucide/vue` singleton。示例的 `npm run dev` 提供本地 mock bridge，可验证组件 props、主题变量、图片、浏览器存储、弹窗和错误状态；正式包作为同源可信发布者代码加载，不附加 iframe sandbox 或额外 UI CSP。宿主会提供零外边距、全宽的 `html/body/#plugin-sandbox-root` 和 `border-box` 基线，插件不要依赖预览入口的固定 body 宽度。弹窗仍受浏览器用户手势规则约束，普通浏览器请求仍受 CORS 和混合内容规则约束。所有 bridge 值必须可由 `JSON.stringify`/`JSON.parse` 完整往返。
+UI 使用宿主同一套 Vue 3、Naive UI 和 `@lucide/vue` singleton。示例的 `npm run dev` 提供本地 mock bridge，可验证组件 props、主题变量、图片、受管页面偏好、弹窗和错误状态；正式包在不透明来源 iframe sandbox 与 CSP 中运行，使用受管 api.storage；预览不能代替真实沙箱验证。宿主会提供零外边距、全宽的 `html/body/#plugin-sandbox-root` 和 `border-box` 基线，插件不要依赖预览入口的固定 body 宽度。弹窗仍受浏览器用户手势规则约束，直接 fetch/XHR/WebSocket 被 CSP 阻止，业务请求使用 Host Call。所有 bridge 值必须可由 `JSON.stringify`/`JSON.parse` 完整往返。
 
 ## 通过标准
 
@@ -59,3 +61,20 @@ UI 使用宿主同一套 Vue 3、Naive UI 和 `@lucide/vue` singleton。示例�
 黑盒联调通过不等于插件获得了未声明权限；最终安装仍由宿主重新校验签名、Manifest、权限、WASM ABI、UI 和运行时状态。
 
 安装包校验与运行响应校验必须分别执行。安装成功只说明包、权限和入口符合要求；发布前还应把真实模块的 state/action/job 返回值送入宿主验收，检查状态枚举、256 KiB 业务 JSON 上限以及 state 的版本/ETag。尤其要覆盖 action 返回 `ok`、job 返回 `succeeded` 的拒绝用例，并用大数据量检查分页是否完整。只在 mock bridge 中读取 `result.state`，或只检查调用没有 error，无法发现这些协议不兼容。
+
+## SDK 与文档一致性
+
+```bash
+cd docs/plugin-platform/examples/sdk
+go test ./...
+cd ../../../..
+node --test docs/plugin-platform/conformance/runtime-check.test.mjs
+node docs/plugin-platform/conformance/generate-reference.mjs --check
+```
+
+速查表仅从公开 OpenAPI 生成，无需主项目源码。修改公开目录后运行 `generate-reference.mjs` 更新速查表。Manifest 的启动预算默认 30000 毫秒；示例显式设置 10000 毫秒，是示例选择而非平台默认值。示例默认不常驻。
+
+浏览器专项验收包括父页面/其他插件存储不可读、原生存储被阻止、受管偏好刷新保留、卸载重装为空、RPC 32 并发上限，以及真实 Federation 页面在沙箱中可渲染。见 [隔离协议](../ui-isolation-v1.md)。
+
+
+声明 jobs[].recovery_handler 时，project-check 同时校验其标识规则；真实恢复仍需覆盖只读核对、已完成跳过、检查点续跑、结果不确定停止和包变化拒绝。UI 联调应包含组件渲染异常、未处理 Promise、重试按钮、诊断编号和页面刷新信号。契约见 [可恢复任务](../job-recovery-v1.md)。

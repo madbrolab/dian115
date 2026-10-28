@@ -59,12 +59,15 @@ for (const field of ['entry', 'assets_root', 'module']) requireText(manifest.ui?
 if (!manifest.ui.federation.entry.startsWith(`${manifest.ui.federation.assets_root}/`)) fail('Federation entry must be below assets_root')
 
 if (!isObject(manifest.permissions)) fail('manifest.permissions must be an object')
+if (!Array.isArray(manifest.permissions.apis) || manifest.permissions.apis.length > 512) fail('permissions.apis must be an array of at most 512 entries')
+if (!['standard', 'extended'].includes(manifest.permissions.host_access || 'standard')) fail('permissions.host_access must be standard or extended')
 if ('capabilities' in manifest || 'account_access' in manifest || 'capabilities' in manifest.permissions || 'account_access' in manifest.permissions) {
   fail('legacy capabilities/account_access fields are not supported')
 }
 for (const [index, permission] of (manifest.permissions.apis || []).entries()) {
   if (!methods.has(permission?.method) || !String(permission?.path || '').startsWith('/api/')) fail(`permissions.apis[${index}] has an invalid method/path`)
   requireText(permission?.reason, `permissions.apis[${index}].reason`, 240)
+  if ('optional' in permission && typeof permission.optional !== 'boolean') fail(`permissions.apis[${index}].optional must be boolean`)
 }
 
 if (!existsSync(openAPIPath)) fail(`public OpenAPI contract not found: ${openAPIPath}`)
@@ -76,7 +79,7 @@ for (const match of openAPI.matchAll(catalogPattern)) catalog.add(`${match[1]} $
 if (!catalog.size) fail('public OpenAPI Host API catalog could not be read')
 for (const [index, permission] of (manifest.permissions.apis || []).entries()) {
   const key = `${permission.method} ${permission.path}`
-  if (!catalog.has(key)) fail(`permissions.apis[${index}] is not in the public Host API catalog: ${key}`)
+  if (!catalog.has(key) && !permission.optional && manifest.permissions.host_access !== 'extended') fail(`permissions.apis[${index}] is not in the public Host API catalog: ${key}`)
 }
 for (const [index, permission] of (manifest.permissions.network || []).entries()) {
   let url

@@ -22,7 +22,25 @@ jobs:
       - name: Validate public OpenAPI contract
         run: node docs/plugin-platform/conformance/openapi-check.mjs
       - name: Validate runtime contract regression
-        run: node --test docs/plugin-platform/conformance/runtime-check.test.mjs
+        run: node --test docs/plugin-platform/conformance/*.test.mjs
+      - name: Verify generated Host API reference
+        run: node docs/plugin-platform/conformance/generate-reference.mjs --check
+
+  plugin-sdk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs/plugin-platform/examples/sdk
+    steps:
+      - name: Checkout public tree
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: docs/plugin-platform/examples/sdk/go.mod
+          cache: false
+      - name: Test the public SDK without host source
+        run: go test ./...
 
   plugin-example:
     runs-on: ubuntu-latest
@@ -31,7 +49,6 @@ jobs:
       matrix:
         example:
           - complete-plugin
-          - douban-chart
     defaults:
       run:
         working-directory: docs/plugin-platform/examples/${{ matrix.example }}
@@ -54,10 +71,8 @@ jobs:
         run: npm ci
       - name: Build the Vue UI
         run: npm run build:ui
-      # Compiling the runtime needs the TinyGo toolchain plus wasm-opt: a few
-      # hundred megabytes that upstream publishes no checksum for, on every docs
-      # change. The main repository's test suite builds both examples with that
-      # toolchain and runs them against the host, and project-check enforces the
-      # same toolchain and size rules on any package an author builds. Authors
-      # who want the full build locally run `npm run release` (see each
-      # example's README).
+      - name: Test the preview and durable invocation examples
+        run: npm test
+      # A complete WASM build additionally requires TinyGo and Binaryen.
+      # The private host suite verifies actual WASM execution; authors can run
+      # npm run release locally with the documented toolchain and signing key.

@@ -7,7 +7,9 @@ const fail = (message) => {
   process.exit(1)
 }
 
-const contractPath = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'openapi-v1.yaml')
+const customIndex = process.argv.indexOf('--contract')
+if (customIndex >= 0 && !process.argv[customIndex + 1]) fail('--contract requires a path')
+const contractPath = customIndex >= 0 ? resolve(process.argv[customIndex + 1]) : resolve(dirname(fileURLToPath(import.meta.url)), '..', 'openapi-v1.yaml')
 const source = readFileSync(contractPath, 'utf8')
 const catalogStart = source.indexOf('x-dian115-host-apis:')
 const catalogEnd = source.indexOf('x-dian115-subscription-host-apis:')
@@ -26,10 +28,13 @@ if (!catalog.size) fail('Host API catalog is empty')
 
 const normalizePath = (value) => value.replace(/\{([^}]+)\}/g, ':$1')
 const published = new Map()
+const pathNames = new Set()
 const pathsText = source.slice(pathsStart, componentsStart)
 const pathPattern = /^  (\/api\/[^\s]+):\r?\n([\s\S]*?)(?=^  \/api\/|(?![\s\S]))/gm
 for (const pathMatch of pathsText.matchAll(pathPattern)) {
   const path = pathMatch[1]
+  if (pathNames.has(path)) fail(`duplicate OpenAPI path: ${path}`)
+  pathNames.add(path)
   const block = pathMatch[2]
   const operations = [...block.matchAll(/^    (get|head|post|put|patch|delete):\r?$/gm)]
   for (let index = 0; index < operations.length; index += 1) {
@@ -75,7 +80,10 @@ for (const line of source.slice(componentsStart).split(/\r?\n/)) {
     continue
   }
   const nameMatch = /^    ([A-Za-z][A-Za-z0-9]*):$/.exec(line)
-  if (componentSection && nameMatch) componentNames.get(componentSection).add(nameMatch[1])
+  if (componentSection && nameMatch) {
+    if (componentNames.get(componentSection).has(nameMatch[1])) fail(`duplicate component: ${componentSection}/${nameMatch[1]}`)
+    componentNames.get(componentSection).add(nameMatch[1])
+  }
 }
 for (const match of source.matchAll(/\$ref: '#\/components\/(schemas|responses|parameters|requestBodies)\/([^']+)'/g)) {
   const [, section, name] = match

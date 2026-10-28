@@ -10,6 +10,7 @@ import (
 	"time"
 	"unsafe"
 
+	"example.com/dian115-plugin-sdk/hostapi"
 	"example.com/dian115-plugin-sdk/pluginjson"
 )
 
@@ -157,7 +158,9 @@ func (r *runtime) invoke(op, invocationID string, payload pluginjson.Raw) (any, 
 	case "action":
 		return r.action(invocationID, payload)
 	case "job":
-		return r.job(payload)
+		return r.job(invocationID, payload)
+	case "recover":
+		return r.recoverJob(invocationID, payload)
 	case "event":
 		return r.event(payload)
 	case "resident":
@@ -180,11 +183,12 @@ func (r *runtime) residentLoop() (any, error) {
 	beats := 0
 	for range ticker.C {
 		beats++
-		value, _ := pluginjson.Encode(map[string]any{"beats": beats, "at": time.Now().UTC().Format(time.RFC3339Nano)})
+		at := time.Now().UTC().Format(time.RFC3339Nano)
+		value, _ := pluginjson.Encode(map[string]any{"beats": beats, "at": at})
 		body, _ := pluginjson.Encode(map[string]any{"value": pluginjson.Raw(value)})
 		_, err := r.hostCall(map[string]any{
 			"method": "PUT", "path": "/api/plugin-runtime/storage/resident-heartbeat",
-			"headers":     map[string]string{"content-type": "application/json", "idempotency-key": "resident-heartbeat-" + pluginjson.Number(beats)},
+			"headers":     map[string]string{"content-type": "application/json", "idempotency-key": "resident-heartbeat-" + at},
 			"body_base64": base64.RawStdEncoding.EncodeToString(body),
 		})
 		if err != nil {
@@ -311,35 +315,31 @@ func (r *runtime) action(invocationID string, payload pluginjson.Raw) (any, erro
 }
 
 func (r *runtime) storageDemo(invocationID string) (any, error) {
-	const path = "/api/plugin-runtime/storage/example"
-	response, err := r.hostCall(map[string]any{"method": "GET", "path": path, "headers": map[string]string{"accept": "application/json"}})
-	if err != nil {
+	client := hostapi.Client{Call: r.peer.call}
+	// The synchronous reactor call is bounded by the host invocation budget.
+	ctx := context.Background()
+	current, etag, err := client.StorageGet(ctx, "example")
+	var problem *hostapi.Problem
+	if err != nil && !(errors.As(err, &problem) && problem.Status == 404) {
 		return map[string]any{"status": "failed", "message": err.Error()}, nil
 	}
-	status := hostStatus(response)
-	if status != 200 && status != 404 {
-		return map[string]any{"status": "failed", "message": "Host Storage 读取失败（HTTP " + pluginjson.Number(status) + "）"}, nil
+	if err == nil && pluginjson.Text(pluginjson.Field(current, "operation_ref")) == invocationID {
+		r.updateState("succeeded", "Host Storage 已保存该业务数据", false)
+		return map[string]any{"status": "succeeded", "message": "Host Storage 已保存该业务数据"}, nil
 	}
-	value, _ := pluginjson.Encode(map[string]any{"saved_by": "complete-plugin", "updated_at": time.Now().UTC().Format(time.RFC3339Nano)})
-	body, _ := pluginjson.Encode(map[string]any{"value": pluginjson.Raw(value)})
-	headers := map[string]string{
-		"content-type":    "application/json",
-		"accept":          "application/json",
-		"idempotency-key": "complete-storage-" + invocationID,
+	value, err := pluginjson.Encode(map[string]any{"schema_version": 1, "saved_by": "complete-plugin", "operation_ref": invocationID})
+	if err != nil {
+		return nil, err
 	}
-	if etag := firstHeader(pluginjson.Field(response, "headers"), "ETag"); etag != "" {
-		headers["if-match"] = etag
+	key, err := hostapi.Key("complete-storage", invocationID)
+	if err != nil {
+		return nil, err
 	}
-	writeResponse, writeErr := r.hostCall(map[string]any{"method": "PUT", "path": path, "headers": headers, "body_base64": base64.RawStdEncoding.EncodeToString(body)})
-	writeStatus := hostStatus(writeResponse)
-	if writeErr != nil || writeStatus >= 400 {
-		if writeErr != nil {
-			return map[string]any{"status": "failed", "message": writeErr.Error()}, nil
-		}
-		return map[string]any{"status": "failed", "message": "Host Storage 写入失败（HTTP " + pluginjson.Number(writeStatus) + "）"}, nil
+	if _, _, err := client.StoragePut(ctx, "example", value, etag, key); err != nil {
+		return map[string]any{"status": "failed", "message": err.Error()}, nil
 	}
 	r.updateState("succeeded", "Host Storage 已使用 ETag/CAS 保存示例数据", false)
-	return map[string]any{"status": "succeeded", "message": "Host Storage 已使用 ETag/CAS 保存示例数据", "hostStatus": writeStatus}, nil
+	return map[string]any{"status": "succeeded", "message": "Host Storage 已保存示例数据"}, nil
 }
 
 // hostStatus reads the HTTP status of a host.call response envelope.
@@ -347,23 +347,61 @@ func hostStatus(response pluginjson.Raw) int {
 	return pluginjson.Int(pluginjson.Field(response, "status"))
 }
 
-// firstHeader reads a response header case-insensitively. Header values are
-// JSON arrays, so the first element is the one the host used.
-func firstHeader(headers pluginjson.Raw, name string) string {
-	for key, values := range pluginjson.Fields(headers) {
-		if strings.EqualFold(key, name) {
-			return strings.TrimSpace(pluginjson.Text(pluginjson.Index(values, 0)))
-		}
-	}
-	return ""
-}
-
-func (r *runtime) job(payload pluginjson.Raw) (any, error) {
+func (r *runtime) job(invocationID string, payload pluginjson.Raw) (any, error) {
 	if pluginjson.Text(pluginjson.Field(payload, "id")) != "refresh" {
 		return map[string]any{"status": "skipped", "message": "未声明的任务"}, nil
 	}
+	client := hostapi.Client{Call: r.peer.call}
+	ctx := context.Background()
+	if pluginjson.Text(pluginjson.Field(payload, "job_ref")) != "" {
+		checkpoint, _ := pluginjson.Encode(map[string]any{"schema_version": 1, "cursor": 1})
+		if err := client.SaveCheckpoint(ctx, checkpoint, 50); err != nil {
+			return nil, err
+		}
+		current, etag, err := client.StorageGet(ctx, "jobs.refresh")
+		var problem *hostapi.Problem
+		if err != nil && !(errors.As(err, &problem) && problem.Status == 404) {
+			return nil, err
+		}
+		if pluginjson.Text(pluginjson.Field(current, "operation_ref")) != invocationID {
+			value, _ := pluginjson.Encode(map[string]any{"schema_version": 1, "operation_ref": invocationID})
+			key, err := hostapi.Key("refresh-job", invocationID)
+			if err != nil {
+				return nil, err
+			}
+			if _, _, err := client.StoragePut(ctx, "jobs.refresh", value, etag, key); err != nil {
+				return nil, err
+			}
+		}
+		checkpoint, _ = pluginjson.Encode(map[string]any{"schema_version": 1, "cursor": 2})
+		if err := client.SaveCheckpoint(ctx, checkpoint, 100); err != nil {
+			return nil, err
+		}
+	}
 	r.updateState("succeeded", "定时刷新已接受", false)
 	return map[string]any{"status": "accepted", "message": "定时刷新已接受"}, nil
+}
+
+// The verification phase performs only a GET. Its stable operation marker
+// stands in for an upstream fact; real plugins query their actual upstream.
+func (r *runtime) recoverJob(invocationID string, payload pluginjson.Raw) (any, error) {
+	if pluginjson.Text(pluginjson.Field(payload, "handler")) != "refresh-recover" {
+		return map[string]any{"decision": "attention_required"}, nil
+	}
+	client := hostapi.Client{Call: r.peer.call}
+	value, _, err := client.StorageGet(context.Background(), "jobs.refresh")
+	if err == nil && pluginjson.Text(pluginjson.Field(value, "operation_ref")) == invocationID {
+		return map[string]any{"decision": "complete", "result": map[string]any{"status": "accepted", "message": "已核对持久结果，无需重复写入"}}, nil
+	}
+	var problem *hostapi.Problem
+	if err != nil && !(errors.As(err, &problem) && problem.Status == 404) {
+		return nil, err
+	}
+	checkpoint := pluginjson.Field(payload, "checkpoint")
+	if len(checkpoint) == 0 {
+		checkpoint = pluginjson.Raw(`null`)
+	}
+	return map[string]any{"decision": "resume", "checkpoint": checkpoint}, nil
 }
 
 func (r *runtime) event(payload pluginjson.Raw) (any, error) {
@@ -433,7 +471,11 @@ func (r *runtime) updateState(status, message string, watchActive bool) {
 func (r *runtime) hostCall(request map[string]any) (pluginjson.Raw, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
-	return r.peer.call(ctx, "host.call", request)
+	raw, err := r.peer.call(ctx, "host.call", request)
+	if err == nil {
+		err = hostapi.CheckResponse(raw)
+	}
+	return raw, err
 }
 
 func (r *runtime) log(level, message string, fields map[string]any) {

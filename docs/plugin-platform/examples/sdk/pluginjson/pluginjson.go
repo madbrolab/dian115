@@ -1,538 +1,474 @@
-// Package pluginjson is the small JSON layer the runtime uses instead of
-// encoding/json.
-//
-// The host accepts modules from a size-optimising toolchain, and encoding/json
-// is by far the biggest thing a Go plugin can pull in: measured on the shipped
-// example it adds about 1 MB to the compiled module, which the host then keeps
-// as compiled code for as long as the plugin is loaded. A plugin only ever
-// needs to read a handful of known fields and to write a handful of known
-// shapes, so this package covers exactly that:
-//
-//   - Field/Index read a raw sub-value without decoding the whole document;
-//   - Text/Int/Bool decode the scalars a plugin reads;
-//   - Encode writes the map/slice/string/number shapes a plugin builds;
-//   - Raw passes an already-encoded value through untouched.
-//
-// It deliberately has no reflection and no struct tags. A plugin that needs
-// general JSON can still import encoding/json and pay the size, but the host
-// refuses such a module, so this package is the supported path.
-//
-// It lives in examples/sdk so the example plugins share one implementation
-// instead of carrying copies that drift apart.
+// Package pluginjson provides bounded JSON field access and deterministic
+// encoding for small WASM plugins. Raw values borrow the input: copy them if
+// they must survive reuse of that input buffer. It does not use encoding/json.
 package pluginjson
 
 import (
 	"errors"
+	"math"
+	"sort"
+	"strconv"
 	"strings"
+	"unicode/utf16"
 	"unicode/utf8"
 )
 
-// Raw is an encoded JSON value that has not been decoded yet.
 type Raw []byte
 
-// Field returns the raw value of a top-level object field. It returns nil when
-// the value is not an object, the field is absent, or the document is
-// malformed. The result aliases the input, so callers must not modify it.
-func Field(object Raw, key string) Raw {
-	data := []byte(object)
-	index := skipSpace(data, 0)
-	if index >= len(data) || data[index] != '{' {
-		return nil
-	}
-	index++
-	for {
-		index = skipSpace(data, index)
-		if index >= len(data) || data[index] == '}' {
-			return nil
-		}
-		if data[index] != '"' {
-			return nil
-		}
-		nameEnd, ok := scanString(data, index)
-		if !ok {
-			return nil
-		}
-		name, ok := unquote(data[index:nameEnd])
-		if !ok {
-			return nil
-		}
-		index = skipSpace(data, nameEnd)
-		if index >= len(data) || data[index] != ':' {
-			return nil
-		}
-		index = skipSpace(data, index+1)
-		valueEnd, ok := scanValue(data, index)
-		if !ok {
-			return nil
-		}
-		if name == key {
-			return Raw(strings.TrimSpace(string(data[index:valueEnd])))
-		}
-		index = skipSpace(data, valueEnd)
-		if index < len(data) && data[index] == ',' {
-			index++
-			continue
-		}
-		return nil
-	}
+const MaxBytes = 16 << 20
+const maxDepth = 64
+
+var errJSON = errors.New("invalid, unsupported or excessive JSON value")
+
+type parser struct {
+	raw Raw
+	pos int
 }
 
-// Index returns the raw value of an array element, or nil when it is absent.
-func Index(array Raw, position int) Raw {
-	data := []byte(array)
-	index := skipSpace(data, 0)
-	if index >= len(data) || data[index] != '[' {
-		return nil
-	}
-	index++
-	for current := 0; ; current++ {
-		index = skipSpace(data, index)
-		if index >= len(data) || data[index] == ']' {
-			return nil
-		}
-		valueEnd, ok := scanValue(data, index)
-		if !ok {
-			return nil
-		}
-		if current == position {
-			return Raw(strings.TrimSpace(string(data[index:valueEnd])))
-		}
-		index = skipSpace(data, valueEnd)
-		if index < len(data) && data[index] == ',' {
-			index++
-			continue
-		}
-		return nil
+func (p *parser) space() {
+	for p.pos < len(p.raw) && strings.ContainsRune(" \t\r\n", rune(p.raw[p.pos])) {
+		p.pos++
 	}
 }
-
-// Fields returns every top-level field of an object as raw values. It returns
-// nil when the value is not an object.
-func Fields(object Raw) map[string]Raw {
-	data := []byte(object)
-	index := skipSpace(data, 0)
-	if index >= len(data) || data[index] != '{' {
-		return nil
-	}
-	index++
-	fields := make(map[string]Raw)
-	for {
-		index = skipSpace(data, index)
-		if index >= len(data) || data[index] == '}' {
-			return fields
-		}
-		if data[index] != '"' {
-			return nil
-		}
-		nameEnd, ok := scanString(data, index)
-		if !ok {
-			return nil
-		}
-		name, ok := unquote(data[index:nameEnd])
-		if !ok {
-			return nil
-		}
-		index = skipSpace(data, nameEnd)
-		if index >= len(data) || data[index] != ':' {
-			return nil
-		}
-		index = skipSpace(data, index+1)
-		valueEnd, ok := scanValue(data, index)
-		if !ok {
-			return nil
-		}
-		fields[name] = Raw(strings.TrimSpace(string(data[index:valueEnd])))
-		index = skipSpace(data, valueEnd)
-		if index < len(data) && data[index] == ',' {
-			index++
-			continue
-		}
-	}
-}
-
-// Text decodes a JSON string. Anything that is not a string decodes to "".
-func Text(value Raw) string {
-	text, _ := unquote([]byte(value))
-	return text
-}
-
-// Int decodes a JSON number. A non-numeric value decodes to 0.
-func Int(value Raw) int {
-	number, _ := parseInt(strings.TrimSpace(string(value)))
-	return number
-}
-
-// Number renders an integer the way JSON does. The runtime uses it instead of
-// strconv: strconv also carries float formatting, which a plugin never needs
-// and which costs more than the rest of this package together.
-func Number(value int) string {
-	return string(appendInt(nil, int64(value)))
-}
-
-// Bool decodes a JSON literal. Anything that is not true decodes to false.
-func Bool(value Raw) bool {
-	return strings.TrimSpace(string(value)) == "true"
-}
-
-// Encode writes a value as JSON. It supports nil, bool, string, int, int64,
-// float64, Raw, map[string]any, map[string]string and []any, which is every
-// shape a plugin needs. Values nest freely.
-func Encode(value any) ([]byte, error) {
-	buffer := make([]byte, 0, 256)
-	return appendValue(buffer, value)
-}
-
-func appendValue(buffer []byte, value any) ([]byte, error) {
-	switch typed := value.(type) {
-	case nil:
-		return append(buffer, "null"...), nil
-	case bool:
-		if typed {
-			return append(buffer, "true"...), nil
-		}
-		return append(buffer, "false"...), nil
-	case string:
-		return appendQuoted(buffer, typed), nil
-	case int:
-		return appendInt(buffer, int64(typed)), nil
-	case int64:
-		return appendInt(buffer, typed), nil
-	case Raw:
-		if len(typed) == 0 {
-			return append(buffer, "null"...), nil
-		}
-		return append(buffer, typed...), nil
-	case map[string]any:
-		return appendObject(buffer, typed)
-	case map[string]string:
-		ordered := make(map[string]any, len(typed))
-		for key, item := range typed {
-			ordered[key] = item
-		}
-		return appendObject(buffer, ordered)
-	case []any:
-		buffer = append(buffer, '[')
-		for position, item := range typed {
-			if position > 0 {
-				buffer = append(buffer, ',')
-			}
-			next, err := appendValue(buffer, item)
-			if err != nil {
-				return nil, err
-			}
-			buffer = next
-		}
-		return append(buffer, ']'), nil
-	default:
-		return nil, errors.New("pluginjson: unsupported value type")
-	}
-}
-
-func appendObject(buffer []byte, object map[string]any) ([]byte, error) {
-	// Keys are sorted so the same value always produces the same bytes, which
-	// keeps request hashes and idempotency keys stable across calls.
-	keys := make([]string, 0, len(object))
-	for key := range object {
-		keys = append(keys, key)
-	}
-	sortStrings(keys)
-	buffer = append(buffer, '{')
-	for position, key := range keys {
-		if position > 0 {
-			buffer = append(buffer, ',')
-		}
-		buffer = appendQuoted(buffer, key)
-		buffer = append(buffer, ':')
-		next, err := appendValue(buffer, object[key])
-		if err != nil {
-			return nil, err
-		}
-		buffer = next
-	}
-	return append(buffer, '}'), nil
-}
-
-func appendQuoted(buffer []byte, text string) []byte {
-	buffer = append(buffer, '"')
-	for index := 0; index < len(text); {
-		character := text[index]
-		if character < utf8.RuneSelf {
-			switch character {
-			case '"', '\\':
-				buffer = append(buffer, '\\', character)
-			case '\n':
-				buffer = append(buffer, '\\', 'n')
-			case '\r':
-				buffer = append(buffer, '\\', 'r')
-			case '\t':
-				buffer = append(buffer, '\\', 't')
-			default:
-				if character < 0x20 {
-					buffer = append(buffer, '\\', 'u', '0', '0', hexDigits[character>>4], hexDigits[character&0x0f])
-				} else {
-					buffer = append(buffer, character)
-				}
-			}
-			index++
-			continue
-		}
-		_, size := utf8.DecodeRuneInString(text[index:])
-		buffer = append(buffer, text[index:index+size]...)
-		index += size
-	}
-	return append(buffer, '"')
-}
-
-// appendInt writes a JSON integer without going through strconv.
-func appendInt(buffer []byte, value int64) []byte {
-	if value == 0 {
-		return append(buffer, '0')
-	}
-	if value < 0 {
-		buffer = append(buffer, '-')
-		// Negate in the unsigned space so the most negative value is safe.
-		return appendUint(buffer, uint64(-(value + 1))+1)
-	}
-	return appendUint(buffer, uint64(value))
-}
-
-func appendUint(buffer []byte, value uint64) []byte {
-	var digits [20]byte
-	position := len(digits)
-	for value > 0 {
-		position--
-		digits[position] = byte('0' + value%10)
-		value /= 10
-	}
-	return append(buffer, digits[position:]...)
-}
-
-// parseInt reads a plain JSON integer. Scientific notation and fractions are
-// rejected, which is what the host sends for the counters a plugin reads.
-func parseInt(text string) (int, bool) {
-	if text == "" {
-		return 0, false
-	}
-	index := 0
-	negative := false
-	switch text[0] {
-	case '-':
-		negative = true
-		index = 1
-	case '+':
-		index = 1
-	}
-	if index >= len(text) {
-		return 0, false
-	}
-	value := 0
-	for ; index < len(text); index++ {
-		digit := text[index]
-		if digit < '0' || digit > '9' {
-			return 0, false
-		}
-		value = value*10 + int(digit-'0')
-	}
-	if negative {
-		value = -value
-	}
-	return value, true
-}
-
-const hexDigits = "0123456789abcdef"
-
-func skipSpace(data []byte, index int) int {
-	for index < len(data) {
-		switch data[index] {
-		case ' ', '\t', '\n', '\r':
-			index++
-		default:
-			return index
-		}
-	}
-	return index
-}
-
-// scanString returns the index just past the closing quote of the string that
-// starts at index.
-func scanString(data []byte, index int) (int, bool) {
-	if index >= len(data) || data[index] != '"' {
-		return 0, false
-	}
-	for cursor := index + 1; cursor < len(data); cursor++ {
-		switch data[cursor] {
-		case '\\':
-			cursor++
-		case '"':
-			return cursor + 1, true
-		}
-	}
-	return 0, false
-}
-
-// scanValue returns the index just past the value that starts at index.
-func scanValue(data []byte, index int) (int, bool) {
-	if index >= len(data) {
-		return 0, false
-	}
-	switch data[index] {
-	case '"':
-		return scanString(data, index)
-	case '{', '[':
-		open := data[index]
-		close := byte('}')
-		if open == '[' {
-			close = ']'
-		}
-		depth := 0
-		for cursor := index; cursor < len(data); cursor++ {
-			switch data[cursor] {
-			case '"':
-				end, ok := scanString(data, cursor)
-				if !ok {
-					return 0, false
-				}
-				cursor = end - 1
-			case open:
-				depth++
-			case close:
-				depth--
-				if depth == 0 {
-					return cursor + 1, true
-				}
-			}
-		}
-		return 0, false
-	default:
-		cursor := index
-		for cursor < len(data) {
-			switch data[cursor] {
-			case ',', '}', ']', ' ', '\t', '\n', '\r':
-				return cursor, cursor != index
-			case '{', '[':
-				return 0, false
-			}
-			cursor++
-		}
-		return cursor, true
-	}
-}
-
-// unquote decodes a JSON string, including \u escapes and surrogate pairs.
-func unquote(data []byte) (string, bool) {
-	data = []byte(strings.TrimSpace(string(data)))
-	if len(data) < 2 || data[0] != '"' || data[len(data)-1] != '"' {
+func (p *parser) stringValue() (string, bool) {
+	if p.pos >= len(p.raw) || p.raw[p.pos] != '"' {
 		return "", false
 	}
-	body := data[1 : len(data)-1]
-	if !hasEscape(body) {
-		return string(body), true
-	}
-	builder := make([]byte, 0, len(body))
-	for index := 0; index < len(body); {
-		if body[index] != '\\' {
-			builder = append(builder, body[index])
-			index++
-			continue
+	p.pos++
+	var out []byte
+	for p.pos < len(p.raw) {
+		c := p.raw[p.pos]
+		p.pos++
+		if c == '"' {
+			return string(out), utf8.Valid(out)
 		}
-		if index+1 >= len(body) {
+		if c < 0x20 {
 			return "", false
 		}
-		switch body[index+1] {
+		if c != '\\' {
+			out = append(out, c)
+			continue
+		}
+		if p.pos >= len(p.raw) {
+			return "", false
+		}
+		c = p.raw[p.pos]
+		p.pos++
+		switch c {
 		case '"', '\\', '/':
-			builder = append(builder, body[index+1])
-			index += 2
+			out = append(out, c)
 		case 'b':
-			builder = append(builder, '\b')
-			index += 2
+			out = append(out, '\b')
 		case 'f':
-			builder = append(builder, '\f')
-			index += 2
+			out = append(out, '\f')
 		case 'n':
-			builder = append(builder, '\n')
-			index += 2
+			out = append(out, '\n')
 		case 'r':
-			builder = append(builder, '\r')
-			index += 2
+			out = append(out, '\r')
 		case 't':
-			builder = append(builder, '\t')
-			index += 2
+			out = append(out, '\t')
 		case 'u':
-			decoded, size, ok := decodeUnicodeEscape(body[index:])
+			r, ok := p.hexRune()
 			if !ok {
 				return "", false
 			}
-			builder = append(builder, decoded...)
-			index += size
+			if r >= 0xd800 && r <= 0xdbff {
+				if p.pos+2 > len(p.raw) || string(p.raw[p.pos:p.pos+2]) != `\u` {
+					return "", false
+				}
+				p.pos += 2
+				low, ok := p.hexRune()
+				if !ok || low < 0xdc00 || low > 0xdfff {
+					return "", false
+				}
+				r = utf16.DecodeRune(r, low)
+			} else if r >= 0xdc00 && r <= 0xdfff {
+				return "", false
+			}
+			out = utf8.AppendRune(out, r)
 		default:
 			return "", false
 		}
 	}
-	return string(builder), true
+	return "", false
 }
-
-func hasEscape(data []byte) bool {
-	for _, character := range data {
-		if character == '\\' {
-			return true
-		}
-	}
-	return false
-}
-
-func decodeUnicodeEscape(data []byte) ([]byte, int, bool) {
-	if len(data) < 6 || data[0] != '\\' || data[1] != 'u' {
-		return nil, 0, false
-	}
-	code, ok := hex16(data[2:6])
-	if !ok {
-		return nil, 0, false
-	}
-	// A high surrogate must be followed by its low surrogate.
-	if code >= 0xd800 && code <= 0xdbff {
-		if len(data) < 12 || data[6] != '\\' || data[7] != 'u' {
-			return []byte("\uFFFD"), 6, true
-		}
-		low, ok := hex16(data[8:12])
-		if !ok || low < 0xdc00 || low > 0xdfff {
-			return []byte("\uFFFD"), 6, true
-		}
-		combined := rune(0x10000 + (code-0xd800)<<10 + (low - 0xdc00))
-		return []byte(string(combined)), 12, true
-	}
-	if code >= 0xdc00 && code <= 0xdfff {
-		return []byte("\uFFFD"), 6, true
-	}
-	return []byte(string(rune(code))), 6, true
-}
-
-func hex16(data []byte) (int, bool) {
-	if len(data) != 4 {
+func (p *parser) hexRune() (rune, bool) {
+	if p.pos+4 > len(p.raw) {
 		return 0, false
 	}
-	value := 0
-	for _, character := range data {
-		value <<= 4
-		switch {
-		case character >= '0' && character <= '9':
-			value |= int(character - '0')
-		case character >= 'a' && character <= 'f':
-			value |= int(character-'a') + 10
-		case character >= 'A' && character <= 'F':
-			value |= int(character-'A') + 10
-		default:
-			return 0, false
-		}
+	value, err := strconv.ParseUint(string(p.raw[p.pos:p.pos+4]), 16, 16)
+	p.pos += 4
+	return rune(value), err == nil
+}
+func (p *parser) value(depth int) bool {
+	if depth > maxDepth {
+		return false
 	}
-	return value, true
+	p.space()
+	if p.pos >= len(p.raw) {
+		return false
+	}
+	switch p.raw[p.pos] {
+	case '"':
+		_, ok := p.stringValue()
+		return ok
+	case '{', '[':
+		object := p.raw[p.pos] == '{'
+		end := byte(']')
+		if object {
+			end = '}'
+		}
+		p.pos++
+		p.space()
+		if p.pos < len(p.raw) && p.raw[p.pos] == end {
+			p.pos++
+			return true
+		}
+		for {
+			if object {
+				p.space()
+				if _, ok := p.stringValue(); !ok {
+					return false
+				}
+				p.space()
+				if p.pos >= len(p.raw) || p.raw[p.pos] != ':' {
+					return false
+				}
+				p.pos++
+			}
+			if !p.value(depth + 1) {
+				return false
+			}
+			p.space()
+			if p.pos >= len(p.raw) {
+				return false
+			}
+			c := p.raw[p.pos]
+			p.pos++
+			if c == end {
+				return true
+			}
+			if c != ',' {
+				return false
+			}
+		}
+	case 't', 'f', 'n':
+		for _, word := range []string{"true", "false", "null"} {
+			if strings.HasPrefix(string(p.raw[p.pos:]), word) {
+				p.pos += len(word)
+				return true
+			}
+		}
+		return false
+	default:
+		start := p.pos
+		if p.raw[p.pos] == '-' {
+			p.pos++
+		}
+		if p.pos >= len(p.raw) {
+			return false
+		}
+		if p.raw[p.pos] == '0' {
+			p.pos++
+		} else {
+			if p.raw[p.pos] < '1' || p.raw[p.pos] > '9' {
+				return false
+			}
+			for p.pos < len(p.raw) && p.raw[p.pos] >= '0' && p.raw[p.pos] <= '9' {
+				p.pos++
+			}
+		}
+		if p.pos < len(p.raw) && p.raw[p.pos] == '.' {
+			p.pos++
+			begin := p.pos
+			for p.pos < len(p.raw) && p.raw[p.pos] >= '0' && p.raw[p.pos] <= '9' {
+				p.pos++
+			}
+			if begin == p.pos {
+				return false
+			}
+		}
+		if p.pos < len(p.raw) && (p.raw[p.pos] == 'e' || p.raw[p.pos] == 'E') {
+			p.pos++
+			if p.pos < len(p.raw) && (p.raw[p.pos] == '+' || p.raw[p.pos] == '-') {
+				p.pos++
+			}
+			begin := p.pos
+			for p.pos < len(p.raw) && p.raw[p.pos] >= '0' && p.raw[p.pos] <= '9' {
+				p.pos++
+			}
+			if begin == p.pos {
+				return false
+			}
+		}
+		return p.pos > start
+	}
 }
 
-// sortStrings is a small insertion sort: object keys are few, and this avoids
-// pulling in the sort package for the reference runtime.
-func sortStrings(values []string) {
-	for index := 1; index < len(values); index++ {
-		for cursor := index; cursor > 0 && values[cursor] < values[cursor-1]; cursor-- {
-			values[cursor], values[cursor-1] = values[cursor-1], values[cursor]
+func Valid(raw Raw) bool {
+	if len(raw) == 0 || len(raw) > MaxBytes {
+		return false
+	}
+	p := parser{raw: raw}
+	if !p.value(0) {
+		return false
+	}
+	p.space()
+	return p.pos == len(raw)
+}
+
+func Field(raw Raw, name string) Raw {
+	// Scan without decoding complete documents or allocating a field map.
+	if len(raw) == 0 || len(raw) > MaxBytes {
+		return nil
+	}
+	p := parser{raw: raw}
+	p.space()
+	if p.pos >= len(raw) || raw[p.pos] != '{' {
+		return nil
+	}
+	p.pos++
+	var result Raw
+	for {
+		p.space()
+		if p.pos >= len(raw) {
+			return nil
 		}
+		if raw[p.pos] == '}' {
+			p.pos++
+			p.space()
+			if p.pos != len(raw) {
+				return nil
+			}
+			return result
+		}
+		key, ok := p.stringValue()
+		if !ok {
+			return nil
+		}
+		p.space()
+		if p.pos >= len(raw) || raw[p.pos] != ':' {
+			return nil
+		}
+		p.pos++
+		p.space()
+		start := p.pos
+		if !p.value(1) {
+			return nil
+		}
+		if key == name {
+			result = raw[start:p.pos]
+		}
+		p.space()
+		if p.pos >= len(raw) {
+			return nil
+		}
+		if raw[p.pos] == '}' {
+			continue
+		}
+		if raw[p.pos] != ',' {
+			return nil
+		}
+		p.pos++
+		p.space()
+		if p.pos >= len(raw) || raw[p.pos] == '}' {
+			return nil
+		}
+	}
+}
+
+func Fields(raw Raw) map[string]Raw {
+	if !Valid(raw) {
+		return nil
+	}
+	p := parser{raw: raw}
+	p.space()
+	if raw[p.pos] != '{' {
+		return nil
+	}
+	p.pos++
+	fields := make(map[string]Raw)
+	for {
+		p.space()
+		if raw[p.pos] == '}' {
+			return fields
+		}
+		key, _ := p.stringValue()
+		p.space()
+		p.pos++
+		p.space()
+		start := p.pos
+		p.value(1)
+		fields[key] = raw[start:p.pos]
+		p.space()
+		if raw[p.pos] == ',' {
+			p.pos++
+		}
+	}
+}
+
+func Index(raw Raw, index int) Raw {
+	if index < 0 || !Valid(raw) {
+		return nil
+	}
+	p := parser{raw: raw}
+	p.space()
+	if raw[p.pos] != '[' {
+		return nil
+	}
+	p.pos++
+	for n := 0; ; n++ {
+		p.space()
+		if raw[p.pos] == ']' {
+			return nil
+		}
+		start := p.pos
+		p.value(1)
+		if n == index {
+			return raw[start:p.pos]
+		}
+		p.space()
+		if raw[p.pos] == ',' {
+			p.pos++
+		}
+	}
+}
+func Text(raw Raw) string {
+	if len(raw) > MaxBytes {
+		return ""
+	}
+	p := parser{raw: raw}
+	p.space()
+	text, ok := p.stringValue()
+	p.space()
+	if !ok || p.pos != len(raw) {
+		return ""
+	}
+	return text
+}
+func Int(raw Raw) int     { n, _ := strconv.Atoi(strings.TrimSpace(string(raw))); return n }
+func Number(n int) string { return strconv.Itoa(n) }
+
+// Encode supports explicit JSON values, never reflection or arbitrary structs.
+// Raw is embedded after validation; []byte is deliberately not a JSON string.
+func Encode(value any) (Raw, error) {
+	raw, err := appendValue(nil, value, 0)
+	if len(raw) > MaxBytes {
+		return nil, errJSON
+	}
+	return raw, err
+}
+func appendString(out []byte, value string) []byte {
+	out = append(out, '"')
+	for _, r := range value {
+		if len(out) > MaxBytes {
+			return out
+		}
+		switch r {
+		case '"', '\\':
+			out = append(out, '\\', byte(r))
+		case '\n':
+			out = append(out, '\\', 'n')
+		case '\r':
+			out = append(out, '\\', 'r')
+		case '\t':
+			out = append(out, '\\', 't')
+		default:
+			if r < 0x20 {
+				out = append(out, '\\', 'u', '0', '0', "0123456789abcdef"[r>>4], "0123456789abcdef"[r&15])
+			} else {
+				out = utf8.AppendRune(out, r)
+			}
+		}
+	}
+	return append(out, '"')
+}
+func appendValue(out []byte, value any, depth int) ([]byte, error) {
+	if depth > maxDepth || len(out) > MaxBytes {
+		return nil, errJSON
+	}
+	switch v := value.(type) {
+	case nil:
+		return append(out, "null"...), nil
+	case Raw:
+		if !Valid(v) {
+			return nil, errJSON
+		}
+		return append(out, v...), nil
+	case string:
+		if len(v) > MaxBytes {
+			return nil, errJSON
+		}
+		return appendString(out, v), nil
+	case bool:
+		return strconv.AppendBool(out, v), nil
+	case int:
+		return strconv.AppendInt(out, int64(v), 10), nil
+	case int32:
+		return strconv.AppendInt(out, int64(v), 10), nil
+	case int64:
+		return strconv.AppendInt(out, v, 10), nil
+	case uint32:
+		return strconv.AppendUint(out, uint64(v), 10), nil
+	case uint64:
+		return strconv.AppendUint(out, v, 10), nil
+	case float64:
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return nil, errJSON
+		}
+		return strconv.AppendFloat(out, v, 'g', -1, 64), nil
+	case map[string]any:
+		keys := make([]string, 0, len(v))
+		for key := range v {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		out = append(out, '{')
+		for i, key := range keys {
+			if i > 0 {
+				out = append(out, ',')
+			}
+			out = appendString(out, key)
+			out = append(out, ':')
+			var err error
+			out, err = appendValue(out, v[key], depth+1)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return append(out, '}'), nil
+	case map[string]string:
+		values := make(map[string]any, len(v))
+		for key, item := range v {
+			values[key] = item
+		}
+		return appendValue(out, values, depth)
+	case []any:
+		out = append(out, '[')
+		for i, item := range v {
+			if i > 0 {
+				out = append(out, ',')
+			}
+			var err error
+			out, err = appendValue(out, item, depth+1)
+			if err != nil {
+				return nil, err
+			}
+		}
+		return append(out, ']'), nil
+	case []string:
+		out = append(out, '[')
+		for i, item := range v {
+			if i > 0 {
+				out = append(out, ',')
+			}
+			out = appendString(out, item)
+			if len(out) > MaxBytes {
+				return nil, errJSON
+			}
+		}
+		return append(out, ']'), nil
+	default:
+		return nil, errJSON
 	}
 }

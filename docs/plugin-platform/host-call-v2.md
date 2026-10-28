@@ -48,6 +48,9 @@
 | `headers` | 否 | 单值 header map；规则因本地/外部请求不同 |
 | `body_base64` | 否 | 标准 Base64；请求接受 padded/unpadded，响应固定 unpadded |
 | `credential_ref` | 否 | 外部 HTTP/HTTPS 可用的安装实例托管凭据引用；使用 HTTP 时秘密会以明文传输 |
+| `timeout_ms` | 否 | 当前 Host Call 的时间上限，1–10000 毫秒；省略或 0 使用既有默认值，实际截止时间不会晚于本次插件执行的截止时间 |
+
+发送 `timeout_ms` 前先调用 `host.capabilities`，仅当 `result.features.host_call_timeout_ms` 为 `true` 时使用该字段。旧宿主拒绝未知字段，未声明能力时应省略它。此扩展保持 `dian115:wasm@1` ABI 不变。批量插件应将剩余时间传给每次嵌套调用，耗尽预算后保留未确认状态，避免把超时当成业务否定结果。截止时间通过请求上下文传递；本地 Handler 必须将该上下文继续传给下游网络调用。
 
 JSON 解码器拒绝未知字段和尾随 JSON。JSON-RPC 帧上限为 16 MiB；解码后的 Host Call 请求正文和返回正文上限均为 8 MiB。该上限只防止异常插件耗尽主容器内存，不再把正常数据限制在 256 KiB；列表接口仍应使用各自的分页参数。
 
@@ -173,7 +176,7 @@ GET /api/plugin-host/emby/items/:id
 
 ### 2.4 插件通知与通道能力
 
-`POST /api/notifications/plugin` 只管"发什么"，不选通道：宿主把它投递到当前所有已配置的通道（Telegram、企业微信、微信 ClawBot）。但**三条通道能承载的东西不一样**，所以响应里的 `channels` 会如实报告每条通道会保留和丢弃什么：
+`POST /api/notifications/plugin` 只管"发什么"，不选通道：宿主把它投递到当前所有已配置的通道（Telegram、企业微信）。但**两条通道能承载的东西不一样**，所以响应里的 `channels` 会如实报告每条通道会保留和丢弃什么：
 
 ```json
 {
@@ -181,25 +184,24 @@ GET /api/plugin-host/emby/items/:id
   "accepted": true,
   "channels": [
     {"channel": "telegram", "preserved": ["link_buttons", "callback_buttons", "images"]},
-    {"channel": "wecom", "preserved": ["link_buttons", "images"], "dropped": ["callback_buttons"]},
-    {"channel": "wechat_claw", "preserved": ["images"], "dropped": ["link_buttons", "callback_buttons"]}
+    {"channel": "wecom", "preserved": ["link_buttons", "images"], "dropped": ["callback_buttons"]}
   ]
 }
 ```
 
 当前能力对照：
 
-| 能力 | Telegram | 企业微信 | 微信 ClawBot |
-| --- | --- | --- | --- |
-| `link_buttons`（链接按钮） | ✓ | ✓（只取第一个） | ✗ |
-| `callback_buttons`（回调按钮） | ✓ | ✗ | ✗ |
-| `images`（图片） | ✓ | ✓ | ✓ |
+| 能力 | Telegram | 企业微信 |
+| --- | --- | --- |
+| `link_buttons`（链接按钮） | ✓ | ✓（只取第一个） |
+| `callback_buttons`（回调按钮） | ✓ | ✗ |
+| `images`（图片） | ✓ | ✓ |
 
-**只要 `callback_buttons` 出现在某条通道的 `dropped` 里，就该认为这条通道上的按钮交互不可用**：企业微信会把第一个链接按钮当作跳转地址，回调按钮没有 URL，因此会被丢弃；ClawBot 完全不接收按钮。插件应当据此降级——例如改用链接按钮，或提示用户回复文字后由插件处理，而不是等待一个永远不会到来的回调。
+**只要 `callback_buttons` 出现在某条通道的 `dropped` 里，就该认为这条通道上的按钮交互不可用**：企业微信会把第一个链接按钮当作跳转地址，回调按钮没有 URL，因此会被丢弃。插件应当据此降级——例如改用链接按钮，或提示用户回复文字后由插件处理，而不是等待一个永远不会到来的回调。
 
 响应只描述通道会保留什么，不代表消息已经送达；投递失败由宿主的持久化队列重试。`accepted` 为真表示通知已被接受并进入投递流程。
 
-两点补充：ClawBot 不接受远程图片直发，宿主要先下载再作为**单独一条消息**发出，所以带图通知在这条通道上是"先文字、后图片"两条消息；另外，`preserved` 说的是通道**能**承载什么，通道自身的通知设置（例如某条通道关闭了图片）仍可能让图片不发。
+`preserved` 说的是通道**能**承载什么，通道自身的通知设置（例如某条通道关闭了图片）仍可能让图片不发。
 
 ## 3. 外部 HTTP/HTTPS 与本地服务
 
@@ -459,6 +461,14 @@ lowercase_hex(SHA256(body))
 115 传输 Broker：`GET /api/plugin-host/accounts/115`、`POST /accounts/115/selections` 创建账号选择引用；`GET/POST /transfers/115/targets`、`POST /transfers/115/share-previews`、`GET /transfers/115/share-previews/:preview_ref/items`、`POST /transfers/115/share-receives`、`POST /transfers/115/offline-downloads`、`GET /transfers/115/offline-tasks`、`GET /transfers/115/offline-quota`。账号 Cookie 始终留在宿主，插件只持有不透明引用。
 
 任务查询：`GET /api/plugin-host/jobs/:job_ref` 查询状态与结果，`POST /api/plugin-host/jobs/:job_ref/cancel` 取消。
+
+查询返回 `{data:{job_ref,kind,status,progress,cancellable,...},meta}`。status 为 queued、running、succeeded、failed、cancelled 或 attention_required；succeeded 表示当前任务自身的工作完成。页面后台 job 的外层引用完成只表示 guest 回调已交付，结果若含 accepted 和子任务 job_ref，应继续查询子任务，不能把受理当成全部业务完成。进度范围 0–100，失败 error 中提供安全错误码和可用的 diagnostic_id。created_at/started_at/finished_at 使用 Asia/Shanghai 的 `YYYY-MM-DD HH:mm:ss` 字符串，未开始/结束的时间字段省略。
+
+取消携带 Idempotency-Key，202 返回 `{data:{job_ref,status:"cancellation_requested"},meta}`，并立即唤醒本地等待者。已经结束或不允许取消返回 409，任务不存在或不属于当前安装返回 404；查询同一 job_ref 确认终态。只批准查询权限不授予 115 任务取消权限。轻量封装见 SDK 的 [JobGet/JobCancel](examples/sdk/README.md#查询和取消后台任务)。
+
+这些异步 Host Job 与页面 `api.jobs.start` 使用主项目统一任务队列，展示插件来源、进度、终态和诊断编号；插件仍查询原 job_ref。不支持手动取消的任务保留原策略，卸载会撤销执行并删除该安装的队列记录。执行与重启恢复边界见 [后台调用](ui-isolation-v1.md#可查询可取消的后台调用)。
+
+插件 JSON 存储另有元数据分页 `GET /api/plugin-runtime/storage` 和用量 `GET /api/plugin-runtime/storage-usage`；先探测 `features.storage_catalog_v1` 并声明相应权限。单页最多 100 条，不返回值正文，详见 [存储协议](storage-and-lifecycle.md#分页与用量)。
 
 声明这些接口后宿主自动推导所需的 `files.local.*`、`files.cloud.*`、`transfer.115.*`、`accounts.115.use` 运行能力；broker 写操作自带幂等生命周期，重试同一 `Idempotency-Key` 不会重复执行。
 

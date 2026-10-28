@@ -156,7 +156,7 @@ WASM runtime 的 ABI、Host imports、配额和生命周期见 [WASM runtime v1]
 
 | 字段 | 默认值 | 范围 |
 | --- | ---: | ---: |
-| `startup_timeout_ms` | 10000 | 1000-60000 |
+| `startup_timeout_ms` | 30000 | 1000-60000 |
 | `shutdown_timeout_ms` | 5000 | 1000-60000 |
 | `timeout_ms` | 30000 | 100-120000 |
 | `background_timeout_ms` | 300000 | 1000-3600000 |
@@ -164,7 +164,7 @@ WASM runtime 的 ABI、Host imports、配额和生命周期见 [WASM runtime v1]
 | `memory_mb` | 64 | 4-512 |
 | `restart_policy` | `on-failure` | 仅此值 |
 
-`memory_mb` 是模块线性内存的硬上限，默认 64 MiB、范围 4–512 MiB。超过上限的分配会失败并按调用错误处理；宿主自身的其余内存不受影响。
+`memory_mb` 是模块线性内存的硬上限，默认 64 MiB、范围 4–512 MiB。超过上限的分配会失败并按调用错误处理；编译代码、宿主缓冲和其他进程内存不包含在该上限中。
 
 不得提交旧运行时字段，如 `abi`、`health_path`、`event_path`、`action_path`、`state_path`、`job_path`。解码器拒绝未知字段。
 
@@ -223,9 +223,9 @@ UI 加载失败只显示错误状态与重试，不会切换到其他 UI 协议�
 
 `telegram` 可选，声明宿主提前登记的消息路由，使宿主无需加载插件即可完成匹配：`commands` 最多 3 项（`command` 为小写字母开头的标识符，可带 `description`），`keywords` 最多 3 项（`keyword` 加 `match`，取值 `exact`、`prefix`、`contains`，默认 `exact`）。命令名不能与宿主内置命令冲突，也不能与其他插件重复。运行时调用 `host.telegram.register` 会被拒绝，请改用这里的声明。
 
-`jobs` 可选，最多 32 项。每项的 `id` 和 `handler` 必须唯一；`id` 使用小写事件标识格式，`handler` 最多 128 个字母、数字、点、下划线或连字符。`allow_overlap` 默认 `false`。
+`jobs` 可选，最多 32 项。每项的 `id` 和 `handler` 必须唯一；`id` 使用小写事件标识格式，`handler` 最多 80 个字符，使用 runtime identifier 规则：字母数字分段，点、下划线或连字符不连续且不位于首尾。`recovery_handler` 可选，遵循相同规则，表示只读恢复核对入口，见 [可恢复任务](job-recovery-v1.md)。`allow_overlap` 默认 `false`。
 
-`default_schedule` 使用 5 段数字 cron：分钟、小时、日、月、星期。支持 `*`、列表、升序范围和步长；不支持名称或第六段秒。分钟集合的最小间隔为 5 分钟。日和星期不能同时设为非 `*`。
+`default_schedule` 可省略或为空，此时只接受手动后台调用、不创建 cron；非空值使用 5 段数字 cron：分钟、小时、日、月、星期。支持 `*`、列表、升序范围和步长；不支持名称或第六段秒。分钟集合的最小间隔为 5 分钟。日和星期不能同时设为非 `*`。
 
 ## 3. `integrity.json`
 
@@ -348,9 +348,9 @@ RFC8785-JCS(parse(integrity.json))
 
 安装器先完成 ZIP、JSON、签名、完整性、Manifest、权限、UI 和运行时检查；WASM 模块还要通过 ABI 校验，然后才提交安装记录和文件。权限或运行时披露变化会生成新的同意摘要，管理员必须重新确认。
 
-插件文件统一保存在 `/config/package/<plugin-id>/`：签名版本包位于 `package/`，插件持久数据位于 `data/`，私有临时文件位于 `tmp/`。WASM 模块只读挂载自己的 `package/`，其余目录不可见；持久数据通过 Host Storage 保存。更新保留 `data/`，先卸载旧模块，再原子写入新版本；数据库提交失败会删除新版本并重新协调旧版本。若新模块 `runtime.initialize` 失败，新版本保持已安装并进入不健康、退避或失败状态；宿主不会自动恢复旧包。发布者应保留旧版本包供管理员显式降级。
+默认数据目录下的插件私有文件位于 `/config/package/<plugin-id>/`，部署可配置该数据目录。私有目录只创建存放签名版本包的 `package/`，不创建可写 `data/`、`tmp/`。WASM 只读挂载当前签名包到 `/package`；插件业务持久数据通过 Host Storage 保存到宿主数据库。更新保留安装身份和持久数据，先卸载旧模块，再原子写入新版本；数据库提交失败会删除新版本并重新协调旧版本。若新模块 `runtime.initialize` 失败，新版本保持已安装并进入不健康、退避或失败状态；宿主不会自动恢复旧包。发布者应保留旧版本包供管理员显式降级。
 
-禁用会停止新调用、任务和事件，注销 Telegram 路由并卸载运行时模块。卸载会删除该插件的整个 `/config/package/<plugin-id>/` 私有目录（包括 `package`、`data`、`tmp`）和安装记录；安装实例级 KV 的保留/删除以当前管理端卸载提示为准。插件不能自行读取其他安装的数据。
+禁用会拒绝新调用、停止插件调度和事件、注销 Telegram 路由并卸载运行时模块，持久配置保留。卸载会停止执行并清空该插件的配置、凭据、任务、日志、投递和调用回执，删除私有目录、待确认导入包、专属编译缓存和安装记录；没有卸载保留期。清理失败会保留停用的清理标记供重试，宿主重启也会继续清理，全部完成后才报告成功。重装从空配置开始；插件不能读取其他安装的数据。完整规则见 [存储与生命周期](storage-and-lifecycle.md)。
 
 ### 本地导入
 

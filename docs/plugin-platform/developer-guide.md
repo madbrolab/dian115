@@ -7,7 +7,7 @@ This guide takes a plugin from source to an installable package. It is self-cont
 A plugin has one supervised WASM runtime and one mandatory Vue page:
 
 ```text
-Vue Federation page (trusted same-origin iframe)
+Vue Federation page (opaque-origin sandbox)
   -> getState / invokeAction
   -> DIAN115 runtime bridge
   -> runtime.invoke envelope over the reactor ABI
@@ -16,7 +16,7 @@ Vue Federation page (trusted same-origin iframe)
   -> approved DIAN115 handler or host HTTP/HTTPS Broker
 ```
 
-The page is signed publisher code loaded in an iframe with a host bridge. It can use normal browser features, including images, `localStorage`, `sessionStorage`, IndexedDB, popups and ordinary `fetch`/XHR requests. It can also access same-origin browser state, so installing a plugin means trusting its publisher. The page is never given raw Bot, 115, TMDB, proxy or CD2 credentials by the plugin bridge, and it has no direct filesystem access. Privileged and background work should stay in the local runtime so it remains covered by plugin permissions, audit, proxy and retry behavior.
+The signed page runs in an opaque-origin sandbox. It cannot access native browser storage, parent DOM or host credentials; use api.storage for persistent preferences and action → WASM → Host Call for business/network work. See [UI isolation and managed storage](ui-isolation-v1.md).
 
 The WASM runtime is loaded directly by the main service in the current Docker container. It cannot listen on a port, create another plugin container, daemonize, require a remote callback, or start helper processes. The module receives no host filesystem mount beyond its own read-only package, no sockets, no credentials and no environment secrets. Host files, watches, network, Telegram and notifications remain mediated by approved Host APIs.
 
@@ -58,8 +58,7 @@ module keeps the ABI in `wasm-runtime-v1.md`; a `no_std` / `no_alloc` build with
 The host refuses any module that carries the Go standard runtime, and names
 that cause in the packaging error. A **2 MiB** ceiling backs it up for modules
 that are not recognisably Go but are still far larger than a plugin should be.
-The shipped example is ~0.6 MiB with TinyGo and ~3.4 MiB with the standard
-compiler, so the difference is visible immediately. WASM is architecture
+Measure the built module with your selected toolchain; example sizes are not a stable API guarantee. WASM is architecture
 independent; no target-architecture build is required.
 
 The protocol also refuses modules that link `encoding/json`, again by name. The
@@ -97,7 +96,7 @@ The UI and runtime are both required:
     "key_id": "ed25519:REPLACED_BY_PACKAGER"
   },
   "compatibility": {
-    "dian115": ">=3.8.51 <4.0.0",
+    "dian115": ">=5.0.46 <6.0.0",
     "plugin_api": "^2.0"
   },
   "runtime": {
@@ -169,7 +168,7 @@ The host calls:
 
 - `runtime.initialize` once after every module load;
 - `runtime.invoke` with `op=state`, `action`, `job`, or `event`;
-- `runtime.ping` for idle liveness; the host answers this probe itself, so the guest does not need to implement it;
+- `runtime.ping` is answered by the host as an availability acknowledgement; it does not enter the guest. Periodic maintenance uses module exit signals and invocation deadlines instead of ping RPCs;
 - `runtime.shutdown` before an intentional unload.
 
 The runtime can call:
@@ -288,7 +287,7 @@ with each other or with the host's reserved commands. Unloading the plugin no
 longer drops the routes, so a plugin does not need to stay resident to keep
 receiving messages.
 
-Each installation may register at most 3 commands and 3 keywords. Registration atomically replaces the installation's previous set. Reserved host commands, conflicts with another plugin, or the global 64-plugin-command limit return JSON-RPC `-32003`; the previous registration remains active and installation is not affected.
+Manifest route conflicts are reported by the host and never replace another installation's routes. Runtime registration and unregistration are rejected. Use `host.telegram.list` for the actual installed routes.
 
 Host parsing always runs first. Only a message the host did not handle and that matches a registered route is delivered as `event` topic `telegram.message`. Unmatched messages never reach plugins.
 
@@ -330,7 +329,7 @@ The interval is 5 to 86400 seconds and each plugin can have at most 32 watches. 
 
 The remote Vue component receives:
 
-- `api` and `hostApi`: the same frozen bridge;
+- `api`: the frozen bridge defined by the public UI SDK;
 - `installationId`, `pluginId`;
 - `runtime`, `runtimeState`;
 - `navKey="main"`;
@@ -338,7 +337,7 @@ The remote Vue component receives:
 
 The bridge provides only `getState(view)`, `invokeAction(action, input)`, and `refresh()`. The component may emit `action`, `refresh`, or `close`. Use Naive UI for controls and `@lucide/vue` for icons. Style with the stable `--dian-*` variables so light/dark and configured host themes update without remounting.
 
-The page runs as trusted same-origin publisher code without an iframe `sandbox` attribute or an extra UI CSP. It may render packaged, HTTP, HTTPS, `data:` and `blob:` images; use browser storage; open HTTP/HTTPS pages; and make ordinary browser requests subject to the browser's normal CORS, mixed-content and popup rules. Values sent through the bridge must still be JSON-serializable. See [Vue Federation UI v1](ui-federation-v1.md) for the exact TypeScript contract, trust model, theme table and popup sequence.
+The page uses an opaque-origin sandbox and CSP. Signed Federation resources and theme providers work through anonymous CORS; native browser storage and direct fetch/XHR/WebSocket are blocked. Use the managed storage and job bridge, handle errors, and keep messages JSON serializable. See [UI isolation](ui-isolation-v1.md).
 
 The host resets the Federation document to a full-width, zero-margin `html/body/#plugin-sandbox-root` baseline and applies `border-box` sizing. Do not add a fixed body `max-width` or minimum width; make the component root `width: 100%; max-width: 100%; min-width: 0`. A desktop browser can still provide a narrow iframe when the host sidebar is open, so switch multi-column layouts to one column around 900-1000px and allow toolbars to wrap. Global CSS imported only by a standalone preview entry is not loaded for the Federation component.
 
@@ -390,3 +389,16 @@ Import tokens are private, single-use, and expire after 15 minutes. The host del
 - The publisher key is stable across upgrades and the private key is not shipped.
 - Market metadata exactly matches the signed package.
 - `node docs/plugin-platform/conformance/verify-public-surface.mjs` passes before public publication; no main-project source is included.
+
+## 12. Data and lifecycle
+
+Start with `resident: false`. Opening the page or invoking work loads the service module; ordinary status metadata reads do not. The host can release idle modules, so guest globals are temporary. Use the shared [SDK](examples/sdk/README.md) for storage, ETag/CAS and HTTP errors. Read [storage and lifecycle](storage-and-lifecycle.md) for exact locations, limits and JSON structure.
+
+Use bounded metadata pages and the usage endpoint instead of loading every stored value to build a list. Probe `features.storage_catalog_v1` first and declare the two GET permissions. Long Host Jobs and UI background runs appear in the main Task Queue with shared progress and cancellation; continue using the original `job_ref` for plugin-side queries. The Plugin Center's diagnostic panel links stable error codes to redacted administrator details. See [background jobs](ui-isolation-v1.md#可查询可取消的后台调用) and [troubleshooting](troubleshooting.md).
+
+Uninstall clears private configuration, credentials, task records, logs, deliveries and files. Reinstallation starts empty. Disable, restart and upgrade preserve persistent configuration. A failed file cleanup leaves an inactive uninstall marker and a retryable error; it is not a successful uninstall.
+
+Do not mistake the 8 MiB Host Call body limit for the 256 KiB business payload limit. Check target HTTP status even when the host import returned a normal result. A 412 conflict requires a fresh read and business merge, not an unconditional retry. Use stable invocation and idempotency IDs across uncertain results.
+
+
+排查首次打开、恢复、存储或卸载问题时，按 [插件排错](troubleshooting.md) 根据错误码处理。

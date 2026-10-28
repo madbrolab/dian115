@@ -173,18 +173,62 @@
     "wasmRuntime": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "entry", "protocol"],
+      "required": [
+        "kind",
+        "entry",
+        "protocol"
+      ],
       "properties": {
-        "kind": {"const":"wasm"},
-        "entry": {"$ref":"#/$defs/packagePath", "description":"WASM module with the dian115_handle ABI."},
-        "protocol": {"const":"dian115:wasm@1"},
-        "startup_timeout_ms": {"type":"integer","minimum":1000,"maximum":60000,"default":10000},
-        "shutdown_timeout_ms": {"type":"integer","minimum":1000,"maximum":60000,"default":5000},
-        "timeout_ms": {"type":"integer","minimum":100,"maximum":120000,"default":30000},
-        "background_timeout_ms": {"type":"integer","minimum":1000,"maximum":3600000,"default":300000},
-        "memory_mb": {"type":"integer","minimum":4,"maximum":512,"default":64},
-        "max_concurrency": {"type":"integer","minimum":1,"maximum":16,"default":4},
-        "restart_policy": {"const":"on-failure","default":"on-failure"},
+        "kind": {
+          "const": "wasm"
+        },
+        "entry": {
+          "$ref": "#/$defs/packagePath",
+          "description": "WASM module with the dian115_handle ABI."
+        },
+        "protocol": {
+          "const": "dian115:wasm@1"
+        },
+        "startup_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 30000
+        },
+        "shutdown_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 5000
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000,
+          "default": 30000
+        },
+        "background_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000,
+          "default": 300000
+        },
+        "memory_mb": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 512,
+          "default": 64
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "default": 4
+        },
+        "restart_policy": {
+          "const": "on-failure",
+          "default": "on-failure"
+        },
         "resident": {
           "type": "boolean",
           "default": false,
@@ -196,50 +240,133 @@
       "type": "object",
       "description": "安装时整体确认的精确宿主接口声明。插件模块不能创建网络 socket；任意 HTTP/HTTPS 请求（包括本机、容器和局域网目标）均通过宿主网络 Broker。network 用于声明特定地址的代理路由偏好，未声明地址默认跟随宿主规则。",
       "additionalProperties": false,
-      "required": ["apis"],
+      "required": [
+        "apis"
+      ],
       "properties": {
         "apis": {
-          "type": "array", "maxItems": 512, "uniqueItems": true,
-          "items": { "$ref": "#/$defs/apiPermission" }
+          "type": "array",
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/apiPermission"
+          }
         },
         "network": {
-          "type": "array", "maxItems": 64, "uniqueItems": true,
-          "items": { "$ref": "#/$defs/networkPermission" }
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/networkPermission"
+          }
         },
         "host_access": {
-          "type": "string", "enum": ["standard", "extended"], "default": "standard",
+          "type": "string",
+          "enum": [
+            "standard",
+            "extended"
+          ],
+          "default": "standard",
           "description": "standard 只允许调用已发布的 Host API 目录；extended 经管理员安装时明确同意后，允许调用除凭证、认证、系统安全与插件管理之外的全部 /api 路由。extended 声明的接口不受目录限制，但响应会经过通用密钥脱敏。"
         }
       }
     },
     "apiPermission": {
-      "type": "object", "additionalProperties": false,
-      "required": ["method", "path", "reason"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "path",
+        "reason"
+      ],
       "properties": {
-        "method": { "type": "string", "enum": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"] },
-        "path": { "type": "string", "minLength": 5, "maxLength": 240, "pattern": "^/api/[A-Za-z0-9._~:/{}?=&-]+$" },
-        "reason": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "method": {
+          "type": "string",
+          "enum": [
+            "GET",
+            "HEAD",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 240,
+          "pattern": "^/api/[A-Za-z0-9._~:/{}?=&-]+$"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
         "optional": {
-          "type": "boolean", "default": false,
+          "type": "boolean",
+          "default": false,
           "description": "为 true 时，宿主不提供该接口不再导致安装失败；该声明被记录为不可用，调用时返回清晰错误。"
         }
       }
     },
     "networkPermission": {
-      "type": "object", "additionalProperties": false,
-      "required": ["origin", "reason"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "reason"
+      ],
       "properties": {
-        "origin": { "type": "string", "minLength": 1, "maxLength": 240, "pattern": "^https?://[^/]+$" },
-        "methods": { "type": "array", "minItems": 1, "maxItems": 6, "uniqueItems": true, "default": ["GET"], "items": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"] } },
-        "proxy_mode": { "type": "string", "enum": ["direct", "system", "required"], "default": "system" },
-        "reason": { "type": "string", "minLength": 1, "maxLength": 240 }
+        "origin": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^https?://[^/]+$"
+        },
+        "methods": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "default": [
+            "GET"
+          ],
+          "items": {
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "HEAD"
+            ]
+          }
+        },
+        "proxy_mode": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "system",
+            "required"
+          ],
+          "default": "system"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
       }
     },
     "ui": {
       "type": "object",
       "additionalProperties": false,
       "description": "Plugin UI exposed as a signed Vue Module Federation page.",
-      "required": ["mode", "federation"],
+      "required": [
+        "mode",
+        "federation"
+      ],
       "properties": {
         "mode": {
           "const": "federation"
@@ -255,7 +382,10 @@
     "federation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["entry", "assets_root"],
+      "required": [
+        "entry",
+        "assets_root"
+      ],
       "properties": {
         "entry": {
           "$ref": "#/$defs/packagePath",
@@ -284,7 +414,9 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["command"],
+            "required": [
+              "command"
+            ],
             "properties": {
               "command": {
                 "type": "string",
@@ -306,7 +438,9 @@
           "items": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["keyword"],
+            "required": [
+              "keyword"
+            ],
             "properties": {
               "keyword": {
                 "type": "string",
@@ -315,7 +449,11 @@
               },
               "match": {
                 "type": "string",
-                "enum": ["exact", "prefix", "contains"],
+                "enum": [
+                  "exact",
+                  "prefix",
+                  "contains"
+                ],
                 "default": "exact"
               }
             }
@@ -341,19 +479,26 @@
         "handler": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 128,
-          "pattern": "^[a-zA-Z0-9_.-]+$"
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$"
         },
         "default_schedule": {
           "type": "string",
-          "minLength": 1,
+          "minLength": 0,
           "maxLength": 100,
-          "pattern": "^(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?)(?:,(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?))* (?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?))* (?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?)(?:,(?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?))* (?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?))* (?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?)(?:,(?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?))*$",
-          "description": "DIAN115 cron v1: five numeric fields (minute hour day-of-month month day-of-week), with wildcard, list, ascending range, and step syntax. Adjacent minute values, including the hour boundary, must be at least five minutes apart. Day-of-month and day-of-week cannot both be restricted. Semantic limits are checked by the installer and project-check.mjs."
+          "pattern": "^(?:$|(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?)(?:,(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?))* (?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?))* (?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?)(?:,(?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?))* (?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?))* (?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?)(?:,(?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?))*)$",
+          "description": "可省略或为空以仅接受手动后台调用；提供非空值时使用五字段数字 cron，最短五分钟，日和星期不能同时限制。"
         },
         "allow_overlap": {
           "type": "boolean",
           "default": false
+        },
+        "recovery_handler": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$",
+          "description": "Optional read-only recover callback. Explicitly verifies upstream state before returning resume, complete, or attention_required."
         }
       }
     },

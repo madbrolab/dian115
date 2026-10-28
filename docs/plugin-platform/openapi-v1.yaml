@@ -524,6 +524,20 @@ x-dian115-host-apis:
       description: "列出 115 转存目标目录。"
       host_credentials: true
     - method: GET
+      path: /api/plugin-runtime/storage
+      category: plugin-runtime
+      risk: read
+      title: "分页列出插件存储"
+      description: "按键游标返回当前安装的存储元数据，不读取值。"
+      host_credentials: false
+    - method: GET
+      path: /api/plugin-runtime/storage-usage
+      category: plugin-runtime
+      risk: read
+      title: "查询插件存储用量"
+      description: "读取当前安装的键数、JSON 字节用量与配额，包含页面偏好。"
+      host_credentials: false
+    - method: GET
       path: /api/plugin-runtime/storage/:key
       category: "plugin-runtime"
       risk: read
@@ -983,7 +997,7 @@ x-dian115-host-apis:
       category: "plugin-jobs"
       risk: write
       title: "取消插件任务"
-      description: "取消当前插件的一个异步任务。"
+      description: "取消当前插件的一个异步任务；仍有恢复记录的 failed/attention_required 任务也可取消，原子清空检查点并停止后续恢复。"
       host_credentials: false
     - method: POST
       path: /api/plugin-host/transfers/115/offline-downloads
@@ -1202,6 +1216,70 @@ x-dian115-subscription-host-apis:
       category: subscriptions
       risk: dangerous
 paths:
+  /api/plugin-runtime/storage:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 分页列出插件存储
+      description: 按键游标返回当前安装的存储元数据，不读取值。
+      operationId: pluginStorageListMetadata
+      x-dian115-category: plugin-runtime
+      x-dian115-risk: read
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - name: prefix
+          in: query
+          schema:
+            type: string
+            maxLength: 160
+            pattern: ^[A-Za-z0-9._-]*$
+        - name: cursor
+          in: query
+          description: 15 分钟有效、绑定当前安装和 prefix 的不透明游标；不表示快照。
+          schema:
+            type: string
+            maxLength: 2048
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: '当前安装的有界存储信息；Cache-Control: no-store。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageMetadataPageEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/storage-usage:
+    get:
+      tags:
+        - Direct Host APIs
+      summary: 查询插件存储用量
+      description: 读取当前安装的键数、JSON 字节用量与配额，包含页面偏好。
+      operationId: pluginStorageUsage
+      x-dian115-category: plugin-runtime
+      x-dian115-risk: read
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      responses:
+        '200':
+          description: '当前安装的有界存储信息；Cache-Control: no-store。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StorageUsageEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
   /api/plugin-center/v1/imports/inspect:
     post:
       tags:
@@ -2223,7 +2301,7 @@ paths:
           description: 插件自己的持久化值；`ETag` 头与 `data.revision` 一致。
           headers:
             ETag:
-              schema: {type: string, pattern: '^"pkv_[0-9]+"$'}
+              schema: {type: string, pattern: '^"pkv_[1-9][0-9]*"$'}
           content:
             application/json:
               schema:
@@ -2255,8 +2333,8 @@ paths:
         - name: If-Match
           in: header
           required: false
-          description: 更新已有值时传上一响应的 `ETag`；省略表示无条件创建或覆盖。
-          schema: {type: string, pattern: '^"?pkv_[0-9]+"?$'}
+          description: 更新已有值时传上一响应的带双引号强 `ETag`；省略表示无条件创建或覆盖。
+          schema: {type: string, pattern: '^"pkv_[1-9][0-9]*"$'}
       requestBody:
         $ref: '#/components/requestBodies/StoragePut'
       responses:
@@ -2264,7 +2342,7 @@ paths:
           description: 保存后的值和新 revision
           headers:
             ETag:
-              schema: {type: string, pattern: '^"pkv_[0-9]+"$'}
+              schema: {type: string, pattern: '^"pkv_[1-9][0-9]*"$'}
           content:
             application/json:
               schema:
@@ -2295,7 +2373,7 @@ paths:
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
         '200':
-          description: 已删除；不存在的 key 也按成功处理。
+          description: 已删除；不存在的 key 也按成功处理。请求不接受 If-Match。
           content:
             application/json:
               schema:
@@ -3104,7 +3182,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/115/shares/{share_code}:
     get:
       tags:
         - Direct Host APIs
@@ -4075,7 +4152,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/organize/rules:
     post:
       tags:
         - Direct Host APIs
@@ -4127,7 +4203,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/organize/rules/{id}:
     put:
       tags:
         - Direct Host APIs
@@ -4371,7 +4446,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/rules:
     post:
       tags:
         - Direct Host APIs
@@ -4423,7 +4497,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/rules/{id}:
     put:
       tags:
         - Direct Host APIs
@@ -4836,7 +4909,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/subscribe/entry-settings:
     put:
       tags:
         - Direct Host APIs
@@ -4904,7 +4976,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/subscribe/library-settings:
     put:
       tags:
         - Direct Host APIs
@@ -4950,7 +5021,6 @@ paths:
           $ref: '#/components/responses/HostError'
         default:
           $ref: '#/components/responses/HostError'
-  /api/subscribe/pt-search-site-selection:
     put:
       tags:
         - Direct Host APIs
@@ -5361,11 +5431,11 @@ paths:
           schema: {type: string}
       responses:
         '200':
-          description: 成功响应；业务结构以宿主 Handler 为准
+          description: 当前安装的持久任务状态；succeeded 表示此任务自身的工作完成，结果中的子任务需要单独确认。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericHostObject'
+                $ref: '#/components/schemas/PluginJobEnvelope'
         '400':
           $ref: '#/components/responses/HostError'
         default:
@@ -5375,7 +5445,7 @@ paths:
       tags:
         - Direct Host APIs
       summary: "取消插件任务"
-      description: "取消当前插件的一个异步任务。"
+      description: "取消当前插件的一个异步任务；仍有恢复记录的 failed/attention_required 任务也可取消，原子清空检查点并停止后续恢复。"
       operationId: directHost_37eed51c2930cab4
       x-dian115-category: "plugin-jobs"
       x-dian115-risk: write
@@ -5388,14 +5458,26 @@ paths:
           schema: {type: string}
         - $ref: '#/components/parameters/IdempotencyKey'
       responses:
-        '200':
-          description: 成功响应；业务结构以宿主 Handler 为准
+        '202':
+          description: 取消请求已提交并通知本地等待者；不承诺外部副作用已撤销。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenericHostObject'
+                $ref: '#/components/schemas/PluginJobCancellationEnvelope'
         '400':
           $ref: '#/components/responses/HostError'
+        '404':
+          description: 任务不存在或不属于当前安装。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '409':
+          description: 已结束且无恢复记录、不支持取消或幂等请求冲突；先查询现有任务状态。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         default:
           $ref: '#/components/responses/HostError'
   /api/plugin-host/transfers/115/offline-downloads:
@@ -5779,6 +5861,98 @@ components:
           schema:
             $ref: '#/components/schemas/PoolIntentEpisodesRequest'
   schemas:
+    StorageMetadata:
+      type: object
+      additionalProperties: false
+      required:
+        - key
+        - revision
+        - bytes
+        - updated_at
+      properties:
+        key:
+          type: string
+        revision:
+          type: string
+          pattern: ^pkv_[1-9][0-9]*$
+        bytes:
+          type: integer
+          format: int64
+          minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+    StorageMetadataPage:
+      type: object
+      additionalProperties: false
+      required:
+        - items
+        - next_cursor
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/StorageMetadata'
+        next_cursor:
+          type:
+            - string
+            - 'null'
+          maxLength: 2048
+    StorageUsage:
+      type: object
+      additionalProperties: false
+      required:
+        - keys
+        - used_bytes
+        - remaining_bytes
+        - limit_bytes
+        - value_limit_bytes
+      properties:
+        keys:
+          type: integer
+          format: int64
+          minimum: 0
+        used_bytes:
+          type: integer
+          format: int64
+          minimum: 0
+        remaining_bytes:
+          type: integer
+          format: int64
+          minimum: 0
+        limit_bytes:
+          type: integer
+          format: int64
+          minimum: 0
+          const: 16777216
+        value_limit_bytes:
+          type: integer
+          format: int64
+          minimum: 0
+          const: 262144
+    StorageMetadataPageEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/StorageMetadataPage'
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
+    StorageUsageEnvelope:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+        - meta
+      properties:
+        data:
+          $ref: '#/components/schemas/StorageUsage'
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
     GenericHostObject:
       type: object
       additionalProperties: true
@@ -6360,6 +6534,75 @@ components:
       properties:
         request_id: {type: string}
         idempotent_replay: {type: boolean}
+    PluginJobFailure:
+      type: object
+      additionalProperties: false
+      required: [code]
+      properties:
+        code: {type: string}
+        detail: {type: string}
+        diagnostic_id: {type: string, pattern: '^diag_[a-f0-9]{36}$', description: 诊断可用时返回的编号。}
+    PluginJob:
+      type: object
+      additionalProperties: false
+      required: [job_ref, kind, status, progress, cancellable, created_at]
+      properties:
+        job_ref: {type: string, pattern: '^job_[A-Za-z0-9]+$', maxLength: 80}
+        kind: {type: string}
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed, cancelled, attention_required]
+        progress: {type: integer, minimum: 0, maximum: 100}
+        cancellable: {type: boolean}
+        cancel_requested: {type: boolean}
+        recovery_supported:
+          type: boolean
+          description: 当前引用具有签名声明的恢复回调与持久检查点。
+        recovery_pending:
+          type: boolean
+          description: 正等待宿主只读核对后恢复。
+        recovery_attempt:
+          type: integer
+          minimum: 0
+          maximum: 3
+        retryable: {type: boolean}
+        result: {}
+        error:
+          $ref: '#/components/schemas/PluginJobFailure'
+        account_selection_ref: {type: string}
+        correlation_id: {type: string}
+        created_at:
+          type: string
+          description: Asia/Shanghai 时间，格式 YYYY-MM-DD HH:mm:ss。
+        started_at:
+          type: string
+          description: 开始执行的 Asia/Shanghai 时间，格式 YYYY-MM-DD HH:mm:ss；尚未开始时省略。
+        finished_at:
+          type: string
+          description: 结束的 Asia/Shanghai 时间，格式 YYYY-MM-DD HH:mm:ss；未结束时省略。
+    PluginJobEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          $ref: '#/components/schemas/PluginJob'
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
+    PluginJobCancellationEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [job_ref, status]
+          properties:
+            job_ref: {type: string}
+            status: {type: string, const: cancellation_requested}
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
     StorageValue:
       type: object
       additionalProperties: false
@@ -6367,7 +6610,7 @@ components:
       properties:
         key: {type: string}
         value: {}
-        revision: {type: string, pattern: '^pkv_[0-9]+$'}
+        revision: {type: string, pattern: '^pkv_[1-9][0-9]*$'}
         updated_at: {type: string, format: date-time}
     StoragePutRequest:
       type: object
@@ -6648,7 +6891,7 @@ components:
         suppression_reason: {type: string}
         channels:
           type: array
-          description: 每条已配置通道会保留或丢弃这条通知的哪些能力。能力出现在 `dropped` 里，说明该通道无法承载它——例如企业微信和微信 ClawBot 都无法把回调按钮的点击送回插件，此时插件应当改用链接按钮或提示用户用文字回复，而不是等待一个永远不会到来的回调。
+          description: 每条已配置通道会保留或丢弃这条通知的哪些能力。能力出现在 `dropped` 里，说明该通道无法承载它——例如企业微信无法把回调按钮的点击送回插件，此时插件应当改用链接按钮或提示用户用文字回复，而不是等待一个永远不会到来的回调。
           items:
             $ref: '#/components/schemas/ChannelSupport'
     ChannelSupport:
@@ -6658,7 +6901,7 @@ components:
       properties:
         channel:
           type: string
-          enum: [telegram, wecom, wechat_claw]
+          enum: [telegram, wecom]
         preserved:
           type: array
           items:
