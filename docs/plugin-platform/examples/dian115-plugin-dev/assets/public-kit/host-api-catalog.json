@@ -1,0 +1,1499 @@
+{
+  "openapi_sha256": "e42fe7b22991499b7865059a92440bb2c24b00c2b5be75084cfb6fb264f1d234",
+  "entries": [
+    {
+      "method": "DELETE",
+      "path": "/api/115/shares/:share_code",
+      "category": "115",
+      "risk": "dangerous",
+      "title": "删除分享",
+      "description": "删除一条分享链接。",
+      "host_credentials": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/local-files",
+      "category": "files",
+      "risk": "dangerous",
+      "title": "删除文件",
+      "description": "删除文件或目录。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/organize/history/:id",
+      "category": "organize",
+      "risk": "dangerous",
+      "title": "删除整理历史",
+      "description": "删除一条整理历史记录。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/organize/rules/:id",
+      "category": "organize",
+      "risk": "dangerous",
+      "title": "删除整理规则",
+      "description": "删除一条整理规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/plugin-runtime/storage/:key",
+      "category": "plugin-runtime",
+      "risk": "dangerous",
+      "title": "删除插件数据",
+      "description": "删除当前安装实例自己的持久化数据。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/plugin-runtime/watches/:watch_ref",
+      "category": "plugin-runtime/watch",
+      "risk": "dangerous",
+      "title": "删除目录监控",
+      "description": "永久删除当前插件的一条目录监控及其游标。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/rules/:id",
+      "category": "rules",
+      "risk": "dangerous",
+      "title": "删除同步规则",
+      "description": "删除一条同步规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/rules/:id/tree",
+      "category": "rules",
+      "risk": "dangerous",
+      "title": "清空规则目录树",
+      "description": "清空一条同步规则已生成的目录树。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/subscribe/pool/intents/:id",
+      "category": "subscriptions",
+      "risk": "dangerous",
+      "title": "取消聚合订阅",
+      "description": "取消一条聚合订阅意图。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/accounts/options",
+      "category": "115",
+      "risk": "read",
+      "title": "列出可用账号",
+      "description": "返回不含 Cookie 的主账号和备用号池选项。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/browse-dirs",
+      "category": "115",
+      "risk": "read",
+      "title": "浏览 115 目录树",
+      "description": "读取目标账号的目录树。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/directories",
+      "category": "115",
+      "risk": "read",
+      "title": "浏览 115 目录",
+      "description": "读取目标账号的目录列表。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/offline/download-path",
+      "category": "115",
+      "risk": "read",
+      "title": "查询默认离线目录",
+      "description": "查询目标账号的默认离线目录。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/offline/quota",
+      "category": "115",
+      "risk": "read",
+      "title": "查询离线额度",
+      "description": "查询目标账号的离线配额。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/offline/tasks",
+      "category": "115",
+      "risk": "read",
+      "title": "查询离线任务",
+      "description": "查询目标账号的离线任务。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/recyclebin",
+      "category": "115",
+      "risk": "read",
+      "title": "读取回收站",
+      "description": "读取目标账号的回收站列表。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/share-notlogin-quota",
+      "category": "115",
+      "risk": "read",
+      "title": "查询免登录转存额度",
+      "description": "查询目标账号的免登录转存配额。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/shares",
+      "category": "115",
+      "risk": "read",
+      "title": "列出分享链接",
+      "description": "读取目标账号创建的分享列表。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/shares/:share_code",
+      "category": "115",
+      "risk": "read",
+      "title": "读取分享详情",
+      "description": "读取一条分享的详情。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/shares/:share_code/access-users",
+      "category": "115",
+      "risk": "read",
+      "title": "读取分享领取记录",
+      "description": "读取一条分享的领取用户记录。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/shares/:share_code/download-details",
+      "category": "115",
+      "risk": "read",
+      "title": "读取分享下载明细",
+      "description": "读取一条分享的下载明细。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/115/status",
+      "category": "115",
+      "risk": "read",
+      "title": "查询 115 账号状态",
+      "description": "读取目标账号的在线状态。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/browse",
+      "category": "cd2",
+      "risk": "read",
+      "title": "浏览 CD2",
+      "description": "通过宿主已配置的 CD2 gRPC 连接浏览目录。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/cd2/clouds",
+      "category": "cd2",
+      "risk": "read",
+      "title": "列出 CD2 云盘",
+      "description": "读取宿主配置中可用的 CD2 云盘名称。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/emby-latest",
+      "category": "dashboard",
+      "risk": "read",
+      "title": "读取看板最新媒体",
+      "description": "读取看板最新入库媒体。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/library",
+      "category": "dashboard",
+      "risk": "read",
+      "title": "读取看板媒体库",
+      "description": "读取看板媒体库视图。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/quick-stats",
+      "category": "dashboard",
+      "risk": "read",
+      "title": "读取看板快报",
+      "description": "读取看板快速统计。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/resource-center-stats",
+      "category": "dashboard",
+      "risk": "read",
+      "title": "读取资源中心统计",
+      "description": "读取资源中心统计。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/stats",
+      "category": "dashboard",
+      "risk": "read",
+      "title": "读取看板统计",
+      "description": "读取看板汇总统计。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/sync-chart",
+      "category": "dashboard",
+      "risk": "read",
+      "title": "读取同步图表",
+      "description": "读取同步趋势图表数据。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/emby-control/libraries",
+      "category": "emby",
+      "risk": "read",
+      "title": "读取 Emby 控制媒体库",
+      "description": "读取 Emby 媒体库及同步配置。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/emby-control/status",
+      "category": "emby",
+      "risk": "read",
+      "title": "读取 Emby 控制状态",
+      "description": "读取 Emby 控制模块状态。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/history",
+      "category": "history",
+      "risk": "read",
+      "title": "读取操作历史",
+      "description": "读取宿主操作历史记录。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/history/stats",
+      "category": "history",
+      "risk": "read",
+      "title": "读取历史统计",
+      "description": "读取操作历史统计。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/local-dirs",
+      "category": "files",
+      "risk": "read",
+      "title": "浏览可选目录",
+      "description": "读取文件管理器可用目录。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/local-files",
+      "category": "files",
+      "risk": "read",
+      "title": "列出文件",
+      "description": "列出本地挂载或 CD2 挂载目录中的文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/local-files/batch-status",
+      "category": "files",
+      "risk": "read",
+      "title": "查询文件任务",
+      "description": "查询批量文件任务状态。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/local-files/organize-options",
+      "category": "files",
+      "risk": "read",
+      "title": "读取整理选项",
+      "description": "读取可用的整理目标和规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/local-files/raw",
+      "category": "files",
+      "risk": "read",
+      "title": "读取文件内容",
+      "description": "读取文件管理器中单个文件的内容（最大 10MB）。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/local-files/search",
+      "category": "files",
+      "risk": "read",
+      "title": "搜索文件",
+      "description": "在文件管理器中按名称搜索文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/local-files/tree",
+      "category": "files",
+      "risk": "read",
+      "title": "读取目录树",
+      "description": "读取本地挂载或 CD2 挂载目录树。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/categories",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理分类",
+      "description": "读取整理分类列表。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/categories/:id",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理分类详情",
+      "description": "读取一个整理分类的详情。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/category-templates",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取分类模板",
+      "description": "读取整理分类模板。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/config",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理配置",
+      "description": "读取文件整理配置。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/history",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理历史",
+      "description": "读取文件整理历史。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/history/:id/detail",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理详情",
+      "description": "读取一条整理历史详情。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/history/:id/manual-organize-context",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取手动整理上下文",
+      "description": "读取一条历史记录的手动整理上下文。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/jobs/:job_id/progress",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理进度",
+      "description": "读取一个整理任务的进度。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/queue",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理队列",
+      "description": "读取待整理队列。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/rules",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取整理规则",
+      "description": "读取文件整理规则列表。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/template-variables",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取模板变量",
+      "description": "读取整理路径模板可用变量。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/tmdb-cache/stats",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取 TMDB 缓存统计",
+      "description": "读取整理模块的 TMDB 缓存统计。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/tmdb/search",
+      "category": "organize",
+      "risk": "read",
+      "title": "整理模块搜索 TMDB",
+      "description": "使用宿主 TMDB 凭据搜索媒体。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/organize/wash-version/default",
+      "category": "organize",
+      "risk": "read",
+      "title": "读取洗版默认配置",
+      "description": "读取默认洗版配置。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/accounts/115",
+      "category": "plugin-transfer",
+      "risk": "read",
+      "title": "列出 115 账号选项",
+      "description": "列出当前插件可用的 115 账号选项。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/emby/episodes",
+      "category": "emby",
+      "risk": "read",
+      "title": "读取 Emby 缺集",
+      "description": "按实例、TMDB 剧集和季数读取已有集与缺集，不返回地址、密钥或路径。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/emby/instances",
+      "category": "emby",
+      "risk": "read",
+      "title": "列出 Emby 实例",
+      "description": "列出可供插件选择的已启用 Emby 实例，不返回服务器地址或 API Key。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/emby/items",
+      "category": "emby",
+      "risk": "read",
+      "title": "查询 Emby 媒体",
+      "description": "分页搜索或列出选定 Emby 实例中的安全媒体元数据。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/emby/items/:id",
+      "category": "emby",
+      "risk": "read",
+      "title": "读取 Emby 媒体详情",
+      "description": "读取选定 Emby 实例中的一条安全媒体元数据。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/emby/libraries",
+      "category": "emby",
+      "risk": "read",
+      "title": "读取 Emby 媒体库",
+      "description": "读取选定 Emby 实例的媒体库名称和类型，不返回媒体路径。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/emby/stats",
+      "category": "emby",
+      "risk": "read",
+      "title": "读取 Emby 统计",
+      "description": "读取选定 Emby 实例的媒体数量和在线统计。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/files/entries",
+      "category": "plugin-files",
+      "risk": "read",
+      "title": "列出目录条目",
+      "description": "按目录引用分页列出文件条目。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/files/entries/:entry_ref",
+      "category": "plugin-files",
+      "risk": "read",
+      "title": "读取条目详情",
+      "description": "读取一个文件条目的元数据。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/files/entries/:entry_ref/content",
+      "category": "plugin-files",
+      "risk": "read",
+      "title": "读取文件内容",
+      "description": "分页读取文件内容，支持 Range，单页最大 4MiB，可循环读取完整文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/files/roots",
+      "category": "plugin-files",
+      "risk": "read",
+      "title": "列出插件文件根",
+      "description": "列出当前插件可访问的本地与 CD2/AURA 挂载根目录。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/jobs/:job_ref",
+      "category": "plugin-jobs",
+      "risk": "read",
+      "title": "查询插件任务",
+      "description": "查询当前插件的一个异步任务状态。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/transfers/115/offline-quota",
+      "category": "plugin-transfer",
+      "risk": "read",
+      "title": "查询离线配额",
+      "description": "查询 115 离线配额。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/transfers/115/offline-tasks",
+      "category": "plugin-transfer",
+      "risk": "read",
+      "title": "查询离线任务",
+      "description": "查询 115 离线任务列表。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/transfers/115/share-previews/:preview_ref/items",
+      "category": "plugin-transfer",
+      "risk": "read",
+      "title": "列出分享条目",
+      "description": "列出分享预览中的条目。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-host/transfers/115/targets",
+      "category": "plugin-transfer",
+      "risk": "read",
+      "title": "列出转存目标",
+      "description": "列出 115 转存目标目录。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/storage",
+      "category": "plugin-runtime",
+      "risk": "read",
+      "title": "分页列出插件存储",
+      "description": "按键游标返回当前安装的存储元数据，不读取值。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/storage-usage",
+      "category": "plugin-runtime",
+      "risk": "read",
+      "title": "查询插件存储用量",
+      "description": "读取当前安装的键数、JSON 字节用量与配额，包含页面偏好。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/storage/:key",
+      "category": "plugin-runtime",
+      "risk": "read",
+      "title": "读取插件数据",
+      "description": "读取当前安装实例自己的持久化数据。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/watches",
+      "category": "plugin-runtime/watch",
+      "risk": "read",
+      "title": "查询目录监控",
+      "description": "读取当前插件创建的宿主目录监控任务。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/rules",
+      "category": "rules",
+      "risk": "read",
+      "title": "读取同步规则",
+      "description": "读取云盘同步规则列表。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/rules/:id/tree/stats",
+      "category": "rules",
+      "risk": "read",
+      "title": "读取规则目录统计",
+      "description": "读取一条同步规则的目录树统计。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/scheduler/jobs",
+      "category": "scheduler",
+      "risk": "read",
+      "title": "读取宿主任务",
+      "description": "读取宿主定时任务列表。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/air-calendar",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "读取追剧日历",
+      "description": "读取订阅播出日历。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/entry-settings",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "读取订阅入口设置",
+      "description": "读取订阅入口设置。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/history",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "读取订阅历史",
+      "description": "读取订阅执行历史。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/library-settings",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "读取媒体库订阅设置",
+      "description": "读取媒体库订阅设置。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/pool/intents",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "查询聚合订阅",
+      "description": "读取聚合订阅意图。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/pool/intents/:id",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "读取聚合订阅",
+      "description": "读取一条聚合订阅意图。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/pt-search-site-selection",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "读取订阅站点选择",
+      "description": "读取订阅搜索使用的站点选择。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/subscribe/records",
+      "category": "subscriptions",
+      "risk": "read",
+      "title": "查询订阅记录",
+      "description": "读取宿主订阅记录。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tasks",
+      "category": "tasks",
+      "risk": "read",
+      "title": "列出后台任务",
+      "description": "读取宿主后台任务列表。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tasks/:id",
+      "category": "tasks",
+      "risk": "read",
+      "title": "读取任务详情",
+      "description": "读取一个后台任务的详情。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/tmdb/discover/movie",
+      "category": "tmdb",
+      "risk": "read",
+      "title": "发现 TMDB 电影",
+      "description": "按条件发现电影。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/tmdb/discover/tv",
+      "category": "tmdb",
+      "risk": "read",
+      "title": "发现 TMDB 剧集",
+      "description": "按条件发现剧集。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/tmdb/genres",
+      "category": "tmdb",
+      "risk": "read",
+      "title": "查询 TMDB 类型",
+      "description": "读取电影和剧集类型。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/tmdb/movie/:id",
+      "category": "tmdb",
+      "risk": "read",
+      "title": "查询 TMDB 电影",
+      "description": "读取电影详情。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/tmdb/search",
+      "category": "tmdb",
+      "risk": "read",
+      "title": "搜索 TMDB",
+      "description": "搜索电影、剧集和人物。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/tmdb/trending",
+      "category": "tmdb",
+      "risk": "read",
+      "title": "查询 TMDB 趋势",
+      "description": "读取电影或剧集趋势。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/tmdb/tv/:id",
+      "category": "tmdb",
+      "risk": "read",
+      "title": "查询 TMDB 剧集",
+      "description": "读取剧集详情和季度信息。",
+      "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/workqueue/stats",
+      "category": "tasks",
+      "risk": "read",
+      "title": "读取工作队列统计",
+      "description": "读取宿主工作队列统计。",
+      "host_credentials": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/plugin-host/files/entries/:entry_ref",
+      "category": "plugin-files",
+      "risk": "dangerous",
+      "title": "重命名条目",
+      "description": "重命名一个文件或目录条目。",
+      "host_credentials": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/plugin-runtime/watches/:watch_ref",
+      "category": "plugin-runtime/watch",
+      "risk": "write",
+      "title": "更新目录监控",
+      "description": "更新当前插件的监控周期、事件主题、递归或启停状态。",
+      "host_credentials": false
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/subscribe/pool/intents/:id/episodes",
+      "category": "subscriptions",
+      "risk": "write",
+      "title": "更新订阅集数",
+      "description": "更新聚合订阅需要的集数。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/offline/add",
+      "category": "115",
+      "risk": "write",
+      "title": "创建离线任务",
+      "description": "将磁力、ED2K 或其他离线地址添加到指定目录。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/offline/clear",
+      "category": "115",
+      "risk": "dangerous",
+      "title": "清理离线任务",
+      "description": "批量清理目标账号中的离线任务。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/offline/delete",
+      "category": "115",
+      "risk": "dangerous",
+      "title": "删除离线任务",
+      "description": "删除目标账号中的离线任务。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/offline/pause",
+      "category": "115",
+      "risk": "write",
+      "title": "暂停离线任务",
+      "description": "暂停目标账号的离线任务。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/offline/restart",
+      "category": "115",
+      "risk": "write",
+      "title": "重试离线任务",
+      "description": "重新提交一个离线任务。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/offline/resume",
+      "category": "115",
+      "risk": "write",
+      "title": "恢复离线任务",
+      "description": "恢复目标账号的离线任务。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/recyclebin/clear",
+      "category": "115",
+      "risk": "dangerous",
+      "title": "清空回收站",
+      "description": "清空目标账号的回收站。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/recyclebin/delete",
+      "category": "115",
+      "risk": "dangerous",
+      "title": "彻底删除回收站文件",
+      "description": "从回收站彻底删除文件。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/recyclebin/revert",
+      "category": "115",
+      "risk": "write",
+      "title": "还原回收站文件",
+      "description": "还原回收站中的文件。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/share/receive",
+      "category": "115",
+      "risk": "write",
+      "title": "转存 115 分享",
+      "description": "将 115 分享链接转存到目标账号的指定目录。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/shares/:share_code/activate",
+      "category": "115",
+      "risk": "write",
+      "title": "激活分享",
+      "description": "激活一条分享。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/shares/:share_code/renew",
+      "category": "115",
+      "risk": "write",
+      "title": "续期分享",
+      "description": "续期一条分享。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/115/shares/:share_code/update",
+      "category": "115",
+      "risk": "write",
+      "title": "更新分享设置",
+      "description": "更新一条分享的有效期等设置。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/emby-control/items/:id/refresh",
+      "category": "emby",
+      "risk": "write",
+      "title": "刷新 Emby 媒体",
+      "description": "刷新一个 Emby 媒体的元数据。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/emby-control/library/refresh",
+      "category": "emby",
+      "risk": "write",
+      "title": "刷新 Emby 媒体库",
+      "description": "刷新 Emby 媒体库。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/library/check-owned",
+      "category": "files",
+      "risk": "read",
+      "title": "检查媒体库是否已存在",
+      "description": "按 TMDB 信息检查媒体是否已入库。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/batch",
+      "category": "files",
+      "risk": "dangerous",
+      "title": "批量管理文件",
+      "description": "批量复制、移动或删除文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/copy",
+      "category": "files",
+      "risk": "write",
+      "title": "复制文件",
+      "description": "按宿主规则在本地挂载或 CD2 之间复制文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/mkdir",
+      "category": "files",
+      "risk": "write",
+      "title": "创建目录",
+      "description": "在文件管理器中创建目录。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/move",
+      "category": "files",
+      "risk": "dangerous",
+      "title": "移动文件",
+      "description": "按宿主规则在本地挂载或 CD2 之间移动文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/organize",
+      "category": "files",
+      "risk": "dangerous",
+      "title": "整理文件",
+      "description": "调用宿主文件整理能力。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/recognize",
+      "category": "files",
+      "risk": "write",
+      "title": "识别媒体文件",
+      "description": "调用宿主识别能力分析文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/rename",
+      "category": "files",
+      "risk": "dangerous",
+      "title": "重命名文件",
+      "description": "重命名文件或目录。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/rename/execute",
+      "category": "files",
+      "risk": "dangerous",
+      "title": "执行批量重命名",
+      "description": "执行批量重命名。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/rename/preview",
+      "category": "files",
+      "risk": "read",
+      "title": "预览重命名",
+      "description": "预览批量重命名结果。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/scrape",
+      "category": "files",
+      "risk": "write",
+      "title": "刮削文件",
+      "description": "调用宿主刮削能力处理文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/local-files/upload",
+      "category": "files-upload",
+      "risk": "write",
+      "title": "上传文件",
+      "description": "以 multipart 表单上传文件到文件管理器目录。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/notifications/plugin",
+      "category": "notifications",
+      "risk": "write",
+      "title": "发送插件通知",
+      "description": "通过宿主 Telegram 通知配置反馈插件任务结果。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/organize/history/:id/manual-organize",
+      "category": "organize",
+      "risk": "write",
+      "title": "手动整理",
+      "description": "对一条历史记录执行手动整理。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/organize/history/:id/rename-source",
+      "category": "organize",
+      "risk": "write",
+      "title": "重命名整理来源",
+      "description": "修正一条历史记录的来源名称。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/organize/retry-failed",
+      "category": "organize",
+      "risk": "write",
+      "title": "重试失败整理",
+      "description": "重试失败的整理任务。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/organize/rules",
+      "category": "organize",
+      "risk": "write",
+      "title": "创建整理规则",
+      "description": "创建文件整理规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/organize/rules/:id/scan",
+      "category": "organize",
+      "risk": "write",
+      "title": "扫描整理规则",
+      "description": "扫描一条整理规则的待处理文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/organize/rules/:id/submit",
+      "category": "organize",
+      "risk": "write",
+      "title": "提交整理任务",
+      "description": "提交一条整理规则的执行任务。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/organize/rules/:id/trigger",
+      "category": "organize",
+      "risk": "write",
+      "title": "触发整理规则",
+      "description": "立即执行一条整理规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/accounts/115/selections",
+      "category": "plugin-transfer",
+      "risk": "write",
+      "title": "创建账号选择",
+      "description": "创建一个有有效期的 115 账号选择引用。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/files/directories",
+      "category": "plugin-files",
+      "risk": "write",
+      "title": "创建目录",
+      "description": "在可写根目录下创建目录。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/files/downloads",
+      "category": "plugin-files",
+      "risk": "write",
+      "title": "下载文件到目录",
+      "description": "把远程文件流式下载到指定本地可写目录（排除 CD2/AURA 挂载），返回任务引用。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/files/operations",
+      "category": "plugin-files",
+      "risk": "dangerous",
+      "title": "复制或移动",
+      "description": "异步复制或移动文件条目，返回任务引用。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/jobs/:job_ref/cancel",
+      "category": "plugin-jobs",
+      "risk": "write",
+      "title": "取消插件任务",
+      "description": "取消当前插件的一个异步任务；仍有恢复记录的 failed/attention_required 任务也可取消，原子清空检查点并停止后续恢复。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/transfers/115/offline-downloads",
+      "category": "plugin-transfer",
+      "risk": "write",
+      "title": "创建离线下载",
+      "description": "向账号选择指向的账号提交离线下载。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/transfers/115/share-previews",
+      "category": "plugin-transfer",
+      "risk": "read",
+      "title": "预览 115 分享",
+      "description": "解析 115 分享链接并创建预览。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/transfers/115/share-receives",
+      "category": "plugin-transfer",
+      "risk": "write",
+      "title": "接收 115 分享",
+      "description": "把 115 分享转存到账号选择指向的目录。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-host/transfers/115/targets",
+      "category": "plugin-transfer",
+      "risk": "write",
+      "title": "创建转存目标",
+      "description": "创建 115 转存目标目录引用。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-runtime/watches",
+      "category": "plugin-runtime/watch",
+      "risk": "write",
+      "title": "创建目录监控",
+      "description": "由宿主持久化轮询本地、CD2 或 115 目录，并向插件投递变化事件。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-runtime/watches/:watch_ref/resync",
+      "category": "plugin-runtime/watch",
+      "risk": "dangerous",
+      "title": "重建目录监控基线",
+      "description": "清空监控游标并从当前目录状态重新建立基线。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-runtime/watches/:watch_ref/retry",
+      "category": "plugin-runtime/watch",
+      "risk": "write",
+      "title": "重试目录事件",
+      "description": "立即重试最近待投递或进入死信的目录变化事件。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules",
+      "category": "rules",
+      "risk": "write",
+      "title": "创建同步规则",
+      "description": "创建云盘同步规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules/:id/clean-orphans",
+      "category": "rules",
+      "risk": "dangerous",
+      "title": "清理孤立文件",
+      "description": "清理一条规则产生的孤立文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules/:id/full-sync",
+      "category": "rules",
+      "risk": "write",
+      "title": "全量同步规则",
+      "description": "全量执行一条同步规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules/:id/generate-strm",
+      "category": "rules",
+      "risk": "write",
+      "title": "生成 STRM",
+      "description": "为一条同步规则生成 STRM 文件。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules/:id/sync",
+      "category": "rules",
+      "risk": "write",
+      "title": "同步规则",
+      "description": "执行一条同步规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules/:id/sync-metadata",
+      "category": "rules",
+      "risk": "write",
+      "title": "同步元数据",
+      "description": "同步一条规则的元数据。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules/:id/toggle",
+      "category": "rules",
+      "risk": "write",
+      "title": "启停同步规则",
+      "description": "启用或停用一条同步规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/rules/sync-all",
+      "category": "rules",
+      "risk": "write",
+      "title": "同步全部规则",
+      "description": "执行全部同步规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/scheduler/jobs/trigger",
+      "category": "scheduler",
+      "risk": "write",
+      "title": "触发宿主任务",
+      "description": "立即触发一个宿主定时任务。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscribe/batch-delete",
+      "category": "subscriptions",
+      "risk": "dangerous",
+      "title": "批量删除订阅",
+      "description": "批量删除订阅记录。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscribe/delete-by-media",
+      "category": "subscriptions",
+      "risk": "dangerous",
+      "title": "按媒体删除订阅",
+      "description": "按媒体删除订阅记录。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/subscribe/pool/intents",
+      "category": "subscriptions",
+      "risk": "write",
+      "title": "创建聚合订阅",
+      "description": "创建聚合订阅意图。",
+      "host_credentials": false
+    },
+    {
+      "method": "POST",
+      "path": "/api/tasks/:id/cancel",
+      "category": "tasks",
+      "risk": "write",
+      "title": "取消任务",
+      "description": "取消一个后台任务。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/organize/rules/:id",
+      "category": "organize",
+      "risk": "write",
+      "title": "更新整理规则",
+      "description": "更新一条整理规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/plugin-host/files/entries/:entry_ref/content",
+      "category": "plugin-files",
+      "risk": "write",
+      "title": "写入文件内容",
+      "description": "按偏移写入本地文件内容，单次最大 4MiB。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/plugin-runtime/storage/:key",
+      "category": "plugin-runtime",
+      "risk": "write",
+      "title": "保存插件数据",
+      "description": "保存当前安装实例自己的持久化数据。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/rules/:id",
+      "category": "rules",
+      "risk": "write",
+      "title": "更新同步规则",
+      "description": "更新一条同步规则。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/subscribe/entry-settings",
+      "category": "subscriptions",
+      "risk": "write",
+      "title": "更新订阅入口设置",
+      "description": "更新订阅入口设置。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/subscribe/library-settings",
+      "category": "subscriptions",
+      "risk": "write",
+      "title": "更新媒体库订阅设置",
+      "description": "更新媒体库订阅设置。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/subscribe/pt-search-site-selection",
+      "category": "subscriptions",
+      "risk": "write",
+      "title": "更新订阅站点选择",
+      "description": "更新订阅搜索使用的站点选择。",
+      "host_credentials": false
+    }
+  ]
+}

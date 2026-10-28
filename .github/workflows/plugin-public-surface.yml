@@ -76,3 +76,34 @@ jobs:
       # A complete WASM build additionally requires TinyGo and Binaryen.
       # The private host suite verifies actual WASM execution; authors can run
       # npm run release locally with the documented toolchain and signing key.
+
+  plugin-dev-skill:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout public tree
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: docs/plugin-platform/examples/sdk/go.mod
+          cache: false
+      - name: Verify generated skill kit matches public sources
+        run: node docs/plugin-platform/conformance/sync-dev-skill.mjs --check
+      - name: Verify skill resources and scaffolding behaviors
+        run: |
+          node docs/plugin-platform/examples/dian115-plugin-dev/scripts/verify.mjs
+          node --test docs/plugin-platform/examples/dian115-plugin-dev/scripts/scaffold.test.mjs
+      - name: Generate a standalone minimal plugin
+        run: node docs/plugin-platform/examples/dian115-plugin-dev/scripts/init.mjs --dir "$RUNNER_TEMP/plugin-skill-smoke" --id dev.ci.skill-smoke --name "Skill smoke" --publisher "CI Test"
+      - name: Test and build the generated plugin UI
+        working-directory: ${{ runner.temp }}/plugin-skill-smoke
+        run: |
+          npm ci
+          npm test
+          go test ./runtime
+          npm run build:ui
+          npm run check:contract

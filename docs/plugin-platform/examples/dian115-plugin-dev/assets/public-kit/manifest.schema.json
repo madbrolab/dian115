@@ -1,0 +1,512 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/madbrolab/dian115/main/docs/plugin-platform/manifest.schema.json",
+  "title": "DIAN115 Plugin Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "version",
+    "description",
+    "default_locale",
+    "publisher",
+    "compatibility",
+    "runtime",
+    "permissions",
+    "ui"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 128,
+      "pattern": "^(?!.*\\.\\.)[a-z0-9](?:[a-z0-9.-]{0,126}[a-z0-9])?$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(?:\\+[0-9A-Za-z-]+(?:\\.[0-9A-Za-z-]+)*)?$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "default_locale": {
+      "type": "string",
+      "description": "Language of package-authored manifest and UI text in v1.",
+      "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"
+    },
+    "publisher": {
+      "$ref": "#/$defs/publisher"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility"
+    },
+    "runtime": {
+      "$ref": "#/$defs/wasmRuntime",
+      "description": "The signed runtime executes inside the DIAN115 container. WASM is the only supported isolation boundary."
+    },
+    "permissions": {
+      "$ref": "#/$defs/permissions"
+    },
+    "ui": {
+      "$ref": "#/$defs/ui"
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 3,
+        "maxLength": 80,
+        "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+      }
+    },
+    "jobs": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/job"
+      }
+    },
+    "telegram": {
+      "$ref": "#/$defs/telegram"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "maxLength": 500
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https?://",
+      "maxLength": 500
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "tags": {
+      "type": "array",
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 40
+      }
+    }
+  },
+  "$defs": {
+    "publisher": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "key_id"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "key_id": {
+          "type": "string",
+          "minLength": 12,
+          "maxLength": 160,
+          "pattern": "^ed25519:[A-Za-z0-9_-]+$"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https?://",
+          "maxLength": 500
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dian115",
+        "plugin_api"
+      ],
+      "properties": {
+        "dian115": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "description": "Masterminds-style SemVer constraint checked against the running DIAN115 version."
+        },
+        "plugin_api": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40,
+          "description": "Masterminds-style SemVer constraint checked against Plugin API 2.0.0."
+        }
+      }
+    },
+    "wasmRuntime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "entry",
+        "protocol"
+      ],
+      "properties": {
+        "kind": {
+          "const": "wasm"
+        },
+        "entry": {
+          "$ref": "#/$defs/packagePath",
+          "description": "WASM module with the dian115_handle ABI."
+        },
+        "protocol": {
+          "const": "dian115:wasm@1"
+        },
+        "startup_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 30000
+        },
+        "shutdown_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 60000,
+          "default": 5000
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 120000,
+          "default": 30000
+        },
+        "background_timeout_ms": {
+          "type": "integer",
+          "minimum": 1000,
+          "maximum": 3600000,
+          "default": 300000
+        },
+        "memory_mb": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 512,
+          "default": 64
+        },
+        "max_concurrency": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "default": 4
+        },
+        "restart_policy": {
+          "const": "on-failure",
+          "default": "on-failure"
+        },
+        "resident": {
+          "type": "boolean",
+          "default": false,
+          "description": "常驻模式：为 WASM 插件额外实例化一个长期运行的模块，执行一次不限时的 resident 后台调用，让插件像本机模块一样持续运行定时器、轮询和事件循环。"
+        }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "description": "安装时整体确认的精确宿主接口声明。插件模块不能创建网络 socket；任意 HTTP/HTTPS 请求（包括本机、容器和局域网目标）均通过宿主网络 Broker。network 用于声明特定地址的代理路由偏好，未声明地址默认跟随宿主规则。",
+      "additionalProperties": false,
+      "required": [
+        "apis"
+      ],
+      "properties": {
+        "apis": {
+          "type": "array",
+          "maxItems": 512,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/apiPermission"
+          }
+        },
+        "network": {
+          "type": "array",
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/networkPermission"
+          }
+        },
+        "host_access": {
+          "type": "string",
+          "enum": [
+            "standard",
+            "extended"
+          ],
+          "default": "standard",
+          "description": "standard 只允许调用已发布的 Host API 目录；extended 经管理员安装时明确同意后，允许调用除凭证、认证、系统安全与插件管理之外的全部 /api 路由。extended 声明的接口不受目录限制，但响应会经过通用密钥脱敏。"
+        }
+      }
+    },
+    "apiPermission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "path",
+        "reason"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "GET",
+            "HEAD",
+            "POST",
+            "PUT",
+            "PATCH",
+            "DELETE"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 240,
+          "pattern": "^/api/[A-Za-z0-9._~:/{}?=&-]+$"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false,
+          "description": "为 true 时，宿主不提供该接口不再导致安装失败；该声明被记录为不可用，调用时返回清晰错误。"
+        }
+      }
+    },
+    "networkPermission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "reason"
+      ],
+      "properties": {
+        "origin": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240,
+          "pattern": "^https?://[^/]+$"
+        },
+        "methods": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 6,
+          "uniqueItems": true,
+          "default": [
+            "GET"
+          ],
+          "items": {
+            "type": "string",
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "PATCH",
+              "DELETE",
+              "HEAD"
+            ]
+          }
+        },
+        "proxy_mode": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "system",
+            "required"
+          ],
+          "default": "system"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        }
+      }
+    },
+    "ui": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Plugin UI exposed as a signed Vue Module Federation page.",
+      "required": [
+        "mode",
+        "federation"
+      ],
+      "properties": {
+        "mode": {
+          "const": "federation"
+        },
+        "icon": {
+          "$ref": "#/$defs/packagePath"
+        },
+        "federation": {
+          "$ref": "#/$defs/federation"
+        }
+      }
+    },
+    "federation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entry",
+        "assets_root"
+      ],
+      "properties": {
+        "entry": {
+          "$ref": "#/$defs/packagePath",
+          "description": "Signed ESM remoteEntry.js path inside assets_root."
+        },
+        "assets_root": {
+          "$ref": "#/$defs/packagePath",
+          "description": "Directory containing remoteEntry.js and every imported JS/CSS asset."
+        },
+        "module": {
+          "type": "string",
+          "pattern": "^\\./[A-Za-z][A-Za-z0-9_-]{0,79}$",
+          "default": "./AppPage",
+          "description": "Vue component expose loaded by the host. Defaults to ./AppPage when omitted."
+        }
+      }
+    },
+    "telegram": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "commands": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "command"
+            ],
+            "properties": {
+              "command": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 32,
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 200
+              }
+            }
+          }
+        },
+        "keywords": {
+          "type": "array",
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "keyword"
+            ],
+            "properties": {
+              "keyword": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "match": {
+                "type": "string",
+                "enum": [
+                  "exact",
+                  "prefix",
+                  "contains"
+                ],
+                "default": "exact"
+              }
+            }
+          }
+        }
+      },
+      "description": "Telegram routes the host matches before the plugin is loaded. Declaring them here (instead of registering at runtime) is what lets the host keep a Telegram plugin unloaded until a message arrives."
+    },
+    "job": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "handler"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+        },
+        "handler": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$"
+        },
+        "default_schedule": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 100,
+          "pattern": "^(?:$|(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?)(?:,(?:\\*(?:/(?:[1-9]|[1-5][0-9]))?|(?:[0-9]|[1-5][0-9])(?:-(?:[0-9]|[1-5][0-9]))?(?:/(?:[1-9]|[1-5][0-9]))?))* (?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-9]|2[0-3]))?|(?:[0-9]|1[0-9]|2[0-3])(?:-(?:[0-9]|1[0-9]|2[0-3]))?(?:/(?:[1-9]|1[0-9]|2[0-3]))?))* (?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?)(?:,(?:\\*(?:/(?:[1-9]|[12][0-9]|3[01]))?|(?:[1-9]|[12][0-9]|3[01])(?:-(?:[1-9]|[12][0-9]|3[01]))?(?:/(?:[1-9]|[12][0-9]|3[01]))?))* (?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?)(?:,(?:\\*(?:/(?:[1-9]|1[0-2]))?|(?:[1-9]|1[0-2])(?:-(?:[1-9]|1[0-2]))?(?:/(?:[1-9]|1[0-2]))?))* (?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?)(?:,(?:\\*(?:/[1-6])?|[0-6](?:-[0-6])?(?:/[1-6])?))*)$",
+          "description": "可省略或为空以仅接受手动后台调用；提供非空值时使用五字段数字 cron，最短五分钟，日和星期不能同时限制。"
+        },
+        "allow_overlap": {
+          "type": "boolean",
+          "default": false
+        },
+        "recovery_handler": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$",
+          "description": "Optional read-only recover callback. Explicitly verifies upstream state before returning resume, complete, or attention_required."
+        }
+      }
+    },
+    "packagePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\:\\u0000])(?!.*(?:[. ])(?:/|$)).+$"
+    }
+  }
+}

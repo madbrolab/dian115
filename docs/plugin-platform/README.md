@@ -1,6 +1,8 @@
 # DIAN115 Plugin API v2
 
 This directory is the complete public contract for third-party plugins. It is intentionally source-free: the main application's implementation is private and is never required for plugin development. The permanent publication boundary is defined in [publication-policy.md](publication-policy.md).
+开发者可安装 [第三方插件开发 Skill](skill-installation.md)，使用固定公开契约、最小模板和检查工具创建插件。
+
 ## Supported plugin shape
 
 Every plugin is one signed `.d115p` ZIP containing both parts below:

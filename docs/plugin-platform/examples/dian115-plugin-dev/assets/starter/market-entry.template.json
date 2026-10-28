@@ -1,0 +1,23 @@
+{
+  "id": "example.complete-plugin",
+  "name": "完整插件示例",
+  "version": "1.0.0",
+  "description": "最小第三方插件：受管页面偏好和只读状态检查。",
+  "author": "Example Publisher",
+  "homepage": "https://example.com/plugins/complete-plugin",
+  "package_url": "https://example.invalid/releases/example.complete-plugin-1.0.0.d115p",
+  "sha256": "REPLACED_BY_PACKAGER",
+  "runtime": {
+    "kind": "wasm",
+    "protocol": "dian115:wasm@1",
+    "autostart": true,
+    "trust_level": "wasm-sandbox"
+  },
+  "permissions": {
+    "apis": [],
+    "network": []
+  },
+  "tags": [
+    "utility"
+  ]
+}

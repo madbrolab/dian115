@@ -1,0 +1,4 @@
+interface:
+  display_name: "DIAN115 第三方插件开发"
+  short_description: "创建、测试和签名打包符合公开协议的轻量 DIAN115 第三方插件"
+  default_prompt: "使用 $dian115-plugin-dev，根据需求开发、验证并打包一个轻量稳定的 DIAN115 第三方插件。"
