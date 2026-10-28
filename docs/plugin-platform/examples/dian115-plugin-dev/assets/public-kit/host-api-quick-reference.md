@@ -1,6 +1,6 @@
 # 宿主接口速查表
 
-从 [OpenAPI](openapi-v1.yaml) 的公开目录生成，共 166 项。安装时声明精确的方法和路径模板；调用方式见 [Host Call v2](host-call-v2.md)。
+从 [OpenAPI](openapi-v1.yaml) 的公开目录生成，共 173 项。安装时声明精确的方法和路径模板；调用方式见 [Host Call v2](host-call-v2.md)。
 
 网络声明是代理路由偏好。扩展访问与可选接口规则见开发指南；下表描述标准目录。
 
@@ -195,6 +195,18 @@
 | POST | `/api/organize/rules/:id/submit` | 提交整理任务：提交一条整理规则的执行任务。 | 写入 | 否 |
 | POST | `/api/organize/rules/:id/trigger` | 触发整理规则：立即执行一条整理规则。 | 写入 | 否 |
 | PUT | `/api/organize/rules/:id` | 更新整理规则：更新一条整理规则。 | 写入 | 否 |
+
+## plugin-http
+
+| 方法 | 路径模板 | 用途 | 风险 | 宿主管理凭据 |
+| --- | --- | --- | --- | --- |
+| GET | `/api/plugin-runtime/http/cookies` | 读取站点 Cookie：读取当前插件会话中匹配目标 URL 的 Cookie。 | 读取 | 否 |
+| PUT | `/api/plugin-runtime/http/cookies` | 写入站点 Cookie：向当前插件会话应用独立 Set-Cookie 值。 | 写入 | 否 |
+| DELETE | `/api/plugin-runtime/http/cookies` | 清空站点会话：清空当前插件的一个 HTTP Cookie 会话。 | 删除或不可逆操作 | 否 |
+| GET | `/api/plugin-runtime/http/cookiecloud` | 读取本地 CookieCloud 概况：读取本地 CookieCloud 的域名、数量和写入版本，不返回全局密码。 | 读取 | 是 |
+| POST | `/api/plugin-runtime/http/cookiecloud/import` | 导入本地 CookieCloud：把指定域名的 Cookie 复制到当前插件会话。 | 读取 | 是 |
+| POST | `/api/plugin-runtime/http/cookiecloud/export` | 写回本地 CookieCloud：按指定域名合并写回共享 CookieCloud，并检查版本防止覆盖并发上传。 | 删除或不可逆操作 | 是 |
+| POST | `/api/plugin-runtime/http/render` | 按需渲染站点页面：使用已配置的 FlareSolverr 取页并保存当前插件会话 Cookie。 | 读取 | 是 |
 
 ## plugin-runtime
 

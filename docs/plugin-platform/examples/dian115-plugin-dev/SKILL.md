@@ -27,6 +27,7 @@ node <skill>/scripts/init.mjs --dir <new-directory> --id <publisher.plugin> --na
 先读 [实现路线](references/development.md)，然后只加载相关专项：
 
 - 选择接口、HTTP 错误、网络和授权： [接口和权限](references/apis.md)。`node <skill>/scripts/api.mjs --query <词语> [--method GET] [--json]` 检索固定目录；精确请求/响应读 [OpenAPI](assets/public-kit/openapi-v1.yaml)，不要只看接口标题。
+- 站点登录、自动 Set-Cookie、多账号会话、CookieCloud 与按需 FlareSolverr： [HTTP 会话](references/http.md)。优先 HTTP，不为 Cookie 保活引入浏览器或常驻任务。
 - 配置、并发写入、分页、凭据、卸载： [数据生命周期](references/storage.md)。
 - 副作用、长任务、取消、异常退出恢复： [调用与恢复](references/recovery.md)。
 - 页面、受管偏好、主题、错误界面： [页面接入](references/ui.md)。

@@ -34,6 +34,41 @@
         "method": "PUT",
         "path": "/api/plugin-runtime/storage/:key",
         "reason": "保存插件自己的 Host Storage 示例数据"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plugin-runtime/http/cookies",
+        "reason": "Read this installation cookie session"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/plugin-runtime/http/cookies",
+        "reason": "Set this installation cookie session"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/plugin-runtime/http/cookies",
+        "reason": "Explicitly clear this account session"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plugin-runtime/http/cookiecloud",
+        "reason": "Inspect local CookieCloud domains"
+      },
+      {
+        "method": "POST",
+        "path": "/api/plugin-runtime/http/cookiecloud/import",
+        "reason": "Explicitly import a selected domain"
+      },
+      {
+        "method": "POST",
+        "path": "/api/plugin-runtime/http/cookiecloud/export",
+        "reason": "Explicitly write selected domains back"
+      },
+      {
+        "method": "POST",
+        "path": "/api/plugin-runtime/http/render",
+        "reason": "Render on demand using configured FlareSolverr"
       }
     ],
     "network": [
@@ -44,6 +79,15 @@
         ],
         "proxy_mode": "system",
         "reason": "演示通过宿主 Broker 访问容器内或局域网本地服务"
+      },
+      {
+        "origin": "https://site.example",
+        "methods": [
+          "GET",
+          "POST"
+        ],
+        "proxy_mode": "system",
+        "reason": "Declare the example site scope for explicit CookieCloud actions"
       }
     ]
   },

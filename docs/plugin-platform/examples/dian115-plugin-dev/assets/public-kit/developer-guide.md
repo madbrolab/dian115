@@ -88,7 +88,7 @@ The UI and runtime are both required:
     "key_id": "ed25519:REPLACED_BY_PACKAGER"
   },
   "compatibility": {
-    "dian115": ">=5.0.46 <6.0.0",
+    "dian115": ">=5.0.53 <6.0.0",
     "plugin_api": "^2.0"
   },
   "runtime": {
@@ -392,3 +392,7 @@ Do not mistake the 8 MiB Host Call body limit for the 256 KiB business payload l
 
 
 排查首次打开、恢复、存储或卸载问题时，按 [插件排错](troubleshooting.md) 根据错误码处理。
+
+## 需要登录的第三方站点
+
+先采用 [HTTP 会话](http-sessions-v1.md)：宿主自动接收 Set-Cookie、持久保存登录状态；多账号分配独立 cookie_session。CookieCloud 导入和写回通过公开接口完成，不复制全局 Key/密码到插件，不调用 PT 导入端点。只有站点确实需要渲染时才调用 render 复用外部 FlareSolverr；DIAN115 不内置 Chromium。初始化、state 与唤醒不自动登录、不写回共享 CookieCloud。

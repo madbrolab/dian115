@@ -1,5 +1,5 @@
 {
-  "openapi_sha256": "e42fe7b22991499b7865059a92440bb2c24b00c2b5be75084cfb6fb264f1d234",
+  "openapi_sha256": "5cc4017d29fc70be3201c244c1b06eeb088637aa43e4c32e06e2265a952c0c35",
   "entries": [
     {
       "method": "DELETE",
@@ -1494,6 +1494,69 @@
       "title": "更新订阅站点选择",
       "description": "更新订阅搜索使用的站点选择。",
       "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/http/cookies",
+      "category": "plugin-http",
+      "risk": "read",
+      "title": "读取站点 Cookie",
+      "description": "读取当前插件会话中匹配目标 URL 的 Cookie。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/plugin-runtime/http/cookies",
+      "category": "plugin-http",
+      "risk": "write",
+      "title": "写入站点 Cookie",
+      "description": "向当前插件会话应用独立 Set-Cookie 值。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/plugin-runtime/http/cookies",
+      "category": "plugin-http",
+      "risk": "dangerous",
+      "title": "清空站点会话",
+      "description": "清空当前插件的一个 HTTP Cookie 会话。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/http/cookiecloud",
+      "category": "plugin-http",
+      "risk": "read",
+      "title": "读取本地 CookieCloud 概况",
+      "description": "读取本地 CookieCloud 的域名、数量和写入版本，不返回全局密码。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-runtime/http/cookiecloud/import",
+      "category": "plugin-http",
+      "risk": "read",
+      "title": "导入本地 CookieCloud",
+      "description": "把指定域名的 Cookie 复制到当前插件会话。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-runtime/http/cookiecloud/export",
+      "category": "plugin-http",
+      "risk": "dangerous",
+      "title": "写回本地 CookieCloud",
+      "description": "按指定域名合并写回共享 CookieCloud，并检查版本防止覆盖并发上传。",
+      "host_credentials": true
+    },
+    {
+      "method": "POST",
+      "path": "/api/plugin-runtime/http/render",
+      "category": "plugin-http",
+      "risk": "read",
+      "title": "按需渲染站点页面",
+      "description": "使用已配置的 FlareSolverr 取页并保存当前插件会话 Cookie。",
+      "host_credentials": true
     }
   ]
 }

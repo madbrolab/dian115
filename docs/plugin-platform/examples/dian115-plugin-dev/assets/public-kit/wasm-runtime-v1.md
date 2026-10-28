@@ -116,7 +116,7 @@ Telegram 命令和关键词在 Manifest 声明，宿主在未加载 guest 时也
 | host.job.current | 当前可恢复后台任务的引用、稳定业务 ID、检查点和核对阶段；普通调用返回 job:null |
 | host.job.checkpoint | 当前可恢复任务原子提交不超过 16 KiB 的 JSON 检查点及 0–100 进度；核对阶段拒绝 |
 
-支持 `host_call_timeout_ms` 特性的宿主允许每次 host.call 带 1–10000 毫秒 timeout_ms。先查询 capabilities，旧宿主不认识字段时省略；嵌套调用的执行期限不会超出外层调用。
+支持 `host_call_timeout_ms` 特性的宿主允许每次 host.call 带 1–30000 毫秒 timeout_ms。先查询 capabilities，缺少特性时提示升级宿主；嵌套调用的执行期限不会超出外层调用。
 
 ## 资源预算与错误
 

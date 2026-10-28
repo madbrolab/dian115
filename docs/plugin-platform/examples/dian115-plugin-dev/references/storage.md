@@ -1,5 +1,7 @@
 # 数据生命周期
 
+HTTP Cookie 使用宿主加密会话，不计入普通 KV；按安装和账号隔离，卸载清空。CookieCloud 的私有导入副本与对共享服务的业务写回分别处理，见 [HTTP 会话](http.md)。
+
 业务配置、规则和业务状态通过 Host Storage 保存；页面筛选/布局等用 `api.storage`。凭据按公开绑定协议管理，持久记录保存允许的引用。`/package` 是只读包资源；页面内存和 guest 全局变量是临时状态，不能当持久数据库。不能依赖可写宿主目录、浏览器 localStorage/IndexedDB 或私有数据库表。
 
 先设计小而明确的 JSON，例如 `{schema_version:1,rules:[...],operation_ref:"..."}`。schema_version 是业务格式版本；KV revision/ETag 是并发版本，不能混用。读取 404 表示没有配置，其他错误应展示并暂停相关写入，不能当空配置覆盖已有数据。升级需要格式变化时写明确转换及冲突处理；不增加已废弃平台协议的兼容层。

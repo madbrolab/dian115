@@ -12,7 +12,7 @@
     "url": "https://example.com/plugins"
   },
   "compatibility": {
-    "dian115": ">=5.0.46 <6.0.0",
+    "dian115": ">=5.0.53 <6.0.0",
     "plugin_api": "^2.0"
   },
   "runtime": {
