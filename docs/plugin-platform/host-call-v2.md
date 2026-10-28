@@ -48,9 +48,10 @@
 | `headers` | 否 | 单值 header map；规则因本地/外部请求不同 |
 | `body_base64` | 否 | 标准 Base64；请求接受 padded/unpadded，响应固定 unpadded |
 | `credential_ref` | 否 | 外部 HTTP/HTTPS 可用的安装实例托管凭据引用；使用 HTTP 时秘密会以明文传输 |
-| `timeout_ms` | 否 | 当前 Host Call 的时间上限，1–10000 毫秒；省略或 0 使用既有默认值，实际截止时间不会晚于本次插件执行的截止时间 |
+| `cookie_session` | 否 | 外部 HTTP 的受管 Cookie 会话，默认 `default`，`none` 对本次请求关闭；不同账号使用不同名称。见 [HTTP 会话协议](http-sessions-v1.md) |
+| `timeout_ms` | 否 | 当前 Host Call 的时间上限，1–30000 毫秒；省略或 0 使用既有默认值，实际截止时间不会晚于本次插件执行的截止时间 |
 
-发送 `timeout_ms` 前先调用 `host.capabilities`，仅当 `result.features.host_call_timeout_ms` 为 `true` 时使用该字段。旧宿主拒绝未知字段，未声明能力时应省略它。此扩展保持 `dian115:wasm@1` ABI 不变。批量插件应将剩余时间传给每次嵌套调用，耗尽预算后保留未确认状态，避免把超时当成业务否定结果。截止时间通过请求上下文传递；本地 Handler 必须将该上下文继续传给下游网络调用。
+发送 `timeout_ms` 前先调用 `host.capabilities`，仅当 `result.features.host_call_timeout_ms` 为 `true` 时使用该字段。未提供该特性时提示升级宿主，不加入旧字段兼容路径。此扩展保持 `dian115:wasm@1` ABI 不变。批量插件应将剩余时间传给每次嵌套调用，耗尽预算后保留未确认状态，避免把超时当成业务否定结果。截止时间通过请求上下文传递；本地 Handler 必须将该上下文继续传给下游网络调用。
 
 JSON 解码器拒绝未知字段和尾随 JSON。JSON-RPC 帧上限为 16 MiB；解码后的 Host Call 请求正文和返回正文上限均为 8 MiB。该上限只防止异常插件耗尽主容器内存，不再把正常数据限制在 256 KiB；列表接口仍应使用各自的分页参数。
 
@@ -219,13 +220,13 @@ GET /api/plugin-host/emby/items/:id
 }
 ```
 
-地址访问没有 origin 白名单。任何安装实例都能通过 Broker 请求任意 HTTP/HTTPS 地址，包括互联网、局域网、宿主机、容器、`localhost`、loopback 和插件可达的本地项目；Manifest `permissions.network` 只提供代理路由偏好。以下边界始终存在：
+地址访问没有 origin 白名单。任何安装实例都能通过 Broker 请求任意 HTTP/HTTPS 地址，包括互联网、局域网、宿主机、容器、`localhost`、loopback 和插件可达的本地项目；Manifest `permissions.network` 提供代理路由偏好，并申报可使用宿主管理凭据的站点范围（CookieCloud 见 [HTTP 会话](http-sessions-v1.md)）。以下边界始终存在：
 
 - URL 必须以精确小写 `http://` 或 `https://` 开头；
 - 禁止 URL userinfo 和 fragment；
 - 只支持 `GET`、`HEAD`、`POST`、`PUT`、`PATCH`、`DELETE`；
 - HTTPS 使用 TLS 最低 1.2、证书、SNI 和 hostname 正常校验；HTTP 不提供加密或证书保护，插件应只把 HTTP 用于本地/受信任网络或本身不含秘密的接口；
-- 默认总超时 10 秒；`host.call` 不提供自定义超时字段；
+- 默认总超时 10 秒；`timeout_ms` 可设为 1–30000 毫秒，且不会超过插件执行的截止时间；
 - 最多跟随 3 次跳转，每次重新校验 URL、DNS、目标地址和代理规则；跳转仍只能到 HTTP/HTTPS；
 - `301/302` 的 POST 和 `303` 会转为 GET 并丢弃 body；
 - 响应正文最多 8 MiB；极端超大响应会在 8 MiB 处截断并返回 `x-dian115-body-truncated: true`，常规列表应使用上游分页参数；
@@ -249,7 +250,7 @@ expect
 
 插件可以在外部请求中自行提供它已知的 `authorization`、`cookie` 或站点自定义 header；这些值属于插件自身已掌握的数据，宿主不会自动提供管理员、115、TMDB、Telegram 或代理凭据。更推荐使用第 6 节的托管凭据，避免把秘密暴露给插件进程和日志。
 
-响应会删除 `set-cookie`、认证挑战、`location`、长度和 hop-by-hop header。其他安全 header 以小写名称返回。跳转的 `Location` 只供宿主内部处理，不直接交给插件。
+响应中的独立 `set-cookie` 会先应用到当前安装的受管 Cookie 会话，再从返回 header 中删除；认证挑战、`location`、长度和 hop-by-hop header 同样不返回。其他安全 header 以小写名称返回。跳转的 `Location` 只供宿主内部处理，不直接交给插件。
 
 Broker 失败返回 HTTP 语义的 `502` Host Call result，body 为脱敏 JSON，例如：
 
@@ -435,7 +436,8 @@ lowercase_hex(SHA256(body))
 
 ```json
 {
-  "host_version": "3.9.0",
+  "host_version": "5.0.53",
+  "features": {"http_sessions_v1": true, "host_call_timeout_ms": true, "storage_catalog_v1": true, "recoverable_jobs_v1": true, "ui_invalidation_v1": true},
   "plugin_api": "2.0.0",
   "host_access": "standard",
   "apis": [{"method":"GET","path":"/api/tmdb/search","category":"tmdb"}],

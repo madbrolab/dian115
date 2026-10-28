@@ -272,8 +272,12 @@ func (r *runtime) action(invocationID string, payload pluginjson.Raw) (any, erro
 		if target == "" {
 			return map[string]any{"status": "failed", "message": "URL 不能为空"}, nil
 		}
-		response, err := r.hostCall(map[string]any{"method": "GET", "path": target, "headers": map[string]string{"accept": "application/json, text/plain;q=0.9"}})
-		status := hostStatus(response)
+		client := hostapi.Client{Call: r.peer.call}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		session := pluginjson.Text(pluginjson.Field(input, "session"))
+		response, err := client.HTTP(ctx, hostapi.HTTPRequest{Method: "GET", URL: target, Session: session, TimeoutMS: 30000, Headers: map[string]string{"accept": "application/json, text/plain;q=0.9"}})
+		status := response.Status
 		if err != nil || status >= 400 {
 			message := "宿主网络 Broker 调用失败"
 			if err != nil {
@@ -284,6 +288,8 @@ func (r *runtime) action(invocationID string, payload pluginjson.Raw) (any, erro
 		}
 		r.updateState("succeeded", "宿主 Broker 返回 HTTP "+pluginjson.Number(status), false)
 		return map[string]any{"status": "succeeded", "message": "宿主 Broker 请求完成", "hostStatus": status}, nil
+	case "cookiecloud-info", "cookiecloud-import", "cookiecloud-export", "cookies-clear", "http-render":
+		return r.httpSessionAction(actionID, invocationID, input)
 	case "create-watch":
 		watchPath := strings.TrimSpace(pluginjson.Text(pluginjson.Field(input, "path")))
 		if watchPath == "" {

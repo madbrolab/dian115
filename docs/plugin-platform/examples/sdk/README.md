@@ -101,3 +101,9 @@ Manifest 声明 recovery_handler 后，宿主在恢复时先进入只读 recover
 ## 独立页面 SDK
 
 `page.ts` 的 connectPluginPage 提供与宿主的连接，`ui.ts` 提供状态、动作、受管存储、任务、显式诊断和页面 context 类型。SDK 没有框架依赖，不挂载组件、不观察布局、不接管全局异常。页面自行打包依赖并创建 Provider；`message.ts` 约束 RPC 数据，`diagnostics.ts` 脱敏诊断。完整入口与主题说明见 [页面协议](../../ui-page-v1.md)。
+
+## 站点 HTTP 与 Cookie
+
+`Client.HTTP` 通过宿主 HTTP 客户端发请求，自动处理 Set-Cookie 并持久保存当前安装的 Cookie。`HTTPRequest.Session` 区分账号；`none` 仅关闭本次请求的自动 Cookie。返回 HTTPResponse 的 Status、Headers、Body，4xx/5xx 保留正文，由插件检查站点业务码。SDK 不建立 socket、不启动浏览器、不自动重试。
+
+`Cookies` / `SetCookies` / `ClearCookies` 管理自己的会话；`CookieCloud` / `ImportCookieCloud` / `ExportCookieCloud` 复用本地服务，export 必须携带刚读到的 revision；`RenderPage` 按需复用已配置的 FlareSolverr。所有非 GET 方法需要稳定幂等键与对应 Manifest API 权限。详细字段、作用域、配额和卸载边界见 [HTTP 会话协议](../../http-sessions-v1.md)。不要把 Cookie 原值放进页面 state、日志或普通配置。

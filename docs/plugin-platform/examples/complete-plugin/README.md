@@ -125,6 +125,18 @@ Telegram 路由在 Manifest 的 telegram 段声明，由宿主安装和启停流
 
 插件开发只依赖 `docs/plugin-platform/` 的公开契约；主项目源码不会作为 SDK、联调包或发布附件提供。公共发布边界见 [`../../publication-policy.md`](../../publication-policy.md)。
 
+## 站点会话示例
+
+`fetch-local` 使用公开 `Client.HTTP`，自动记住 Cookie，可传 input.session 区分账号；页面仅显示状态，不展示 Cookie 或响应正文。新增 action 只在明确调用时执行：
+
+- `cookiecloud-info`：读取本地服务域名概况和 revision。
+- `cookiecloud-import`：输入 `{domain,session}`，导入所选域名。
+- `cookiecloud-export`：输入 `{domain,session,revision}`，明确写回共享 CookieCloud。
+- `cookies-clear`：输入 `{session}`，清空自己的账号会话。
+- `http-render`：输入 `{url,session}`，按需渲染；仅返回 HTML 字节数。
+
+这些 action 可通过自有页面的 api.invokeAction 调用，稳定编号按 src/actions.ts 的流程先保存。export 前应明确展示目标域名和用户意图，409 时不自动覆盖。所需接口在 Manifest 和市场条目中一致声明；CookieCloud 仅能访问 network 已声明站点及其子域，请把 site.example 替换为实际站点，正式插件删除不用的权限。示例要求宿主 5.0.53+。代码见 runtime/http_sessions.go，完整说明见 [HTTP 会话](../../http-sessions-v1.md)。
+
 ## 数据生命周期
 
 `storage-demo` 在同一有界配置值中保存本次 invocation ID 作为 operation_ref，重试先核对已保存的业务标记，确认已完成就直接返回成功，不用新的时间戳重新写入同一幂等请求。并发版本冲突应重新核对业务状态，不自动覆盖。配置存入 Host Storage，升级、重启和休眠保留；卸载清空，重装不恢复。state 中的演示计数只存在内存，每次重新加载会重置，不能作为正式业务数据。常驻心跳使用本次业务时间作唯一标识，不用重启后归零的计数生成幂等键；所有 Host Call 均检查目标 HTTP 状态。详见 [存储与生命周期](../../storage-and-lifecycle.md)。

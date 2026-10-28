@@ -27,7 +27,7 @@ Read these files in order:
 5. [数据存储与生命周期](storage-and-lifecycle.md)：存储位置、JSON 结构、CAS、升级与卸载清空。
 6. [Independent HTML page v1](ui-page-v1.md): build contract, SDK connection, bridge API, opaque-origin isolation and managed storage and every stable theme variable.
 7. [可恢复后台任务](job-recovery-v1.md)：检查点、只读上游核对与安全续跑。
-8. [OpenAPI](openapi-v1.yaml): exact request and response schemas for every approved local Host API. [宿主接口速查表](host-api-quick-reference.md) 按分类列出一页可看的全部 166 条接口。
+8. [OpenAPI](openapi-v1.yaml): exact request and response schemas for every approved local Host API. [宿主接口速查表](host-api-quick-reference.md) 按分类列出一页可看的全部 173 条接口。
 9. [Black-box conformance](conformance/README.md): manifest, market, WASM and public-surface checks without main-project source.
 10. [UI 隔离、存储与后台调用](ui-isolation-v1.md)：浏览器边界、页面持久化、后台调用和接入要求。
 11. [插件排错](troubleshooting.md)：首次打开、恢复、Host Call、资源与卸载错误的处理路径。
@@ -76,3 +76,5 @@ The token expires after 15 minutes, is single-use, and is removed after install,
 ## Public-source boundary
 
 The GitHub repository publishes plugin contracts and third-party examples only. Never publish the main project's `cmd/`, `internal/`, `frontend/src/`, build files, deployment files, generated release packages, or private signing keys. Run the public-surface check before every public commit; CI rejects violations. See [publication-policy.md](publication-policy.md).
+
+- [轻量 HTTP 会话、CookieCloud 与 FlareSolverr](http-sessions-v1.md)：自动 Set-Cookie、按安装和账号隔离、加密持久化、共享 CookieCloud 按域名读写及按需渲染。

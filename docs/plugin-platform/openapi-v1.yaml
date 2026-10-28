@@ -1188,6 +1188,56 @@ x-dian115-host-apis:
       title: "更新订阅站点选择"
       description: "更新订阅搜索使用的站点选择。"
       host_credentials: false
+    - method: GET
+      path: /api/plugin-runtime/http/cookies
+      category: plugin-http
+      risk: read
+      title: "读取站点 Cookie"
+      description: "读取当前插件会话中匹配目标 URL 的 Cookie。"
+      host_credentials: false
+    - method: PUT
+      path: /api/plugin-runtime/http/cookies
+      category: plugin-http
+      risk: write
+      title: "写入站点 Cookie"
+      description: "向当前插件会话应用独立 Set-Cookie 值。"
+      host_credentials: false
+    - method: DELETE
+      path: /api/plugin-runtime/http/cookies
+      category: plugin-http
+      risk: dangerous
+      title: "清空站点会话"
+      description: "清空当前插件的一个 HTTP Cookie 会话。"
+      host_credentials: false
+    - method: GET
+      path: /api/plugin-runtime/http/cookiecloud
+      category: plugin-http
+      risk: read
+      title: "读取本地 CookieCloud 概况"
+      description: "读取本地 CookieCloud 的域名、数量和写入版本，不返回全局密码。"
+      host_credentials: true
+    - method: POST
+      path: /api/plugin-runtime/http/cookiecloud/import
+      category: plugin-http
+      risk: read
+      title: "导入本地 CookieCloud"
+      description: "把指定域名的 Cookie 复制到当前插件会话。"
+      host_credentials: true
+    - method: POST
+      path: /api/plugin-runtime/http/cookiecloud/export
+      category: plugin-http
+      risk: dangerous
+      title: "写回本地 CookieCloud"
+      description: "按指定域名合并写回共享 CookieCloud，并检查版本防止覆盖并发上传。"
+      host_credentials: true
+    - method: POST
+      path: /api/plugin-runtime/http/render
+      category: plugin-http
+      risk: read
+      title: "按需渲染站点页面"
+      description: "使用已配置的 FlareSolverr 取页并保存当前插件会话 Cookie。"
+      host_credentials: true
+
 x-dian115-subscription-host-apis:
   description: 订阅安全接口目录；完整开放下列操作，不包含 PT Cookie、API Key、Token、passkey、私密 RSS 地址或下载器凭据。
   entries:
@@ -1216,6 +1266,226 @@ x-dian115-subscription-host-apis:
       category: subscriptions
       risk: dangerous
 paths:
+  /api/plugin-runtime/http/cookies:
+    get:
+      tags: [Direct Host APIs]
+      summary: 读取站点 Cookie
+      description: 读取当前插件会话中匹配目标 URL 的 Cookie。 协议见 http-sessions-v1.md。
+      operationId: pluginHTTPGETCookies
+      x-dian115-category: plugin-http
+      x-dian115-risk: read
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - name: session
+          in: query
+          required: false
+          schema: {type: string, maxLength: 64, default: default}
+        - name: url
+          in: query
+          required: true
+          schema: {type: string, format: uri}
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。渲染成功不证明站点业务成功。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPCookiesEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      tags: [Direct Host APIs]
+      summary: 写入站点 Cookie
+      description: 向当前插件会话应用独立 Set-Cookie 值。 协议见 http-sessions-v1.md。
+      operationId: pluginHTTPPUTCookies
+      x-dian115-category: plugin-http
+      x-dian115-risk: write
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginHTTPCookieWrite'
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。渲染成功不证明站点业务成功。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPMutationEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [Direct Host APIs]
+      summary: 清空站点会话
+      description: 清空当前插件的一个 HTTP Cookie 会话。 协议见 http-sessions-v1.md。
+      operationId: pluginHTTPDELETECookies
+      x-dian115-category: plugin-http
+      x-dian115-risk: dangerous
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: session
+          in: query
+          required: false
+          schema: {type: string, maxLength: 64, default: default}
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。渲染成功不证明站点业务成功。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPMutationEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/http/cookiecloud:
+    get:
+      tags: [Direct Host APIs]
+      summary: 读取本地 CookieCloud 概况
+      description: 读取本地 CookieCloud 的域名、数量和写入版本，不返回全局密码。 协议见 http-sessions-v1.md。
+      operationId: pluginHTTPGETCookiecloud
+      x-dian115-category: plugin-http
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。渲染成功不证明站点业务成功。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginCookieCloudOverviewEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/http/cookiecloud/import:
+    post:
+      tags: [Direct Host APIs]
+      summary: 导入本地 CookieCloud
+      description: 把指定域名的 Cookie 复制到当前插件会话。 协议见 http-sessions-v1.md。
+      operationId: pluginHTTPPOSTImport
+      x-dian115-category: plugin-http
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginCookieCloudImport'
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。渲染成功不证明站点业务成功。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPMutationEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/http/cookiecloud/export:
+    post:
+      tags: [Direct Host APIs]
+      summary: 写回本地 CookieCloud
+      description: 按指定域名合并写回共享 CookieCloud，并检查版本防止覆盖并发上传。 协议见 http-sessions-v1.md。
+      operationId: pluginHTTPPOSTExport
+      x-dian115-category: plugin-http
+      x-dian115-risk: dangerous
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginCookieCloudExport'
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。渲染成功不证明站点业务成功。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPMutationEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /api/plugin-runtime/http/render:
+    post:
+      tags: [Direct Host APIs]
+      summary: 按需渲染站点页面
+      description: 使用已配置的 FlareSolverr 取页并保存当前插件会话 Cookie。 协议见 http-sessions-v1.md。
+      operationId: pluginHTTPPOSTRender
+      x-dian115-category: plugin-http
+      x-dian115-risk: read
+      x-dian115-host-credentials: true
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginHTTPRenderRequest'
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。渲染成功不证明站点业务成功。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPRenderEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '503':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
   /api/plugin-runtime/storage:
     get:
       tags:
@@ -7184,10 +7454,137 @@ components:
             type: string
         body_base64:
           type: string
+        cookie_session:
+          type: string
+          maxLength: 64
+          description: '默认 default；none 对此请求关闭受管 Cookie；其他名称隔离账号会话。'
+        timeout_ms:
+          type: integer
+          minimum: 0
+          maximum: 30000
+          description: '0 或省略使用默认值，且受插件执行预算限制。'
         credential_ref:
           type: string
           pattern: '^cred_[A-Za-z0-9]+$'
           description: Installation-scoped hosted credential reference. Valid for external HTTP/HTTPS paths when permissions include the hosted credential capability; HTTP sends the secret without transport encryption.
+    PluginHTTPCookie:
+      type: object
+      additionalProperties: false
+      required: [name, value, domain, path, host_only, secure, http_only]
+      properties:
+        name: {type: string}
+        value: {type: string}
+        domain: {type: string}
+        path: {type: string}
+        host_only: {type: boolean}
+        secure: {type: boolean}
+        http_only: {type: boolean}
+        same_site: {type: string, enum: [strict, lax, none]}
+        expires_at: {type: integer, format: int64, description: 'Unix 秒；省略或 0 为会话 Cookie。'}
+    PluginHTTPCookieWrite:
+      type: object
+      additionalProperties: false
+      required: [url, set_cookie]
+      properties:
+        url: {type: string, format: uri}
+        session: {type: string, maxLength: 64, default: default}
+        set_cookie:
+          type: array
+          minItems: 1
+          maxItems: 64
+          items: {type: string, maxLength: 8192}
+    PluginCookieCloudImport:
+      type: object
+      additionalProperties: false
+      required: [domains]
+      properties:
+        session: {type: string, maxLength: 64, default: default}
+        domains:
+          type: array
+          minItems: 1
+          maxItems: 16
+          items: {type: string}
+        revision: {type: string, description: '导入时可省略，写回时必须使用当前 revision。'}
+    PluginCookieCloudExport:
+      allOf:
+        - $ref: '#/components/schemas/PluginCookieCloudImport'
+        - type: object
+          required: [revision]
+          properties:
+            revision: {type: string, pattern: '^[a-f0-9]{64}$'}
+    PluginHTTPRenderRequest:
+      type: object
+      additionalProperties: false
+      required: [url]
+      properties:
+        url: {type: string, format: uri}
+        session: {type: string, maxLength: 64, default: default}
+        wait_seconds: {type: integer, minimum: 0, maximum: 10, default: 3}
+    PluginHTTPCookiesEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [session, cookies, total_cookies, user_agent]
+          properties:
+            session: {type: string}
+            cookies:
+              type: array
+              maxItems: 256
+              items:
+                $ref: '#/components/schemas/PluginHTTPCookie'
+            total_cookies: {type: integer, minimum: 0, maximum: 256}
+            user_agent: {type: string}
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
+    PluginHTTPMutationEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [session]
+          properties:
+            session: {type: string}
+            total_cookies: {type: integer, minimum: 0, maximum: 256}
+            imported: {type: integer, minimum: 0}
+            revision: {type: string}
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
+    PluginCookieCloudOverviewEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [revision, domains]
+          properties:
+            revision: {type: string, pattern: '^[a-f0-9]{64}$'}
+            domains:
+              type: array
+              items:
+                type: object
+                required: [domain, cookie_count]
+                properties:
+                  domain: {type: string}
+                  cookie_count: {type: integer, minimum: 0}
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
+    PluginHTTPRenderEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [url, html, user_agent, http_status_verified]
+          properties:
+            url: {type: string, format: uri}
+            html: {type: string, maxLength: 4194304}
+            user_agent: {type: string}
+            http_status_verified: {type: boolean, enum: [false]}
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
     PluginNotificationRequest:
       type: object
       additionalProperties: false

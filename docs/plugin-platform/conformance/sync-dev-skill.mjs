@@ -10,6 +10,7 @@ const hash=data=>createHash('sha256').update(data).digest('hex')
 const expected=new Map([['.gitattributes',Buffer.from('* -text\n')]])
 const add=(source,dest)=>{const path=resolve(platform,source);if(!lstatSync(path).isFile())throw Error('Expected a regular public source file: '+source);expected.set(dest,readFileSync(path))}
 const docs=['README.md','skill-installation.md','developer-guide.md','package-format-v1.md','wasm-runtime-v1.md','host-call-v2.md','storage-and-lifecycle.md','ui-page-v1.md','ui-isolation-v1.md','job-recovery-v1.md','troubleshooting.md','publication-policy.md','host-api-quick-reference.md','openapi-v1.yaml','manifest.schema.json','integrity.schema.json','signature.schema.json','market-index.schema.json']
+docs.push('http-sessions-v1.md')
 for(const file of docs)add(file,file)
 for(const file of ['README.md','verify-public-surface.mjs','project-check.mjs','runtime-check.mjs','openapi-check.mjs','generate-reference.mjs','openapi-check.test.mjs','runtime-check.test.mjs','project-check.test.mjs'])add('conformance/'+file,'conformance/'+file)
 // Explicit public source inventory; never collect untracked local files or secrets.
@@ -27,6 +28,7 @@ const sources=[
   "examples/complete-plugin/package.json",
   "examples/complete-plugin/preview-bridge.test.mjs",
   "examples/complete-plugin/runtime/main.go",
+  "examples/complete-plugin/runtime/http_sessions.go",
   "examples/complete-plugin/scripts/build-runtime.mjs",
   "examples/complete-plugin/scripts/package.mjs",
   "examples/complete-plugin/src/AppPage.vue",
@@ -44,6 +46,8 @@ const sources=[
   "examples/sdk/hostapi/checkpoints_test.go",
   "examples/sdk/hostapi/client.go",
   "examples/sdk/hostapi/client_test.go",
+  "examples/sdk/hostapi/http.go",
+  "examples/sdk/hostapi/http_test.go",
   "examples/sdk/hostapi/jobs.go",
   "examples/sdk/hostapi/jobs_test.go",
   "examples/sdk/hostapi/storage_catalog.go",
