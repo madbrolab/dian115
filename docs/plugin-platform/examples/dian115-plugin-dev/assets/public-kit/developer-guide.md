@@ -396,3 +396,8 @@ Do not mistake the 8 MiB Host Call body limit for the 256 KiB business payload l
 ## 需要登录的第三方站点
 
 先采用 [HTTP 会话](http-sessions-v1.md)：宿主自动接收 Set-Cookie、持久保存登录状态；多账号分配独立 cookie_session。CookieCloud 导入和写回通过公开接口完成，不复制全局 Key/密码到插件，不调用 PT 导入端点。只有站点确实需要渲染时才调用 render 复用外部 FlareSolverr；DIAN115 不内置 Chromium。初始化、state 与唤醒不自动登录、不写回共享 CookieCloud。
+
+
+## 用户自定义地址和站点登录
+
+第三方插件可以在页面提供账号、密码、明文 Cookie、自定义站点与验证码输入，不根据字段名拒绝业务数据。普通 HTTP 地址可以来自安装后配置。站点配置使用 `/api/plugin-runtime/http/sites`，CookieCloud 可访问 Manifest 声明或此接口保存的域名；不必为新增域名重新打包。表单登录使用 SDK PostForm，手填 Cookie 使用 SetCookieHeader，CookieCloud 是第三种可选来源。交互验证码由站点适配器按实际流程取得图片/令牌、收集答案和验证；平台不固定站点的字段或登录接口。完整约定与示例见 [HTTP 会话](http-sessions-v1.md) 和完整示例的 runtime/http_sessions.go、src/AppPage.vue。

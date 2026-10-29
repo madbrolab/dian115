@@ -21,7 +21,7 @@ if err == nil && current != nil && !current.Verifying {
 }
 ```
 
-`host.job.current` 返回 `{job:null}` 或 `{job:{job_ref,invocation_id,attempt,checkpoint,verifying}}`。`host.job.checkpoint` 参数为 `{checkpoint,progress}`，提交成功返回 `{saved:true}`。检查点最多 16 KiB 有效 JSON，进度必须为 0–100 整数，深度、节点数和明确凭据字段规则与普通业务 JSON 相同。
+`host.job.current` 返回 `{job:null}` 或 `{job:{job_ref,invocation_id,attempt,checkpoint,verifying}}`。`host.job.checkpoint` 参数为 `{checkpoint,progress}`，提交成功返回 `{saved:true}`。检查点最多 16 KiB 有效 JSON，进度必须为 0–100 整数，深度、节点数规则与普通业务 JSON 相同，字段名不设凭据黑名单。检查点由宿主加密保存，仍应只携带恢复所需数据。
 
 检查点和进度一起提交；取消、卸载、停用、包变化或旧恢复代次的晚写被拒绝。检查点保存在宿主数据库、加密落盘，不占业务 KV，不会被页面存储接口读取。每安装最多 128 个未清理恢复记录，全局最多 1024；成功、取消及卸载清理，启动时清理孤立或已完成记录。业务本身的长期事实仍保存到 Host Storage 或对应主项目服务。
 

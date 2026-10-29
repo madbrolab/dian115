@@ -56,6 +56,10 @@ SDK 不轮询，不注册 ResizeObserver，不监听 error/unhandledrejection，
 
 ## 状态、动作、存储和后台任务
 
+插件页面可以提供账号、密码、明文 Cookie、验证码和自定义站点地址输入框。`invokeAction` 的输入与返回数据不会因 password、cookie 等字段名被拒绝。表单使用 submit.prevent，通过 action → WASM → HTTP 提交，不能依赖 iframe 向第三方原生直投表单。CookieCloud 是可选来源，不是必需登录步骤。
+
+敏感输入不要写入普通 `api.storage`。完整示例 `invokeSavedAction(..., undefined, { transientInput: true })` 只保存动作编号；响应不确定时重新填写原值并复用编号，由宿主哈希拒绝不同内容。宿主动作用于重放的请求和响应、HTTP Cookie 均加密保存并随卸载清空。用户名、站点地址等非秘密配置可正常持久化；插件自行决定明确的凭据展示，不能自动写入日志或整页快照。
+
 ```ts
 const response = await api.getState('main')
 const result = await api.invokeAction('save', { name: 'demo' }, 'inv_save_business_1')

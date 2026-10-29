@@ -107,3 +107,8 @@ Manifest 声明 recovery_handler 后，宿主在恢复时先进入只读 recover
 `Client.HTTP` 通过宿主 HTTP 客户端发请求，自动处理 Set-Cookie 并持久保存当前安装的 Cookie。`HTTPRequest.Session` 区分账号；`none` 仅关闭本次请求的自动 Cookie。返回 HTTPResponse 的 Status、Headers、Body，4xx/5xx 保留正文，由插件检查站点业务码。SDK 不建立 socket、不启动浏览器、不自动重试。
 
 `Cookies` / `SetCookies` / `ClearCookies` 管理自己的会话；`CookieCloud` / `ImportCookieCloud` / `ExportCookieCloud` 复用本地服务，export 必须携带刚读到的 revision；`RenderPage` 按需复用已配置的 FlareSolverr。所有非 GET 方法需要稳定幂等键与对应 Manifest API 权限。详细字段、作用域、配额和卸载边界见 [HTTP 会话协议](../../http-sessions-v1.md)。不要把 Cookie 原值放进页面 state、日志或普通配置。
+
+
+账号密码无需转成 credential_ref，也不强制 CookieCloud。`PostForm(ctx, HTTPRequest{URL: loginURL, Session: account}, fields)` 支持任意站点表单字段、密码、验证码及 CSRF；不修改调用方 headers。`SetCookieHeader` 接收用户手填的 `name=value; name2=value2`，`SetCookies` 则保留逐条 Set-Cookie 属性。登录后通过 HTTP 会话记住 Cookie。插件自己的输入/返回可以使用 password、cookie 等字段，宿主凭据仍通过对应 Host API 处理。
+
+安装后使用 `Sites`、`SaveSite(HTTPSite{ID,URL,Label},key)`、`DeleteSite(id,key)` 保存任意 HTTP(S) 地址，`DeleteSite("",key)` 清空全部地址并可恢复损坏配置。需声明 GET/PUT/DELETE `/api/plugin-runtime/http/sites`。地址加密存储、按安装隔离；无需逐域改包。CookieCloud 可按已保存站点使用其凭据范围。探测 `features.http_sites_v1` 和 `features.credential_fields_v1`；缺失时提示升级宿主。

@@ -25,6 +25,41 @@ func (r *runtime) httpSessionAction(action, invocationID string, input pluginjso
 	}
 	var data pluginjson.Raw
 	switch action {
+	case "site-list":
+		data, e = client.Sites(ctx)
+	case "site-save":
+		data, e = client.SaveSite(ctx, hostapi.HTTPSite{ID: pluginjson.Text(pluginjson.Field(input, "site_id")), URL: pluginjson.Text(pluginjson.Field(input, "url")), Label: pluginjson.Text(pluginjson.Field(input, "label"))}, key)
+	case "site-delete":
+		data, e = client.DeleteSite(ctx, pluginjson.Text(pluginjson.Field(input, "site_id")), key)
+	case "cookie-save":
+		data, e = client.SetCookieHeader(ctx, pluginjson.Text(pluginjson.Field(input, "url")), session, pluginjson.Text(pluginjson.Field(input, "cookie")), key)
+	case "site-login":
+		// The site adapter owns its login URL, field names and verification.
+		// A challenge/CSRF value can be collected in an earlier GET action.
+		fields := map[string]string{}
+		for name, value := range pluginjson.Fields(pluginjson.Field(input, "fields")) {
+			if len(value) == 0 || value[0] != '"' {
+				return nil, errors.New("form fields must be strings")
+			}
+			fields[name] = pluginjson.Text(value)
+		}
+		for _, name := range []string{"username", "password"} {
+			if value := pluginjson.Text(pluginjson.Field(input, name)); value != "" {
+				fields[name] = value
+			}
+		}
+		if len(fields) == 0 {
+			return nil, errors.New("provide the site's form fields")
+		}
+		response, err := client.PostForm(ctx, hostapi.HTTPRequest{URL: pluginjson.Text(pluginjson.Field(input, "url")), Session: session, TimeoutMS: 30000}, fields)
+		if err != nil {
+			return nil, err
+		}
+		if response.Status >= 400 {
+			return map[string]any{"status": "failed", "message": "登录接口返回 HTTP " + pluginjson.Number(response.Status) + "，请检查表单、验证码和站点业务结果", "httpStatus": response.Status, "verified": false}, nil
+		}
+		// Do not echo a login response or claim that 200 means authenticated.
+		return map[string]any{"status": "succeeded", "message": "已提交登录表单；请按站点业务码核实登录状态", "httpStatus": response.Status, "verified": false}, nil
 	case "cookiecloud-info":
 		data, e = client.CookieCloud(ctx)
 	case "cookiecloud-import", "cookiecloud-export":

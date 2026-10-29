@@ -2,7 +2,7 @@
 
 ## 短动作的副作用
 
-复用完整示例 `src/actions.ts` 的 intent 流程：点击处理函数先占用 busy，恢复完成后读取未确认记录，保存稳定 invocation ID 和原输入成功后才提交。新输入不得覆盖未确认业务。`api.invokeAction(action,input,id)` 的第三参必须保留；跨页面重试仍用同一编号。对可能来自较旧宿主的桥，应先核对支持情况，不能丢掉编号悄悄调用。
+复用完整示例 `src/actions.ts` 的 intent 流程：点击处理函数先占用 busy，恢复完成后读取未确认记录，普通业务保存稳定 invocation ID 和原输入成功后才提交；密码/Cookie 使用 transientInput:true，只保存编号，重新提供原字段，由宿主请求哈希阻止改内容重放，回执由宿主加密保存。新输入不得覆盖未确认业务。`api.invokeAction(action,input,id)` 的第三参必须保留；跨页面重试仍用同一编号。对可能来自较旧宿主的桥，应先核对支持情况，不能丢掉编号悄悄调用。
 
 Host Call 写请求用该业务 ID 派生稳定 Idempotency-Key。外部系统仍有自己的幂等/查询规则，宿主回执不能证明无限期 exactly-once。网络断开、runtime timeout 或丢失响应时先查询回执或上游业务事实，不换编号直接重发。回执过期后也遵循事实核对。
 

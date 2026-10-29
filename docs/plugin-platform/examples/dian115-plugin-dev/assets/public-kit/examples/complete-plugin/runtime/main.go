@@ -288,7 +288,7 @@ func (r *runtime) action(invocationID string, payload pluginjson.Raw) (any, erro
 		}
 		r.updateState("succeeded", "宿主 Broker 返回 HTTP "+pluginjson.Number(status), false)
 		return map[string]any{"status": "succeeded", "message": "宿主 Broker 请求完成", "hostStatus": status}, nil
-	case "cookiecloud-info", "cookiecloud-import", "cookiecloud-export", "cookies-clear", "http-render":
+	case "site-list", "site-save", "site-delete", "site-login", "cookie-save", "cookiecloud-info", "cookiecloud-import", "cookiecloud-export", "cookies-clear", "http-render":
 		return r.httpSessionAction(actionID, invocationID, input)
 	case "create-watch":
 		watchPath := strings.TrimSpace(pluginjson.Text(pluginjson.Field(input, "path")))

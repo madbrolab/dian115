@@ -84,6 +84,21 @@
         "method": "POST",
         "path": "/api/plugin-runtime/http/render",
         "reason": "Render on demand using configured FlareSolverr"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plugin-runtime/http/sites",
+        "reason": "安装后读取、添加、修改或删除用户自定义的站点地址"
+      },
+      {
+        "method": "PUT",
+        "path": "/api/plugin-runtime/http/sites",
+        "reason": "安装后读取、添加、修改或删除用户自定义的站点地址"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/plugin-runtime/http/sites",
+        "reason": "安装后读取、添加、修改或删除用户自定义的站点地址"
       }
     ],
     "network": [

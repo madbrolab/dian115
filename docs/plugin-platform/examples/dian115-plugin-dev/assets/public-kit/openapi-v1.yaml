@@ -1200,7 +1200,7 @@ x-dian115-host-apis:
       category: plugin-http
       risk: write
       title: "写入站点 Cookie"
-      description: "向当前插件会话应用独立 Set-Cookie 值。"
+      description: "向当前插件会话应用 Set-Cookie 或手动填写的 Cookie。"
       host_credentials: false
     - method: DELETE
       path: /api/plugin-runtime/http/cookies
@@ -1237,6 +1237,27 @@ x-dian115-host-apis:
       title: "按需渲染站点页面"
       description: "使用已配置的 FlareSolverr 取页并保存当前插件会话 Cookie。"
       host_credentials: true
+    - method: GET
+      path: /api/plugin-runtime/http/sites
+      category: plugin-http
+      risk: read
+      title: "读取自定义站点"
+      description: "读取当前插件安装后配置的站点地址。"
+      host_credentials: false
+    - method: PUT
+      path: /api/plugin-runtime/http/sites
+      category: plugin-http
+      risk: write
+      title: "保存自定义站点"
+      description: "安装后添加或修改站点地址，也用于选择共享 CookieCloud 的站点范围。"
+      host_credentials: false
+    - method: DELETE
+      path: /api/plugin-runtime/http/sites
+      category: plugin-http
+      risk: write
+      title: "删除自定义站点"
+      description: "删除一个自定义地址并移除其 CookieCloud 范围，不删除共享数据。"
+      host_credentials: false
 
 x-dian115-subscription-host-apis:
   description: 订阅安全接口目录；完整开放下列操作，不包含 PT Cookie、API Key、Token、passkey、私密 RSS 地址或下载器凭据。
@@ -1266,6 +1287,88 @@ x-dian115-subscription-host-apis:
       category: subscriptions
       risk: dangerous
 paths:
+  /api/plugin-runtime/http/sites:
+    get:
+      tags: [Direct Host APIs]
+      summary: 读取自定义站点
+      description: 读取当前插件安装后配置的站点地址。 无需改包或重新安装，范围按插件隔离。
+      operationId: pluginHTTPGETSites
+      x-dian115-category: plugin-http
+      x-dian115-risk: read
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。返回修改后的完整地址列表。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPSitesEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    put:
+      tags: [Direct Host APIs]
+      summary: 保存自定义站点
+      description: 安装后添加或修改站点地址，也用于选择共享 CookieCloud 的站点范围。 无需改包或重新安装，范围按插件隔离。
+      operationId: pluginHTTPPUTSites
+      x-dian115-category: plugin-http
+      x-dian115-risk: write
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PluginHTTPSite'
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。返回修改后的完整地址列表。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPSitesEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+    delete:
+      tags: [Direct Host APIs]
+      summary: 删除自定义站点
+      description: 删除一个自定义地址并移除其 CookieCloud 范围，不删除共享数据。 无需改包或重新安装，范围按插件隔离。
+      operationId: pluginHTTPDELETESites
+      x-dian115-category: plugin-http
+      x-dian115-risk: write
+      x-dian115-host-credentials: false
+      x-dian115-in-process-only: true
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - name: id
+          in: query
+          required: false
+          description: 省略则清空地址配置，也可恢复损坏记录；不会删除 Cookie 或共享数据。
+          schema: {type: string, minLength: 1, maxLength: 64}
+      responses:
+        '200':
+          description: '成功；Cache-Control: no-store。返回修改后的完整地址列表。'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PluginHTTPSitesEnvelope'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
   /api/plugin-runtime/http/cookies:
     get:
       tags: [Direct Host APIs]
@@ -1303,7 +1406,7 @@ paths:
     put:
       tags: [Direct Host APIs]
       summary: 写入站点 Cookie
-      description: 向当前插件会话应用独立 Set-Cookie 值。 协议见 http-sessions-v1.md。
+      description: 向当前插件会话应用 Set-Cookie 或手动填写的 Cookie。 协议见 http-sessions-v1.md。
       operationId: pluginHTTPPUTCookies
       x-dian115-category: plugin-http
       x-dian115-risk: write
@@ -7481,13 +7584,42 @@ components:
         http_only: {type: boolean}
         same_site: {type: string, enum: [strict, lax, none]}
         expires_at: {type: integer, format: int64, description: 'Unix 秒；省略或 0 为会话 Cookie。'}
+    PluginHTTPSite:
+      type: object
+      additionalProperties: false
+      required: [id, url]
+      properties:
+        id: {type: string, minLength: 1, maxLength: 64, pattern: '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$'}
+        url: {type: string, format: uri, maxLength: 2048, description: '用户自定义的 HTTP(S) 地址，保留路径和 query；无 userinfo 或 fragment。'}
+        label: {type: string, maxLength: 120}
+    PluginHTTPSitesEnvelope:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [sites]
+          properties:
+            sites:
+              type: array
+              maxItems: 32
+              items:
+                $ref: '#/components/schemas/PluginHTTPSite'
+        meta:
+          $ref: '#/components/schemas/PluginMeta'
     PluginHTTPCookieWrite:
       type: object
       additionalProperties: false
-      required: [url, set_cookie]
+      required: [url]
+      oneOf:
+        - required: [set_cookie]
+          not: {required: [cookie]}
+        - required: [cookie]
+          not: {required: [set_cookie]}
       properties:
         url: {type: string, format: uri}
         session: {type: string, maxLength: 64, default: default}
+        cookie: {type: string, minLength: 1, maxLength: 8192, description: '用户手动填写的 Cookie header；与 set_cookie 二选一。'}
         set_cookie:
           type: array
           minItems: 1

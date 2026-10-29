@@ -1,5 +1,5 @@
 {
-  "openapi_sha256": "5cc4017d29fc70be3201c244c1b06eeb088637aa43e4c32e06e2265a952c0c35",
+  "openapi_sha256": "dd96656575fcbef26ad41d82d6cfd6df103d6129eb0401f77c8180837e985e4d",
   "entries": [
     {
       "method": "DELETE",
@@ -1510,7 +1510,7 @@
       "category": "plugin-http",
       "risk": "write",
       "title": "写入站点 Cookie",
-      "description": "向当前插件会话应用独立 Set-Cookie 值。",
+      "description": "向当前插件会话应用 Set-Cookie 或手动填写的 Cookie。",
       "host_credentials": false
     },
     {
@@ -1557,6 +1557,33 @@
       "title": "按需渲染站点页面",
       "description": "使用已配置的 FlareSolverr 取页并保存当前插件会话 Cookie。",
       "host_credentials": true
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/http/sites",
+      "category": "plugin-http",
+      "risk": "read",
+      "title": "读取自定义站点",
+      "description": "读取当前插件安装后配置的站点地址。",
+      "host_credentials": false
+    },
+    {
+      "method": "PUT",
+      "path": "/api/plugin-runtime/http/sites",
+      "category": "plugin-http",
+      "risk": "write",
+      "title": "保存自定义站点",
+      "description": "安装后添加或修改站点地址，也用于选择共享 CookieCloud 的站点范围。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/plugin-runtime/http/sites",
+      "category": "plugin-http",
+      "risk": "write",
+      "title": "删除自定义站点",
+      "description": "删除一个自定义地址并移除其 CookieCloud 范围，不删除共享数据。",
+      "host_credentials": false
     }
   ]
 }

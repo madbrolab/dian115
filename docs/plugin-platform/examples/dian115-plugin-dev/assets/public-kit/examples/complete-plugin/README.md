@@ -129,13 +129,16 @@ Telegram 路由在 Manifest 的 telegram 段声明，由宿主安装和启停流
 
 `fetch-local` 使用公开 `Client.HTTP`，自动记住 Cookie，可传 input.session 区分账号；页面仅显示状态，不展示 Cookie 或响应正文。新增 action 只在明确调用时执行：
 
+- `site-list` / `site-save` / `site-delete`：读取、保存 `{site_id,url,label}` 或删除地址，无需改包重装。
+- `site-login`：页面直接填写账号、密码和附加表单字段，`PostForm` 提交；返回 verified:false，需由实际站点适配器核实业务结果，不能把 HTTP 200 当登录成功。
+- `cookie-save`：输入 `{url,session,cookie}`，手填 Cookie 加密保存。
 - `cookiecloud-info`：读取本地服务域名概况和 revision。
 - `cookiecloud-import`：输入 `{domain,session}`，导入所选域名。
 - `cookiecloud-export`：输入 `{domain,session,revision}`，明确写回共享 CookieCloud。
 - `cookies-clear`：输入 `{session}`，清空自己的账号会话。
 - `http-render`：输入 `{url,session}`，按需渲染；仅返回 HTML 字节数。
 
-这些 action 可通过自有页面的 api.invokeAction 调用，稳定编号按 src/actions.ts 的流程先保存。export 前应明确展示目标域名和用户意图，409 时不自动覆盖。所需接口在 Manifest 和市场条目中一致声明；CookieCloud 仅能访问 network 已声明站点及其子域，请把 site.example 替换为实际站点，正式插件删除不用的权限。示例要求宿主 5.0.53+。代码见 runtime/http_sessions.go，完整说明见 [HTTP 会话](../../http-sessions-v1.md)。
+这些 action 可通过自有页面的 api.invokeAction 调用，稳定编号按 src/actions.ts 的流程先保存。登录和手填 Cookie 使用 transientInput:true，只在普通页面存储中保存编号；密码或 Cookie 不写普通页面偏好。丢失响应后用相同内容和原编号核实/重试，不能改变输入换号登录。export 前应明确展示目标域名和用户意图，409 时不自动覆盖。所需接口在 Manifest 和市场条目中一致声明；CookieCloud 可访问 network 声明或 sites 接口保存的站点及其子域。普通 HTTP 可直接使用用户配置的地址，账号密码登录和手填 Cookie 无需 CookieCloud。正式插件删除不用的权限。示例要求宿主 5.0.53+。代码见 runtime/http_sessions.go，完整说明见 [HTTP 会话](../../http-sessions-v1.md)。
 
 ## 数据生命周期
 

@@ -8,6 +8,6 @@ Manifest 只添加所需 `permissions.apis` 方法+路径模板，并以具体�
 
 用 public-kit/examples/sdk/hostapi 处理 Host Call。传输 error、目标 HTTP 4xx/5xx、业务结果分别检查。`Problem` 可带 Code/Detail/Retryable/DiagnosticID；日志保留操作编号和安全错误信息。只在公开协议明确允许、业务能安全重复时采用有界重试；上游超时不是未执行证明。
 
-外部网络同样走 Host Call，HTTP/HTTPS、本地服务、代理与凭据语义以 host-call-v2.md 为准。network 声明中的 origin/methods/proxy_mode 是公开网络路由与披露契约，不把它误当整个宿主的网络防火墙。凭据通过协议允许的宿主绑定/引用使用，不读取宿主登录 cookie 或配置文件。
+外部网络同样走 Host Call，HTTP/HTTPS、本地服务、代理与凭据语义以 host-call-v2.md 为准。network 声明中的 origin/methods/proxy_mode 是公开网络路由与披露契约，不把它误当整个宿主的网络防火墙。插件自有账号密码和 Cookie 可直接输入并经 action 提交 HTTP；宿主已有凭据才通过相应绑定/引用使用，不读取管理员登录 Cookie 或配置文件。安装后地址可以来自用户配置和 sites API。
 
 不要向所有插件授予测试台的全部接口。请求正文、分页、HTTP 响应和日志均保持有界；响应预览截断不等于业务完整结果。调试时结合原始状态码、diagnostic_id、任务引用和时间排查。
