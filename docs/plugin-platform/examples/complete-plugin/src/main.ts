@@ -13,7 +13,7 @@ async function start() {
     const { default: manifest } = await import('../manifest.template.json')
     const state = shallowReactive<Record<string, unknown>>({ revision: 1, actionCount: 0, eventCount: 0, watchActive: false, lastStatus: 'ready', lastMessage: '本地预览已就绪' })
     initial = { api: createPreviewBridge(state, manifest.jobs.map(job => job.id)), installationId: 1, pluginId: manifest.id,
-      runtime: { installation_id: 1, runtime_kind: 'wasm', timeout_ms: 30000, health_status: 'healthy', process_state: 'running' },
+      runtime: { installation_id: 1, runtime_kind: 'wasm', timeout_ms: 300000, health_status: 'healthy', process_state: 'running' },
       runtimeState: state, navKey: 'main', themeContract: 'dian115-theme-v1' }
   } else {
     connection = await connectPluginPage()

@@ -224,6 +224,8 @@ Result:
 
 External access supports only `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE`. `OPTIONS`, `CONNECT`, and `TRACE` are not part of the contract. HTTP/HTTPS transport, DNS, redirects, target resolution and proxy selection are performed by the host. Details and HTTP security warnings are in [Host Call v2](host-call-v2.md).
 
+HTTP defaults to 60 seconds; `timeout_ms` allows up to 300000 ms. Foreground runtime defaults to 120000 ms and accepts up to 600000 ms, so leave sufficient outer execution time for long pages. Connections are reused, with per-installation private caches. Use `CacheMode`, `CacheTTLMS`, `MaxResponseBytes`, `HTTPResponse.Network` and `Truncated` in the public SDK. Independent GET/HEAD requests can use `Client.HTTPBatch` (up to eight items, default concurrency four); check each response and keep dependent login steps sequential. Probe `http_network_v2` / `http_batch_v1`; full cache, cancellation and lifecycle semantics are in [HTTP sessions and performance](http-sessions-v1.md).
+
 ### Read host-configured Emby data
 
 The plugin runtime can read Emby without receiving the server URL or API Key. Declare only the operations it uses:

@@ -40,7 +40,7 @@ export function createPreviewBridge(state: Record<string, unknown>, declaredJobs
         storageKey(key)
         const saved = copy(value)
         const next = { ...storage, [key]: saved }
-        if (bytes(saved) > 16 * 1024 || Object.keys(next).length > 128 || bytes(next) > 64 * 1024) throw new Error('quota_exceeded')
+        if (bytes(saved) > 128 * 1024 || Object.keys(next).length > 512 || bytes(next) > 1024 * 1024) throw new Error('quota_exceeded')
         storage[key] = saved
       },
       async remove(key) { storageKey(key); delete storage[key] },

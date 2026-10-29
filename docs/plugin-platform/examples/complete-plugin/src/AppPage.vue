@@ -25,6 +25,8 @@ const message = useMessage()
 const busyAction = ref('')
 const watchPath = ref('')
 const localURL = ref('http://127.0.0.1:8080/health')
+const networkURLs = ref('')
+const networkResult = ref('')
 const siteID = ref('site-a')
 const siteURL = ref('https://site.example')
 const siteLabel = ref('我的站点')
@@ -105,6 +107,24 @@ async function runAction(action: string, input: Record<string, unknown> = {}) {
   } finally {
     busyAction.value = ''
   }
+}
+
+async function networkAction(action: 'http-batch' | 'http-cache-info' | 'http-cache-clear') {
+  if (busyAction.value) return
+  const urls = networkURLs.value.split(/\r?\n/).map(url => url.trim()).filter(Boolean)
+  if (action === 'http-batch' && (!urls.length || urls.length > 8 || urls.some(url => !/^https?:\/\//.test(url)))) {
+    message.warning('请逐行填写 1–8 个 HTTP(S) 地址')
+    return
+  }
+  busyAction.value = action
+  try {
+    const response = await invokeSavedAction(props.api, action, action === 'http-batch' ? { urls, session: siteSession.value } : {}, undefined, { transientInput: true })
+    if (response.result.status === 'failed') throw new Error(String(response.result.message || '网络操作失败'))
+    networkResult.value = JSON.stringify(response.result, null, 2)
+    if (response.confirmation_pending) message.warning('结果已返回，确认状态未保存；再次提交前请核实')
+    else message.success(String(response.result.message || '操作完成'))
+  } catch (error: any) { message.error(String(error?.message || '网络操作失败；重试保留原请求')) }
+  finally { busyAction.value = '' }
 }
 
 async function createWatch() {
@@ -263,6 +283,22 @@ async function siteAction(action: 'site-list' | 'site-save' | 'site-delete' | 's
         </NFormItem>
         <NButton attr-type="submit" type="primary" :loading="busyAction === 'fetch-local'">通过宿主请求</NButton>
       </NForm>
+    </section>
+
+    <section class="tool-panel">
+      <h3>只读并发与响应缓存</h3>
+      <p>独立资源逐行填写，最多 8 项、并发 4；每项最多 1 MiB。结果显示耗时、缓存和截断状态，不展示凭据或正文。</p>
+      <NForm label-placement="top" @submit.prevent="networkAction('http-batch')">
+        <NFormItem label="HTTP(S) 地址（每行一个，使用上方账号会话）">
+          <NInput v-model:value="networkURLs" type="textarea" placeholder="https://你的站点/list?page=1" :autosize="{ minRows: 2, maxRows: 8 }" />
+        </NFormItem>
+        <div class="actions">
+          <NButton attr-type="submit" :loading="busyAction === 'http-batch'">并发请求</NButton>
+          <NButton :loading="busyAction === 'http-cache-info'" @click="networkAction('http-cache-info')">查看缓存用量</NButton>
+          <NButton :loading="busyAction === 'http-cache-clear'" @click="networkAction('http-cache-clear')">清空缓存（保留 Cookie）</NButton>
+        </div>
+      </NForm>
+      <pre v-if="networkResult" role="status" style="white-space: pre-wrap; overflow-wrap: anywhere">{{ networkResult }}</pre>
     </section>
 
     <section class="tool-panel">

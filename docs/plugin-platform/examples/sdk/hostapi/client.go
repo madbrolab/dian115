@@ -153,8 +153,8 @@ func (c Client) storage(ctx context.Context, method, key string, value pluginjso
 		if etag != "" && !validStorageETag(etag) {
 			return nil, "", errors.New("invalid storage ETag")
 		}
-		if len(value) > 256<<10 || !pluginjson.Valid(value) {
-			return nil, "", errors.New("storage value must be JSON no larger than 256 KiB")
+		if len(value) > 1<<20 || !pluginjson.Valid(value) {
+			return nil, "", errors.New("storage value must be JSON no larger than 1 MiB")
 		}
 		body, err := pluginjson.Encode(map[string]any{"value": value})
 		if err != nil {
@@ -182,7 +182,7 @@ func (c Client) storage(ctx context.Context, method, key string, value pluginjso
 	}
 	value = pluginjson.Field(data, "value")
 	responseETag := Header(raw, "ETag")
-	if !pluginjson.Valid(value) || len(value) > 256<<10 || pluginjson.Text(pluginjson.Field(data, "key")) != key || !validStorageETag(responseETag) || pluginjson.Text(pluginjson.Field(data, "revision")) != responseETag[1:len(responseETag)-1] || pluginjson.Text(pluginjson.Field(data, "updated_at")) == "" {
+	if !pluginjson.Valid(value) || pluginjson.Text(pluginjson.Field(data, "key")) != key || !validStorageETag(responseETag) || pluginjson.Text(pluginjson.Field(data, "revision")) != responseETag[1:len(responseETag)-1] || pluginjson.Text(pluginjson.Field(data, "updated_at")) == "" {
 		return nil, "", errors.New("invalid storage value response")
 	}
 	return value, responseETag, nil

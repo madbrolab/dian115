@@ -109,14 +109,17 @@ Telegram 命令和关键词在 Manifest 声明，宿主在未加载 guest 时也
 | 方法 | 用途 |
 | --- | --- |
 | host.call | 安装时批准的宿主 API 或 Broker HTTP/HTTPS |
+| host.http.batch | 最多 8 项外部 GET/HEAD，无正文；并发默认 4、最大 8；按输入顺序返回 results，每项为 response 或 error |
 | host.log | 有界、脱敏、按安装归属的日志 |
 | host.capabilities | 宿主版本、公开目录、已授予和不可用接口、特性 |
 | host.telegram.list | Manifest 已登记的 Telegram 路由 |
 | host.ui.invalidate | 返回 accepted，并向当前安装已打开的页面合并推送刷新信号；无页面时不唤醒 guest |
 | host.job.current | 当前可恢复后台任务的引用、稳定业务 ID、检查点和核对阶段；普通调用返回 job:null |
-| host.job.checkpoint | 当前可恢复任务原子提交不超过 16 KiB 的 JSON 检查点及 0–100 进度；核对阶段拒绝 |
+| host.job.checkpoint | 当前可恢复任务原子提交不超过 64 KiB 的 JSON 检查点及 0–100 进度；核对阶段拒绝 |
 
-支持 `host_call_timeout_ms` 特性的宿主允许每次 host.call 带 1–30000 毫秒 timeout_ms。先查询 capabilities，缺少特性时提示升级宿主；嵌套调用的执行期限不会超出外层调用。
+支持 `host_call_timeout_ms` 特性的宿主允许每次 host.call 带 1–300000 毫秒 timeout_ms。先查询 capabilities，缺少特性时提示升级宿主；嵌套调用的执行期限不会超出外层调用。
+
+http_network_v2 特性提供连接复用、缓存选项及 network 元数据；http_batch_v1 提供批量并发。批量 params 为 `{requests:[HostCallRequest,...],concurrency?:4}`，result 为 `{results:[{response:HostCallResponse}|{error:string},...]}`。开始前校验方法、URL 形式、超时和大小选项；具体权限及每项参数错误分别报告，其他项继续执行。通过宿主并发 HTTP 工作，服务实例本身仍串行，不同时进入同一模块。完整策略见 [HTTP 会话与性能](http-sessions-v1.md)。
 
 ## 资源预算与错误
 
@@ -125,13 +128,13 @@ Telegram 命令和关键词在 Manifest 声明，宿主在未加载 guest 时也
 | WASM 文件 | 2 MiB |
 | 线性内存 | 每实例默认 64 MiB，允许 4–512 MiB |
 | 启动 | 默认 30 秒，允许 1–60 秒；另有编译槽等待预算 |
-| 前台执行 | 默认 30 秒，允许 0.1–120 秒 |
+| 前台执行 | 默认 120 秒，允许 0.1–600 秒 |
 | 后台执行 | 默认 5 分钟，允许 1 秒–1 小时 |
 | 等待执行 | 30 秒；已加载安装 pending 最多 32 |
 | ABI JSON 帧 | 16 MiB |
 | 解码后的 Host Call 正文 | 请求、响应各 8 MiB |
 | 普通业务输入、输出和持久回执 | 256 KiB |
-| Storage | 单值 256 KiB，每安装 16 MiB |
+| Storage | 单值 1 MiB，每安装 64 MiB |
 | 宿主接纳 | 加载中及驻留安装默认最多 32；声明内存预算默认 1024 MiB，resident 按两个实例计费 |
 | 常驻 | 默认最多 2 个 resident 安装，不与普通调用共享长驻执行槽 |
 | 全局调用 | 最多 128 个等待/运行调用，执行最多 8 个；同一模块仍串行 |

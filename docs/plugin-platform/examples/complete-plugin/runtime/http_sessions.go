@@ -13,7 +13,7 @@ import (
 // state nor wake-up imports credentials or writes the shared CookieCloud.
 func (r *runtime) httpSessionAction(action, invocationID string, input pluginjson.Raw) (any, error) {
 	client := hostapi.Client{Call: r.peer.call}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
 	session := pluginjson.Text(pluginjson.Field(input, "session"))
 	if session == "" {
@@ -23,8 +23,48 @@ func (r *runtime) httpSessionAction(action, invocationID string, input pluginjso
 	if e != nil {
 		return nil, e
 	}
+	if action == "http-batch" || action == "http-cache-info" || action == "http-cache-clear" {
+		caps, err := r.peer.call(ctx, "host.capabilities", map[string]any{})
+		if err != nil {
+			return nil, err
+		}
+		features := pluginjson.Field(caps, "features")
+		if string(pluginjson.Field(features, "http_network_v2")) != "true" || (action == "http-batch" && string(pluginjson.Field(features, "http_batch_v1")) != "true") {
+			return nil, errors.New("upgrade the host for HTTP cache and batch support")
+		}
+	}
 	var data pluginjson.Raw
 	switch action {
+	case "http-cache-info":
+		data, e = client.HTTPCache(ctx)
+	case "http-cache-clear":
+		data, e = client.ClearHTTPCache(ctx, key)
+	case "http-batch":
+		requests := []hostapi.HTTPRequest{}
+		urls := pluginjson.Field(input, "urls")
+		for index := 0; index < 8; index++ {
+			value := pluginjson.Index(urls, index)
+			if value == nil {
+				break
+			}
+			requests = append(requests, hostapi.HTTPRequest{URL: pluginjson.Text(value), Session: session, TimeoutMS: 60000, CacheTTLMS: 30000})
+		}
+		if pluginjson.Index(urls, 8) != nil {
+			return nil, errors.New("split URLs into batches of at most eight")
+		}
+		results, err := client.HTTPBatch(ctx, requests, 4)
+		if err != nil {
+			return nil, err
+		}
+		summaries := []any{}
+		for _, item := range results {
+			if item.Error != nil {
+				summaries = append(summaries, map[string]any{"error": item.Error.Error()})
+			} else {
+				summaries = append(summaries, map[string]any{"httpStatus": item.Response.Status, "cache": item.Response.Network.Cache, "durationMS": item.Response.Network.DurationMS, "truncated": item.Response.Truncated})
+			}
+		}
+		return map[string]any{"status": "succeeded", "message": "并发请求已完成，请逐项核实业务结果", "responses": summaries}, nil
 	case "site-list":
 		data, e = client.Sites(ctx)
 	case "site-save":
@@ -51,7 +91,7 @@ func (r *runtime) httpSessionAction(action, invocationID string, input pluginjso
 		if len(fields) == 0 {
 			return nil, errors.New("provide the site's form fields")
 		}
-		response, err := client.PostForm(ctx, hostapi.HTTPRequest{URL: pluginjson.Text(pluginjson.Field(input, "url")), Session: session, TimeoutMS: 30000}, fields)
+		response, err := client.PostForm(ctx, hostapi.HTTPRequest{URL: pluginjson.Text(pluginjson.Field(input, "url")), Session: session, TimeoutMS: 120000}, fields)
 		if err != nil {
 			return nil, err
 		}

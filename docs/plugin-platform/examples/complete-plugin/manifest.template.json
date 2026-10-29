@@ -21,7 +21,7 @@
     "protocol": "dian115:wasm@1",
     "startup_timeout_ms": 10000,
     "shutdown_timeout_ms": 5000,
-    "timeout_ms": 30000,
+    "timeout_ms": 300000,
     "background_timeout_ms": 300000,
     "max_concurrency": 1,
     "restart_policy": "on-failure",
@@ -99,6 +99,16 @@
         "method": "DELETE",
         "path": "/api/plugin-runtime/http/sites",
         "reason": "安装后读取、添加、修改或删除用户自定义的站点地址"
+      },
+      {
+        "method": "GET",
+        "path": "/api/plugin-runtime/http/cache",
+        "reason": "查看或按用户要求清空本插件的 HTTP 响应缓存"
+      },
+      {
+        "method": "DELETE",
+        "path": "/api/plugin-runtime/http/cache",
+        "reason": "查看或按用户要求清空本插件的 HTTP 响应缓存"
       }
     ],
     "network": [

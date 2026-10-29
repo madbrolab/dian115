@@ -34,7 +34,7 @@ func TestCurrentJobAndCheckpointUseOneHostCall(t *testing.T) {
 	if calls != 2 {
 		t.Fatal("checkpoint helper retried or polled", calls)
 	}
-	if c.SaveCheckpoint(context.Background(), pluginjson.Raw(`{}`), 101) == nil || c.SaveCheckpoint(context.Background(), pluginjson.Raw(`"`+strings.Repeat("x", 16<<10)+`"`), 1) == nil {
+	if c.SaveCheckpoint(context.Background(), pluginjson.Raw(`{}`), 101) == nil || c.SaveCheckpoint(context.Background(), pluginjson.Raw(`"`+strings.Repeat("x", 64<<10)+`"`), 1) == nil {
 		t.Fatal("unbounded checkpoint accepted")
 	}
 	if calls != 2 {

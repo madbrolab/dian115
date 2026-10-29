@@ -38,7 +38,7 @@ func (c Client) CurrentJob(ctx context.Context) (*JobContext, error) {
 	}
 	value := &JobContext{Ref: pluginjson.Text(pluginjson.Field(job, "job_ref")), InvocationID: pluginjson.Text(pluginjson.Field(job, "invocation_id")), Checkpoint: pluginjson.Field(job, "checkpoint")}
 	attempt, err := strconv.ParseInt(string(pluginjson.Field(job, "attempt")), 10, 32)
-	if err != nil || attempt < 0 || attempt > 3 || !validJobRef(value.Ref) || !strings.HasPrefix(value.InvocationID, "inv_") || len(value.InvocationID) > 80 || !ValidStorageKey(value.InvocationID) || !pluginjson.Valid(value.Checkpoint) || len(value.Checkpoint) > 16<<10 {
+	if err != nil || attempt < 0 || attempt > 3 || !validJobRef(value.Ref) || !strings.HasPrefix(value.InvocationID, "inv_") || len(value.InvocationID) > 80 || !ValidStorageKey(value.InvocationID) || !pluginjson.Valid(value.Checkpoint) || len(value.Checkpoint) > 64<<10 {
 		return nil, errors.New("invalid current job fields")
 	}
 	flag := string(pluginjson.Field(job, "verifying"))
@@ -50,10 +50,10 @@ func (c Client) CurrentJob(ctx context.Context) (*JobContext, error) {
 	return value, nil
 }
 
-// SaveCheckpoint commits one <=16 KiB JSON checkpoint and progress together.
+// SaveCheckpoint commits one <=64 KiB JSON checkpoint and progress together.
 // Stable business idempotency keys remain necessary for external effects.
 func (c Client) SaveCheckpoint(ctx context.Context, checkpoint pluginjson.Raw, progress int) error {
-	if c.Call == nil || progress < 0 || progress > 100 || !pluginjson.Valid(checkpoint) || len(checkpoint) > 16<<10 {
+	if c.Call == nil || progress < 0 || progress > 100 || !pluginjson.Valid(checkpoint) || len(checkpoint) > 64<<10 {
 		return errors.New("invalid checkpoint")
 	}
 	raw, err := c.Call(ctx, "host.job.checkpoint", map[string]any{"checkpoint": checkpoint, "progress": progress})

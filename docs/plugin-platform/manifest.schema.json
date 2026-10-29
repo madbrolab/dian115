@@ -204,8 +204,8 @@
         "timeout_ms": {
           "type": "integer",
           "minimum": 100,
-          "maximum": 120000,
-          "default": 30000
+          "maximum": 600000,
+          "default": 120000
         },
         "background_timeout_ms": {
           "type": "integer",

@@ -81,7 +81,7 @@ ui
     "protocol": "dian115:wasm@1",
     "startup_timeout_ms": 10000,
     "shutdown_timeout_ms": 5000,
-    "timeout_ms": 30000,
+    "timeout_ms": 120000,
     "background_timeout_ms": 300000,
     "max_concurrency": 4,
     "restart_policy": "on-failure"
@@ -155,7 +155,7 @@ WASM runtime 的 ABI、Host imports、配额和生命周期见 [WASM runtime v1]
 | --- | ---: | ---: |
 | `startup_timeout_ms` | 30000 | 1000-60000 |
 | `shutdown_timeout_ms` | 5000 | 1000-60000 |
-| `timeout_ms` | 30000 | 100-120000 |
+| `timeout_ms` | 120000 | 100-600000 |
 | `background_timeout_ms` | 300000 | 1000-3600000 |
 | `max_concurrency` | 4 | 1-16 |
 | `memory_mb` | 64 | 4-512 |

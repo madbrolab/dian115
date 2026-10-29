@@ -42,7 +42,7 @@ export function connectPluginPage(options: { timeoutMS?: number } = {}): Promise
       const id = `${Date.now().toString(36)}-${++sequence}`
       const runtime = context.runtime
       const callTimeout = ['invokeAction', 'getState', 'refresh'].includes(op)
-        ? Math.max(100, Math.min(120_000, Number(runtime?.timeout_ms) || 30_000)) + Math.max(1_000, Math.min(60_000, Number(runtime?.startup_timeout_ms) || 30_000)) + 70_000
+        ? Math.max(100, Math.min(600_000, Number(runtime?.timeout_ms) || 120_000)) + Math.max(1_000, Math.min(60_000, Number(runtime?.startup_timeout_ms) || 30_000)) + 70_000
         : 30_000
       return new Promise((accept, fail) => {
         const timer = window.setTimeout(() => { pending.delete(id); fail(new Error('宿主响应超时')) }, callTimeout)
