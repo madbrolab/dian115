@@ -1,6 +1,6 @@
 # 宿主接口速查表
 
-从 [OpenAPI](openapi-v1.yaml) 的公开目录生成，共 176 项。安装时声明精确的方法和路径模板；调用方式见 [Host Call v2](host-call-v2.md)。
+从 [OpenAPI](openapi-v1.yaml) 的公开目录生成，共 178 项。安装时声明精确的方法和路径模板；调用方式见 [Host Call v2](host-call-v2.md)。
 
 网络声明是代理路由偏好。扩展访问与可选接口规则见开发指南；下表描述标准目录。
 
@@ -210,6 +210,8 @@
 | GET | `/api/plugin-runtime/http/sites` | 读取自定义站点：读取当前插件安装后配置的站点地址。 | 读取 | 否 |
 | PUT | `/api/plugin-runtime/http/sites` | 保存自定义站点：安装后添加或修改站点地址，也用于选择共享 CookieCloud 的站点范围。 | 写入 | 否 |
 | DELETE | `/api/plugin-runtime/http/sites` | 删除自定义站点：删除一个自定义地址并移除其 CookieCloud 范围，不删除共享数据。 | 写入 | 否 |
+| GET | `/api/plugin-runtime/http/cache` | 读取网络缓存用量：读取当前插件 HTTP 缓存用量和命中计数，不返回内容或地址。 | 读取 | 否 |
+| DELETE | `/api/plugin-runtime/http/cache` | 清空网络缓存：清空当前插件 HTTP 响应缓存，不清空 Cookie 登录会话。 | 写入 | 否 |
 
 ## plugin-runtime
 

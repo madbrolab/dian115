@@ -27,7 +27,7 @@ node <skill>/scripts/init.mjs --dir <new-directory> --id <publisher.plugin> --na
 先读 [实现路线](references/development.md)，然后只加载相关专项：
 
 - 选择接口、HTTP 错误、网络和授权： [接口和权限](references/apis.md)。`node <skill>/scripts/api.mjs --query <词语> [--method GET] [--json]` 检索固定目录；精确请求/响应读 [OpenAPI](assets/public-kit/openapi-v1.yaml)，不要只看接口标题。
-- 站点登录、自动 Set-Cookie、多账号会话、CookieCloud 与按需 FlareSolverr： [HTTP 会话](references/http.md)。优先 HTTP，不为 Cookie 保活引入浏览器或常驻任务。
+- 站点登录、自动 Set-Cookie、多账号会话、慢页超时、批量并发、缓存、CookieCloud 与按需 FlareSolverr： [HTTP 会话](references/http.md)。优先 HTTP，不为 Cookie 保活引入浏览器或常驻任务。
 - 配置、并发写入、分页、凭据、卸载： [数据生命周期](references/storage.md)。
 - 副作用、长任务、取消、异常退出恢复： [调用与恢复](references/recovery.md)。
 - 页面、受管偏好、主题、错误界面： [页面接入](references/ui.md)。
@@ -41,6 +41,7 @@ node <skill>/scripts/init.mjs --dir <new-directory> --id <publisher.plugin> --na
 - 支持直接填写账号密码、Cookie 和安装后自定义地址，使用 PostForm / SetCookieHeader / sites。CookieCloud 是可选来源；不因自有凭据字段名拒绝业务，不强制每个新地址改包重装。秘密不写普通页面偏好或日志。
 - 初始化和 state 查询不发送通知、不提交业务写入。页内变量/guest 全局变量会随页面或模块释放；恢复记录读取完毕后才允许相关写入。
 - 发送副作用前持久保存稳定 invocation ID；普通输入可一并保存，密码/Cookie 使用 transientInput，仅重新提供原字段，由宿主哈希核对；结果不确定时核对事实，重试复用原编号和幂等键。取消和卸载不能撤销已完成的外部业务。
+- 网络复用宿主连接和私有缓存；独立只读请求用有界 HTTPBatch，检查各项状态、截断和耗时。按实际慢页配置请求及外层期限，不以无限并发或 guest 并发 ABI 调用加速。登录步骤按业务依赖顺序执行。
 - 长任务使用公开宿主任务能力；需要恢复时实现只读核对回调。按需加载、有界批次/分页/预览优先，常驻只用于确有持续执行需要的功能。
 - 卸载清空插件数据，重装为空。重启、休眠和停用保留持久配置。业务格式版本与 ETag 并发版本分别处理。
 - Manifest 与市场条目的权限、身份、版本保持一致；只声明实际使用的方法、路径和网络需求。目标主机文件路径按 Linux 语义处理，远端文件名保持不变。

@@ -51,7 +51,7 @@ test('preview storage matches JSON copy, key, quota and installation boundaries'
   assert.equal((await api.storage.get('settings')).nested.value, 1)
   assert.equal(await fixture().storage.get('settings'), null)
   await assert.rejects(api.storage.set('a..b', 1), /invalid_storage_key/)
-  await assert.rejects(api.storage.set('large', 'x'.repeat(16 * 1024)), /quota_exceeded/)
+  await assert.rejects(api.storage.set('large', 'x'.repeat(128 * 1024)), /quota_exceeded/)
   assert.equal(await api.storage.get('large'), null)
   await api.storage.clear()
   assert.equal(await api.storage.get('settings'), null)

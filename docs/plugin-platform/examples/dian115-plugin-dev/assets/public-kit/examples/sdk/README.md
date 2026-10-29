@@ -16,7 +16,7 @@ replace example.com/dian115-plugin-sdk => ../sdk
 
 ## 数据和重试
 
-业务数据只放 Host Storage。键如 `settings`、`rules.rule01`，不能是文件路径；单值 256 KiB、每安装 16 MiB。`schema_version` 是业务格式版本，ETag 是并发修改版本，二者独立。
+业务数据只放 Host Storage。键如 `settings`、`rules.rule01`，不能是文件路径；单值 1 MiB、每安装 64 MiB。`schema_version` 是业务格式版本，ETag 是并发修改版本，二者独立。
 
 读取不存在值返回状态为 404 的 `*hostapi.Problem`。PUT 省略 ETag 表示覆盖；传入读取所得 ETag 表示 CAS，412 表示需要重新读取并由业务合并。DELETE 对不存在键成功，不接受用户指定的 If-Match。SDK 不自动重试写入，也不自行生成新幂等键。对同一业务尝试使用相同请求与相同 key；新业务必须使用不同 key。
 
@@ -90,7 +90,7 @@ go test ./pluginjson -fuzz=FuzzAccessNeverPanics -fuzztime=5s
 
 ## 可恢复后台任务
 
-`Client.CurrentJob(ctx)` 返回当前可恢复 job 的稳定业务 ID、检查点及验证标志；普通 action/event/cron 投递返回 nil。`Client.SaveCheckpoint(ctx, raw, progress)` 一次提交不超过 16 KiB 的 JSON 与进度，不自动轮询或重试。只有当前执行代次可写，核对、取消、卸载及包变化后的写入会被拒绝。
+`Client.CurrentJob(ctx)` 返回当前可恢复 job 的稳定业务 ID、检查点及验证标志；普通 action/event/cron 投递返回 nil。`Client.SaveCheckpoint(ctx, raw, progress)` 一次提交不超过 64 KiB 的 JSON 与进度，不自动轮询或重试。只有当前执行代次可写，核对、取消、卸载及包变化后的写入会被拒绝。
 
 两个方法校验完整 JSON 回执，不接受合法字段后带尾随正文的伪成功。已落库的取消请求在异常退出后仍有效，启动恢复不会重新提交该任务。
 
@@ -112,3 +112,13 @@ Manifest 声明 recovery_handler 后，宿主在恢复时先进入只读 recover
 账号密码无需转成 credential_ref，也不强制 CookieCloud。`PostForm(ctx, HTTPRequest{URL: loginURL, Session: account}, fields)` 支持任意站点表单字段、密码、验证码及 CSRF；不修改调用方 headers。`SetCookieHeader` 接收用户手填的 `name=value; name2=value2`，`SetCookies` 则保留逐条 Set-Cookie 属性。登录后通过 HTTP 会话记住 Cookie。插件自己的输入/返回可以使用 password、cookie 等字段，宿主凭据仍通过对应 Host API 处理。
 
 安装后使用 `Sites`、`SaveSite(HTTPSite{ID,URL,Label},key)`、`DeleteSite(id,key)` 保存任意 HTTP(S) 地址，`DeleteSite("",key)` 清空全部地址并可恢复损坏配置。需声明 GET/PUT/DELETE `/api/plugin-runtime/http/sites`。地址加密存储、按安装隔离；无需逐域改包。CookieCloud 可按已保存站点使用其凭据范围。探测 `features.http_sites_v1` 和 `features.credential_fields_v1`；缺失时提示升级宿主。
+
+## 网络性能与诊断
+
+HTTP 默认 60 秒，TimeoutMS 最高 300000；Manifest 前台默认 120000、最高 600000 毫秒，外层预算仍约束请求。使用 `CacheMode`（default/no-store/reload）、`CacheTTLMS`（最高 24 小时）和 `MaxResponseBytes`（单次最高 8 MiB）控制请求。上游 no-store/no-cache、Set-Cookie、跳转或截断响应不会缓存；登录、验证码用 no-store。
+
+`HTTPResponse.Network` 包含 Cache、DurationMS、QueueMS、TimeoutMS、ReusedConnection；检查 `Truncated` 后再解析正文。`HTTPBatch(ctx, []HTTPRequest{...}, 4)` 一次发送最多 8 项只读外部请求，由宿主并发执行，每项最多 1 MiB，按输入顺序返回独立结果/错误。不要从多个 guest goroutine 同时进入共享 ABI 传输。HTTP 状态错误仍在各项 Response.Status，SDK 不自动重试。
+
+`HTTPCache(ctx)` 读当前安装缓存数量、字节和命中计数；`ClearHTTPCache(ctx,key)` 清空缓存，保留 Cookie。需声明 GET/DELETE `/api/plugin-runtime/http/cache`；新网络和批量能力分别探测 features.http_network_v2 与 features.http_batch_v1。缓存只在内存保存，停用/卸载释放，每安装 8 MiB、全局 32 MiB。缓存策略、会话并发及迟到响应规则见 [HTTP 会话与性能](../../http-sessions-v1.md)。
+
+`RenderPageWithTimeout(ctx,url,session,waitSeconds,timeoutMS,key)` 指定已有 FlareSolverr 的总预算，默认 90000、最高 300000 毫秒；waitSeconds 为 0–30。普通 HTTP 不启动浏览器。

@@ -6,8 +6,8 @@ import { validateRuntime, validateJobSchedules } from './runtime-check.mjs'
 const schema = JSON.parse(readFileSync(new URL('../manifest.schema.json', import.meta.url)))
 const runtime = { kind: 'wasm', entry: 'runtime/plugin.wasm', protocol: 'dian115:wasm@1' }
 test('runtime follows public schema defaults and limits', () => {
-  assert.equal(validateRuntime({ ...runtime, timeout_ms: 120000, background_timeout_ms: 300000 }, schema).kind, 'wasm')
-  for (const changes of [{ kind: 'process' }, { protocol: 'wrong' }, { timeout_ms: 180000 }, { resident: 'true' }, { entry: '../plugin.wasm' }, { memory_mb: 513 }, { unknown: 1 }]) assert.throws(() => validateRuntime({ ...runtime, ...changes }, schema))
+  assert.equal(validateRuntime({ ...runtime, timeout_ms: 600000, background_timeout_ms: 300000 }, schema).kind, 'wasm')
+  for (const changes of [{ kind: 'process' }, { protocol: 'wrong' }, { timeout_ms: 600001 }, { resident: 'true' }, { entry: '../plugin.wasm' }, { memory_mb: 513 }, { unknown: 1 }]) assert.throws(() => validateRuntime({ ...runtime, ...changes }, schema))
 })
 test('cron validates cadence, ranges and identities', () => {
   const job = schedule => [{ id: 'refresh', handler: 'refresh', default_schedule: schedule, allow_overlap: false }]

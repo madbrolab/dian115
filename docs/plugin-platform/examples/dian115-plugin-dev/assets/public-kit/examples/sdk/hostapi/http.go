@@ -17,11 +17,16 @@ type HTTPRequest struct {
 	Headers              map[string]string
 	Body                 []byte
 	TimeoutMS            int
+	CacheMode            string
+	CacheTTLMS           int
+	MaxResponseBytes     int
 }
 type HTTPResponse struct {
-	Status  int
-	Headers pluginjson.Raw
-	Body    []byte
+	Status    int
+	Headers   pluginjson.Raw
+	Body      []byte
+	Network   HTTPNetworkInfo
+	Truncated bool
 }
 
 func validHTTPSession(v string) bool {
@@ -42,10 +47,18 @@ func validHTTPSession(v string) bool {
 	return true
 }
 
-func (c Client) HTTP(ctx context.Context, r HTTPRequest) (HTTPResponse, error) {
-	var result HTTPResponse
-	if c.Call == nil || !(strings.HasPrefix(r.URL, "https://") || strings.HasPrefix(r.URL, "http://")) || !validHTTPSession(r.Session) || r.TimeoutMS < 0 || r.TimeoutMS > 30000 || len(r.Body) > 8<<20 {
-		return result, errors.New("invalid HTTP request")
+type HTTPNetworkInfo struct {
+	Cache                          string
+	DurationMS, QueueMS, TimeoutMS int
+	ReusedConnection               bool
+}
+
+func encodeHTTPRequest(r HTTPRequest) (map[string]any, error) {
+	if !(strings.HasPrefix(r.URL, "https://") || strings.HasPrefix(r.URL, "http://")) || !validHTTPSession(r.Session) || r.TimeoutMS < 0 || r.TimeoutMS > 300000 || len(r.Body) > 8<<20 || r.CacheTTLMS < 0 || r.CacheTTLMS > 86400000 || r.MaxResponseBytes < 0 || r.MaxResponseBytes > 8<<20 {
+		return nil, errors.New("invalid HTTP request")
+	}
+	if r.CacheMode != "" && r.CacheMode != "default" && r.CacheMode != "no-store" && r.CacheMode != "reload" {
+		return nil, errors.New("invalid HTTP cache mode")
 	}
 	method := strings.ToUpper(r.Method)
 	if method == "" {
@@ -54,7 +67,7 @@ func (c Client) HTTP(ctx context.Context, r HTTPRequest) (HTTPResponse, error) {
 	switch method {
 	case "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE":
 	default:
-		return result, errors.New("invalid HTTP method")
+		return nil, errors.New("invalid HTTP method")
 	}
 	request := map[string]any{"method": method, "path": r.URL}
 	if r.Headers != nil {
@@ -66,25 +79,104 @@ func (c Client) HTTP(ctx context.Context, r HTTPRequest) (HTTPResponse, error) {
 	if r.TimeoutMS > 0 {
 		request["timeout_ms"] = r.TimeoutMS
 	}
+	if r.CacheMode != "" {
+		request["cache_mode"] = r.CacheMode
+	}
+	if r.CacheTTLMS > 0 {
+		request["cache_ttl_ms"] = r.CacheTTLMS
+	}
+	if r.MaxResponseBytes > 0 {
+		request["max_response_bytes"] = r.MaxResponseBytes
+	}
 	if len(r.Body) > 0 {
 		request["body_base64"] = base64.RawStdEncoding.EncodeToString(r.Body)
 	}
-	raw, err := c.Call(ctx, "host.call", request)
-	if err != nil {
-		return result, err
-	}
+	return request, nil
+}
+
+func decodeHTTPResponse(raw pluginjson.Raw) (HTTPResponse, error) {
+	var result HTTPResponse
 	result.Status = pluginjson.Int(pluginjson.Field(raw, "status"))
 	result.Headers = pluginjson.Field(raw, "headers")
 	if result.Status < 100 || result.Status > 599 {
 		return result, errors.New("invalid HTTP response")
 	}
+	var err error
 	result.Body, err = Body(raw)
 	if err != nil {
 		return result, err
 	}
-	// HTTP error statuses retain their body. Transport success does not imply
-	// login or business success; the plugin inspects its site's response.
+	meta := pluginjson.Field(raw, "network")
+	result.Network = HTTPNetworkInfo{Cache: pluginjson.Text(pluginjson.Field(meta, "cache")), DurationMS: pluginjson.Int(pluginjson.Field(meta, "duration_ms")), QueueMS: pluginjson.Int(pluginjson.Field(meta, "queue_ms")), TimeoutMS: pluginjson.Int(pluginjson.Field(meta, "timeout_ms")), ReusedConnection: string(pluginjson.Field(meta, "reused_connection")) == "true"}
+	result.Truncated = pluginjson.Text(pluginjson.Index(pluginjson.Field(result.Headers, "x-dian115-body-truncated"), 0)) == "true"
 	return result, nil
+}
+
+func (c Client) HTTP(ctx context.Context, r HTTPRequest) (HTTPResponse, error) {
+	if c.Call == nil {
+		return HTTPResponse{}, errors.New("HTTP client is unavailable")
+	}
+	request, err := encodeHTTPRequest(r)
+	if err != nil {
+		return HTTPResponse{}, err
+	}
+	raw, err := c.Call(ctx, "host.call", request)
+	if err != nil {
+		return HTTPResponse{}, err
+	}
+	return decodeHTTPResponse(raw)
+}
+
+type HTTPBatchResult struct {
+	Response HTTPResponse
+	Error    error
+}
+
+// HTTPBatch preserves order and per-item failures. GET/HEAD only, up to eight
+// requests; each response is bounded to 1 MiB (check Truncated).
+func (c Client) HTTPBatch(ctx context.Context, requests []HTTPRequest, concurrency int) ([]HTTPBatchResult, error) {
+	if c.Call == nil || len(requests) < 1 || len(requests) > 8 || concurrency < 0 || concurrency > 8 {
+		return nil, errors.New("invalid HTTP batch")
+	}
+	encoded := make([]any, 0, len(requests))
+	for _, r := range requests {
+		request, err := encodeHTTPRequest(r)
+		if err != nil {
+			return nil, err
+		}
+		if (request["method"] != "GET" && request["method"] != "HEAD") || len(r.Body) > 0 || r.MaxResponseBytes > 1<<20 {
+			return nil, errors.New("HTTP batch requires GET/HEAD without a body; response limit is 1 MiB")
+		}
+		encoded = append(encoded, request)
+	}
+	raw, err := c.Call(ctx, "host.http.batch", map[string]any{"requests": encoded, "concurrency": concurrency})
+	if err != nil {
+		return nil, err
+	}
+	values := pluginjson.Field(raw, "results")
+	if pluginjson.Index(values, len(requests)) != nil {
+		return nil, errors.New("unexpected HTTP batch result count")
+	}
+	result := make([]HTTPBatchResult, len(requests))
+	for i := range requests {
+		item := pluginjson.Index(values, i)
+		if item == nil {
+			return nil, errors.New("missing HTTP batch result")
+		}
+		if detail := pluginjson.Text(pluginjson.Field(item, "error")); detail != "" {
+			result[i].Error = errors.New(detail)
+			continue
+		}
+		result[i].Response, result[i].Error = decodeHTTPResponse(pluginjson.Field(item, "response"))
+	}
+	return result, nil
+}
+
+func (c Client) HTTPCache(ctx context.Context) (pluginjson.Raw, error) {
+	return c.sessionRequest(ctx, "GET", "cache", nil, "")
+}
+func (c Client) ClearHTTPCache(ctx context.Context, key string) (pluginjson.Raw, error) {
+	return c.sessionRequest(ctx, "DELETE", "cache", nil, key)
 }
 
 // PostForm accepts site-specific names, CSRF tokens and captcha answers.
@@ -234,8 +326,11 @@ func (c Client) ExportCookieCloud(ctx context.Context, session string, domains [
 // RenderPage is explicitly requested, GET-only and bounded to a temporary
 // FlareSolverr session. It does not retry, submit login forms or start Chromium.
 func (c Client) RenderPage(ctx context.Context, targetURL, session string, waitSeconds int, key string) (pluginjson.Raw, error) {
-	if !validManagedHTTPSession(session) || waitSeconds < 0 || waitSeconds > 10 {
+	return c.RenderPageWithTimeout(ctx, targetURL, session, waitSeconds, 0, key)
+}
+func (c Client) RenderPageWithTimeout(ctx context.Context, targetURL, session string, waitSeconds, timeoutMS int, key string) (pluginjson.Raw, error) {
+	if !validManagedHTTPSession(session) || waitSeconds < 0 || waitSeconds > 30 || timeoutMS < 0 || timeoutMS > 300000 {
 		return nil, errors.New("invalid render request")
 	}
-	return c.sessionRequest(ctx, "POST", "render", map[string]any{"url": targetURL, "session": session, "wait_seconds": waitSeconds}, key)
+	return c.sessionRequest(ctx, "POST", "render", map[string]any{"url": targetURL, "session": session, "wait_seconds": waitSeconds, "timeout_ms": timeoutMS}, key)
 }

@@ -8,6 +8,41 @@ import (
 	"testing"
 )
 
+func TestHTTPBatchCacheControlsAndPerItemErrors(t *testing.T) {
+	var method string
+	var input map[string]any
+	c := Client{Call: func(_ context.Context, m string, in any) (pluginjson.Raw, error) {
+		method, input = m, in.(map[string]any)
+		return pluginjson.Encode(map[string]any{"results": []any{
+			map[string]any{"response": map[string]any{"status": 200, "headers": map[string]any{"x-dian115-body-truncated": []any{"true"}}, "body_base64": base64.RawStdEncoding.EncodeToString([]byte("page")), "network": map[string]any{"cache": "hit", "duration_ms": 2, "queue_ms": 0, "reused_connection": true}}},
+			map[string]any{"error": "fixture failure"},
+		}})
+	}}
+	result, err := c.HTTPBatch(context.Background(), []HTTPRequest{{URL: "https://one.test", TimeoutMS: 300000, CacheTTLMS: 60000}, {URL: "http://two.test", CacheMode: "no-store"}}, 4)
+	if err != nil || len(result) != 2 || method != "host.http.batch" || input["concurrency"] != 4 {
+		t.Fatal(method, input, result, err)
+	}
+	if result[0].Error != nil || !result[0].Response.Truncated || result[0].Response.Network.Cache != "hit" || !result[0].Response.Network.ReusedConnection || result[1].Error == nil {
+		t.Fatal(result)
+	}
+	requests := input["requests"].([]any)
+	if requests[0].(map[string]any)["timeout_ms"] != 300000 || requests[1].(map[string]any)["cache_mode"] != "no-store" {
+		t.Fatal(input)
+	}
+	if _, err = c.HTTPBatch(context.Background(), []HTTPRequest{{URL: "https://one.test", Method: "POST"}}, 1); err == nil {
+		t.Fatal("batch accepted side effect")
+	}
+	if _, err = c.HTTP(context.Background(), HTTPRequest{URL: "https://one.test", TimeoutMS: 300001}); err == nil {
+		t.Fatal("unbounded timeout accepted")
+	}
+	if _, err = c.HTTP(context.Background(), HTTPRequest{URL: "https://one.test", CacheTTLMS: 86400001}); err == nil {
+		t.Fatal("unbounded cache lifetime accepted")
+	}
+	if _, err = c.HTTP(context.Background(), HTTPRequest{URL: "https://one.test", CacheMode: "made-up"}); err == nil {
+		t.Fatal("invalid cache mode accepted")
+	}
+}
+
 func TestPostFormAndDynamicSites(t *testing.T) {
 	var request map[string]any
 	c := Client{Call: func(_ context.Context, _ string, input any) (pluginjson.Raw, error) {

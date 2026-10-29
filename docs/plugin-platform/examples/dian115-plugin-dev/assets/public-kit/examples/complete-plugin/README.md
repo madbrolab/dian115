@@ -137,6 +137,8 @@ Telegram 路由在 Manifest 的 telegram 段声明，由宿主安装和启停流
 - `cookiecloud-export`：输入 `{domain,session,revision}`，明确写回共享 CookieCloud。
 - `cookies-clear`：输入 `{session}`，清空自己的账号会话。
 - `http-render`：输入 `{url,session}`，按需渲染；仅返回 HTML 字节数。
+- `http-batch`：输入 `{urls:[...],session}`，最多 8 个地址、并发 4，缓存 TTL 30 秒；逐项返回 HTTP 状态、耗时、缓存及截断标志，不回显正文或地址。
+- `http-cache-info` / `http-cache-clear`：查询或清空当前安装响应缓存，保留 Cookie。
 
 这些 action 可通过自有页面的 api.invokeAction 调用，稳定编号按 src/actions.ts 的流程先保存。登录和手填 Cookie 使用 transientInput:true，只在普通页面存储中保存编号；密码或 Cookie 不写普通页面偏好。丢失响应后用相同内容和原编号核实/重试，不能改变输入换号登录。export 前应明确展示目标域名和用户意图，409 时不自动覆盖。所需接口在 Manifest 和市场条目中一致声明；CookieCloud 可访问 network 声明或 sites 接口保存的站点及其子域。普通 HTTP 可直接使用用户配置的地址，账号密码登录和手填 Cookie 无需 CookieCloud。正式插件删除不用的权限。示例要求宿主 5.0.53+。代码见 runtime/http_sessions.go，完整说明见 [HTTP 会话](../../http-sessions-v1.md)。
 
@@ -160,3 +162,5 @@ refresh job 声明 recovery_handler: refresh-recover。受管后台执行先提�
 清除意图的确认响应也可能丢失。示例保留已收到的动作结果并提示确认状态尚待核对，不把清理失败重新抛成业务失败；否则“清理已提交但响应丢失”可能导致下一次重试换用新编号。测试同时覆盖该窗口。
 
 后台任务的取消请求一旦落库，异常退出后也保持取消，不会因尚未收尾而自动续跑。`npm test` 另覆盖动作意图写入失败不提交、丢失响应后跨页面复用原编号、预览动作重放及冲突。
+
+网络面板可直接执行小批量只读请求和缓存查询/清空，结果仅在页面内存显示。该示例显式设置前台预算 300000 毫秒；普通请求最多等待 120 秒，批量每项 60 秒。实际网络能力探测 http_network_v2/http_batch_v1；预览环境明确报告未连接宿主。

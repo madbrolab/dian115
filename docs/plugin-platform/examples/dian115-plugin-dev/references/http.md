@@ -13,3 +13,11 @@
 - 写方法使用稳定业务编号派生幂等键，不在重试时换号。初始化、state、唤醒和只读恢复不自动登录、不写回 CookieCloud。
 - 卸载清空插件自己的会话、导入副本、记录和绑定。显式导出到用户共享 CookieCloud 属于已提交的外部结果，不随卸载回滚；不清空其他插件或站点的数据。
 - 用隔离 HTTP fixture 验证登录 Set-Cookie、重定向、会话恢复、串号隔离、过期删除、并发请求、卸载迟到响应，以及 CookieCloud 版本冲突。真实站点验收使用用户授权账号，不把账号密码、Cookie 或站点私有数据放进示例、技能或公共提交。
+
+## 慢页、缓存与并发
+
+- HTTP 默认 60 秒、TimeoutMS 最高 300000；前台默认 120 秒、Manifest 最高 600000 毫秒。外层执行预算要覆盖页面处理、请求及返回；批量长工作用统一后台任务，不在页面加入无限等待或自动重放。
+- 探测 http_network_v2 / http_batch_v1。宿主复用连接，每安装网络在途最多 8、全局 32。独立 GET/HEAD 用 HTTPBatch，一次最多 8 项、并发默认 4、每项响应 1 MiB，按原顺序处理单项错误；不要并发操作同一 WASM ABI 缓冲。
+- 按业务选择 CacheMode、CacheTTLMS 和 MaxResponseBytes。默认遵守上游新鲜度，显式 TTL 不覆盖 no-store/no-cache；Set-Cookie、跳转、截断及托管凭据响应不缓存。登录/验证码选 no-store。缓存内存有界、按安装及账号版本隔离，HTTPCache / ClearHTTPCache 分别查询及清空，不清除 Cookie。
+- 展示 Network 的耗时、排队、缓存和复用信息，检查 Truncated。504 超时、499 取消和 409 cookie_session_conflict 分别处理；保留 request_id，先核对写入事实。原始请求/响应字节保持，不能用 HTTP 200 取代业务验证。
+- 同一 Cookie 会话可以并发读取；依赖 Cookie/CSRF 更新的登录步骤按序执行。清空、导入、重新登录或卸载后旧响应不能恢复旧 Cookie/缓存。测试慢页超过 10 秒、并发合并、取消、缓存失效和隔离边界。

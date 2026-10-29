@@ -49,7 +49,10 @@
 | `body_base64` | 否 | 标准 Base64；请求接受 padded/unpadded，响应固定 unpadded |
 | `credential_ref` | 否 | 外部 HTTP/HTTPS 可用的安装实例托管凭据引用；使用 HTTP 时秘密会以明文传输 |
 | `cookie_session` | 否 | 外部 HTTP 的受管 Cookie 会话，默认 `default`，`none` 对本次请求关闭；不同账号使用不同名称。见 [HTTP 会话协议](http-sessions-v1.md) |
-| `timeout_ms` | 否 | 当前 Host Call 的时间上限，1–30000 毫秒；省略或 0 使用既有默认值，实际截止时间不会晚于本次插件执行的截止时间 |
+| `timeout_ms` | 否 | 当前 Host Call 的时间上限，1–300000 毫秒；省略或 0 时外部 HTTP 默认 60000，本地 API 沿用外层期限；实际截止早于执行期限少量时间以便 guest 处理超时 |
+| `cache_mode` | 否 | 外部 HTTP 的 default / no-store / reload；默认仅复用仍新鲜的私有缓存 |
+| `cache_ttl_ms` | 否 | 0–86400000，外部 GET/HEAD 显式缓存期限；不覆盖上游 no-store/no-cache 或延长上游期限 |
+| `max_response_bytes` | 否 | 外部 HTTP 正文上限，1–8388608；0 或省略使用 8388608，批量请求最高 1048576 |
 
 发送 `timeout_ms` 前先调用 `host.capabilities`，仅当 `result.features.host_call_timeout_ms` 为 `true` 时使用该字段。未提供该特性时提示升级宿主，不加入旧字段兼容路径。此扩展保持 `dian115:wasm@1` ABI 不变。批量插件应将剩余时间传给每次嵌套调用，耗尽预算后保留未确认状态，避免把超时当成业务否定结果。截止时间通过请求上下文传递；本地 Handler 必须将该上下文继续传给下游网络调用。
 
@@ -226,8 +229,8 @@ GET /api/plugin-host/emby/items/:id
 - 禁止 URL userinfo 和 fragment；
 - 只支持 `GET`、`HEAD`、`POST`、`PUT`、`PATCH`、`DELETE`；
 - HTTPS 使用 TLS 最低 1.2、证书、SNI 和 hostname 正常校验；HTTP 不提供加密或证书保护，插件应只把 HTTP 用于本地/受信任网络或本身不含秘密的接口；
-- 默认总超时 10 秒；`timeout_ms` 可设为 1–30000 毫秒，且不会超过插件执行的截止时间；
-- 最多跟随 3 次跳转，每次重新校验 URL、DNS、目标地址和代理规则；跳转仍只能到 HTTP/HTTPS；
+- 默认总超时 60 秒；`timeout_ms` 可设为 1–300000 毫秒，且不会超过插件执行的截止时间；
+- 最多跟随 8 次跳转，每次检查 URL 和代理规则；标准拨号器负责 DNS 与双栈回退，连接可以复用；跳转仍只能到 HTTP/HTTPS；
 - `301/302` 的 POST 和 `303` 会转为 GET 并丢弃 body；
 - 响应正文最多 8 MiB；极端超大响应会在 8 MiB 处截断并返回 `x-dian115-body-truncated: true`，常规列表应使用上游分页参数；
 - 查询与 fragment 不会写入审计日志，审计记录 origin、方法、状态、耗时和代理范围。
@@ -250,17 +253,25 @@ expect
 
 插件可以在外部请求中自行提供它已知的 `authorization`、`cookie` 或站点自定义 header；这些值属于插件自身已掌握的数据，宿主不会自动提供管理员、115、TMDB、Telegram 或代理凭据。更推荐使用第 6 节的托管凭据，避免把秘密暴露给插件进程和日志。
 
-响应中的独立 `set-cookie` 会先应用到当前安装的受管 Cookie 会话，再从返回 header 中删除；认证挑战、`location`、长度和 hop-by-hop header 同样不返回。其他安全 header 以小写名称返回。跳转的 `Location` 只供宿主内部处理，不直接交给插件。
+响应中的独立 `set-cookie` 会先应用到当前安装的受管 Cookie 会话，再从返回 header 中删除；`location`、长度和 hop-by-hop header 不返回；WWW-Authenticate 认证挑战按原语义返回。其他安全 header 以小写名称返回。跳转的 `Location` 只供宿主内部处理，不直接交给插件。
 
-Broker 失败返回 HTTP 语义的 `502` Host Call result，body 为脱敏 JSON，例如：
+Broker 失败仍返回 HTTP 语义的 Host Call result，正文为脱敏 `application/problem+json`，含 code、status、request_id 和 retryable：
 
-```json
-{"error":"upstream request failed"}
-```
+| HTTP / code | 含义 |
+| --- | --- |
+| 504 / upstream_timeout | HTTP 总预算或外层剩余预算耗尽 |
+| 499 / operation_cancelled | 请求被取消，如停用或卸载 |
+| 409 / cookie_session_conflict | 会话已清空或更换，旧请求不能回写 |
+| 404 / plugin_unavailable | 安装已不存在或不再可用 |
+| 503 / network_capacity | HTTP 资源接纳已满 |
+| 502 / dns_failed | DNS 失败 |
+| 502 / upstream_unavailable | 其他连接或上游错误 |
+
+目标站点自身的 4xx/5xx 状态、认证挑战和正文保留，不改写成 Broker 故障。外部响应可附 `network` 耗时、排队、连接复用及缓存信息；详情、缓存失效与 `host.http.batch` 并发方法见 [HTTP 会话与性能](http-sessions-v1.md)。SDK 使用 HTTPResponse.Network、Truncated 和 HTTPBatch 读取。
 
 ## 4. 目标地址与 DNS 规则
 
-直连时宿主解析目标 hostname，依次尝试解析得到的地址，并保留原 hostname 用于 HTTP Host 与 HTTPS SNI。此版本有意允许 loopback、局域网、容器、宿主机、link-local 和其他非公网地址，以便插件对接本地项目；因此安装者必须把插件发布者和插件包视为同一信任边界。每个 redirect 都会重新解析目标。使用代理时由宿主选择的代理解析目标，以支持只能通过代理 DNS 解析的地址；宿主代理域名列表的命中规则始终优先。
+直连使用标准拨号器解析 hostname 并处理双栈回退，保留原 hostname 用于 HTTP Host 与 HTTPS SNI。此版本有意允许 loopback、局域网、容器、宿主机、link-local 和其他非公网地址，以便插件对接本地项目；因此安装者必须把插件发布者和插件包视为同一信任边界。每次跳转重新检查目标与代理规则；连接复用时不重复拨号。使用代理时由宿主选择的代理解析目标，以支持只能通过代理 DNS 解析的地址；宿主代理域名列表的命中规则始终优先。
 
 `localhost`、`127.0.0.1` 和 `::1` 指 DIAN115 宿主进程所在的网络命名空间；Docker 部署中通常是当前 DIAN115 容器。访问物理宿主机或其他容器时，应使用该目标在 DIAN115 容器网络中可解析、可路由的 hostname 或 IP（例如同一 Docker network 的服务名、明确配置的宿主网关名或局域网地址）。
 

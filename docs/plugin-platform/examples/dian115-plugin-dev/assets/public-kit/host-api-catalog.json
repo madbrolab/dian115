@@ -1,5 +1,5 @@
 {
-  "openapi_sha256": "dd96656575fcbef26ad41d82d6cfd6df103d6129eb0401f77c8180837e985e4d",
+  "openapi_sha256": "ee134905ffeabc20c1ca571db2e0be6e267668958980870d673640cd47b096e1",
   "entries": [
     {
       "method": "DELETE",
@@ -1583,6 +1583,24 @@
       "risk": "write",
       "title": "删除自定义站点",
       "description": "删除一个自定义地址并移除其 CookieCloud 范围，不删除共享数据。",
+      "host_credentials": false
+    },
+    {
+      "method": "GET",
+      "path": "/api/plugin-runtime/http/cache",
+      "category": "plugin-http",
+      "risk": "read",
+      "title": "读取网络缓存用量",
+      "description": "读取当前插件 HTTP 缓存用量和命中计数，不返回内容或地址。",
+      "host_credentials": false
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/plugin-runtime/http/cache",
+      "category": "plugin-http",
+      "risk": "write",
+      "title": "清空网络缓存",
+      "description": "清空当前插件 HTTP 响应缓存，不清空 Cookie 登录会话。",
       "host_credentials": false
     }
   ]

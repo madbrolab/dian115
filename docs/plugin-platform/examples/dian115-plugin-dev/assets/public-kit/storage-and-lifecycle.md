@@ -14,7 +14,7 @@ WASM 的 Host Call 身份来自宿主持有的安装上下文。安装只保存�
 | --- | --- |
 | 配置、规则、少量业务记录 | Host Storage JSON |
 | 任务结果和进度 | 对应 Host Job API，插件保存 job_ref |
-| 可恢复长任务的检查点 | 宿主加密保存的恢复记录，单条最多 16 KiB，不计入业务 KV 用量 |
+| 可恢复长任务的检查点 | 宿主加密保存的恢复记录，单条最多 64 KiB，不计入业务 KV 用量 |
 | 宿主媒体与文件 | Host API 给出的业务数据与引用，不复制完整宿主数据库 |
 | 自有站点登录 | 页面直接输入密码、Cookie；受管 HTTP 会话加密保存 Cookie，动作重放记录加密保存；普通页面偏好不保存秘密 |
 | 宿主密钥 | 宿主凭据绑定的 credential_ref，不用普通 KV 冒充密钥库 |
@@ -25,7 +25,7 @@ WASM 的 Host Call 身份来自宿主持有的安装上下文。安装只保存�
 
 键长 1–160 字符，由 ASCII 字母、数字和点、短横线、下划线组成；分隔符不能连续或位于首尾。`settings`、`rules.rule01` 合法，`settings/rules.json`、`a..b` 不合法。
 
-每个 JSON 值最大 256 KiB，每安装所有值合计最大 16 MiB。超额返回 HTTP 413 和 `quota_exceeded`。列表拆成有界记录，不把整个媒体库、图片 Base64 或无限历史塞进一个配置值。
+每个 JSON 值最大 1 MiB，每安装所有值合计最大 64 MiB。超额返回 HTTP 413 和 `quota_exceeded`。列表拆成有界记录，不把整个媒体库、图片 Base64 或无限历史塞进一个配置值。
 
 ```json
 {"value":{"schema_version":1,"enabled":true,"selected_emby_instance":2,"rules":[{"id":"rule01","enabled":true}]}}
@@ -56,6 +56,19 @@ DELETE 必须使用 Idempotency-Key，对不存在键成功；携带 If-Match �
 
 轻量 SDK 提供 `StorageList`、`StorageUsage`，不自动拉取所有页或重试。示例见 [SDK](examples/sdk/README.md)。
 
+## 页面偏好、会话及缓存额度
+
+| 数据 | 单值/单会话 | 每安装额度 |
+| --- | --- | --- |
+| 普通 Host Storage | 1 MiB | 64 MiB，受管 UI 偏好也计入 |
+| 页面偏好 api.storage | 128 KiB | 512 键、序列化总计 1 MiB |
+| 加密 HTTP Cookie 会话 | 1024 条 Cookie、1 MiB | 128 个会话，独立于 KV |
+| 自定义站点 | URL 最长 2048 字节 | 128 个，http.sites.v1 计入 KV |
+| 恢复检查点 | 64 KiB | 沿用有界任务记录，不计入 KV |
+| HTTP 响应缓存 | 含响应头最多 1 MiB | 8 MiB / 256 项，全局 32 MiB / 1024 项，内存淘汰 |
+
+额度放宽后仍按页/批次处理数据，使用 StorageUsage 查询实际容量。缓存会随停用、卸载或宿主重启清理；业务配置和 Cookie 在重启、休眠和停用后保留，不能依赖缓存维持登录。
+
 ## 生命周期
 
 | 操作 | 持久数据 | 运行行为 |
@@ -78,12 +91,12 @@ DELETE 必须使用 Idempotency-Key，对不存在键成功；携带 If-Match �
 
 ## 浏览器存储与备份
 
-当前插件 UI 使用不透明来源沙箱，原生浏览器存储不可访问。页面偏好通过 `api.storage` 保存在同安装 KV，单值 16 KiB、合计 64 KiB、最多 128 键；卸载一并清空，旧安装晚写被拒绝。业务持久状态仍使用 Host Storage。详见 [隔离与受管存储](ui-isolation-v1.md)。
+当前插件 UI 使用不透明来源沙箱，原生浏览器存储不可访问。页面偏好通过 `api.storage` 保存在同安装 KV，单值 128 KiB、合计 1 MiB、最多 512 键；卸载一并清空，旧安装晚写被拒绝。业务持久状态仍使用 Host Storage。详见 [隔离与受管存储](ui-isolation-v1.md)。
 
 备份由宿主管理。JSON 数据随所选数据库备份，加密材料和包随数据目录备份；编译缓存可以重建。插件不接触备份密钥。升级修改数据结构之前应验证回滚兼容性，不能只回退包而忽略已经迁移的数据。
 
 ## HTTP Cookie 会话
 
-HTTP 会话独立于普通 KV，按安装编号和账号会话隔离并加密保存。每安装最多 32 个会话，每会话 256 条 Cookie、256 KiB；没有常驻浏览器或 Cookie 保活任务。休眠、停用及重启保留，卸载与迟到写入保护沿用安装生命周期；重装为空。CookieCloud 导入是私有副本，显式写回是对共享用户服务的业务操作，不随卸载撤销。完整协议见 [HTTP 会话](http-sessions-v1.md)。
+HTTP 会话独立于普通 KV，按安装编号和账号会话隔离并加密保存。每安装最多 128 个会话，每会话 1024 条 Cookie、1 MiB；没有常驻浏览器或 Cookie 保活任务。休眠、停用及重启保留，卸载与迟到写入保护沿用安装生命周期；重装为空。CookieCloud 导入是私有副本，显式写回是对共享用户服务的业务操作，不随卸载撤销。完整协议见 [HTTP 会话](http-sessions-v1.md)。
 
 安装后自定义站点通过 HTTP sites 接口加密保存于当前安装的 `http.sites.v1` KV，计入既有 KV 用量；无需新增表、改写签名 Manifest 或重新安装。卸载与普通 KV 一并删除，格式见 HTTP 会话协议。

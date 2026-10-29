@@ -4,7 +4,7 @@
 
 ## 验证范围
 
-`project-check.mjs` 会在构包前检查 Manifest、市场条目、权限格式、独立 HTML 入口、相对静态资源路径，以及运行时入口：WASM magic、是否由 Go 标准编译器构建、是否链接了 `encoding/json`、以及 2 MiB 体积上限。它通过 `runtime-check.mjs` 读取公开 `manifest.schema.json`，核对 runtime 协议、字段、超时、内存和并发范围。前台 `timeout_ms` 上限为 120000 毫秒，不能使用后台预算或浏览器传输上限代替。工具只使用 Node.js 标准库，分发时保留相邻脚本及 schema：
+`project-check.mjs` 会在构包前检查 Manifest、市场条目、权限格式、独立 HTML 入口、相对静态资源路径，以及运行时入口：WASM magic、是否由 Go 标准编译器构建、是否链接了 `encoding/json`、以及 2 MiB 体积上限。它通过 `runtime-check.mjs` 读取公开 `manifest.schema.json`，核对 runtime 协议、字段、超时、内存和并发范围。前台 `timeout_ms` 上限为 600000 毫秒，不能使用后台预算或浏览器传输上限代替。工具只使用 Node.js 标准库，分发时保留相邻脚本及 schema：
 
 ```bash
 node docs/plugin-platform/conformance/project-check.mjs \
@@ -21,7 +21,7 @@ node docs/plugin-platform/conformance/openapi-check.mjs
 node --test docs/plugin-platform/conformance/openapi-check.test.mjs
 ```
 
-运行 `node --test docs/plugin-platform/conformance/runtime-check.test.mjs` 可验证 runtime 契约回归：非 WASM 的 `runtime.kind` 必须被拒绝，错误的协议字符串必须被拒绝，180000 毫秒的前台 action 必须被拒绝，120000 毫秒前台 action 与 300000 毫秒后台 job 的组合允许通过。`project-check.mjs` 同时检查五字段数值 cron，拒绝一分钟任务及小时边界处不足五分钟的间隔；`*/5 * * * *` 可用于最短周期任务。
+运行 `node --test docs/plugin-platform/conformance/runtime-check.test.mjs` 可验证 runtime 契约回归：非 WASM 的 `runtime.kind` 必须被拒绝，错误的协议字符串必须被拒绝，600001 毫秒的前台 action 必须被拒绝，600000 毫秒前台 action 与 300000 毫秒后台 job 的组合允许通过。`project-check.mjs` 同时检查五字段数值 cron，拒绝一分钟任务及小时边界处不足五分钟的间隔；`*/5 * * * *` 可用于最短周期任务。
 
 `verify-public-surface.mjs` 检查 Git 跟踪文件里没有主项目源码、发布产物或已经废弃的插件契约，必须在任何公开提交前运行：
 
