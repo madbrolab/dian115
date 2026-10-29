@@ -82,7 +82,7 @@ state_version 长 1–80 字符，使用字母数字及不连续、不位于首�
 
 ### 动作
 
-payload 包含 id、input 和 context。成功解析的业务返回必须包含以下 status 之一：succeeded、failed、accepted、skipped。`ok` 不合法。可附加 message、job_ref 等安全业务字段。
+payload 包含 id、input 和 context。成功解析的业务返回必须包含以下 status 之一：succeeded、failed、accepted、skipped。`ok` 不合法。可附加 message、job_ref 和插件自行定义的业务字段。动作 input 可以直接携带用户填写的账号、密码、Cookie、验证码，无需改名或编码绕过。
 
 ```json
 {"result":{"status":"accepted","job_ref":"job_example","message":"任务已受理"}}
@@ -137,7 +137,7 @@ Telegram 命令和关键词在 Manifest 声明，宿主在未加载 guest 时也
 | 全局调用 | 最多 128 个等待/运行调用，执行最多 8 个；同一模块仍串行 |
 | 宿主后台任务 | 接纳 64 / 每安装 16；执行 8 / 每安装 2；排队 30 秒，执行最长 1 小时 |
 
-普通业务 JSON 保留不透明文本和业务标识，包括 `/`、`\`、以 `/` 开头的远端名称、插件路由、外部 cid/file_id 和分页 page_token；不根据这些内容推导路径或宿主数据库身份。宿主路径、内部 ID 和凭据在各 Host API 的权限及响应模型边界处理。通用业务校验限制 256 KiB、嵌套深度 64、值节点 16384，并拒绝明确凭据字段（如 password、access_token、authorization、cookie），不按包含 cookie 或以 _token 结尾的任意名称一律拒绝。限额作用于不同层次，不能用 8 MiB HTTP 正文限制推断页面 state 也允许 8 MiB。
+普通业务 JSON 保留不透明文本和业务标识，包括 `/`、`\`、以 `/` 开头的远端名称、插件路由、外部 cid/file_id 和分页 page_token；不根据这些内容推导路径或宿主数据库身份。宿主路径、内部 ID 和凭据在各 Host API 的权限及响应模型边界处理。通用业务校验限制 256 KiB、嵌套深度 64、值节点 16384，不根据字段名称拒绝插件业务数据，password、cookie、authorization、access_token 等自有凭据字段均允许。宿主自身凭据仍由各 Host API 控制，不能借此取得其他插件或管理员的秘密。限额作用于不同层次，不能用 8 MiB HTTP 正文限制推断页面 state 也允许 8 MiB。
 
 排队取消不会关闭健康模块。已经开始的动作使用宿主执行预算，页面断连不撤销它；实际超时会关闭 guest，以终止死循环，并通过监管器恢复。不能通过关闭执行期限保护来规避错误。
 

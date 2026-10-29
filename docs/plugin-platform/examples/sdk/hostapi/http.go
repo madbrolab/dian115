@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"sort"
 	"strings"
 
 	"example.com/dian115-plugin-sdk/pluginjson"
@@ -86,6 +87,53 @@ func (c Client) HTTP(ctx context.Context, r HTTPRequest) (HTTPResponse, error) {
 	return result, nil
 }
 
+// PostForm accepts site-specific names, CSRF tokens and captcha answers.
+// The host remembers response cookies in r.Session; no CookieCloud is needed.
+func (c Client) PostForm(ctx context.Context, r HTTPRequest, fields map[string]string) (HTTPResponse, error) {
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	var body strings.Builder
+	for i, key := range keys {
+		if i > 0 {
+			body.WriteByte('&')
+		}
+		body.WriteString(escapeHTTPQuery(key))
+		body.WriteByte('=')
+		body.WriteString(escapeHTTPQuery(fields[key]))
+	}
+	headers := make(map[string]string, len(r.Headers)+1)
+	for key, value := range r.Headers {
+		if !strings.EqualFold(key, "content-type") {
+			headers[key] = value
+		}
+	}
+	headers["content-type"] = "application/x-www-form-urlencoded"
+	r.Method, r.Body, r.Headers = "POST", []byte(body.String()), headers
+	return c.HTTP(ctx, r)
+}
+
+type HTTPSite struct {
+	ID    string `json:"id"`
+	URL   string `json:"url"`
+	Label string `json:"label,omitempty"`
+}
+
+func (c Client) Sites(ctx context.Context) (pluginjson.Raw, error) {
+	return c.sessionRequest(ctx, "GET", "sites", nil, "")
+}
+func (c Client) SaveSite(ctx context.Context, site HTTPSite, key string) (pluginjson.Raw, error) {
+	return c.sessionRequest(ctx, "PUT", "sites", map[string]any{"id": site.ID, "url": site.URL, "label": site.Label}, key)
+}
+func (c Client) DeleteSite(ctx context.Context, id, key string) (pluginjson.Raw, error) {
+	if id == "" {
+		return c.sessionRequest(ctx, "DELETE", "sites", nil, key)
+	}
+	return c.sessionRequest(ctx, "DELETE", "sites?id="+escapeHTTPQuery(id), nil, key)
+}
+
 func (c Client) sessionRequest(ctx context.Context, method, path string, input any, key string) (pluginjson.Raw, error) {
 	if c.Call == nil {
 		return nil, errors.New("HTTP session client is unavailable")
@@ -139,7 +187,8 @@ func escapeHTTPQuery(value string) string {
 func validManagedHTTPSession(value string) bool { return value != "none" && validHTTPSession(value) }
 
 // Cookies returns only cookies matching targetURL, including HttpOnly values
-// belonging to this installation. Never copy them into UI state or logs.
+// belonging to this installation. Display only when explicitly requested by
+// the user; avoid broad state snapshots, ordinary preferences and logs.
 func (c Client) Cookies(ctx context.Context, targetURL, session string) (pluginjson.Raw, error) {
 	if !validManagedHTTPSession(session) {
 		return nil, errors.New("invalid cookie session")
@@ -151,6 +200,14 @@ func (c Client) SetCookies(ctx context.Context, targetURL, session string, heade
 		return nil, errors.New("invalid cookie update")
 	}
 	return c.sessionRequest(ctx, "PUT", "cookies", map[string]any{"url": targetURL, "session": session, "set_cookie": headers}, key)
+}
+
+// SetCookieHeader persists a manually entered Cookie header in this account.
+func (c Client) SetCookieHeader(ctx context.Context, targetURL, session, cookie, key string) (pluginjson.Raw, error) {
+	if !validManagedHTTPSession(session) || strings.TrimSpace(cookie) == "" || len(cookie) > 8192 {
+		return nil, errors.New("invalid Cookie header")
+	}
+	return c.sessionRequest(ctx, "PUT", "cookies", map[string]any{"url": targetURL, "session": session, "cookie": cookie}, key)
 }
 func (c Client) ClearCookies(ctx context.Context, session, key string) (pluginjson.Raw, error) {
 	if !validManagedHTTPSession(session) {

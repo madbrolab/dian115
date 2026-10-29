@@ -25,6 +25,15 @@ const message = useMessage()
 const busyAction = ref('')
 const watchPath = ref('')
 const localURL = ref('http://127.0.0.1:8080/health')
+const siteID = ref('site-a')
+const siteURL = ref('https://site.example')
+const siteLabel = ref('我的站点')
+const siteSession = ref('account-a')
+const loginURL = ref('https://site.example/login')
+const loginUsername = ref('')
+const loginPassword = ref('')
+const loginFields = ref('{}')
+const manualCookie = ref('')
 const browserNote = ref('')
 const backgroundJob = ref<PluginJob | null>(null)
 const jobBusy = ref(false)
@@ -106,6 +115,38 @@ async function createWatch() {
   }
   await runAction('create-watch', { path })
 }
+
+async function siteAction(action: 'site-list' | 'site-save' | 'site-delete' | 'site-login' | 'cookie-save') {
+  if (busyAction.value) return
+  let fields: Record<string, string> = {}
+  if (action === 'site-login') {
+    try {
+      fields = JSON.parse(loginFields.value)
+      if (!fields || Array.isArray(fields) || typeof fields !== 'object' || Object.values(fields).some(value => typeof value !== 'string')) throw new Error()
+    } catch { message.error('表单字段必须是 JSON 对象，值为字符串；字段名按目标站点填写'); return }
+  }
+  busyAction.value = action
+  try {
+    const input = action === 'site-login' ? { url: loginURL.value, session: siteSession.value, username: loginUsername.value, password: loginPassword.value, fields }
+      : action === 'cookie-save' ? { url: siteURL.value, session: siteSession.value, cookie: manualCookie.value }
+      : action === 'site-save' ? { site_id: siteID.value, url: siteURL.value, label: siteLabel.value }
+      : action === 'site-delete' ? { site_id: siteID.value } : {}
+    // A configured URL may itself contain private query values.
+    const response = await invokeSavedAction(props.api, action, input, undefined, { transientInput: ['site-login', 'cookie-save', 'site-save'].includes(action) })
+    if (response.result.status === 'failed') throw new Error(String(response.result.message || '站点操作失败'))
+    if (action === 'site-list') {
+      const data = response.result.data as { sites?: { id: string; url: string; label?: string }[] } | undefined
+      const saved = data?.sites?.find(site => site.id === siteID.value)
+      if (saved) { siteURL.value = saved.url; siteLabel.value = saved.label || '' }
+      else { message.info('当前编号尚未保存，可填写任意站点地址后保存'); return }
+    }
+    if (action === 'site-login') { loginPassword.value = ''; loginFields.value = '{}' }
+    if (action === 'cookie-save') manualCookie.value = ''
+    message.success(String(response.result.message || '操作完成'))
+    if (response.confirmation_pending) message.warning('结果已返回，确认状态未保存；再次提交前请核实业务结果')
+  } catch (error: any) { message.error(String(error?.message || '操作失败；重试请使用原表单内容')) }
+  finally { busyAction.value = '' }
+}
 </script>
 
 <template>
@@ -143,6 +184,36 @@ async function createWatch() {
         <template #icon><NIcon :component="ExternalLink" /></template>
         打开外部授权页
       </NButton>
+    </section>
+
+    <section class="tool-panel">
+      <h3>自定义站点、表单登录与手填 Cookie</h3>
+      <p>安装后可添加或修改地址。账号密码、验证码及令牌由站点适配器处理，CookieCloud 是可选来源。</p>
+      <NForm label-placement="top" @submit.prevent="siteAction('site-save')">
+        <NFormItem label="站点编号"><NInput v-model:value="siteID" /></NFormItem>
+        <NFormItem label="站点名称"><NInput v-model:value="siteLabel" /></NFormItem>
+        <NFormItem label="站点地址"><NInput v-model:value="siteURL" placeholder="https://你的站点/" /></NFormItem>
+        <div class="actions">
+          <NButton attr-type="submit" :loading="busyAction === 'site-save'">保存地址</NButton>
+          <NButton :loading="busyAction === 'site-list'" @click="siteAction('site-list')">读取地址</NButton>
+          <NButton :loading="busyAction === 'site-delete'" @click="siteAction('site-delete')">删除地址</NButton>
+        </div>
+      </NForm>
+      <NForm label-placement="top" @submit.prevent="siteAction('site-login')">
+        <NFormItem label="账号会话名（不同账号填写不同名称）"><NInput v-model:value="siteSession" /></NFormItem>
+        <NFormItem label="登录表单提交地址"><NInput v-model:value="loginURL" /></NFormItem>
+        <NFormItem label="账号"><NInput v-model:value="loginUsername" autocomplete="username" /></NFormItem>
+        <NFormItem label="密码"><NInput v-model:value="loginPassword" type="password" show-password-on="click" autocomplete="current-password" /></NFormItem>
+        <NFormItem label="附加表单字段 JSON（可填写验证码、CSRF 或自定义账号字段）">
+          <NInput v-model:value="loginFields" type="password" show-password-on="click" placeholder='{"captcha":"验证码","csrf":"站点令牌"}' />
+        </NFormItem>
+        <NButton attr-type="submit" :loading="busyAction === 'site-login'">提交登录表单</NButton>
+      </NForm>
+      <NForm label-placement="top" @submit.prevent="siteAction('cookie-save')">
+        <NFormItem label="手动 Cookie"><NInput v-model:value="manualCookie" type="password" show-password-on="click" placeholder="name=value; another=value" /></NFormItem>
+        <NButton attr-type="submit" :loading="busyAction === 'cookie-save'">保存 Cookie</NButton>
+      </NForm>
+      <p>敏感输入仅留在表单内存，宿主加密保存动作回执和 Cookie。示例只报告提交结果；正式插件必须检查站点业务码，处理 CSRF、验证码并核实登录状态。</p>
     </section>
 
     <section class="tool-panel">
