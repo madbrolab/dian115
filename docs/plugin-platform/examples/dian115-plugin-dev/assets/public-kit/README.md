@@ -1,80 +1,33 @@
-# DIAN115 Plugin API v2
+# DIAN115 第三方可信扩展 v3
 
-This directory is the complete public contract for third-party plugins. It is intentionally source-free: the main application's implementation is private and is never required for plugin development. The permanent publication boundary is defined in [publication-policy.md](publication-policy.md).
-开发者可安装 [第三方插件开发 Skill](skill-installation.md)，使用固定公开契约、最小模板和检查工具创建插件。
+插件与宿主共同运行：页面直接使用宿主 HTTP API，后台 JavaScript 编排业务，主项目负责实际转存、整理、通知与队列调度。无需主项目源码、WASM、Node、额外容器或内置浏览器。
 
-## Supported plugin shape
+宿主插件 API 3.5 能力一览：宿主公开的业务 HTTP API、二进制 HTTP 与流式下载上传、后台任务进入宿主任务队列并显示任务级进度与计数（3.2）、由宿主执行并带进度的文件移动复制删除（CD2 gRPC/挂载路径自动分流）、实时目录监听（created/changed/removed）、宿主业务事件订阅、独立监听端口与 Webhook、Cookie/CookieCloud/FlareSolverr、CD2、通知、定时与消息触发、设置表单、侧栏菜单与图标，以及后台 fetch/URL/编码/加密/HTML/XML 标准库。
 
-Every plugin is one signed `.d115p` ZIP containing both parts below:
+- [市场与安装来源](market.md)：.dian115p 包、目录、自定义仓库及来源校验。
+- [插件包格式](package-format.md)：统一的 .dian115p 交付、打包与安装。
+- [开发指南](developer-guide.md)：目录、入口、API、任务、文件与监听。
+- [安装与数据生命周期](storage-and-lifecycle.md)：更新、停用、恢复、卸载。
+- [插件通知](notifications.md)：选择 Telegram / 企业微信渠道、text / markdown / html 格式、按渠道内容、图片按钮及逐渠道结果。
+- [订阅与增量搜索](subscriptions.md)：磁力 / ED2K 缓存、馒头时间窗口、独立基线及中断续读。
+- [网络与登录](network.md)：账号密码、明文 CK、自定义站点、CookieCloud、FlareSolverr。
+- [加密交付](encrypted-delivery.md)：作者网页加密、直接离线安装、维护者审查。
+- [页面与主题](ui-theme.md)：直接挂载页面和完整 HTML。
+- [安全限制](security.md)：调用权限、CookieCloud 与宿主文件保护、安装后防篡改。
+- [插件 API 完整参考](api-reference.md)：清单、页面与后台 ctx、文件、事件、处理器、限额一页列全。
+- [宿主接口参考](host-api-reference.md)：逐个接口的参数、请求与响应字段、`ctx.api` 调用写法和示例；[速查](host-api-quick-reference.md)为一行一个接口。
+- [宿主接口速查](host-api-quick-reference.md)、[OpenAPI](openapi-v3.json)、[清单 Schema](manifest.schema.json)。
+- [完整示例](examples/complete-plugin/README.md)、[SDK](examples/sdk/README.md)、[开发 skill](skill-installation.md)。
+- [黑盒检查工具](conformance/README.md)、[排错](troubleshooting.md)、[公开材料边界](publication-policy.md)。
 
-- a signed, self-contained HTML page with its own renderer and a framework-independent SDK connection;
-- a WASM reactor runtime (`dian115:wasm@1`) executed by the embedded container runtime.
+安装会展示实际代码静态分析、作者声明、已识别接口和站点以及未确定范围。等级和声明只作告知；宿主仍执行[权限检查](security.md)：受限调用在安装时拒绝或运行时返回 403；公开文档只收录插件可调用的接口。安装后代码被修改即停用，需重新安装。宿主原有登录、授权版本与业务参数校验继续适用。
 
-The UI is mandatory. Packages without `ui.mode=page`, a signed HTML entry, and a valid WASM runtime are rejected. There is no native process runtime, remote runtime, extra plugin container, alternate UI format, or UI fallback protocol.
+可信扩展可以影响宿主和外部文件，无法以进程内执行同时承诺强制内存隔离或完整撤销任意全局副作用。请选择信任的作者。每个插件的默认数据、任务与 Cookie 独立保存；卸载清空这部分全部本地数据。
 
-The plugin owns its HTML, CSS, framework providers, rendering and scrolling. The host displays the signed page in an isolated iframe and sends theme/state updates through the SDK; it does not resize to content or replace the page on browser error events. Package all required styles in the production entry and use relative asset URLs.
+本目录保留的其他独立客户端和用户脚本示例不作为 v3 安装模板；开发本平台扩展请使用 complete-plugin 与当前 SDK。
 
-WASM is executed by the main service inside the current Docker container without inherited host descriptors, sockets, secrets, or preopened host paths. Host files, watches, HTTP requests and DIAN115 business operations continue through `host.call`. HTTP targets may be internet, LAN, host, container, loopback, or other locally reachable services.
+3.5 新增：[订阅增量查询](subscriptions.md)：缓存按更新时间和 ID 续读、馒头按发布时间范围实时分页；空结果推进基线，失败保留进度。
 
-## Authoritative files
+3.4 新增：插件自有 SQLite 结构化只读查询和媒体 NFO 解析，见同一份 [媒体与资料接口文档](media-and-ai.md)。
 
-Read these files in order:
-
-1. [Developer guide](developer-guide.md): end-to-end workflow and capability overview.
-2. [Package format v1](package-format-v1.md): Manifest, ZIP, integrity, signature, market index, installation and update rules.
-3. [WASM runtime v1](wasm-runtime-v1.md): reactor ABI, broker imports, quotas, Telegram events and lifecycle.
-4. [Host Call v2](host-call-v2.md): local Host APIs, external HTTP/HTTPS, local services, proxy precedence, credentials, limits and errors.
-5. [数据存储与生命周期](storage-and-lifecycle.md)：存储位置、JSON 结构、CAS、升级与卸载清空。
-6. [Independent HTML page v1](ui-page-v1.md): build contract, SDK connection, bridge API, opaque-origin isolation and managed storage and every stable theme variable.
-7. [可恢复后台任务](job-recovery-v1.md)：检查点、只读上游核对与安全续跑。
-8. [OpenAPI](openapi-v1.yaml): exact request and response schemas for every approved local Host API. [宿主接口速查表](host-api-quick-reference.md) 按分类列出一页可看的全部 178 条接口。
-9. [Black-box conformance](conformance/README.md): manifest, market, WASM and public-surface checks without main-project source.
-10. [UI 隔离、存储与后台调用](ui-isolation-v1.md)：浏览器边界、页面持久化、后台调用和接入要求。
-11. [插件排错](troubleshooting.md)：首次打开、恢复、Host Call、资源与卸载错误的处理路径。
-
-Machine-readable schemas:
-
-- [manifest.schema.json](manifest.schema.json)
-- [integrity.schema.json](integrity.schema.json)
-- [signature.schema.json](signature.schema.json)
-- [market index schema](market-index.schema.json)
-
-The complete sample is in [`examples/complete-plugin`](examples/complete-plugin/README.md). It contains a Go WASM reactor runtime, a Vue page, a Manifest template, packaging/signing code, and a market entry template.
-
-## Compatibility and source of truth
-
-`compatibility.dian115` is a SemVer range selected by the plugin publisher. `compatibility.plugin_api` must target Plugin API v2. The host still checks the signed package, market disclosure, WASM module, UI and permissions at installation time.
-
-For local Host APIs, the runtime catalog returned by `GET /api/plugin-center/v1/host-apis` and the `x-dian115-host-apis.entries` section in `openapi-v1.yaml` are the public compatibility contract. A host release must keep those two public lists identical; plugin authors do not need access to the private implementation. The black-box conformance materials describe how to validate a plugin against this contract.
-
-## Security summary
-
-- Install only packages signed by a publisher you trust. An installed plugin remains publisher code even inside the WASM sandbox.
-- The mandatory Vue page runs in an opaque-origin sandbox. Native browser persistence and parent DOM access are blocked; use the managed `api.storage` bridge. Direct network calls use runtime actions and Host Call. See [UI isolation](ui-isolation-v1.md) for storage and uninstall semantics.
-- The package limit is 32 MiB compressed, 128 MiB expanded, 1024 ZIP members, and 32 MiB per member.
-- WASM plugins have no inherited file descriptors, sockets, credentials, environment secrets or preopened host directories. The embedded runtime enforces module memory and context time limits; network, storage, notifications, watches and DIAN115 operations are brokered Host API calls. Installing a plugin does not start any plugin executable or helper process.
-- The plugin's package is mounted read-only at `/package` (`DIAN115_PLUGIN_PACKAGE=/package`). There is no writable mount: `DIAN115_PLUGIN_FILESYSTEM` is `broker-storage`, and every persistent value goes through Host Storage. Host paths are never exposed as plugin-owned paths.
-- Brokered network access supports `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE` over HTTP and HTTPS. The host does not reject a target because it resolves to loopback, private, link-local, container, host or other non-public addresses.
-- Host proxy-domain rules have higher priority than plugin routing preferences.
-- Backend plugins can read host-configured Emby instances, aggregate statistics, libraries and safe media metadata through six explicit read-only Host APIs. Emby addresses, API Keys, paths, media sources, users, sessions, devices, logs and mutations remain private.
-- Telegram routes are install-time declarations in the manifest `telegram` block, not runtime registrations. Each plugin may declare at most 3 commands and 3 keywords. A conflict is reported at registration time and does not fail installation. Declaring the routes is what lets the host match a message and wake an unloaded plugin instead of requiring it to stay resident.
-- Host message parsing always runs before plugin Telegram matching.
-- File APIs validate the submitted path, normalized path, resolved symbolic-link target, and saved watch source. Linux system directories and `/config` remain protected.
-
-## Local import
-
-Administrators can import a plugin package directly from the Plugin Center's
-"Repositories & development" tab. The flow is deliberately the same trust
-boundary as a market install:
-
-1. Select a `.d115p` file. The host stores it in a private, short-lived staging directory and returns a review token; the browser never receives a server filesystem path.
-2. The host validates ZIP limits, `manifest.json`, `integrity.json`, Ed25519 signature, the declared WASM runtime, HTML UI, and permissions before showing the review dialog.
-3. After the administrator accepts the displayed permissions, the token is submitted to install. The host re-checks the token, expiry, SHA-256, consent digest, and package before starting the normal asynchronous install operation.
-
-The token expires after 15 minutes, is single-use, and is removed after install, cancellation, failure, or expiry. Local import does not create a market repository entry and does not bypass signature, integrity, UI, runtime, filesystem, network, Telegram, or permission checks. Installed records show `本地导入` as their source.
-
-## Public-source boundary
-
-The GitHub repository publishes plugin contracts and third-party examples only. Never publish the main project's `cmd/`, `internal/`, `frontend/src/`, build files, deployment files, generated release packages, or private signing keys. Run the public-surface check before every public commit; CI rejects violations. See [publication-policy.md](publication-policy.md).
-
-- [轻量 HTTP 会话、CookieCloud 与 FlareSolverr](http-sessions-v1.md)：自动 Set-Cookie、按安装和账号隔离、加密持久化、共享 CookieCloud 按域名读写及按需渲染。
+3.3 新增：[图片处理、宿主 badge、FFP、AI 与演员图片](media-and-ai.md)。现有 PT 搜索支持馒头 normal/adult 模式；文件接口增加硬/软链接和非递归空目录删除。

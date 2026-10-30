@@ -10,9 +10,10 @@ if (result.status !== 0) throw new Error(result.stderr || `git ${command.join(' 
 
 const files = result.stdout.split(/\r?\n/).map((value) => value.trim()).filter(Boolean)
 const alwaysForbidden = [
+  /(?:^|\/)\.DS_Store$/,
   /(?:^|\/)(?:node_modules|build|releases)(?:\/|$)/,
   /\.(?:pem|key)$/i,
-  /\.d115p$/i,
+  /\.(?:d115p|dian115p)$/i,
 ]
 const mainSourceForbidden = [
   /^cmd\//,
@@ -22,6 +23,7 @@ const mainSourceForbidden = [
   /^(?:go\.mod|go\.sum|Dockerfile|docker-compose\.ya?ml)$/,
   /^scripts\//,
   /^vendor\//,
+  /^tools\/plugin-code-worker\//,
   /^(?:dist|config|logs|tmp|temp|cache)\//,
 ]
 const allowedPluginExample = /^docs\/plugin-platform\/examples\//
@@ -34,7 +36,6 @@ const obsoleteContractPatterns = [
   { pattern: new RegExp(['Direct', 'Response'].join('')), label: 'opaque OpenAPI response placeholder' },
   { pattern: /与对应主项目接口一致/, label: 'private-source response placeholder' },
   { pattern: /(?:declarative\s+UI|声明式\s*UI)/i, label: 'removed declarative UI model' },
-  { pattern: /\/api\/pt\//i, label: 'removed PT plugin route' },
   { pattern: /[?&]query=Dune\b/, label: 'obsolete TMDB search parameter' },
   { pattern: /dian115:process@1|isolated-process/, label: 'removed native-process plugin runtime' },
 ]

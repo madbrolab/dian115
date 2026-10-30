@@ -1,405 +1,195 @@
-# DIAN115 plugin developer guide
+# 开发指南 v3
 
-This guide takes a plugin from source to an installable package. It is self-contained and does not require the main project's source code. Normative details are linked at each step; use the [black-box conformance tools](conformance/README.md) for local runtime validation.
-
-## 1. Architecture
-
-A plugin has one supervised WASM runtime and one mandatory HTML page:
+## 最小目录
 
 ```text
-HTML page (opaque-origin sandbox)
-  -> getState / invokeAction
-  -> DIAN115 runtime bridge
-  -> runtime.invoke envelope over the reactor ABI
-  -> plugin WASM reactor
-  -> host.call
-  -> approved DIAN115 handler or host HTTP/HTTPS Broker
+plugin.json
+ui/page.js
+jobs/job.js
 ```
-
-The signed page runs in an opaque-origin sandbox. It cannot access native browser storage, parent DOM or host credentials; use api.storage for persistent preferences and action → WASM → Host Call for business/network work. See [UI isolation and managed storage](ui-isolation-v1.md).
-
-The WASM runtime is loaded directly by the main service in the current Docker container. It cannot listen on a port, create another plugin container, daemonize, require a remote callback, or start helper processes. The module receives no host filesystem mount beyond its own read-only package, no sockets, no credentials and no environment secrets. Host files, watches, network, Telegram and notifications remain mediated by approved Host APIs.
-
-## 2. Start from the complete sample
-
-Copy [`examples/complete-plugin`](examples/complete-plugin/README.md), then change:
-
-- the plugin ID, name, version, publisher and compatibility range in `manifest.template.json`;
-- the Go runtime behavior in `runtime/main.go`;
-- the Vue page in `src/AppPage.vue`;
-- the exact local APIs in `permissions.apis`;
-- optional per-origin proxy preferences in `permissions.network`;
-- declared event topics and scheduled jobs.
-
-Build a self-contained HTML page. The example uses Vue, Naive UI and Lucide as ordinary bundled dependencies; other browser renderers can use the framework-independent SDK in `examples/sdk/page.ts`. Set Vite `base: './'`, call `connectPluginPage()` in the production entry, then mount your own application and providers. The host never mounts a component, shares a Vue instance or observes the document height. Read [the page contract](ui-page-v1.md).
-
-The runtime must be a reactor module built with a size-optimising toolchain. The
-Go standard compiler is not accepted: it links the complete Go runtime into the
-module, which puts every module far above the host budget and makes each plugin
-pay for a runtime it does not need. Use TinyGo for Go sources, or Rust, Zig or C:
-
-```bash
-tinygo build -target=wasi -buildmode=c-shared -opt=z -o build/runtime/plugin.wasm ./runtime
-```
-
-TinyGo needs `wasm-opt` from Binaryen on `PATH` (or the `WASMOPT` environment
-variable pointing at it). Rust, Zig and C are equally accepted as long as the
-module keeps the ABI in `wasm-runtime-v1.md`; a `no_std` / `no_alloc` build with
-`-Oz` typically lands in the same size range.
-
-The host refuses any module that carries the Go standard runtime, and names
-that cause in the packaging error. A **2 MiB** ceiling backs it up for modules
-that are not recognisably Go but are still far larger than a plugin should be.
-Measure the built module with your selected toolchain; example sizes are not a stable API guarantee. WASM is architecture
-independent; no target-architecture build is required.
-
-The protocol also refuses modules that link `encoding/json`, again by name. The
-host keeps a loaded plugin's compiled code, so one heavy package is paid for by
-every plugin; the reference runtime includes
-[`pluginjson`](examples/sdk/pluginjson/pluginjson.go), which
-reads the fields a plugin needs without decoding whole documents. Use it (or its
-equivalent in your language) instead of a general JSON library:
-
-```go
-method := pluginjson.Text(pluginjson.Field(request, "method"))
-params := pluginjson.Field(request, "params")
-```
-
-Both rules are checked by `conformance/project-check.mjs`, so packaging fails
-before installation does. They are developer-experience rules rather than a
-security boundary: they keep the catalogue's footprint predictable, and an
-author who genuinely needs the standard library should say so rather than work
-around the check.
-
-## 3. Define the signed Manifest
-
-The UI and runtime are both required:
 
 ```json
-{
-  "schema_version": 1,
-  "id": "example.media-helper",
-  "name": "Media helper",
-  "version": "1.0.0",
-  "description": "Queries media and creates host tasks.",
-  "default_locale": "en-US",
-  "publisher": {
-    "name": "Example publisher",
-    "key_id": "ed25519:REPLACED_BY_PACKAGER"
-  },
-  "compatibility": {
-    "dian115": ">=5.0.53 <6.0.0",
-    "plugin_api": "^2.0"
-  },
-  "runtime": {
-    "kind": "wasm",
-    "entry": "runtime/plugin.wasm",
-    "protocol": "dian115:wasm@1"
-  },
-  "permissions": {
-    "apis": [
-      {
-        "method": "GET",
-        "path": "/api/tmdb/search",
-        "reason": "Search for media selected in the plugin page"
-      }
-    ],
-    "network": [
-      {
-        "origin": "http://127.0.0.1:8080",
-        "methods": ["GET", "POST"],
-        "proxy_mode": "system",
-        "reason": "Call a local companion service"
-      }
-    ]
-  },
-  "ui": {
-    "mode": "page",
-    "entry": "frontend/dist/index.html",
-    "assets_root": "frontend/dist",
-    "icon": "frontend/icon.svg"
-  },
-  "events": ["files.changed"],
-  "jobs": [
-    {
-      "id": "refresh",
-      "handler": "refresh",
-      "default_schedule": "*/15 * * * *",
-      "allow_overlap": false
-    }
-  ]
+{"schema_version":3,"id":"example.transfer","name":"资源转存","version":"1.0.0","ui":{"entry":"ui/page.js"},"jobs":[{"id":"transfer","entry":"jobs/job.js","handler":"run","recover":"recover","timeout_seconds":1800}],"declared_usage":{"apis":["POST /api/115/share/receive"],"sites":["用户自定义地址"],"files":[],"risk":"创建115文件并发送通知"}}
+```
+
+UI 和 jobs 至少提供一项。ID 使用小写字母、数字、点和连字符。代码通过相对 ESM 导入共享模块；后台只加载安装快照内的 JS，不提供 Node 的 require、进程启动或 npm 内置模块。浏览器页面可使用自己的框架与构建产物。
+
+## 普通宿主 API
+
+页面 `ctx.api.post('/api/115/share/receive', payload)` 与普通页面请求使用同一路由、登录和业务校验。后台也使用 `ctx.api`，宿主在进程内调用同一组 HTTP handler，不执行端点授权清单或协议嵌套。
+
+SDK 只是便捷函数，不是强制协议。浏览器也可直接 fetch；在跨域部署或 APP 中，优先使用传入的客户端处理服务器地址和登录。`api.get/post/put/patch/delete/head` 返回原接口 JSON；非成功状态抛错。后台 API 错误含 status/method/path/data，message 展示路由、状态及服务端错误；页面客户端沿用普通 Axios 错误结构。GET 查询参数放在 URL 中。上传、大文件下载和流式接口使用页面原生 HTTP 或宿主现有专用接口；后台的通用 JSON 客户端适合业务编排，单次响应最多捕获 64 MiB；大文件走文件下载/流式接口，避免在宿主进程中整份缓冲。
+
+每个接口要传什么、返回什么，查[宿主接口参考](host-api-reference.md)：参数表、请求与响应字段说明、可直接复制的 `ctx.api` 调用和示例。用 TypeScript 或支持 JSDoc 的编辑器时，SDK 的 `host-api.d.ts` 会按路径推断：
+
+```ts
+const tasks = await ctx.api.get('/api/115/offline/tasks?status=downloading') // 推断为 OfflineTaskList
+tasks.items[0].progress                                                       // number，0–1
+await ctx.api.post('/api/115/share/receive', { share_url, target_cid })      // 请求体字段拼错会报错
+```
+
+稳定业务输入输出以 [OpenAPI](openapi-v3.json) 为准。公开目录仅收录插件可调用的接口，权限由宿主检查；未写入稳定契约的接口随宿主版本变化，不保证可用。先用 `conformance/project-check.mjs` 检查结构，再由宿主安装检查确认可接受性，见[安全限制](security.md)。
+
+## 后台任务
+
+```js
+export async function run(ctx, input) {
+  await ctx.task.checkpoint({ stage: 'before-transfer', share: input.share_url })
+  const result = await ctx.api.post('/api/115/share/receive', input)
+  await ctx.task.checkpoint({ stage: 'transferred', result })
+  await ctx.notify({title:'转存完成',body:'资源已提交',dedupe_key:ctx.task.id+':done'})
+  return result
+}
+export async function recover(ctx, checkpoint) {
+  if (checkpoint?.stage === 'transferred') return {action:'complete',result:checkpoint.result}
+  // 先查询目标目录、业务记录或远端状态，证实未执行后才允许 resume。
+  return {action:'attention'}
 }
 ```
 
-Only declare local APIs the runtime actually calls. Every `(method, path template)` must appear in [OpenAPI](openapi-v1.yaml). Paths are exact; declaring one parameter route does not authorize a static sibling. Write methods require an `Idempotency-Key` between 16 and 128 printable ASCII characters unless the endpoint's OpenAPI operation says it owns an equivalent idempotency mechanism.
+任务由统一工作队列执行，插件 SQLite 保存独立历史。提交必须带稳定 business_key；相同 job、标识和输入返回原记录，改变输入返回冲突。默认不重叠，包括尚未核对的中断记录。需要并行的任务显式设置 allow_overlap。
 
-Three optional declaration refinements:
+通知见[插件通知](notifications.md)：`ctx.notify({title, body, format, channels, overrides})` 可选择 Telegram / 企业微信、内容格式与按渠道内容，并返回逐渠道结果。
 
-- `"optional": true` on an API entry keeps installation working on hosts that do not offer it; the entry is recorded as `unavailable_apis` and calls fail with a clear error.
-- `"host_access": "extended"` asks the administrator for broader access: any non-protected `/api` route (credentials, authentication, host security settings, plugin management and bot tokens stay host-only). Extended calls keep the same idempotency, audit, path-policy and size-limit rules, and JSON responses pass through generic credential redaction.
-- `host.capabilities` (a `host.*` runtime method) returns the host version, the live API catalog, and this installation's granted and unavailable APIs, so plugins branch on capability instead of version sniffing.
+后台 ctx 包含 api、storage.get/set/remove、http、files.call、watch.add/remove、cd2.call、notify、cookiecloud、sleep、settings.get、server、codec、crypto、html、xml、plugin（id/version/generation/revision/host_api），以及 task.id/update/log/checkpoint/checkpointValue。后台 storage.set 返回版本数字；页面 storage.set 返回 `{revision}`，分别对应进程内存储和普通 HTTP 响应。宿主返回的结构统一使用文档中的小写 JSON 字段名。
 
-`permissions.network` is not a website allowlist. A plugin can use the Broker for any HTTP/HTTPS origin, including localhost, loopback, container, host and LAN services. These declarations record a routing preference for a specific origin and method:
+## 后台标准库（宿主 API 3.1）
 
-- `system`: use the host proxy-domain decision;
-- `direct`: use a direct route only when no host proxy-domain rule matches;
-- `required`: require a configured proxy even when no host rule matches.
+后台没有 DOM 与 Node 内置模块，但提供常用 Web 基础对象，便于直接移植浏览器侧代码：
 
-The host rule always wins. An undeclared origin/method uses `system`.
+- 全局：`fetch`、`Headers`、`Response`、`URL`、`URLSearchParams`、`TextEncoder`、`TextDecoder`（含 gbk/gb18030/big5 等）、`atob`、`btoa`、`setTimeout`/`setInterval`/`clear*`、`queueMicrotask`、`structuredClone`、`AbortController`、`crypto.randomUUID/getRandomValues`。`fetch` 走 ctx.http（同一会话、Cookie、代理），`init.session`、`init.timeout_seconds`、`init.proxy` 可选。
+- `ctx.codec`：utf8Encode/utf8Decode、encode/decode（任意字符集）、base64Encode/base64Decode、hexEncode/hexDecode、concat。二进制统一为 Uint8Array。
+- `ctx.crypto`：hash/md5/sha1/sha256/sha512、hmac、aesEncrypt/aesDecrypt（cbc/gcm/ctr/ecb，默认 PKCS7）、rsaEncrypt/rsaDecrypt/rsaSign/rsaVerify（PEM 或 Base64 DER；pkcs1/oaep/pss），randomBytes。`output` 可为 hex、base64、base64url、utf8、bytes。
+- `ctx.html.load(html,{baseURL})` 返回类 jQuery 选择集：find/filter/eq/first/parent/closest/children/next/prev/siblings、text/html/outerHTML/attr/attrs/url（按 baseURL 解析成绝对地址）、map/each/toArray；`ctx.html.select(html, selector)` 直接得到 `{text,html,attrs}` 数组。
+- `ctx.xml.parse(xml)` 返回 `{name,attrs,text,children}` 树，适合 RSS/Torznab。
 
-See [Package format v1](package-format-v1.md) for every field and cross-file rule.
+定时器只在处理器仍在等待 Promise 时运行；处理器返回后未触发的定时器随运行结束。需要跨越运行的周期动作使用清单定时任务。
 
-## 4. Implement the runtime protocol
+task.update 接收 stage、message、progress（0–100）以及任务级计数 total、done、failed（见下节）；checkpoint 保存 JSON；sleep 单次 0–24 小时且可取消。默认单次任务 30 分钟，timeout_seconds 可自定义（至 365 天）；实际生命周期还受宿主关闭、用户取消和工作队列停止影响。长流程应分段提交并记录检查点。
 
-WASM plugins use the reactor ABI and broker imports described in [WASM runtime v1](wasm-runtime-v1.md). The module exports `dian115_alloc` and `dian115_handle`, and may import `dian115.host_call` / `dian115.host_read` (or the `wasi_snapshot_preview1` functions the standalone Go runtime needs).
+## 任务队列与进度
 
-The host calls:
+（宿主插件 API 3.2 起提供 job `title`、`queue` 与任务级计数；较低版本宿主忽略这些字段。）每次后台运行（定时、监听、事件、页面 `ctx.tasks.run`）都会进入宿主的统一任务队列，任务队列页面实时显示，可在那里取消。
 
-- `runtime.initialize` once after every module load;
-- `runtime.invoke` with `op=state`, `action`, `job`, or `event`;
-- `runtime.ping` is answered by the host as an availability acknowledgement; it does not enter the guest. Periodic maintenance uses module exit signals and invocation deadlines instead of ping RPCs;
-- `runtime.shutdown` before an intentional unload.
+- **名称**：显示为“插件名：标题”。标题取清单 job 的 `title`（不超过 40 字），省略时用任务 ID。
+- **进度**：`ctx.task.update({progress})` 直接设置百分比，队列只显示进度条。批量处理时上报任务级计数 `total`、`done`、`failed`，队列显示“已处理 done / total”和失败数；只给计数不给 progress 时，进度按 (done + failed) ÷ total 计算。
+- **文件操作**：任务里调用宿主 move/copy/remove 时，宿主每秒把当前文件的进度写进 message（如“移动 a.mkv 1.2 GiB/4.0 GiB”）。上报了 total 的任务，整体进度只由计数决定，不会被单个文件的 0–100% 来回覆盖；没有上报计数的任务，文件进度就是任务进度。
+- **隐藏短任务**：job 设置 `"queue": false` 时不在任务队列页面显示，适合测试、预览这类由页面发起、几秒内完成的任务；运行记录、日志和结果仍保存在插件历史里。
+- **中断后的核对**：已开始执行的任务被宿主重启打断后记为“需要核对”（attention_required）。不允许重叠的 job 在核对前不接受新的运行，包括定时和监听触发，页面应提供 `ctx.tasks.retry(id)` 入口，由 recover 处理器判断完成、继续或继续等待核对。
 
-The runtime can call:
-
-- `host.call` for approved local APIs or external HTTP/HTTPS services;
-- `host.log` for structured installation-scoped logs;
-- `host.ui.invalidate` to request a state refresh;
-- `host.telegram.list` to read the routes the manifest declared. Telegram routes
-  are **not** registered at runtime any more: `host.telegram.register` and
-  `host.telegram.unregister` are rejected, and a plugin that needs Telegram
-  declares its routes in the manifest instead (see below).
-
-Do not return an arbitrary JSON object for `state`, `action`, or `job`; the host validates each result. The exact frames, payloads, response status enums, ETag requirements, quotas, cancellation semantics and lifecycle are in [WASM runtime v1](wasm-runtime-v1.md).
-
-### Plugin-owned files
-
-The module's own package is mounted read-only at `/package` (`DIAN115_PLUGIN_PACKAGE=/package`), so bundled assets can be read with ordinary language I/O. There is no writable mount, no `/data` and no `/tmp`: `DIAN115_PLUGIN_FILESYSTEM` is `broker-storage`, and every persistent value must go through Host Storage.
-
-```go
-template, err := os.ReadFile("/package/assets/template.json")
-if err != nil { /* report initialization failure */ }
-// Persist state through Host Storage, not a local file.
-```
-
-`/package` is host-managed and read-only, and its contents change with every installed version. Host paths such as `/config`, `/etc`, `/proc` and media mounts never resolve for the module. To access an administrator-approved host path, call the corresponding file Host API; do not try to translate it into a local path.
-
-## 5. Use Host Call
-
-需要一页看全所有可调用接口时，查 [宿主接口速查表](host-api-quick-reference.md)；逐字段请求/响应格式以 [OpenAPI](openapi-v1.yaml) 为准。
-
-Local request:
-
-```json
-{
-  "method": "GET",
-  "path": "/api/tmdb/search?q=Dune&page=1",
-  "headers": {"accept": "application/json"},
-  "body_base64": ""
-}
-```
-
-External request:
-
-```json
-{
-  "method": "POST",
-  "path": "http://127.0.0.1:8080/v1/items",
-  "headers": {"content-type": "application/json"},
-  "body_base64": "eyJuYW1lIjoiZXhhbXBsZSJ9"
-}
-```
-
-Result:
-
-```json
-{
-  "status": 200,
-  "headers": {"content-type": ["application/json"]},
-  "body_base64": "eyJvayI6dHJ1ZX0"
-}
-```
-
-`body_base64` accepts padded or unpadded standard Base64 on requests. Responses use unpadded standard Base64. A plugin invocation frame may be up to 16 MiB, and the decoded Host Call request or response body may be up to 8 MiB. Use endpoint pagination even though normal payloads are no longer constrained to 256 KiB.
-
-External access supports only `GET`, `HEAD`, `POST`, `PUT`, `PATCH`, and `DELETE`. `OPTIONS`, `CONNECT`, and `TRACE` are not part of the contract. HTTP/HTTPS transport, DNS, redirects, target resolution and proxy selection are performed by the host. Details and HTTP security warnings are in [Host Call v2](host-call-v2.md).
-
-HTTP defaults to 60 seconds; `timeout_ms` allows up to 300000 ms. Foreground runtime defaults to 120000 ms and accepts up to 600000 ms, so leave sufficient outer execution time for long pages. Connections are reused, with per-installation private caches. Use `CacheMode`, `CacheTTLMS`, `MaxResponseBytes`, `HTTPResponse.Network` and `Truncated` in the public SDK. Independent GET/HEAD requests can use `Client.HTTPBatch` (up to eight items, default concurrency four); check each response and keep dependent login steps sequential. Probe `http_network_v2` / `http_batch_v1`; full cache, cancellation and lifecycle semantics are in [HTTP sessions and performance](http-sessions-v1.md).
-
-### Read host-configured Emby data
-
-The plugin runtime can read Emby without receiving the server URL or API Key. Declare only the operations it uses:
-
-```json
-{
-  "apis": [
-    {"method":"GET","path":"/api/plugin-host/emby/instances","reason":"Let the user select an Emby instance"},
-    {"method":"GET","path":"/api/plugin-host/emby/libraries","reason":"List available media libraries"},
-    {"method":"GET","path":"/api/plugin-host/emby/items","reason":"Search safe media metadata"},
-    {"method":"GET","path":"/api/plugin-host/emby/items/:id","reason":"Read one selected media item"}
-  ]
-}
-```
-
-At runtime, call `GET /api/plugin-host/emby/instances`, let the user choose an `id`, and pass it as `proxy_id` to the other calls. When only one instance exists or the host has a valid default, `proxy_id` may be omitted. An instance with `id: 0` represents legacy single-instance configuration and must be used by omitting `proxy_id`, not by sending zero.
-
-```json
-{"method":"GET","path":"/api/plugin-host/emby/items?proxy_id=2&type=Movie&q=Dune&limit=20&offset=0"}
-```
-
-The item result includes IDs, titles, overview, year, rating, genres, provider IDs, series/episode numbers, dates and image-presence hints. It intentionally excludes the Emby URL, API Key, filesystem paths, media sources, user data, sessions, devices and logs. There are no Emby mutations in the plugin catalog. See the six `PluginEmby*` operations and exact schemas in [OpenAPI](openapi-v1.yaml), and use `offset`/`limit` pagination up to 50 items per call.
-
-For episode subscriptions, also declare `GET /api/plugin-host/emby/episodes`. Confirm the TMDB TV identity and season (including season 0), then pass `proxy_id`, `tmdb_id`, `season` and `total_episodes` to preview coverage. A failed library read is an error, never proof that every episode is missing. Store the user's preferred instance in plugin storage; this does not change the host default. Create the intent with the same instance and season. For a fixed user target, send `episode_scope_mode: "fixed"` and `initial_needed_episodes: "1-3,5"`; the host subtracts live owned episodes before starting work. Do not send `library_snapshot_provided` to bypass the library scan. See the complete flow in [Host Call v2](host-call-v2.md#8-指定实例和集数的订阅流程).
-
-## 6. Telegram
-
-Send an active notification through the approved local API `POST /api/notifications/plugin`. The host uses its Bot configuration and recipient policy; the plugin cannot select an arbitrary chat ID or obtain the Bot Token.
-
-Declare incoming routes in the manifest. The host registers them at install and
-enable time, matches a message against them **without loading the plugin**, and
-only then loads the plugin to handle it. That is what lets a Telegram plugin
-stay unloaded while idle:
-
-```json
-{
-  "telegram": {
-    "commands": [
-      {"command": "media_helper", "description": "Open media helper"}
-    ],
-    "keywords": [
-      {"keyword": "media helper", "match": "prefix"}
-    ]
+```js
+export async function run(ctx, input) {
+  const items = await listWork(ctx)
+  let done = 0, failed = 0
+  await ctx.task.update({ stage: 'scan', message: `共 ${items.length} 项`, total: items.length, done, failed })
+  for (const item of items) {
+    try { await handle(ctx, item); done++ } catch (e) { failed++; await ctx.task.log(`${item.name}：${e.message}`) }
+    await ctx.task.update({ stage: 'work', message: item.name, done, failed })
   }
+  return { done, failed }
 }
 ```
 
-At most 3 commands and 3 keywords per plugin, and command names must not collide
-with each other or with the host's reserved commands. Unloading the plugin no
-longer drops the routes, so a plugin does not need to stay resident to keep
-receiving messages.
+默认定时任务在 job 指定 default_schedule（标准五段 cron）或 interval_seconds，两者互斥。宿主时区生效。调度不补发宿主停机期间错过的周期。
 
-Manifest route conflicts are reported by the host and never replace another installation's routes. Runtime registration and unregistration are rejected. Use `host.telegram.list` for the actual installed routes.
+## 文件与 CD2
 
-Host parsing always runs first. Only a message the host did not handle and that matches a registered route is delivered as `event` topic `telegram.message`. Unmatched messages never reach plugins.
+插件不直接读写宿主文件内容。宿主文件操作仅接受允许的业务路径，也不能把宿主文件复制或移动进插件自己的目录，详见[安全限制](security.md)。文件只有两类路径：
 
-Notification and reply buttons may carry `callback_data` instead of `url`. A tap is delivered back to the owning installation as `event` topic `telegram.callback` (declare it in `events`), and the plugin answers with a toast (`answer`/`alert`) plus an optional follow-up `reply`. See [host.call v2](host-call-v2.md) sections 11-12 for the callback contract and the file/transfer/job broker APIs.
+- **插件自有路径**（相对路径，位于插件 data/files）：可 read/write/append，用于配置导出、下载暂存、生成待交付文件；单次 read 最多 16 MiB（用 offset/length 分段）。不能通过 `..` 或符号链接逃出该目录，卸载时清空。
+- **宿主路径**（绝对 Linux 路径，或 `cd2:/云盘/目录` 写法）：只能做 list、stat、exists、walk、hash、mkdir、rename、move、copy、remove，由宿主执行，插件拿不到文件内容。read/write 宿主路径会被拒绝。
 
-WASM plugins that need an always-on main loop (timers, pollers, long-lived state) can declare `"resident": true` in `runtime`; the host keeps a second module instance running an endless `resident` invocation. See [WASM runtime v1](wasm-runtime-v1.md).
+宿主路径按 CD2 挂载前缀（系统设置中的 CD2 挂载路径）自动分流：
 
-## 7. Directory watches
+| 源与目标 | 执行方式 | 进度 |
+| --- | --- | --- |
+| 两边都在 CD2 挂载路径内（或 `cd2:`） | CloudDrive2 gRPC 服务端执行，不经过本地 I/O；只能在同一云盘内 | 按项目数 |
+| 任一边不在 CD2 内 | 系统命令 mkdir/mv/cp/rm，CD2 一侧使用其挂载路径 | 按字节（每秒） |
+| 都是普通本地路径 | 系统命令；同文件系统 mv 为即时重命名 | 按字节 |
 
-Declare the event topic in `events`, then approve the exact watch APIs your runtime uses. Creating a host path watch:
+```js
+// 下载到插件目录，再交给宿主移动到 CD2（本地→挂载路径，系统命令执行，带字节进度）
+await ctx.http.request({ url, save_to: 'downloads/a.torrent' })
+await ctx.files.call({ operation: 'move', path: 'downloads/a.torrent', destination_dir: 'cd2:/115/种子' })
+await ctx.files.call({ operation: 'move', paths: ['/mnt/inbox/A', '/mnt/inbox/B'], destination_dir: '/mnt/media/电影' })
+await ctx.files.call({ operation: 'rename', path: '/mnt/cd2/115/a.mkv', name: 'b.mkv' })
+```
+
+- move/copy：`destination`（单个源的完整目标路径）或 `destination_dir`（多个源保留原名）；目标已存在默认失败，`overwrite:true` 才覆盖。目录移动到已存在目录时合并内容。复制先写入同目录暂存区，完成后原子改名，取消不会留下半个目标。
+- remove 可用 `paths` 批量；rename 用 `name`（只改名不换目录）；mkdir 递归创建；walk 仅限本地路径（CD2 请用 list 逐层）；hash 仅 sha256 且只限本地路径，避免通过挂载下载整个云端文件。
+- 返回：system 方式为 `{backend:'system',items:[{source,path,size}]}`；CD2 方式为 `{backend:'cd2',result}`；list/stat 条目含 name/path/is_dir/size/modified/backend。
+
+**进度**：后台任务里调用 move/copy/remove 时，宿主每秒把进度写入当前任务（stage=`file:move`、progress 百分比、message 如“移动 a.mkv 1.2 GiB/4.0 GiB（1/3）”），任务队列页面实时可见；`progress:false` 关闭。页面通过 `ctx.files.call` 发起的宿主移动/复制/删除会作为“插件 X：文件移动”任务进入统一任务队列，默认等待完成并返回 `{task_id,result}`；`ctx.files.start(options)` 立即返回 `{task_id}`，在任务队列查看进度。CD2 gRPC 操作由 CD2 服务端完成，只有开始和完成两个进度点。
+
+页面：`ctx.files.downloadURL(path)` 与 `ctx.files.upload(path, file)` 只作用于插件自有路径。
+
+115 返回的 name/fn/file_name 是不透明元数据，即使包含 `/` 或 `\` 也不据此拆层级。目录层级按节点 ID 与父 ID；投影到 Linux 文件名时才将 `/` 映射为 `／`，保留原始 name。
+
+`ctx.cd2.call(method, options)` 复用主项目连接：list/stat/mkdir/rename/move/copy/remove/search。list 接收 path、force_refresh，返回 path/name/id/size/modified/is_dir 数组；mkdir 用 parent/name，rename 用 path/name，move/copy 用 path/destination，search 用 path/query/fuzzy。rename/move 返回逐项 path/file/error/retryable，宿主做身份与结果核对；move 使用 Skip 冲突策略。stat/search 返回相同文件结构；mkdir 返回 file/result，copy/remove 返回 success/error_message/paths。其他变更接口遇到超时，作者必须先查询业务结果，不应直接重发。
+
+## 目录监听和消息触发
+
+```js
+await ctx.watch.add({id:'inbox',kind:'local',path:'/mnt/inbox',job:'organize',interval_seconds:5})
+await ctx.watch.add({id:'cloud',kind:'cd2',path:'/115/Inbox',job:'organize',interval_seconds:15})
+```
+
+local 监听默认实时：宿主用 inotify 订阅目录，事件发生后经 `debounce_ms`（默认 500）立即做一次快照比较；interval_seconds 仍作为兜底全量扫描，可调大（例如 300）。`realtime:false` 关闭实时；`patterns:['*.mkv','*.mp4']` 按文件名过滤；`recursive:false` 只看第一层。超过 8192 个目录或系统 inotify 上限时自动退回轮询。cd2 为当前目录的完整 gRPC 列表轮询。首次快照建立基线，后续变化以 `{watch,changes:[{path,kind:'created|changed|removed'}]}` 提交任务。目录读取、挂载或 CD2 流失败会保留上次快照与错误，不把失败当作删除。待提交事件持久保存；后台任务恢复仍由插件核对。替换监听先 remove 再 add。此功能不改变内置整理的轮询策略。
+
+可选清单 events：`{event:'message',job:'search',commands:['find'],prefixes:['搜索 ']}`、`{event:'callback',job:'buttons'}` 或宿主业务事件 `{event:'host',job:'on-organize',types:['library_organize_*','media_library_add']}`。宿主事件在推送渠道开关、静默时段和聚合之前投递，与是否开启通知无关；`types` 支持 `*` 和前缀通配，可用类型由 `GET /api/extensions/v3/_events` 列出（整理成功/跳过/失败、STRM 生成、入库、播放、订阅、签到等）。任务输入为 `{id,type,title,content,data,at}`；事件可能密集到达，订阅任务建议设置 `allow_overlap:true`，否则上一条未结束时后续事件提交会失败。消息命中后入队；输入为宿主投影的消息或按钮事件。插件任务自行调用通知接口反馈；不会占用一个常驻脚本。重名命令按安装列表顺序匹配，作者应使用独特前缀。
+
+## 监听端口与 Webhook
+
+清单声明同步 HTTP 处理器后，宿主可把三类入站请求交给插件：
 
 ```json
-{
-  "source": {"kind": "host_path", "path": "/media/incoming"},
-  "event_topic": "files.changed",
-  "recursive": true,
-  "interval_seconds": 30
+{"http":{"entry":"jobs/http.js","handler":"handle","timeout_seconds":60,"public":true},"listeners":[{"id":"api","port":18080}]}
+```
+
+```js
+export async function handle(ctx, req) {
+  // req: method/path/url/query/headers/remote_addr/host/source/body/body_base64/json
+  if (req.headers['X-Token']?.[0] !== (await ctx.settings.get()).token) return { status: 401, json: { error: 'unauthorized' } }
+  if (req.path === '/file') return { file: 'export/latest.xml' }
+  return { status: 200, headers: { 'Cache-Control': 'no-store' }, json: { ok: true } }
 }
 ```
 
-Creating a 115 watch:
+- `/api/extensions/v3/<id>/hook/<路径>`：走宿主登录，适合页面或已登录客户端调用。
+- `/plugin-hooks/<id>/<路径>`：仅当 `http.public=true`，不经宿主登录，插件必须自行校验签名或令牌。
+- 独立端口：清单 `listeners` 在启用时绑定；运行时可用 `ctx.server.listen({id,port,host})` 新增并持久保存，`ctx.server.close(id)` 关闭。停用、更新、卸载和宿主关闭都会释放端口；绑定失败写入 `ctx.server.list()` 的 error。Docker 部署需映射对应端口或使用 host 网络。
+
+返回值：字符串为 text/plain；null 为 204；对象可带 status、headers、body/body_base64/json，或 `file`（插件自有路径，支持 Range）。每个请求独立执行一次处理器（不入任务队列），单插件并发 32，请求体上限 32 MiB，默认超时 60 秒（最多 3600）。
+
+## 设置、图标与菜单
 
 ```json
-{
-  "source": {
-    "kind": "115",
-    "account": {"mode": "backup", "id": 12},
-    "cid": "0"
-  },
-  "event_topic": "files.changed",
-  "recursive": false,
-  "interval_seconds": 60
-}
+{"icon":"ui/icon.svg","menu":{"title":"资源搜索","order":10},"requires":{"api":"3.1"},
+ "settings":[{"key":"site","label":"站点地址","type":"url","required":true},{"key":"token","label":"令牌","type":"password"},{"key":"mode","label":"模式","type":"select","options":[{"label":"快速","value":"fast"}],"default":"fast"}]}
 ```
 
-The interval is 5 to 86400 seconds and each plugin can have at most 32 watches. A `backup_pool` selector is resolved once and persisted as one concrete account. The first scan creates a baseline and emits no mass-added event. Later deliveries preserve a stable event ID for retries. Full request/response schemas are in [OpenAPI](openapi-v1.yaml).
+**设置放在插件页面里**：有页面的插件应把全部设置做在自己的页面内，默认值写在插件代码里，不要再声明清单 `settings`。清单 `settings` 只用于没有页面的插件：宿主据此在插件卡片上显示设置图标，点开后在“设置”标签渲染表单，类型有 text、password、textarea、number、boolean、select、path、url；值保存在插件 KV 的 `settings` 键，后台与页面 `ctx.settings.get()` 返回默认值叠加已保存值。
 
-## 8. Build the UI
+**插件卡片**：主按钮“打开”进入插件页面；图标只用于设置（仅声明了清单 settings 时出现）、调试（任务运行与日志）和安装记录；启用开关和“侧边栏”开关在卡片上，更新与卸载在“更多”菜单。
 
-The remote Vue component receives:
+**侧边栏**：插件页面是否出现在宿主侧边栏完全由用户在卡片上的“侧边栏”开关决定，新安装的插件默认不出现；`menu` 只提供入口的标题和排序，不会自动加入侧边栏。`icon` 用于插件中心卡片与页面标题，建议提供 SVG。`requires.api` 高于宿主版本时拒绝安装。
 
-- `api`: the frozen bridge defined by the public UI SDK;
-- `installationId`, `pluginId`;
-- `runtime`, `runtimeState`;
-- `navKey="main"`;
-- `themeContract="dian115-theme-v1"`.
+## 发布
 
-The bridge provides only `getState(view)`, `invokeAction(action, input)`, and `refresh()`. The component may emit `action`, `refresh`, or `close`. Use Naive UI for controls and `@lucide/vue` for icons. Style with the stable `--dian-*` variables so light/dark and configured host themes update without remounting.
+源码目录或 .dian115p 包根目录直接包含 plugin.json。安装先 inspect 展示报告，再用返回 token 确认安装；token 15 分钟失效。更新走 inspect → update，ID 必须一致，先停止活跃任务和目录轮询；保留数据。无旧协议兼容或旧安装迁移。安装过程不调用 run 入口；启用后的定时和消息触发器按清单生效。
 
-The page uses an opaque-origin sandbox and CSP. Signed page resources load through anonymous CORS; the plugin owns its providers; native browser storage and direct fetch/XHR/WebSocket are blocked. Use the managed storage and job bridge, handle errors, and keep messages JSON serializable. See [UI isolation](ui-isolation-v1.md).
+运行 `node conformance/project-check.mjs <插件目录>` 检查源码，再运行示例测试。安装用户自己选择是否信任；不要用混淆、动态下载代码或遗漏声明来暗示代码已经被完整审核。
 
-The production HTML entry loads all required CSS and owns its root/body layout. Use fluid widths and local scrolling for tables; the host provides a stable iframe viewport rather than a content-height feedback loop. Ordinary browser errors do not cause the host to destroy the page. Report selected real failures explicitly with api.reportError.
+## 市场与远程安装
 
-## 9. Package, sign and publish
+插件中心支持 .dian115p 包、服务器源码目录和 HTTP/HTTPS 交付地址。市场索引 schema_version=3，记录每个版本的 id/name/version/source_url/sha256/delivery，可附作者声明；协议见 plugin-market/index.schema.json。用户主动刷新时才请求市场，不影响首次打开已安装插件。
 
-The package root must contain:
+用户在插件中心管理来源、刷新市场和选择版本。宿主核对下载摘要及真实清单，再对实际代码生成报告，由用户确认安装或更新。来源索引只描述交付信息，不授予权限；直接地址安装也会重新解析实际代码。
 
-```text
-manifest.json
-frontend/icon.svg                 # optional icon, UI itself is mandatory
-frontend/dist/index.html          # mandatory signed HTML entry
-frontend/dist/assets/...          # signed page scripts/styles/fonts
-runtime/plugin.wasm                # mandatory WASM reactor
-integrity.json
-signature.json
-```
+## 媒体与 AI 插件
 
-`integrity.json` lists every ZIP member except itself and `signature.json`, sorted by UTF-8 path bytes. Sign this exact byte sequence with Ed25519:
+图片裁剪、宿主 badge 水印、真实分辨率、翻译与 Emby 演员头像使用 [API 3.3 的共享能力](media-and-ai.md)。先在插件目录暂存远程图片，再由宿主处理和移动；不要自己搭建 FFP、AI 代理或读取系统配置。业务字段策略、任务恢复、并发和订阅存储仍由插件编排。
 
-```text
-UTF8("DIAN115-PLUGIN-PACKAGE-V1")
-0x00
-RFC8785-JCS(manifest.json)
-0x00
-RFC8785-JCS(integrity.json)
-```
+### 订阅时间基线（API 3.5）
 
-Publish the `.d115p` on HTTPS and add one entry to a market `index.json`. The market runtime and permissions disclosure must exactly match the signed Manifest; the market SHA-256 must match the package bytes. The complete sample packager generates the key ID, integrity file, signature file, ZIP permissions, package SHA-256, and market entry values.
-
-## 10. Local import behavior
-
-An administrator may also select the finished `.d115p` from the Plugin Center. This is an installation path, not a second package format: the host performs the same archive, manifest, integrity, signature, WASM runtime, HTML UI, and permission checks before presenting the consent dialog. The package must therefore be complete and signed even when it is not published in a market index.
-
-The inspect endpoint is `POST /api/plugin-center/v1/imports/inspect` with a multipart field named `package`. A successful response contains `import_token`, `expires_at`, `file_name`, and the same plugin permission snapshot shown by a market install. The administrator then submits `POST /api/plugin-center/v1/imports/{token}/install` with `permissions_accepted: true` and the returned `consent_digest`. The host revalidates every value and queues the normal `plugin_install` operation.
-
-Import tokens are private, single-use, and expire after 15 minutes. The host deletes the staged file after the operation is accepted or rejected. No local package is uploaded to a repository, and the installed source is recorded as `本地导入`.
-
-## 11. Release checklist
-
-- The HTML entry is present, connects using the public SDK, owns its providers, and loads packaged assets using relative URLs.
-- UI bridge props, action inputs and results are JSON-serializable; no functions, DOM nodes, cyclic objects, `BigInt` or Vue proxy objects cross the bridge.
-- Every UI asset and runtime file is covered by `integrity.json`.
-- WASM runtime entry has the WASM magic, exports `dian115_alloc`/`dian115_handle` and exports memory.
-- Runtime returns the required response envelope for every op and handles cancellation.
-- Every local Host API is declared exactly and appears in OpenAPI.
-- Write calls use stable idempotency keys.
-- Network calls use host-brokered HTTP/HTTPS, support local services, and tolerate proxy use and redirect revalidation.
-- Filesystem requests never depend on Linux system paths or `/config`.
-- Telegram registration stays within 3 commands and 3 keywords and handles conflicts.
-- The publisher key is stable across upgrades and the private key is not shipped.
-- Market metadata exactly matches the signed package.
-- `node docs/plugin-platform/conformance/verify-public-surface.mjs` passes before public publication; no main-project source is included.
-
-## 12. Data and lifecycle
-
-Start with `resident: false`. Opening the page or invoking work loads the service module; ordinary status metadata reads do not. The host can release idle modules, so guest globals are temporary. Use the shared [SDK](examples/sdk/README.md) for storage, ETag/CAS and HTTP errors. Read [storage and lifecycle](storage-and-lifecycle.md) for exact locations, limits and JSON structure.
-
-Use bounded metadata pages and the usage endpoint instead of loading every stored value to build a list. Probe `features.storage_catalog_v1` first and declare the two GET permissions. Long Host Jobs and UI background runs appear in the main Task Queue with shared progress and cancellation; continue using the original `job_ref` for plugin-side queries. The Plugin Center's diagnostic panel links stable error codes to redacted administrator details. See [background jobs](ui-isolation-v1.md#可查询可取消的后台调用) and [troubleshooting](troubleshooting.md).
-
-Uninstall clears private configuration, credentials, task records, logs, deliveries and files. Reinstallation starts empty. Disable, restart and upgrade preserve persistent configuration. A failed file cleanup leaves an inactive uninstall marker and a retryable error; it is not a successful uninstall.
-
-Do not mistake the 8 MiB Host Call body limit for the 256 KiB business payload limit. Check target HTTP status even when the host import returned a normal result. A 412 conflict requires a fresh read and business merge, not an unconditional retry. Use stable invocation and idempotency IDs across uncertain results.
-
-
-排查首次打开、恢复、存储或卸载问题时，按 [插件排错](troubleshooting.md) 根据错误码处理。
-
-## 需要登录的第三方站点
-
-先采用 [HTTP 会话](http-sessions-v1.md)：宿主自动接收 Set-Cookie、持久保存登录状态；多账号分配独立 cookie_session。CookieCloud 导入和写回通过公开接口完成，不复制全局 Key/密码到插件，不调用 PT 导入端点。只有站点确实需要渲染时才调用 render 复用外部 FlareSolverr；DIAN115 不内置 Chromium。初始化、state 与唤醒不自动登录、不写回共享 CookieCloud。
-
-
-## 用户自定义地址和站点登录
-
-第三方插件可以在页面提供账号、密码、明文 Cookie、自定义站点与验证码输入，不根据字段名拒绝业务数据。普通 HTTP 地址可以来自安装后配置。站点配置使用 `/api/plugin-runtime/http/sites`，CookieCloud 可访问 Manifest 声明或此接口保存的域名；不必为新增域名重新打包。表单登录使用 SDK PostForm，手填 Cookie 使用 SetCookieHeader，CookieCloud 是第三种可选来源。交互验证码由站点适配器按实际流程取得图片/令牌、收集答案和验证；平台不固定站点的字段或登录接口。完整约定与示例见 [HTTP 会话](http-sessions-v1.md) 和完整示例的 runtime/http_sessions.go、src/AppPage.vue。
+复用 [订阅增量接口](subscriptions.md)，不按固定周期重复读取整份磁力 / ED2K 缓存或全部 PT 搜索结果。基线与未提交候选一起保存，完整空结果也推进；查询错误与未完成分页必须保留原基线。

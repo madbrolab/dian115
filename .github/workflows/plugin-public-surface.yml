@@ -1,109 +1,32 @@
-name: Plugin public surface guard
-
+name: Public plugin contract v3
 on:
-  pull_request:
   push:
-    branches:
-      - main
-
+    paths: ['docs/plugin-platform/**', 'plugin-market/**', '.github/workflows/plugin-public-surface.yml']
+  pull_request:
+    paths: ['docs/plugin-platform/**', 'plugin-market/**', '.github/workflows/plugin-public-surface.yml']
 permissions:
   contents: read
-
 jobs:
-  public-surface:
+  public-contract:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout public tree
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 1
-      - name: Reject main-project source and release material
+          node-version: '24'
+      - name: Verify public source boundary
         run: node docs/plugin-platform/conformance/verify-public-surface.mjs
-      - name: Validate public OpenAPI contract
-        run: node docs/plugin-platform/conformance/openapi-check.mjs
-      - name: Validate runtime contract regression
-        run: node --test docs/plugin-platform/conformance/*.test.mjs
-      - name: Verify generated Host API reference
-        run: node docs/plugin-platform/conformance/generate-reference.mjs --check
-
-  plugin-sdk:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: docs/plugin-platform/examples/sdk
-    steps:
-      - name: Checkout public tree
-        uses: actions/checkout@v4
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: docs/plugin-platform/examples/sdk/go.mod
-          cache: false
-      - name: Test the public SDK without host source
-        run: go test ./...
-
-  plugin-example:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        example:
-          - complete-plugin
-    defaults:
-      run:
-        working-directory: docs/plugin-platform/examples/${{ matrix.example }}
-    steps:
-      - name: Checkout public tree
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: docs/plugin-platform/examples/${{ matrix.example }}/package-lock.json
-      # Checked before anything is built, so the published manifest, market
-      # template, permissions, schemas and cron rules are validated as shipped.
-      # The compiled module is not present here, so project-check stops before
-      # the build checks; see the note below for where the runtime is verified.
-      - name: Validate the published contract
-        run: node ../../conformance/project-check.mjs --manifest manifest.template.json --market market-entry.template.json
-      - name: Install example dependencies
-        run: npm ci
-      - name: Build the Vue UI
-        run: npm run build:ui
-      - name: Test the preview and durable invocation examples
-        run: npm test
-      # A complete WASM build additionally requires TinyGo and Binaryen.
-      # The private host suite verifies actual WASM execution; authors can run
-      # npm run release locally with the documented toolchain and signing key.
-
-  plugin-dev-skill:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout public tree
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: docs/plugin-platform/examples/sdk/go.mod
-          cache: false
-      - name: Verify generated skill kit matches public sources
-        run: node docs/plugin-platform/conformance/sync-dev-skill.mjs --check
-      - name: Verify skill resources and scaffolding behaviors
+      - name: Verify OpenAPI and examples
         run: |
-          node docs/plugin-platform/examples/dian115-plugin-dev/scripts/verify.mjs
-          node --test docs/plugin-platform/examples/dian115-plugin-dev/scripts/scaffold.test.mjs
-      - name: Generate a standalone minimal plugin
-        run: node docs/plugin-platform/examples/dian115-plugin-dev/scripts/init.mjs --dir "$RUNNER_TEMP/plugin-skill-smoke" --id dev.ci.skill-smoke --name "Skill smoke" --publisher "CI Test"
-      - name: Test and build the generated plugin UI
-        working-directory: ${{ runner.temp }}/plugin-skill-smoke
+          node docs/plugin-platform/conformance/openapi-check.mjs
+          node docs/plugin-platform/conformance/annotate-openapi.mjs --check
+          node docs/plugin-platform/conformance/generate-reference.mjs --check
+          node docs/plugin-platform/conformance/generate-sdk-types.mjs --check
+          npx --yes -p typescript@5.6.3 tsc --noEmit --strict --module esnext --moduleResolution bundler --target es2022 docs/plugin-platform/conformance/sdk-types.check.ts
+          node --test docs/plugin-platform/conformance/*.test.mjs
+          node docs/plugin-platform/conformance/project-check.mjs docs/plugin-platform/examples/complete-plugin
+      - name: Verify portable developer skill
         run: |
-          npm ci
-          npm test
-          go test ./runtime
-          npm run build:ui
-          npm run check:contract
+          node docs/plugin-platform/conformance/sync-dev-skill.mjs --check
+          node docs/plugin-platform/examples/dian115-plugin-dev/scripts/init.mjs "$RUNNER_TEMP/plugin-v3-smoke" dev.ci.smoke
+          node docs/plugin-platform/conformance/project-check.mjs "$RUNNER_TEMP/plugin-v3-smoke"
