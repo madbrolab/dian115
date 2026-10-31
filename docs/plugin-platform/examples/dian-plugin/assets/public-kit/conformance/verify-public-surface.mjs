@@ -42,7 +42,7 @@ const obsoleteContractPatterns = [
 const contentViolations = []
 for (const file of publicContractFiles) {
   if (/^docs\/plugin-platform\/conformance\/(?:verify-public-surface|openapi-check|project-check)\.mjs$/.test(file)) continue
-  if (/^docs\/plugin-platform\/examples\/(?:dian115-plugin-dev|dian-plugin)\/assets\/public-kit\/conformance\/(?:verify-public-surface|openapi-check|project-check)\.mjs$/.test(file)) continue
+  if (/^docs\/plugin-platform\/examples\/dian-plugin\/assets\/public-kit\/conformance\/(?:verify-public-surface|openapi-check|project-check)\.mjs$/.test(file)) continue
   const extension = file.slice(file.lastIndexOf('.')).toLowerCase()
   if (!textExtensions.has(extension)) continue
   let content

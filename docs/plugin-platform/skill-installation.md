@@ -1,8 +1,8 @@
 # DIAN115 插件开发与审查
 
-推荐调用名为 **`dian-plugin`**，使用 `$dian-plugin`；原名 `$dian115-plugin-dev` 继续可用。两个入口功能一致，由同步脚本从同一份材料生成。
+调用名为 **`dian-plugin`**，使用 `$dian-plugin`。
 
-完整目录分别位于 `examples/dian-plugin/` 和 `examples/dian115-plugin-dev/`。任选一个目录安装到自己的 Codex/兼容技能目录，安装目录与调用名一致；需要两个名称时同时安装两个目录。每个入口均包含 SKILL.md、scripts、agents 与 assets/public-kit，可独立使用，不需要主项目源码。
+完整目录位于 `examples/dian-plugin/`。将该目录安装到自己的 Codex/兼容技能目录，安装目录命名为 `dian-plugin`。必须复制 SKILL.md、scripts、agents 与 assets/public-kit；不需要主项目源码。
 
 开发：`使用 $dian-plugin 开发一个可以安装后自定义站点、搜索资源并交给宿主转存的插件。`
 

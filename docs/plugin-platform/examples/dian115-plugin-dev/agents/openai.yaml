@@ -1,4 +1,0 @@
-interface:
-  display_name: "DIAN115 插件开发与审查"
-  short_description: "开发、打包 DIAN115 插件，安装前检测恶意代码"
-  default_prompt: "使用 $dian115-plugin-dev 开发或审查 DIAN115 插件。"
