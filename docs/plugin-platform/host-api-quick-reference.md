@@ -54,7 +54,7 @@
 | POST | `/api/extensions/v3/{id}/cookies` | 读取 Cookie 或写入明文 Cookie 头 |
 | POST | `/api/extensions/v3/{id}/cookies/import` | 导入 CookieCloud 格式 Cookie；保留属性 |
 | POST | `/api/extensions/v3/{id}/data/sqlite` | 只读查询插件自有静态 SQLite |
-| POST | `/api/extensions/v3/{id}/files` | 文件操作：相对路径为插件自有（可读写内容）；绝对路径或 cd2: 为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列 |
+| POST | `/api/extensions/v3/{id}/files` | 文件操作：相对路径为插件自有（可读写内容）；绝对路径为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列 |
 | GET | `/api/extensions/v3/{id}/files/download` | 下载插件自有文件（相对路径，支持 Range） |
 | POST | `/api/extensions/v3/{id}/files/upload` | 流式上传到插件自有路径 |
 | GET | `/api/extensions/v3/{id}/hook/{path}` | 登录态 Webhook：交给清单 http 处理器同步响应 |
@@ -196,3 +196,5 @@
 | POST | `/v3/decrypt` | 管理员上传加密 .dian115p 并解密为源码包；不留档、不执行插件 |
 | GET | `/v3/info` | 读取加密 Worker 的插件包格式与上传容量 |
 | POST | `/v3/releases` | 公开上传完整源码 .dian115p 包并取得加密交付包，无需登录或口令 |
+| POST | `/api/extensions/v3/{id}/messaging/{operation}` | 调用消息渠道 |
+| GET | `/api/extensions/v3/{id}/daemons` | 读取常驻任务状态 |

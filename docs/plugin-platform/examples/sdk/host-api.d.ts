@@ -428,7 +428,7 @@ export type ExtensionManifest = ({
 })
 
 export type ExtensionMediaProbeRequest = {
-  /** 受宿主路径规则保护的绝对媒体路径或 cd2:/ 路径；仅真实媒体文件，不接受 URL/STRM/命令行 */
+  /** 受宿主路径规则保护的绝对媒体路径；仅真实媒体文件，不接受 URL/STRM/命令行 */
   path: string
   /** 可选 115 SHA1；用于复用共享 FFP 缓存 */
   sha1?: string
@@ -502,7 +502,7 @@ export type ExtensionNFOMetadata = {
 }
 
 export type ExtensionNFORequest = {
-  /** 受宿主文件保护约束的本地绝对 .nfo 路径或 cd2:/...；最大 2 MiB */
+  /** 受宿主文件保护约束的绝对 .nfo 路径；最大 2 MiB */
   path: string
 }
 
@@ -3638,7 +3638,7 @@ export interface HostRoutes {
     }; response: ExtensionOK }
   /** 只读查询插件自有静态 SQLite。API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件、宿主路径或扩展加载。 */
   "POST /api/extensions/v3/{id}/data/sqlite": { query: never; body: ExtensionSQLiteRequest; response: ExtensionSQLiteResult }
-  /** 文件操作：相对路径为插件自有（可读写内容）；绝对路径或 cd2: 为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列。3.3 新增 hardlink/symlink：只允许宿主本地路径、单个普通源文件与完整 destination，拒绝覆盖和 CD2；硬链接必须同文件系统。rmdir 只删除一个空目录（支持插件自有和宿主本地），非递归且不支持 CD2。 */
+  /** 文件操作：相对路径为插件自有（可读写内容）；绝对路径为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列。3.3 新增 hardlink/symlink：只允许宿主本地路径、单个普通源文件与完整 destination，拒绝覆盖和 CD2；硬链接必须同文件系统。rmdir 只删除一个空目录（支持插件自有和宿主本地），非递归且不支持 CD2。 */
   "POST /api/extensions/v3/{id}/files": { query: { wait?: "0" }; body: {
       algorithm?: "sha256"
       content?: string
@@ -3656,7 +3656,7 @@ export interface HostRoutes {
       offset?: number
       operation: "read" | "write" | "append" | "list" | "walk" | "stat" | "exists" | "hash" | "mkdir" | "rmdir" | "remove" | "rename" | "move" | "copy" | "hardlink" | "symlink"
       overwrite?: boolean
-      /** 插件相对路径，或宿主绝对 Linux / cd2:/ 路径；内容读写仅限插件相对路径 */
+      /** 插件相对路径，或宿主绝对 Linux 路径（CD2 写挂载路径）；内容读写仅限插件相对路径 */
       path?: string
       /** 多个宿主绝对路径 */
       paths?: Array<string>
@@ -3989,6 +3989,12 @@ export interface HostRoutes {
   "GET /api/tmdb/tv/{id}": { query: { raw_episode_counts?: boolean }; body: never; response: TmdbTVDetail }
   /** 读取工作队列统计。读取宿主工作队列统计。 */
   "GET /api/workqueue/stats": { query: never; body: never; response: GenericHostObject }
+  /** 调用消息渠道。调用已授权的消息渠道：Telegram 机器人、企业微信或 TG 监控账号。权限须在清单 permissions 中声明并由用户授权；结果不含令牌和渠道配置。后台与页面用 ctx.telegram、ctx.wecom、ctx.messaging。 */
+  "POST /api/extensions/v3/{id}/messaging/{operation}": { query: never; body: {
+      [key: string]: unknown
+    }; response: unknown }
+  /** 读取常驻任务状态。读取清单中常驻任务的运行状态、重启次数、最后错误和最近日志。 */
+  "GET /api/extensions/v3/{id}/daemons": { query: never; body: never; response: unknown }
 }
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD'

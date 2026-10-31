@@ -16,7 +16,7 @@ export interface HTTPClient {request(options:HTTPRequest):Promise<HTTPResult>;co
 export interface FileInfo {name:string;path:string;is_dir:boolean;size:number;modified:string;backend:'plugin'|'local'|'cd2'}
 export type FileEncoding = 'utf8'|'base64'
 export interface FileWriteResult {size:number;sha256:string;path?:string}
-/** Relative = plugin-owned data/files; absolute Linux path or "cd2:/drive/dir" = host path (never readable). */
+/** Relative = plugin-owned data/files; absolute Linux path = host path (never readable). Paths under the CD2 mount prefix go through CD2 automatically. */
 export type FilePath = string
 export interface FileTransfer {path?:FilePath;paths?:FilePath[];destination?:FilePath;destination_dir?:FilePath;overwrite?:boolean;progress?:boolean}
 export interface TransferResult {backend:'system'|'cd2'|'plugin';items?:{source:string;path:string;size:number}[];result?:JSONValue}
@@ -54,8 +54,8 @@ export interface CD2Operations {
  search:{input:{path:string;query:string;fuzzy?:boolean};output:CD2File[]};
 }
 export interface CD2Client {call<M extends keyof CD2Operations>(method:M,options:CD2Operations[M]['input']):Promise<CD2Operations[M]['output']>}
-export interface WatchInput {id:string;kind:'local'|'cd2';path:string;job:string;interval_seconds?:number;realtime?:boolean;debounce_ms?:number;patterns?:string[];recursive?:boolean}
-export interface WatchChange {path:string;kind:'created'|'changed'|'removed'}
+export interface WatchInput {id:string;/** Decided from the path when omitted. */kind?:'local'|'cd2';path:string;job:string;interval_seconds?:number;realtime?:boolean;debounce_ms?:number;patterns?:string[];recursive?:boolean}
+export interface WatchChange {path:string;cd2_path?:string;kind:'created'|'changed'|'removed'}
 export interface WatchInputEvent {watch:string;changes:WatchChange[]}
 export interface HostEvent {id:string;type:string;title?:string;content?:string;data?:Record<string,JSONValue>;at:string}
 export interface ListenerState {id:string;port:number;host?:string;source:'manifest'|'runtime';running:boolean;address?:string;error?:string}
@@ -84,3 +84,25 @@ export interface CookieCloudClient {
 export interface KVEntry {key:string;revision:number;encrypted_bytes:number}
 export interface Run {id:string;job_id:string;business_key:string;revision:string;status:'queued'|'running'|'failed'|'succeeded'|'cancelled'|'attention_required';attempted:boolean;stage:string;progress:number;message:string;total?:number;done?:number;failed?:number;input?:JSONValue;result?:JSONValue;checkpoint?:JSONValue;error?:string;logs?:string[];created_at:string;updated_at:string}
 export interface APIError extends Error {status:number;method:string;path:string;data:unknown}
+
+export interface KnownChat {channel:'telegram'|'wecom';id:string;type?:string;title?:string;username?:string;last_seen:number}
+export interface TelegramBotMessage {chat_id:string|number;text?:string;format?:'text'|'html';image_url?:string;buttons?:{text:string;url?:string;callback_data?:string}[][];reply_to?:number;message_thread_id?:number;silent?:boolean}
+export interface AccountPeer {peer_type:'private'|'bot'|'group'|'channel';peer_id:string;access_hash?:string}
+export interface AccountDialog {id:string;access_hash:string;type:string;name:string;username:string;last_message:string;last_message_time:string;unread_count:number}
+export interface AccountMessage {id:number;text:string;sender_name:string;sender_id:string;is_outgoing:boolean;date:string;has_media:boolean;media_type:string}
+export interface WeComMessage {to?:string;title?:string;text:string;image_url?:string;link?:string}
+export interface ReplyOptions {text:string;format?:'text'|'html';image_url?:string;title?:string;link?:string;buttons?:TelegramBotMessage['buttons']}
+export interface WebSocketMessage {type:'text'|'binary'|'close';text?:string;data?:Uint8Array;code?:number;reason?:string}
+export interface PluginWebSocket {protocol:string;receive():Promise<WebSocketMessage>;send(data:string|Uint8Array|ArrayBuffer):Promise<void>;close(code?:number,reason?:string):Promise<void>}
+export interface StreamIterator<T> {next():Promise<{done:boolean;value?:T}>}
+export interface HTTPStream {status:number;url:string;headers:Record<string,string[]>;read():Promise<Uint8Array|null>;chunks():StreamIterator<Uint8Array>;lines():StreamIterator<string>;events():StreamIterator<{event:string;data:string;id:string}>;close():Promise<void>}
+export interface TCPSocket {local_address:string;remote_address:string;read(options?:{timeout_ms?:number}):Promise<Uint8Array|null>;lines():StreamIterator<string>;write(data:string|Uint8Array|ArrayBuffer):Promise<void>;end():Promise<void>;close():Promise<void>}
+export interface TCPServer {address:string;port:number;accept():Promise<TCPSocket>;close():Promise<void>}
+export interface SSEMessage {event?:string;id?:string|number;retry?:number;data?:JSONValue}
+export interface ResponseStreams {sse(options?:{status?:number;headers?:Record<string,string>}):Promise<{send(message:SSEMessage):Promise<void>;comment(text?:string):Promise<void>}>;stream(options?:{status?:number;headers?:Record<string,string>}):Promise<{write(data:string|Uint8Array|ArrayBuffer):Promise<void>}>}
+export interface MessagingContext {
+ telegram:{bot:{chats():Promise<KnownChat[]>;send(message:TelegramBotMessage):Promise<{ok:true;message_id:number}>;edit(message:TelegramBotMessage&{message_id:number}):Promise<{ok:true}>;delete(target:{chat_id:string|number;message_id:number}):Promise<{ok:true}>};
+  account:{status():Promise<{logged_in:boolean;id?:string;first_name?:string;last_name?:string;username?:string}>;dialogs():Promise<AccountDialog[]>;messages(options:AccountPeer&{limit?:number;offset_id?:number}):Promise<AccountMessage[]>;send(options:AccountPeer&{text:string}):Promise<{ok:true}>}};
+ wecom:{users():Promise<KnownChat[]>;send(message:WeComMessage):Promise<{ok:true}>};
+ messaging:{reply(input:unknown,options:ReplyOptions):Promise<unknown>};
+}

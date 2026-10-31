@@ -1465,7 +1465,7 @@
    "ExtensionMediaProbeRequest": {
     "properties": {
      "path": {
-      "description": "受宿主路径规则保护的绝对媒体路径或 cd2:/ 路径；仅真实媒体文件，不接受 URL/STRM/命令行",
+      "description": "受宿主路径规则保护的绝对媒体路径；仅真实媒体文件，不接受 URL/STRM/命令行",
       "type": "string"
      },
      "sha1": {
@@ -1682,7 +1682,7 @@
    "ExtensionNFORequest": {
     "properties": {
      "path": {
-      "description": "受宿主文件保护约束的本地绝对 .nfo 路径或 cd2:/...；最大 2 MiB",
+      "description": "受宿主文件保护约束的绝对 .nfo 路径；最大 2 MiB",
       "type": "string"
      }
     },
@@ -12736,7 +12736,7 @@
           "type": "boolean"
          },
          "path": {
-          "description": "插件相对路径，或宿主绝对 Linux / cd2:/ 路径；内容读写仅限插件相对路径",
+          "description": "插件相对路径，或宿主绝对 Linux 路径（CD2 写挂载路径）；内容读写仅限插件相对路径",
           "type": "string"
          },
          "paths": {
@@ -12835,7 +12835,7 @@
       "description": "错误详情"
      }
     },
-    "summary": "文件操作：相对路径为插件自有（可读写内容）；绝对路径或 cd2: 为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列"
+    "summary": "文件操作：相对路径为插件自有（可读写内容）；绝对路径为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列"
    }
   },
   "/api/extensions/v3/{id}/files/download": {
@@ -21499,6 +21499,112 @@
     },
     "security": [],
     "summary": "公开上传完整源码 .dian115p 包并取得加密交付包，无需登录或口令"
+   }
+  },
+  "/api/extensions/v3/{id}/messaging/{operation}": {
+   "post": {
+    "description": "调用已授权的消息渠道：Telegram 机器人、企业微信或 TG 监控账号。权限须在清单 permissions 中声明并由用户授权；结果不含令牌和渠道配置。后台与页面用 ctx.telegram、ctx.wecom、ctx.messaging。",
+    "operationId": "extension_post__api_extensions_v3__id__messaging__operation_",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "id",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "operation",
+      "required": true,
+      "schema": {
+       "type": "string",
+       "enum": [
+        "telegram.chats",
+        "telegram.send",
+        "telegram.edit",
+        "telegram.delete",
+        "wecom.users",
+        "wecom.send",
+        "account.status",
+        "account.dialogs",
+        "account.messages",
+        "account.send",
+        "reply"
+       ]
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "example": {
+        "chat_id": "123456789",
+        "text": "任务完成",
+        "format": "text"
+       },
+       "schema": {
+        "type": "object",
+        "additionalProperties": true
+       }
+      }
+     }
+    },
+    "responses": {
+     "200": {
+      "description": "操作结果",
+      "content": {
+       "application/json": {
+        "example": {
+         "ok": true,
+         "message_id": 42
+        },
+        "schema": {}
+       }
+      }
+     },
+     "400": {
+      "description": "参数错误、未授权或频率超限"
+     }
+    },
+    "summary": "调用消息渠道"
+   }
+  },
+  "/api/extensions/v3/{id}/daemons": {
+   "get": {
+    "description": "读取清单中常驻任务的运行状态、重启次数、最后错误和最近日志。",
+    "operationId": "extension_get__api_extensions_v3__id__daemons",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "id",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "常驻任务状态",
+      "content": {
+       "application/json": {
+        "example": [
+         {
+          "job": "listen",
+          "running": true,
+          "restarts": 0,
+          "logs": []
+         }
+        ],
+        "schema": {}
+       }
+      }
+     }
+    },
+    "summary": "读取常驻任务状态"
    }
   }
  },

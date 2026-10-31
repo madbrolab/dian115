@@ -1,6 +1,6 @@
-# 插件 API 完整参考（宿主插件 API 3.5）
+# 插件 API 完整参考（宿主插件 API 3.8）
 
-本页列出插件可用的全部能力。业务细节见[开发指南](developer-guide.md)、[网络](network.md)、[生命周期](storage-and-lifecycle.md)、[页面](ui-theme.md)；接口契约见 [OpenAPI](openapi-v3.json) 与[速查](host-api-quick-reference.md)；类型见 [SDK](examples/sdk/)。
+本页列出插件可用的全部能力。第一次开发先看[快速开始](quickstart.md)，字段规则见[清单参考](manifest.md)，常见写法见[配方](cookbook.md)。业务细节见[开发指南](developer-guide.md)、[网络](network.md)、[生命周期](storage-and-lifecycle.md)、[页面](ui-theme.md)；接口契约见 [OpenAPI](openapi-v3.json) 与[速查](host-api-quick-reference.md)；类型见 [SDK](examples/sdk/)。
 
 ## 1. 清单 plugin.json
 
@@ -14,8 +14,9 @@
 | `ui.entry` | `ui/page.js`（导出 `mount(el, ctx)`）或 `ui/index.html` |
 | `menu` | `{title, order}`，侧栏入口的标题与排序（需要 ui）；是否显示由用户在插件卡片的“侧边栏”开关决定，默认不显示 |
 | `settings[]` | `{key,label,type,default,options,required,help,placeholder}`；type：text/password/textarea/number/boolean/select/path/url。值存在 KV 的 `settings` 键 |
-| `jobs[]` | `{id,entry,handler='run',recover,timeout_seconds,default_schedule|interval_seconds,allow_overlap,title,queue}`；`title`（≤40 字）是任务在宿主任务队列里的名称（显示为“插件名：标题”）；`queue:false` 不在任务队列页面显示，适合测试、预览等短任务 |
-| `events[]` | `message`（commands/prefixes）、`callback`、`host`（types，支持 `*` 与前缀通配） |
+| `jobs[]` | `{id,entry,handler='run',recover,timeout_seconds,default_schedule|interval_seconds,allow_overlap,title,queue,daemon}`；`daemon:true` 是[常驻任务](long-connections.md)；`title`（≤40 字）是任务在宿主任务队列里的名称（显示为“插件名：标题”）；`queue:false` 不在任务队列页面显示，适合测试、预览等短任务 |
+| `events[]` | `message`（commands/prefixes/keywords/patterns/channels）、`account_message`（prefixes/keywords/patterns/all/peer_types/include_outgoing）、`callback`、`host`（types，支持 `*` 与前缀通配），见[清单参考](manifest.md) |
+| `permissions[]` | `telegram.bot`、`wecom`、`telegram.account`、`network.tcp`，用户授权后生效，见[消息渠道](messaging.md)和[长连接](long-connections.md) |
 | `http` | `{entry,handler='handle',timeout_seconds≤3600,public}`：Webhook、公开回调与监听端口的处理器 |
 | `listeners[]` | `{id,port,host}`，启用时自动绑定的端口（需要 http） |
 | `declared_usage` | 作者声明（apis/sites/files/risk…），仅告知，不是权限白名单 |
@@ -41,6 +42,7 @@ UI、jobs、http 至少提供一项。
 | `events.catalog()` | 可订阅的宿主事件类型 |
 | `notifications.send(options)` / `notify(options)`、`notifications.channels()` | 发送通知、查看渠道（见[插件通知](notifications.md)） |
 | `cookiecloud(op, options)`、`usage()` | CookieCloud、磁盘用量 |
+| `telegram.bot.*`、`telegram.account.*`、`wecom.*`、`messaging.reply` | 需授权，见[消息渠道](messaging.md) |
 
 ## 3. 后台 ctx（`export async function run(ctx, input)`）
 
@@ -55,6 +57,10 @@ UI、jobs、http 至少提供一项。
 | `notify(options)` / `notifications.send`、`notifications.channels()` | 通知：channels 选渠道、format 选 text/markdown/html、overrides 按渠道内容，返回逐渠道 deliveries（见[插件通知](notifications.md)） |
 | `cd2.call(method, options)`、`watch.add/remove`、`cookiecloud` | 同页面 |
 | `server.list/listen/close`、`server.hookPath/publicHookPath` | 端口与回调路径 |
+| `telegram.bot.*`、`telegram.account.*`、`wecom.*`、`messaging.reply` | 需授权，见[消息渠道](messaging.md) |
+| `ws.connect(options)`、`http.stream(options)` | 长连接与流式读取，仅后台，见[长连接](long-connections.md) |
+| `tcp.connect(options)`、`tcp.listen(options)` | 原生 TCP，需要 `network.tcp` 授权，仅后台 |
+| `response.sse(options)`、`response.stream(options)` | 流式输出，仅 HTTP 处理器 |
 | `sleep(ms)` | 可取消等待，单次 ≤24 小时 |
 | `plugin` | `{id,name,version,generation,revision,host_api}` |
 | `codec` | utf8Encode/utf8Decode、encode/decode(任意字符集)、base64Encode/Decode、hexEncode/Decode、concat |
@@ -64,7 +70,7 @@ UI、jobs、http 至少提供一项。
 
 `recover(ctx, checkpoint)` 返回 `{action:'complete',result}`、`{action:'resume'}` 或 `{action:'attention'}`。
 
-后台全局：`fetch`、`Headers`、`Response`、`URL`、`URLSearchParams`、`TextEncoder`、`TextDecoder`、`atob`、`btoa`、`setTimeout/setInterval/clear*`、`queueMicrotask`、`structuredClone`、`AbortController`、`crypto.randomUUID/getRandomValues`、`console.log`（写入任务日志）。没有 DOM、Node 内置模块、`require` 和子进程。
+后台全局：`fetch`、`WebSocket`、`Headers`、`Response`、`URL`、`URLSearchParams`、`TextEncoder`、`TextDecoder`、`atob`、`btoa`、`setTimeout/setInterval/clear*`、`queueMicrotask`、`structuredClone`、`AbortController`、`crypto.randomUUID/getRandomValues`、`console.log`（写入任务日志）。没有 DOM、Node 内置模块、`require` 和子进程。脚本引擎支持 async/await，不支持 `for await` 和异步生成器。后台 ctx 没有 `tasks`、`events`、`usage`，这些只在页面提供；任务报错的文字末尾带文件和行号。
 
 ## 4. HTTP 处理器（`export async function handle(ctx, req)`）
 
@@ -77,13 +83,13 @@ UI、jobs、http 至少提供一项。
 | 路径 | 允许的操作 |
 | --- | --- |
 | 相对路径（插件 data/files） | read（≤16 MiB/次）、write、append、list、walk、stat、exists、hash、mkdir、rename、move、copy、remove |
-| 绝对路径 / `cd2:/…`（宿主） | list、walk（仅本地）、stat、exists、hash（仅本地，sha256）、mkdir、rename、move、copy、remove；**不能 read/write** |
+| 绝对路径（宿主，CD2 文件写挂载路径） | list、walk（仅本地）、stat、exists、hash（仅本地，sha256）、mkdir、rename、move、copy、remove；**不能 read/write** |
 
 宿主路径分流：两边都在 CD2 挂载内走 CD2 gRPC；任一边不在 CD2 内走系统命令，CD2 一侧使用挂载路径。系统命令操作每秒报告字节进度。参数：path/paths、destination/destination_dir、name、overwrite、progress、pattern、limit。
 
 ## 6. 监听与事件
 
-- 目录监听：`{id,kind:'local'|'cd2',path,job,interval_seconds,realtime,debounce_ms,patterns,recursive}`；任务输入 `{watch,changes:[{path,kind:'created'|'changed'|'removed'}]}`。
+- 目录监听：`{id,path,job,kind?,interval_seconds,realtime,debounce_ms,patterns,recursive}`，`kind` 通常省略，由宿主按 CD2 挂载前缀判定；任务输入 `{watch,changes:[{path,cd2_path?,kind:'created'|'changed'|'removed'}]}`。
 - 宿主事件：任务输入 `{id,type,title,content,data,at}`；类型列表 `GET /api/extensions/v3/_events`。
 - 消息与按钮：`message`/`callback` 事件，输入为宿主投影的消息或回调。
 - 定时：`default_schedule`（五段 cron）或 `interval_seconds`。
@@ -108,12 +114,24 @@ UI、jobs、http 至少提供一项。
 | 目录快照 | 并发 4（`DIAN115_EXTENSION_WATCH_CONCURRENCY`），实时监听 ≤8192 个目录 |
 | 任务 | 默认 30 分钟，最多 365 天；日志单条 8 KiB、保留 500 条 |
 | HTTP 缓存 | 每插件 128 MiB；Cookie 每会话 4096 条 |
+| 长连接 | 每插件 16 条，含 WebSocket、流式读取、TCP 和对外推送；WebSocket 单条消息默认 1 MiB，最大 16 MiB；TCP 单次写入 16 MiB |
+| 常驻任务 | 重启等待 1 秒到 5 分钟；保留最近 200 条日志 |
+| 消息渠道 | 每插件每分钟：机器人 30、企业微信 20、账号发送 20、账号读取 60 |
+| CD2 递归监听 | 最多 500 个目录，单次扫描 2 分钟 |
 
 插件是可信扩展：与宿主同进程、同登录权限运行。限额防止失控，不构成安全隔离。
 
 ## API 3.3 媒体与 AI
 
 完整参数、限制、页面/后台示例见 [media-and-ai.md](media-and-ai.md)。通过 ctx.api 复用图片处理、badge 图片读取、FFP、AI 与 Emby 图片上传；文件 call 增加 hardlink/symlink/rmdir，PT 搜索增加 mteam_mode。
+
+## API 3.7 长连接
+
+`jobs[].daemon`、`ctx.ws`、`ctx.http.stream` 与全局 `WebSocket` 见 [long-connections.md](long-connections.md)。3.8 增加 `ctx.tcp` 和 `ctx.response`。
+
+## API 3.6 消息渠道
+
+`permissions`、`keywords`、`patterns`、`account_message` 事件以及 `ctx.telegram`、`ctx.wecom`、`ctx.messaging` 见 [messaging.md](messaging.md)。
 
 ## API 3.5 订阅增量查询
 

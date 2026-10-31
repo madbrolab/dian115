@@ -20,4 +20,20 @@
 - 通知没有收到：看返回的 `deliveries`。`skipped/disabled` 表示用户在该渠道关闭了插件通知，`quiet_hours` 为该渠道静默时段，`not_configured` 为渠道未配置；`failed` 的 `error` 给出脱敏原因（如 Telegram 拒绝 HTML 时的解析错误）。
 - 企业微信里 markdown 显示“不支持”：个人微信（微信插件）不渲染企业微信 markdown，可用 `overrides.wecom.format:'text'`。
 
+- `Cannot read property 'xxx' of undefined or null`：代码读取了不存在的对象的属性，比如写错 ctx 成员。错误末尾的括号是文件和行号。后台 ctx 没有 `tasks`、`events`、`usage`，可用成员见 [API 参考](api-reference.md)。
+- `SyntaxError ... for await`：脚本引擎不支持 `for await` 和异步生成器，循环调用 `next()`，见[长连接](long-connections.md)。
+- `permission ... is not granted`：清单声明了权限但用户没开，到插件卡片打开；或者代码用了清单没声明的渠道。
+- 关键字不触发：确认授权已开。`/` 开头的文本和宿主能识别的链接由宿主优先处理；只有白名单用户的消息会进入插件。
+- 账号事件收不到：账号要登录且客户端在运行；默认不包含账号自己发的消息。
+- `操作过于频繁`：超过消息渠道限额，按提示等待。账号发送要控制频率，避免 Telegram 风控。
+- 常驻任务不运行：调用 `GET /api/extensions/v3/{id}/daemons` 看 `last_error` 和日志。反复重启时等待时间会增加到 5 分钟。
+- `每个插件最多同时保持 16 条长连接`：用完调用 `close()`，脚本结束时宿主也会全部关闭。SSE 连接也计入。
+- `permission network.tcp is not granted`：清单声明 `network.tcp`，并在插件卡片打开“原生 TCP”。
+- TCP 端口外部连不上：`host` 默认只绑定本机；Docker 部署还要映射端口。
+- `address already in use`：端口被占用，换端口。常驻任务重启时会自动重试。
+- SSE 收不到实时数据：反向代理开了缓冲，或处理器没有用 `ctx.response`。长时间无数据时用 `stream.comment()` 发心跳。
+- CD2 目录监听很慢或扫描超时：路径写挂载路径，让宿主走 CD2 接口；减少 `recursive` 范围，调大 `interval_seconds`。
+- 市场仓库报 `is missing author, ...`：条目缺少必填字段，见[市场规范](market.md)，发布前运行 `market-check.mjs`。
+- 安装报“引用了禁止调用的宿主接口”：代码写了受保护的接口，改用公开能力，比如消息用 `ctx.telegram`，不要调用账号客户端接口。
+
 报告问题时提供宿主版本、插件 ID/版本/revision、失败操作、任务标识与脱敏错误。不要上传 Cookie、密码、运行密钥或整份数据库。

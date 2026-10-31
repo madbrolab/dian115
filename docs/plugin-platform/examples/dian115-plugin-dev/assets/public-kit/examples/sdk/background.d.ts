@@ -1,4 +1,4 @@
-import type { HostAPI, HTTPClient, Files, CD2Client, Notification, NotificationResult, NotifyChannelInfo, CookieCloudClient, WatchInput, JSONValue, ListenerState } from './core-types.js'
+import type { HostAPI, HTTPClient, Files, CD2Client, Notification, NotificationResult, NotifyChannelInfo, CookieCloudClient, WatchInput, JSONValue, ListenerState, MessagingContext, HTTPRequest, PluginWebSocket, HTTPStream, TCPSocket, TCPServer, ResponseStreams } from './core-types.js'
 export type Bytes = Uint8Array
 export type BinaryInput = string|Uint8Array|ArrayBuffer
 export type Output = 'hex'|'base64'|'base64url'|'utf8'|'bytes'
@@ -12,8 +12,13 @@ export interface HTMLSelection {
 export interface XMLNode {name:string;attrs:Record<string,string>;text:string;children:XMLNode[]}
 export interface AESOptions {mode?:'cbc'|'gcm'|'ctr'|'ecb';key:BinaryInput;iv?:BinaryInput;data:BinaryInput;aad?:BinaryInput;padding?:'pkcs7'|'none';output?:Output}
 export interface RSAOptions {key:string;data:BinaryInput;padding?:'pkcs1'|'oaep'|'pss';hash?:string;signature?:BinaryInput;output?:Output}
-export interface BackgroundContext {
- api:HostAPI;http:HTTPClient;files:Files;cd2:CD2Client;notify(options:Notification):Promise<NotificationResult>;cookiecloud:CookieCloudClient;
+export interface BackgroundContext extends MessagingContext {
+ ws:{connect(options:string|(HTTPRequest&{protocols?:string[];max_message_bytes?:number})):Promise<PluginWebSocket>};
+ /** Requires the network.tcp grant. */
+ tcp:{connect(options:{host:string;port:number;tls?:boolean;server_name?:string;insecure?:boolean;timeout_seconds?:number}):Promise<TCPSocket>;listen(options:{port:number;host?:string}):Promise<TCPServer>};
+ /** Only inside an HTTP handler. */
+ response?:ResponseStreams;
+ api:HostAPI;http:HTTPClient&{stream(options:HTTPRequest):Promise<HTTPStream>};files:Files;cd2:CD2Client;notify(options:Notification):Promise<NotificationResult>;cookiecloud:CookieCloudClient;
  notifications:{send(options:Notification):Promise<NotificationResult>;channels():Promise<NotifyChannelInfo[]>};
  storage:{get<T=JSONValue>(key:string):Promise<T|null>;set(key:string,value:JSONValue):Promise<number>;remove(key:string):Promise<void>};
  task:{id:string;checkpointValue:JSONValue;/** total/done/failed 为任务级计数：宿主任务队列显示“已处理 done/total”；只给计数时进度按 (done+failed)/total 计算，宿主文件移动的进度不再覆盖整体进度。 */update(value:{stage?:string;message?:string;progress?:number;total?:number;done?:number;failed?:number}):Promise<void>;log(message:string):Promise<void>;checkpoint(value:JSONValue):Promise<void>};

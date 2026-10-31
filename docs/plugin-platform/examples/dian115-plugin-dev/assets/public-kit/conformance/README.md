@@ -1,6 +1,8 @@
 # v3 检查工具
 
 - `node project-check.mjs <插件目录>`：检查源码清单、入口、路径、任务和触发器；调用权限由宿主在安装和运行时检查，本地通过不代表一定可安装。
+- `node audit.mjs <目录或.dian115p> [--json]`：只读的恶意代码扫描，见[安全审查](../security-audit.md)。
+- `node market-check.mjs <index.json>`：检查市场索引的必填字段。
 - `node pack.mjs <插件源码目录> <目录外的插件.dian115p>`：无需安装依赖，生成可读源码插件包。
 - `node --test docs/plugin-platform/conformance/*.test.mjs`：SDK 路径隔离与示例恢复语义测试。
 - `node annotate-openapi.mjs` / `--check`：把[字段词汇表](api-glossary.json)与[常用接口示例](api-cookbook.json)写入 OpenAPI；示例先按契约校验，不符合即失败。

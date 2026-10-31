@@ -31,7 +31,7 @@ export function packPlugin(directory, output) {
   visit(root)
   const names = new Set(sources.map(file => file.name.toString()))
   for (const entry of [manifest.ui?.entry, ...(manifest.jobs || []).map(job => job.entry)].filter(Boolean)) if (!names.has(entry)) throw Error('入口文件不存在：' + entry)
-  if (!manifest.ui && !manifest.jobs?.length) throw Error('插件必须包含页面或后台任务')
+  if (!manifest.ui && !manifest.jobs?.length && !manifest.http) throw Error('插件必须包含页面、后台任务或 HTTP 处理器')
   const local = [], central = []
   let offset = 0
   for (const { name, plain } of sources) {

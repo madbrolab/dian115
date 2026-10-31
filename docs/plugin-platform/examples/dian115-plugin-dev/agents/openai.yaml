@@ -1,4 +1,4 @@
 interface:
-  display_name: "DIAN115 可信扩展开发"
-  short_description: "开发、测试和交付 DIAN115 v3 页面与后台编排插件"
-  default_prompt: "使用 $dian115-plugin-dev，根据公开 v3 契约开发并验证轻量 DIAN115 可信扩展。"
+  display_name: "DIAN115 插件开发与审查"
+  short_description: "开发、打包 DIAN115 插件，安装前检测恶意代码"
+  default_prompt: "使用 $dian115-plugin-dev 开发或审查 DIAN115 插件。"

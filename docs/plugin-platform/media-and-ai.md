@@ -46,7 +46,7 @@ const media = await ctx.api.post(`${base}/media/probe`, {path:'/media/movie.mkv'
 // width,height,resolution,duration,video_codec,audio_tracks,subtitle_tracks,...
 ```
 
-`path` 是受宿主文件保护规则约束的绝对媒体路径或 `cd2:/...`；CD2 需要宿主已配置挂载路径。支持 MP4/MKV/AVI/MOV/WMV/FLV/TS/M2TS/M4V/WebM/MPG/MPEG/ISO/VOB。可选 `sha1` 用于复用已有 SHA1 FFP 缓存；缺失时走宿主已有探测服务。缓存命中不占探测槽，真实探测共享整理服务的全局并发与内置 FFP 工具；总时限 120 秒。
+`path` 是受宿主文件保护规则约束的绝对媒体路径，CD2 文件写挂载路径。支持 MP4/MKV/AVI/MOV/WMV/FLV/TS/M2TS/M4V/WebM/MPG/MPEG/ISO/VOB。可选 `sha1` 用于复用已有 SHA1 FFP 缓存；缺失时走宿主已有探测服务。缓存命中不占探测槽，真实探测共享整理服务的全局并发与内置 FFP 工具；总时限 120 秒。
 
 不接受任意命令、可执行文件参数、HTTP URL 或 STRM 文件；不返回原始探测输出、访问直链或凭据。没有可用 FFP/挂载/视频流时返回错误或空尺寸，插件必须明确选择失败、等待或采用文件名，不得把文件名推测标成真实分辨率。
 
@@ -102,4 +102,4 @@ SQLite 只接受插件自有相对路径，最大 512 MiB；不接受任意 SQL�
 
 文件按 `mode=ro&immutable=1` 打开，不读取外置 WAL。仅用于下载完成、已关闭并完成 checkpoint 的静态快照；不得查询仍被其他任务写入的数据库。第三方资料按需下载并缓存在插件自己的文件区，下载到临时路径、验证后再替换；不需要打包数据库驱动、整库或启动外部服务。数据库使用许可由资料提供者规定。
 
-NFO 只接受受宿主保护规则约束的本地绝对 `.nfo` 路径或有挂载的 `cd2:/...`。只读普通文件，最多 2 MiB、50000 元素、32 层、单字段 64 KiB；要求单个 `movie` 根节点。不执行 DTD/外部实体，也不返回原始 XML。返回标题、简介、日期、厂商、合集、演员及头像、类型和标签等已声明字段；`uniqueid` 仅在 `type=num/jav` 时作为番号候选。调用者仍须将 NFO 的番号与当前媒体核对后再整理。
+NFO 只接受受宿主保护规则约束的绝对 `.nfo` 路径，CD2 文件写挂载路径。只读普通文件，最多 2 MiB、50000 元素、32 层、单字段 64 KiB；要求单个 `movie` 根节点。不执行 DTD/外部实体，也不返回原始 XML。返回标题、简介、日期、厂商、合集、演员及头像、类型和标签等已声明字段；`uniqueid` 仅在 `type=num/jav` 时作为番号候选。调用者仍须将 NFO 的番号与当前媒体核对后再整理。

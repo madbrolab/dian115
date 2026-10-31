@@ -97,20 +97,20 @@ export async function run(ctx, input) {
 插件不直接读写宿主文件内容。宿主文件操作仅接受允许的业务路径，也不能把宿主文件复制或移动进插件自己的目录，详见[安全限制](security.md)。文件只有两类路径：
 
 - **插件自有路径**（相对路径，位于插件 data/files）：可 read/write/append，用于配置导出、下载暂存、生成待交付文件；单次 read 最多 16 MiB（用 offset/length 分段）。不能通过 `..` 或符号链接逃出该目录，卸载时清空。
-- **宿主路径**（绝对 Linux 路径，或 `cd2:/云盘/目录` 写法）：只能做 list、stat、exists、walk、hash、mkdir、rename、move、copy、remove，由宿主执行，插件拿不到文件内容。read/write 宿主路径会被拒绝。
+- **宿主路径**（绝对 Linux 路径，CD2 文件写挂载路径）：只能做 list、stat、exists、walk、hash、mkdir、rename、move、copy、remove，由宿主执行，插件拿不到文件内容。read/write 宿主路径会被拒绝。
 
 宿主路径按 CD2 挂载前缀（系统设置中的 CD2 挂载路径）自动分流：
 
 | 源与目标 | 执行方式 | 进度 |
 | --- | --- | --- |
-| 两边都在 CD2 挂载路径内（或 `cd2:`） | CloudDrive2 gRPC 服务端执行，不经过本地 I/O；只能在同一云盘内 | 按项目数 |
+| 两边都在 CD2 挂载路径内 | CloudDrive2 gRPC 服务端执行，不经过本地 I/O；只能在同一云盘内 | 按项目数 |
 | 任一边不在 CD2 内 | 系统命令 mkdir/mv/cp/rm，CD2 一侧使用其挂载路径 | 按字节（每秒） |
 | 都是普通本地路径 | 系统命令；同文件系统 mv 为即时重命名 | 按字节 |
 
 ```js
 // 下载到插件目录，再交给宿主移动到 CD2（本地→挂载路径，系统命令执行，带字节进度）
 await ctx.http.request({ url, save_to: 'downloads/a.torrent' })
-await ctx.files.call({ operation: 'move', path: 'downloads/a.torrent', destination_dir: 'cd2:/115/种子' })
+await ctx.files.call({ operation: 'move', path: 'downloads/a.torrent', destination_dir: '/mnt/cd2/115/种子' })
 await ctx.files.call({ operation: 'move', paths: ['/mnt/inbox/A', '/mnt/inbox/B'], destination_dir: '/mnt/media/电影' })
 await ctx.files.call({ operation: 'rename', path: '/mnt/cd2/115/a.mkv', name: 'b.mkv' })
 ```
@@ -125,18 +125,20 @@ await ctx.files.call({ operation: 'rename', path: '/mnt/cd2/115/a.mkv', name: 'b
 
 115 返回的 name/fn/file_name 是不透明元数据，即使包含 `/` 或 `\` 也不据此拆层级。目录层级按节点 ID 与父 ID；投影到 Linux 文件名时才将 `/` 映射为 `／`，保留原始 name。
 
-`ctx.cd2.call(method, options)` 复用主项目连接：list/stat/mkdir/rename/move/copy/remove/search。list 接收 path、force_refresh，返回 path/name/id/size/modified/is_dir 数组；mkdir 用 parent/name，rename 用 path/name，move/copy 用 path/destination，search 用 path/query/fuzzy。rename/move 返回逐项 path/file/error/retryable，宿主做身份与结果核对；move 使用 Skip 冲突策略。stat/search 返回相同文件结构；mkdir 返回 file/result，copy/remove 返回 success/error_message/paths。其他变更接口遇到超时，作者必须先查询业务结果，不应直接重发。
+`ctx.cd2.call(method, options)` 复用主项目连接，路径可写挂载路径或 CD2 路径，传挂载路径时结果也返回挂载路径：list/stat/mkdir/rename/move/copy/remove/search。list 接收 path、force_refresh，返回 path/name/id/size/modified/is_dir 数组；mkdir 用 parent/name，rename 用 path/name，move/copy 用 path/destination，search 用 path/query/fuzzy。rename/move 返回逐项 path/file/error/retryable，宿主做身份与结果核对；move 使用 Skip 冲突策略。stat/search 返回相同文件结构；mkdir 返回 file/result，copy/remove 返回 success/error_message/paths。其他变更接口遇到超时，作者必须先查询业务结果，不应直接重发。
 
 ## 目录监听和消息触发
 
 ```js
-await ctx.watch.add({id:'inbox',kind:'local',path:'/mnt/inbox',job:'organize',interval_seconds:5})
-await ctx.watch.add({id:'cloud',kind:'cd2',path:'/115/Inbox',job:'organize',interval_seconds:15})
+await ctx.watch.add({id:'inbox',path:'/mnt/inbox',job:'organize',interval_seconds:5})
+await ctx.watch.add({id:'cloud',path:'/mnt/cd2/115/Inbox',job:'organize',interval_seconds:15})
 ```
+
+宿主按 CD2 挂载前缀判断路径：挂载目录内的路径走 CD2 接口，其余是本地监听，`kind` 不用填。事件的 `path` 是挂载路径，CD2 监听同时带 `cd2_path`。CD2 监听默认只看一层，`recursive:true` 时递归，最多 500 个目录；每个目录都是一次云端请求，请把 `interval_seconds` 设得足够大。
 
 local 监听默认实时：宿主用 inotify 订阅目录，事件发生后经 `debounce_ms`（默认 500）立即做一次快照比较；interval_seconds 仍作为兜底全量扫描，可调大（例如 300）。`realtime:false` 关闭实时；`patterns:['*.mkv','*.mp4']` 按文件名过滤；`recursive:false` 只看第一层。超过 8192 个目录或系统 inotify 上限时自动退回轮询。cd2 为当前目录的完整 gRPC 列表轮询。首次快照建立基线，后续变化以 `{watch,changes:[{path,kind:'created|changed|removed'}]}` 提交任务。目录读取、挂载或 CD2 流失败会保留上次快照与错误，不把失败当作删除。待提交事件持久保存；后台任务恢复仍由插件核对。替换监听先 remove 再 add。此功能不改变内置整理的轮询策略。
 
-可选清单 events：`{event:'message',job:'search',commands:['find'],prefixes:['搜索 ']}`、`{event:'callback',job:'buttons'}` 或宿主业务事件 `{event:'host',job:'on-organize',types:['library_organize_*','media_library_add']}`。宿主事件在推送渠道开关、静默时段和聚合之前投递，与是否开启通知无关；`types` 支持 `*` 和前缀通配，可用类型由 `GET /api/extensions/v3/_events` 列出（整理成功/跳过/失败、STRM 生成、入库、播放、订阅、签到等）。任务输入为 `{id,type,title,content,data,at}`；事件可能密集到达，订阅任务建议设置 `allow_overlap:true`，否则上一条未结束时后续事件提交会失败。消息命中后入队；输入为宿主投影的消息或按钮事件。插件任务自行调用通知接口反馈；不会占用一个常驻脚本。重名命令按安装列表顺序匹配，作者应使用独特前缀。
+可选清单 events：`{event:'message',job:'search',commands:['find'],prefixes:['搜索 ']}`（关键字、正则和账号消息见[消息渠道](messaging.md)）、`{event:'callback',job:'buttons'}` 或宿主业务事件 `{event:'host',job:'on-organize',types:['library_organize_*','media_library_add']}`。宿主事件在推送渠道开关、静默时段和聚合之前投递，与是否开启通知无关；`types` 支持 `*` 和前缀通配，可用类型由 `GET /api/extensions/v3/_events` 列出（整理成功/跳过/失败、STRM 生成、入库、播放、订阅、签到等）。任务输入为 `{id,type,title,content,data,at}`；事件可能密集到达，订阅任务建议设置 `allow_overlap:true`，否则上一条未结束时后续事件提交会失败。消息命中后入队；输入为宿主投影的消息或按钮事件。插件任务自行调用通知接口反馈；不会占用一个常驻脚本。同一消息分发给所有命中的插件，作者应使用独特前缀。
 
 ## 监听端口与 Webhook
 

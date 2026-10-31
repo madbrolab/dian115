@@ -1,6 +1,6 @@
 # 插件通知
 
-插件通过宿主已配置的推送渠道给用户发消息。宿主目前有两个渠道：**Telegram**（`telegram`）和**企业微信**（`wecom`，企业微信应用消息，也可经“微信插件”在个人微信中接收）。插件不接触 Bot Token、企业微信密钥或会话 ID。
+插件通过宿主已配置的推送渠道给用户发消息。宿主目前有两个渠道：**Telegram**（`telegram`）和**企业微信**（`wecom`，企业微信应用消息，也可经“微信插件”在个人微信中接收）。插件不接触 Bot Token 和企业微信密钥。
 
 ```js
 // 后台任务
@@ -10,6 +10,8 @@ const r = await ctx.notifications.send({ title: '测试', body: '来自插件页
 // 发送前查看渠道
 const channels = await ctx.notifications.channels()
 ```
+
+需要指定会话发送、接收消息或使用 TG 账号时，见[消息渠道](messaging.md)。
 
 ## 参数
 

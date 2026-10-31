@@ -2,9 +2,15 @@
 
 插件与宿主共同运行：页面直接使用宿主 HTTP API，后台 JavaScript 编排业务，主项目负责实际转存、整理、通知与队列调度。无需主项目源码、WASM、Node、额外容器或内置浏览器。
 
-宿主插件 API 3.5 能力一览：宿主公开的业务 HTTP API、二进制 HTTP 与流式下载上传、后台任务进入宿主任务队列并显示任务级进度与计数（3.2）、由宿主执行并带进度的文件移动复制删除（CD2 gRPC/挂载路径自动分流）、实时目录监听（created/changed/removed）、宿主业务事件订阅、独立监听端口与 Webhook、Cookie/CookieCloud/FlareSolverr、CD2、通知、定时与消息触发、设置表单、侧栏菜单与图标，以及后台 fetch/URL/编码/加密/HTML/XML 标准库。
+宿主插件 API 3.8 能力一览：宿主公开的业务 HTTP API、二进制 HTTP 与流式下载上传、后台任务进入宿主任务队列并显示任务级进度与计数（3.2）、由宿主执行并带进度的文件移动复制删除（CD2 gRPC/挂载路径自动分流）、实时目录监听（created/changed/removed）、宿主业务事件订阅、独立监听端口与 Webhook、Cookie/CookieCloud/FlareSolverr、CD2、通知、定时与消息触发、设置表单、侧栏菜单与图标，以及后台 fetch/URL/编码/加密/HTML/XML 标准库。
 
-- [市场与安装来源](market.md)：.dian115p 包、目录、自定义仓库及来源校验。
+- [快速开始](quickstart.md)：10 分钟做出第一个插件。
+- [配方](cookbook.md)：命令、关键字、定时、监听、Webhook、长连接等可直接改用的写法。
+- [清单参考](manifest.md)：plugin.json 全部字段和校验规则。
+- [消息渠道](messaging.md)：Telegram 机器人、企业微信和 TG 账号收发消息。
+- [长连接与常驻任务](long-connections.md)：开机常驻、WebSocket、SSE、流式读取与输出、原生 TCP。
+- [安全审查](security-audit.md)：安装前用 AI 或扫描工具检查恶意代码。
+- [市场规范](market.md)：上架要求、宿主校验、安装确认与接口分级。
 - [插件包格式](package-format.md)：统一的 .dian115p 交付、打包与安装。
 - [开发指南](developer-guide.md)：目录、入口、API、任务、文件与监听。
 - [安装与数据生命周期](storage-and-lifecycle.md)：更新、停用、恢复、卸载。
@@ -25,6 +31,14 @@
 可信扩展可以影响宿主和外部文件，无法以进程内执行同时承诺强制内存隔离或完整撤销任意全局副作用。请选择信任的作者。每个插件的默认数据、任务与 Cookie 独立保存；卸载清空这部分全部本地数据。
 
 本目录保留的其他独立客户端和用户脚本示例不作为 v3 安装模板；开发本平台扩展请使用 complete-plugin 与当前 SDK。
+
+3.8 新增：[原生 TCP 客户端与服务端、对外 SSE 和流式响应](long-connections.md)；TCP 需要用户授权 `network.tcp`。
+
+3.7 新增：CD2 路径统一按挂载前缀判定，监听的 `kind` 可省略，`ctx.cd2.call` 接受挂载路径，`cd2:` 写法仅保留兼容；任务报错带文件和行号。
+
+3.7 新增：[长连接与常驻任务](long-connections.md)：开机自启的常驻任务、后台 WebSocket、流式读取与 SSE。
+
+3.6 新增：[消息渠道](messaging.md)：授权后可用 Telegram 机器人、企业微信和 TG 监控账号收发消息、读取会话，并按命令、前缀、关键字和正则触发任务。
 
 3.5 新增：[订阅增量查询](subscriptions.md)：缓存按更新时间和 ID 续读、馒头按发布时间范围实时分页；空结果推进基线，失败保留进度。
 

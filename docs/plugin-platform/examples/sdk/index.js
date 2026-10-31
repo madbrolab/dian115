@@ -28,6 +28,12 @@ export function createPluginContext(id, request, options = {}) {
       retry: id => own('POST','/runs/'+encodeURIComponent(id)+'/retry') },
     notify: options => own('POST','/notify',options),
     notifications: { send: options => own('POST','/notify',options), channels: () => request('GET', '/api/extensions/v3/_notify/channels', undefined, source) },
+    telegram: {
+      bot: { chats: () => own('POST','/messaging/telegram.chats',{}), send: options => own('POST','/messaging/telegram.send',options), edit: options => own('POST','/messaging/telegram.edit',options), delete: options => own('POST','/messaging/telegram.delete',options) },
+      account: { status: () => own('POST','/messaging/account.status',{}), dialogs: () => own('POST','/messaging/account.dialogs',{}), messages: options => own('POST','/messaging/account.messages',options), send: options => own('POST','/messaging/account.send',options) },
+    },
+    wecom: { users: () => own('POST','/messaging/wecom.users',{}), send: options => own('POST','/messaging/wecom.send',options) },
+    messaging: { reply: (input, options) => own('POST','/messaging/reply',{ ...options, input }) },
     cookiecloud: (operation, options) => own('POST','/cookiecloud/'+encodeURIComponent(operation),options),
     usage: () => own('GET','/usage'),
   }

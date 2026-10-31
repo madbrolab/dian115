@@ -1,7 +1,8 @@
+import type { MessagingContext } from './core-types.js'
 import type { HostAPI, HTTPClient, Files, CD2Client, WatchInput, WatchRecord, Notification, NotificationResult, NotifyChannelInfo, CookieCloudClient, KVEntry, Run, OK, JSONValue, ListenerState, FileWriteResult } from './core-types.js'
 export * from './core-types.js'
 export type Request = (method:string,path:string,body?:unknown,source?:{plugin_id:string;generation?:string;revision?:string})=>Promise<unknown>
-export interface PluginContext {
+export interface PluginContext extends MessagingContext {
  id:string;api:HostAPI;
  storage:{get<T=JSONValue>(key:string):Promise<T|null>;set(key:string,value:JSONValue,expected_revision?:number):Promise<{revision:number}>;remove(key:string):Promise<OK>;list(limit?:number,offset?:number):Promise<KVEntry[]>};
  http:HTTPClient;files:Files&{start(options:{operation:'move'|'copy'|'remove'}&Record<string,JSONValue>):Promise<{task_id:string}>;downloadURL(path:string,options?:{inline?:boolean}):string;upload(path:string,file:Blob):Promise<FileWriteResult>};cd2:CD2Client;
