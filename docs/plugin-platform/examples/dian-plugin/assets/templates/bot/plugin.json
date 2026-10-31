@@ -1,0 +1,19 @@
+{
+  "schema_version": 3,
+  "id": "example.bot",
+  "name": "消息机器人",
+  "version": "0.1.0",
+  "author": "",
+  "description": "响应 TG 和企业微信的命令与关键字",
+  "requires": { "api": "3.7" },
+  "permissions": ["telegram.bot", "wecom"],
+  "jobs": [
+    { "id": "on-message", "entry": "jobs/message.js", "title": "处理消息", "queue": false, "allow_overlap": true },
+    { "id": "on-button", "entry": "jobs/button.js", "title": "处理按钮", "queue": false, "allow_overlap": true }
+  ],
+  "events": [
+    { "event": "message", "job": "on-message", "commands": ["hello"], "prefixes": ["!查询 "], "keywords": ["帮助"] },
+    { "event": "callback", "job": "on-button" }
+  ],
+  "declared_usage": { "purpose": "收到命令后回复", "apis": [], "sites": [] }
+}

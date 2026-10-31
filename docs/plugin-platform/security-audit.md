@@ -17,7 +17,7 @@
 安装[开发 skill](skill-installation.md) 后，对 AI 说：
 
 ```text
-使用 $dian115-plugin-dev 审查这个插件有没有恶意代码：/绝对路径/插件.dian115p
+使用 $dian-plugin 审查这个插件有没有恶意代码：/绝对路径/插件.dian115p
 ```
 
 AI 会先运行扫描，再逐行读可疑文件，最后给出结论和证据。整个过程只读取文件，**不会运行插件**。

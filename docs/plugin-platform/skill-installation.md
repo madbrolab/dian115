@@ -1,10 +1,12 @@
-# 开发者 Skill v3
+# DIAN115 插件开发与审查
 
-完整目录位于 `examples/dian115-plugin-dev/`。将该目录安装到自己的 Codex/兼容技能目录，或让 Skill Installer 从公开仓库对应路径安装。必须复制 SKILL.md、scripts、agents 与 assets/public-kit；不需要主项目源码。
+推荐调用名为 **`dian-plugin`**，使用 `$dian-plugin`；原名 `$dian115-plugin-dev` 继续可用。两个入口功能一致，由同步脚本从同一份材料生成。
 
-开发：`使用 $dian115-plugin-dev 开发一个可以安装后自定义站点、搜索资源并交给宿主转存的插件。`
+完整目录分别位于 `examples/dian-plugin/` 和 `examples/dian115-plugin-dev/`。任选一个目录安装到自己的 Codex/兼容技能目录，安装目录与调用名一致；需要两个名称时同时安装两个目录。每个入口均包含 SKILL.md、scripts、agents 与 assets/public-kit，可独立使用，不需要主项目源码。
 
-审查：`使用 $dian115-plugin-dev 审查这个插件有没有恶意代码：/绝对路径/插件.dian115p`
+开发：`使用 $dian-plugin 开发一个可以安装后自定义站点、搜索资源并交给宿主转存的插件。`
+
+审查：`使用 $dian-plugin 审查这个插件有没有恶意代码：/绝对路径/插件.dian115p`
 
 脚本都在 `scripts/` 下，只依赖 Node.js 18 以上：
 

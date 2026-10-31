@@ -30,3 +30,5 @@ jobs:
           node docs/plugin-platform/conformance/sync-dev-skill.mjs --check
           node docs/plugin-platform/examples/dian115-plugin-dev/scripts/init.mjs "$RUNNER_TEMP/plugin-v3-smoke" dev.ci.smoke
           node docs/plugin-platform/conformance/project-check.mjs "$RUNNER_TEMP/plugin-v3-smoke"
+          node docs/plugin-platform/examples/dian-plugin/scripts/init.mjs "$RUNNER_TEMP/plugin-short-name-smoke" dev.ci.short
+          node docs/plugin-platform/conformance/project-check.mjs "$RUNNER_TEMP/plugin-short-name-smoke"

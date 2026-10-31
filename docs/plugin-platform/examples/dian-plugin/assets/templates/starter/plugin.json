@@ -1,0 +1,13 @@
+{
+  "schema_version": 3,
+  "id": "example.starter",
+  "name": "新插件",
+  "version": "0.1.0",
+  "author": "",
+  "description": "说明插件做什么",
+  "requires": { "api": "3.7" },
+  "ui": { "entry": "ui/page.js" },
+  "menu": { "title": "新插件" },
+  "jobs": [{ "id": "work", "entry": "jobs/work.js", "title": "执行任务", "recover": "recover" }],
+  "declared_usage": { "purpose": "说明用途", "apis": ["/api/115/status"], "sites": [] }
+}

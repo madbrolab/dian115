@@ -1,0 +1,560 @@
+{
+  "_comment": "Hand-written descriptions and examples for the host endpoints plugins use most. annotate-openapi.mjs validates every example against the OpenAPI schema and writes it into openapi-v3.json. \"schemas\" sets descriptions of specific schema fields (\"Schema.field\").",
+  "operations": {
+    "GET /api/115/accounts/options": {
+      "description": "列出可用于 115 操作的账号。写操作的 account.mode/id 从这里取值；只返回 Cookie 状态，不返回 Cookie。",
+      "response": {
+        "accounts": [
+          {
+            "mode": "main",
+            "id": 1,
+            "name": "主账号",
+            "user_name": "user01",
+            "is_vip": true,
+            "cookie_status": "valid",
+            "cloud_name": "115"
+          },
+          {
+            "mode": "backup",
+            "id": 2,
+            "name": "备用 2",
+            "is_vip": false,
+            "cookie_status": "valid"
+          }
+        ]
+      }
+    },
+    "GET /api/115/directories": {
+      "description": "列出 115 目录下的子目录（只含目录）。cid 省略为根目录 \"0\"。遇到 115 风控时返回验证码要求，完成验证后带 captcha_token 重试。",
+      "query": "cid=0",
+      "response": {
+        "cid": "0",
+        "dirs": [
+          {
+            "cid": "2876543210987654321",
+            "name": "电影"
+          },
+          {
+            "cid": "2876543210987654322",
+            "name": "剧集"
+          }
+        ],
+        "account": {
+          "mode": "main",
+          "id": 1,
+          "name": "主账号"
+        }
+      }
+    },
+    "POST /api/115/share/receive": {
+      "description": "把 115 分享转存到账号目录。share_url 与 share_code 二选一；提取码可放在链接 password= 或 receive_code。主账号省略 target_cid 时转存到默认转存目录，备用账号必须给出。只表示 115 已接受转存，不代表整理完成。",
+      "request": {
+        "share_url": "https://115cdn.com/s/sw3abcd1234?password=x1y2",
+        "target_cid": "2876543210987654321",
+        "account": {
+          "mode": "main"
+        }
+      },
+      "response": {
+        "success": true,
+        "share_code": "sw3abcd1234",
+        "target_cid": "2876543210987654321",
+        "account": {
+          "mode": "main",
+          "id": 1,
+          "name": "主账号"
+        }
+      }
+    },
+    "POST /api/115/offline/add": {
+      "description": "提交 115 离线下载。urls 支持磁力、ed2k、HTTP(S)，每次最多 100 个。accepted 为 115 接受的数量；下载进度用离线任务列表查询。",
+      "request": {
+        "urls": [
+          "magnet:?xt=urn:btih:c9e15763f722f23e98a29decdfae341b98d53056"
+        ],
+        "save_cid": "2876543210987654321"
+      },
+      "response": {
+        "success": true,
+        "accepted": 1,
+        "save_cid": "2876543210987654321",
+        "account": {
+          "mode": "main",
+          "id": 1,
+          "name": "主账号"
+        }
+      }
+    },
+    "GET /api/115/offline/tasks": {
+      "description": "分页查询离线任务。status 可为 all、failed、completed、downloading；progress 为 0–1 的小数；status 为归一化状态，status_code 为 115 原始状态码。",
+      "query": "page=1&page_size=30&status=downloading",
+      "response": {
+        "items": [
+          {
+            "info_hash": "c9e15763f722f23e98a29decdfae341b98d53056",
+            "name": "Example.S01.1080p",
+            "size": 4294967296,
+            "progress": 0.42,
+            "status": "downloading",
+            "download_rate": 5242880,
+            "remaining_seconds": 600,
+            "added_at": 1761744000,
+            "updated_at": 1761744600,
+            "status_code": 1,
+            "target_cid": "2876543210987654321",
+            "can_pause": true,
+            "can_resume": false,
+            "can_restart": false,
+            "file_id": "",
+            "error": "",
+            "move_status": 0
+          }
+        ],
+        "page": 1,
+        "page_size": 30,
+        "page_count": 1,
+        "total": 1,
+        "account": {
+          "mode": "main",
+          "id": 1,
+          "name": "主账号"
+        }
+      }
+    },
+    "POST /api/115/offline/delete": {
+      "description": "删除离线任务。info_hash 或 info_hashes 二选一；delete_source=true 同时删除已下载文件。",
+      "request": {
+        "info_hashes": [
+          "c9e15763f722f23e98a29decdfae341b98d53056"
+        ],
+        "delete_source": false
+      }
+    },
+    "POST /api/115/offline/pause": {
+      "description": "暂停一个离线任务。响应为 115 原始结果透传，字段随 115 变化；HTTP 200 即表示成功。",
+      "request": {
+        "info_hash": "c9e15763f722f23e98a29decdfae341b98d53056",
+        "account": {
+          "mode": "main"
+        }
+      }
+    },
+    "POST /api/115/offline/resume": {
+      "description": "恢复一个已暂停的离线任务。响应为 115 原始结果透传；HTTP 200 即表示成功。",
+      "request": {
+        "info_hash": "c9e15763f722f23e98a29decdfae341b98d53056",
+        "account": {
+          "mode": "main"
+        }
+      }
+    },
+    "POST /api/115/recyclebin/delete": {
+      "description": "彻底删除 115 回收站中的文件。id 或 ids 二选一；开启回收站密码时提供 password。响应为 115 原始结果透传。",
+      "request": {
+        "ids": [
+          "2876543210987654399"
+        ],
+        "password": ""
+      }
+    },
+    "GET /api/local-files": {
+      "description": "列出宿主目录。位于 CD2 挂载路径下时通过 CD2 读取（backend=cd2）。插件后台更推荐 ctx.files.call({operation:'list'})。",
+      "query": "path=/mnt/media",
+      "response": {
+        "current": "/mnt/media",
+        "parent": "/mnt",
+        "backend": "local",
+        "entries": [
+          {
+            "name": "电影",
+            "path": "/mnt/media/电影",
+            "is_dir": true,
+            "size": 0,
+            "mod_time": "2026-10-29 21:30:00",
+            "ext": ""
+          },
+          {
+            "name": "a.mkv",
+            "path": "/mnt/media/a.mkv",
+            "is_dir": false,
+            "size": 4294967296,
+            "mod_time": "2026-10-29 21:30:00",
+            "ext": ".mkv"
+          }
+        ]
+      }
+    },
+    "POST /api/local-files/move": {
+      "description": "文件管理器移动：把 src_paths 移入 dest_dir，同步执行，完成后返回。本地与 CD2 挂载路径不能混合。插件需要进度或跨本地/CD2 时用 ctx.files.call({operation:'move'})。",
+      "request": {
+        "src_paths": [
+          "/mnt/inbox/a.mkv"
+        ],
+        "dest_dir": "/mnt/media/电影"
+      },
+      "response": {
+        "success": true
+      }
+    },
+    "POST /api/local-files/batch": {
+      "description": "批量删除/移动/复制，作为后台任务执行，立即返回任务 ID；用 batch-status 查询进度。",
+      "request": {
+        "operation": "move",
+        "paths": [
+          "/mnt/inbox/a.mkv",
+          "/mnt/inbox/b.mkv"
+        ],
+        "dest_dir": "/mnt/media/电影"
+      }
+    },
+    "POST /api/local-files/organize": {
+      "description": "按整理规则整理一个宿主路径，提交后在后台执行。rule_id 省略时由宿主按路径选择规则；可选规则见 organize-options。",
+      "request": {
+        "path": "/mnt/inbox/Example.S01E01.mkv",
+        "rule_id": 1
+      },
+      "response": {
+        "message": "整理任务已提交"
+      }
+    },
+    "POST /api/local-files/recognize": {
+      "description": "识别一个文件或目录对应的影视条目（不移动文件）。",
+      "request": {
+        "path": "/mnt/inbox/Game.of.Thrones.S01E01.1080p.mkv"
+      },
+      "response": {
+        "path": "/mnt/inbox/Game.of.Thrones.S01E01.1080p.mkv",
+        "name": "Game.of.Thrones.S01E01.1080p.mkv",
+        "is_dir": false,
+        "media_type": "tv",
+        "title": "权力的游戏",
+        "year": 2011,
+        "tmdb_id": 1399,
+        "season": 1,
+        "episode": 1
+      }
+    },
+    "GET /api/browse": {
+      "description": "按 CD2 路径（不含挂载前缀）浏览 CloudDrive2。",
+      "query": "path=/115/电影",
+      "response": {
+        "path": "/115/电影",
+        "files": [
+          {
+            "name": "Example (2024)",
+            "path": "/115/电影/Example (2024)",
+            "is_dir": true,
+            "size": 0
+          }
+        ]
+      }
+    },
+    "GET /api/cd2/clouds": {
+      "description": "列出 CD2 中已挂载的云盘。path 为 CD2 路径，加上系统设置中的 CD2 挂载前缀即为宿主路径。",
+      "response": {
+        "clouds": [
+          {
+            "name": "115",
+            "path": "/115"
+          }
+        ]
+      }
+    },
+    "GET /api/plugin-host/emby/instances": {
+      "description": "列出 Emby 实例。多实例时其他 Emby 接口用 proxy_id 指定；id 为 0 的旧版单实例调用时省略 proxy_id。",
+      "response": {
+        "items": [
+          {
+            "id": 1,
+            "name": "家里的 Emby",
+            "is_default": true,
+            "api_key_configured": true
+          }
+        ]
+      }
+    },
+    "GET /api/plugin-host/emby/episodes": {
+      "description": "按 TMDB ID 查询 Emby 中某季已有与缺失的集数，适合订阅补集。",
+      "query": "tmdb_id=1399&season=1&total_episodes=10",
+      "response": {
+        "tmdb_id": 1399,
+        "season": 1,
+        "total_episodes": 10,
+        "covered_episodes": "1-3",
+        "needed_episodes": "4-10",
+        "complete": false,
+        "proxy_id": 1
+      }
+    },
+    "GET /api/tmdb/search": {
+      "description": "搜索 TMDB 电影与剧集（多类型）。电影用 title/release_date，剧集用 name/first_air_date。",
+      "query": "q=权力的游戏&page=1",
+      "response": {
+        "page": 1,
+        "total_pages": 1,
+        "total_results": 1,
+        "results": [
+          {
+            "id": 1399,
+            "media_type": "tv",
+            "title": "",
+            "name": "权力的游戏",
+            "original_title": "",
+            "original_name": "Game of Thrones",
+            "original_language": "en",
+            "overview": "七大王国的权力争夺。",
+            "poster_path": "/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg",
+            "backdrop_path": "/2OMB0ynKlyIenMJWI2Dy9IWT4c.jpg",
+            "release_date": "",
+            "first_air_date": "2011-04-17",
+            "genre_ids": [
+              10765,
+              18
+            ],
+            "popularity": 120.5,
+            "vote_average": 8.4,
+            "vote_count": 23000
+          }
+        ]
+      }
+    },
+    "POST /api/subscribe/pool/intents": {
+      "description": "创建聚合订阅（电影或剧集某一季）。剧集可用 initial_needed_episodes 只订阅缺失的集；宿主按启用的来源自动搜索并转存。",
+      "request": {
+        "tmdb_id": 1399,
+        "media_type": "tv",
+        "title": "权力的游戏",
+        "year": "2011",
+        "season": 1,
+        "total_episodes": 10,
+        "episode_scope_mode": "fixed",
+        "initial_covered_episodes": "1-3",
+        "initial_needed_episodes": "4-10"
+      }
+    },
+    "GET /api/subscribe/records": {
+      "description": "查询某个媒体的订阅记录，可用于判断是否已订阅。",
+      "query": "tmdb_id=1399&media_type=tv&season=1"
+    },
+    "POST /api/rules/{id}/sync": {
+      "description": "立即执行一个同步（STRM）规则，作为后台任务运行。",
+      "response": {
+        "message": "同步任务已提交",
+        "task_id": "20261029213000-a1b2c3"
+      }
+    },
+    "GET /api/tasks/{id}": {
+      "description": "查询统一任务队列中的任务。status 常见值 pending、running、completed、failed、cancelled；进度看 total_files/synced_files/failed_files 与 message。"
+    },
+    "GET /api/tasks": {
+      "description": "列出统一任务队列中的近期任务（含插件任务与文件任务），数组元素结构同 GET /api/tasks/{id}。"
+    },
+    "POST /api/tasks/{id}/cancel": {
+      "description": "取消运行中或排队中的任务。外部已提交的业务（例如 115 已接受的转存）不会回滚。",
+      "response": {
+        "success": true
+      }
+    },
+    "POST /api/scheduler/jobs/trigger": {
+      "description": "立即触发一个宿主定时任务；trigger_key 取自 GET /api/scheduler/jobs。",
+      "request": {
+        "trigger_key": "<GET /api/scheduler/jobs 返回的任务键>"
+      }
+    },
+    "POST /api/extensions/v3/{id}/notify": {
+      "description": "发送插件通知。默认发往用户允许插件通知的所有渠道；channels 只缩小范围，不会越过用户的渠道开关与静默时段。text 套用用户的插件通知模板；markdown/html 按原样排版（Telegram 渲染为 HTML，企业微信 markdown 原样发送、html 转纯文本），宿主附加来源行。deliveries 逐渠道报告结果。后台用 ctx.notify(...)，页面用 ctx.notifications.send(...)。",
+      "request": {
+        "title": "转存完成",
+        "body": "**3** 个文件已转存到 `/电影`\n- Example.2024.mkv\n[查看任务](https://example.com/tasks/1)",
+        "level": "success",
+        "format": "markdown",
+        "channels": [
+          "telegram",
+          "wecom"
+        ],
+        "overrides": {
+          "wecom": {
+            "body": "3 个文件已转存到 /电影",
+            "format": "text"
+          }
+        },
+        "buttons": [
+          [
+            {
+              "text": "打开 115",
+              "url": "https://115.com/"
+            }
+          ]
+        ],
+        "dedupe_key": "transfer:20261029-1"
+      },
+      "response": {
+        "event": "plugin_notification_message",
+        "accepted": true,
+        "channels": [
+          {
+            "channel": "telegram",
+            "preserved": [
+              "link_buttons"
+            ]
+          }
+        ],
+        "deliveries": [
+          {
+            "channel": "telegram",
+            "status": "sent",
+            "format": "markdown",
+            "preserved": [
+              "link_buttons"
+            ]
+          },
+          {
+            "channel": "wecom",
+            "status": "skipped",
+            "reason": "quiet_hours"
+          }
+        ]
+      }
+    },
+    "GET /api/extensions/v3/_notify/channels": {
+      "description": "列出通知渠道：是否配置、用户是否允许插件通知、当前是否静默，以及可用格式与功能。发送前据此选择 channels 与 format。",
+      "response": [
+        {
+          "channel": "telegram",
+          "name": "Telegram",
+          "configured": true,
+          "enabled": true,
+          "quiet_now": false,
+          "deliverable": true,
+          "formats": [
+            "text",
+            "markdown",
+            "html"
+          ],
+          "capabilities": [
+            "link_buttons",
+            "callback_buttons",
+            "images"
+          ],
+          "max_body_runes": 3500
+        },
+        {
+          "channel": "wecom",
+          "name": "企业微信",
+          "configured": true,
+          "enabled": true,
+          "quiet_now": true,
+          "deliverable": false,
+          "formats": [
+            "text",
+            "markdown"
+          ],
+          "capabilities": [
+            "link_buttons",
+            "images"
+          ],
+          "max_body_runes": 3500
+        }
+      ]
+    },
+    "POST /api/extensions/v3/{id}/data/sqlite": {
+      "description": "API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件、宿主路径或扩展加载。",
+      "body": {
+        "source": "reference/actors.db",
+        "table": "Names",
+        "columns": [
+          "Alias",
+          "Name"
+        ],
+        "equals": {
+          "Alias": "示例演员"
+        },
+        "limit": 20
+      }
+    },
+    "POST /api/extensions/v3/{id}/media/nfo": {
+      "description": "API 3.4；只读标准 movie NFO，最多 2 MiB、50000 元素、32 层、单字段 64 KiB。只返回声明的资料字段，不返回任意文件文本；不解析外部实体，不返回非 num/jav 类型的 uniqueid 作为番号。",
+      "body": {
+        "path": "/media/example/movie.nfo"
+      }
+    },
+    "GET /api/cache/magnet/changes": {
+      "description": "API 3.5；按 updated_at/id 升序续读，后端按时间范围过滤且不全量计数。窗口下界包含、上界排除。完整空结果可以推进基线；错误、未读完或游标不前进时必须保留原基线。",
+      "query": "keyword=SSIS-001&since=2026-01-01T00%3A00%3A00Z&until=2026-01-02T00%3A00%3A00Z&limit=100",
+      "response": {
+        "items": [],
+        "until": "2026-01-02T00:00:00Z",
+        "complete": true
+      }
+    },
+    "POST /api/pt/search": {
+      "description": "普通搜索保持原行为。API 3.5 incremental=true 时必须显式指定一个馒头站点和 keyword：将发布时间窗口传给站点，每次实时取 100 条的一页，忽略 max_pages/page_size/extra_keywords/priority_rule/stop_when_found，返回原始候选供调用方精确匹配。window.complete=false 用 next_page 和同一 published_before 续读；完整空结果也可推进基线；错误/不完整响应不能推进。其他站点暂不支持该模式。",
+      "request": {
+        "keyword": "SSIS-001",
+        "site_ids": [
+          7
+        ],
+        "mteam_mode": "adult",
+        "incremental": true,
+        "published_after": "2026-01-01T00:00:00Z",
+        "published_before": "2026-01-02T00:00:00Z",
+        "page": 1
+      },
+      "response": {
+        "code": "ok",
+        "data": {
+          "torrents": [],
+          "total_found": 0,
+          "total_passed": 0,
+          "window": {
+            "since": "2026-01-01T00:00:00Z",
+            "until": "2026-01-02T00:00:00Z",
+            "complete": true
+          }
+        }
+      }
+    }
+  },
+  "schemas": {
+    "AccountSelector.mode": "main 主账号（默认）；backup 指定备用账号（需 id）；backup_pool 由宿主挑选备用账号（仅创建离线或转存）",
+    "AccountSelector.id": "备用账号 ID，来自 GET /api/115/accounts/options",
+    "AccountSummary.mode": "实际使用的账号类型：main 或 backup",
+    "AccountSummary.id": "实际使用的账号 ID",
+    "AccountOption.mode": "账号类型；写操作的 account.mode 取此值",
+    "AccountOption.id": "账号 ID；写操作的 account.id 取此值",
+    "AccountOption.is_vip": "是否 115 VIP",
+    "OfflineTask.status": "归一化状态：downloading 下载中、completed 完成、failed 失败、stopped 已暂停、moving 正在移动到目标目录、move_failed 移动失败、unknown",
+    "OfflineTask.status_code": "115 原始状态码",
+    "OfflineTask.progress": "下载进度，0–1 的小数",
+    "OfflineTask.download_rate": "下载速度，字节/秒",
+    "OfflineTask.remaining_seconds": "预计剩余秒数",
+    "OfflineTask.file_id": "完成后在 115 中的文件或目录 ID",
+    "OfflineTask.can_pause": "当前是否可暂停",
+    "OfflineTask.can_resume": "当前是否可恢复",
+    "OfflineTask.can_restart": "当前是否可重试",
+    "OfflineTask.updated_at": "最后更新时间（Unix 秒）",
+    "PoolIntent.id": "订阅 ID，用于 GET/DELETE /api/subscribe/pool/intents/{id}",
+    "PoolIntent.state": "订阅状态：pending 刚创建、searching 搜索资源中、transferring 转存中、waiting 等待下载或转存完成、verifying 核对实际季集、partial 部分完成、caught_up 已覆盖当前已知集",
+    "PoolIntent.episode_scope_mode": "follow 自动跟随新集；fixed 只获取指定集数范围",
+    "PoolIntent.is_upgrade": "1 表示洗版订阅（已有资源，寻找更好版本）",
+    "PoolIntent.retry_count": "已重试次数",
+    "PoolIntent.last_check_at": "最近一次检查时间",
+    "PoolIntentCreateRequest.episode_scope_mode": "follow 自动跟随新集；fixed 只获取 initial_needed_episodes 指定的集",
+    "PoolIntentCreateRequest.enabled_sources": "启用的资源来源；省略使用宿主默认来源",
+    "GetTasksByIdResponse.id": "任务 ID",
+    "GetTasksByIdResponse.status": "pending 等待中、running 运行中、completed 已完成、failed 失败、cancelled 已取消",
+    "GetTasksByIdResponse.type": "任务类型（如 file_operation、plugin 等）",
+    "GetTasksByIdResponse.progress": "进度百分比",
+    "GetTasksByIdResponse.result_available": "是否有可读取的任务结果",
+    "TmdbItem.id": "TMDB ID",
+    "TmdbItem.media_type": "movie 或 tv",
+    "TmdbItem.title": "电影标题（剧集为空）",
+    "TmdbItem.name": "剧集名称（电影为空）",
+    "TmdbItem.release_date": "电影上映日期",
+    "TmdbItem.first_air_date": "剧集首播日期",
+    "PluginEmbyItem.id": "Emby 媒体 ID",
+    "PluginEmbyItem.provider_ids": "外部 ID，如 {\"Tmdb\":\"1399\"}",
+    "CD2Entry.path": "CD2 路径（不含挂载前缀）",
+    "LocalBatchRequest.operation": "delete 删除、move 移动、copy 复制"
+  }
+}
