@@ -74,6 +74,7 @@
 | POST | `/api/extensions/v3/{id}/media/image` | 裁剪、缩放与合成插件图片 |
 | POST | `/api/extensions/v3/{id}/media/nfo` | 读取媒体 NFO 的结构化资料 |
 | POST | `/api/extensions/v3/{id}/media/probe` | 复用宿主 FFP 获取真实媒体信息 |
+| GET | `/api/extensions/v3/{id}/network-capabilities` | 查询宿主默认渲染能力与配置状态（不返回地址和凭据） |
 | POST | `/api/extensions/v3/{id}/notify` | 发送插件通知（选择渠道、格式与按渠道内容） |
 | POST | `/api/extensions/v3/{id}/render` | 按需复用外部 FlareSolverr |
 | GET | `/api/extensions/v3/{id}/runs` | 读取插件/runs |

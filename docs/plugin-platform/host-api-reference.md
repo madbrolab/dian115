@@ -17,7 +17,7 @@
 - [cache](#cache)（1）
 - [看板与历史](#看板与历史)（8）
 - [Emby](#emby)（10）
-- [插件平台](#插件平台)（51）
+- [插件平台](#插件平台)（52）
 - [媒体库](#媒体库)（1）
 - [宿主文件管理](#宿主文件管理)（18）
 - [整理](#整理)（24）
@@ -3825,6 +3825,38 @@ const res = await ctx.api.post('/api/extensions/v3/id/media/probe', {
 | `video_codec` | string |  |
 | `width` | integer |  |
 
+### GET `/api/extensions/v3/{id}/network-capabilities`
+
+<a id="get-api-extensions-v3-id-network-capabilities"></a>
+
+查询宿主默认渲染能力与配置状态（不返回地址和凭据）。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `id` | path | string | 是 |  |
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/extensions/v3/id/network-capabilities')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "default_render_endpoint": true,
+  "render_configured": true
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `default_render_endpoint` | boolean |  |
+| `render_configured` | boolean |  |
+
 ### POST `/api/extensions/v3/{id}/notify`
 
 <a id="post-api-extensions-v3-id-notify"></a>
@@ -3961,7 +3993,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/notify', {
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
-| `endpoint` | string | 是 |  |
+| `endpoint` | string |  | 省略时由宿主内部使用已配置的 FlareSolverr 地址；不向插件返回系统设置。 |
 | `session` | string |  |  |
 | `timeout_seconds` | integer |  |  |
 | `url` | string | 是 |  |

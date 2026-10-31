@@ -10,7 +10,7 @@ export interface MultipartFile {field:string;filename?:string;content_type?:stri
 export interface HTTPRequest {url:string;method?:string;headers?:Headers|Record<string,string>;body?:string;body_base64?:string|Uint8Array;body_file?:string;form?:Record<string,JSONValue>;json?:JSONValue;multipart?:{fields?:Record<string,JSONValue>;files?:MultipartFile[]};
  response_type?:'text'|'base64'|'json';charset?:string;save_to?:string;follow_redirects?:boolean;max_redirects?:number;session?:string;timeout_seconds?:number;max_bytes?:number;cache_seconds?:number;proxy?:string}
 export interface HTTPResult {status:number;url:string;headers:Headers;body:string;cached:boolean;body_base64?:string;data?:JSONValue;path?:string;size?:number;sha256?:string}
-export interface RenderRequest {endpoint:string;url:string;session?:string;wait_seconds?:number;timeout_seconds?:number}
+export interface RenderRequest {endpoint?:string;url:string;session?:string;wait_seconds?:number;timeout_seconds?:number}
 export interface RenderResult {url:string;html:string;user_agent:string;http_status_verified:boolean}
 export interface HTTPClient {request(options:HTTPRequest):Promise<HTTPResult>;cookies(options:{url:string;session?:string;cookie?:string}):Promise<Cookie[]>;importCookies(options:{cookies:Cookie[];session?:string;replace?:boolean}):Promise<OK>;render(options:RenderRequest):Promise<RenderResult>}
 export interface FileInfo {name:string;path:string;is_dir:boolean;size:number;modified:string;backend:'plugin'|'local'|'cd2'}

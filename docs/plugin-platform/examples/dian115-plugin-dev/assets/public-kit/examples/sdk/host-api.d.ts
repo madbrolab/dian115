@@ -3724,11 +3724,17 @@ export interface HostRoutes {
   "POST /api/extensions/v3/{id}/media/nfo": { query: never; body: ExtensionNFORequest; response: ExtensionNFOMetadata }
   /** 复用宿主 FFP 获取真实媒体信息。宿主插件 API 3.3。复用已有 SHA1 缓存和全局整理探测并发；无缓存时调用宿主 FFP。CD2 需要挂载；不返回直链、原始探测 JSON 或凭据。总时限 120 秒。 */
   "POST /api/extensions/v3/{id}/media/probe": { query: never; body: ExtensionMediaProbeRequest; response: ExtensionMediaProfile }
+  /** 查询宿主默认渲染能力与配置状态（不返回地址和凭据） */
+  "GET /api/extensions/v3/{id}/network-capabilities": { query: never; body: never; response: {
+      default_render_endpoint: boolean
+      render_configured: boolean
+    } }
   /** 发送插件通知（选择渠道、格式与按渠道内容）。发送插件通知。默认发往用户允许插件通知的所有渠道；channels 只缩小范围，不会越过用户的渠道开关与静默时段。text 套用用户的插件通知模板；markdown/html 按原样排版（Telegram 渲染为 HTML，企业微信 markdown 原样发送、html 转纯文本），宿主附加来源行。deliveries 逐渠道报告结果。后台用 ctx.notify(...)，页面用 ctx.notifications.send(...)。 */
   "POST /api/extensions/v3/{id}/notify": { query: never; body: ExtensionNotification; response: ExtensionNotificationResult }
   /** 按需复用外部 FlareSolverr */
   "POST /api/extensions/v3/{id}/render": { query: never; body: {
-      endpoint: string
+      /** 省略时由宿主内部使用已配置的 FlareSolverr 地址；不向插件返回系统设置。 */
+      endpoint?: string
       session?: string
       timeout_seconds?: number
       url: string

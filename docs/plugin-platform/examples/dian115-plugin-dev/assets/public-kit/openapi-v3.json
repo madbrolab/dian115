@@ -14417,6 +14417,47 @@
     ]
    }
   },
+  "/api/extensions/v3/{id}/network-capabilities": {
+   "get": {
+    "operationId": "extension_get_network_capabilities",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "id",
+      "required": true,
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": false,
+         "properties": {
+          "default_render_endpoint": {
+           "type": "boolean"
+          },
+          "render_configured": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "default_render_endpoint",
+          "render_configured"
+         ],
+         "type": "object"
+        }
+       }
+      },
+      "description": "网络能力状态"
+     }
+    },
+    "summary": "查询宿主默认渲染能力与配置状态（不返回地址和凭据）"
+   }
+  },
   "/api/extensions/v3/{id}/notify": {
    "post": {
     "description": "发送插件通知。默认发往用户允许插件通知的所有渠道；channels 只缩小范围，不会越过用户的渠道开关与静默时段。text 套用用户的插件通知模板；markdown/html 按原样排版（Telegram 渲染为 HTML，企业微信 markdown 原样发送、html 转纯文本），宿主附加来源行。deliveries 逐渠道报告结果。后台用 ctx.notify(...)，页面用 ctx.notifications.send(...)。",
@@ -14567,6 +14608,7 @@
        "schema": {
         "properties": {
          "endpoint": {
+          "description": "省略时由宿主内部使用已配置的 FlareSolverr 地址；不向插件返回系统设置。",
           "type": "string"
          },
          "session": {
@@ -14588,7 +14630,6 @@
          }
         },
         "required": [
-         "endpoint",
          "url"
         ],
         "type": "object"
