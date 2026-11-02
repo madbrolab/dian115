@@ -13,6 +13,6 @@ for(const item of index.plugins||[]){
  if(!url(item.homepage))errors.push(`${label}：homepage 须为 HTTP/HTTPS 地址`)
  if(!url(item.source_url))errors.push(`${label}：source_url 须为 HTTP/HTTPS 地址`)
  if(!/^[a-fA-F0-9]{64}$/.test(item.sha256||''))errors.push(`${label}：sha256 须为 64 位十六进制`)
- if(!['source','encrypted'].includes(item.delivery))errors.push(`${label}：delivery 须为 source 或 encrypted`)
+ if(!['source','encrypted','protected-v4'].includes(item.delivery))errors.push(`${label}：delivery 须为 source、encrypted 或 protected-v4`)
 }
 if(errors.length){console.error(errors.join('\n'));process.exitCode=1}else console.log(`通过：${index.plugins.length} 个版本`)

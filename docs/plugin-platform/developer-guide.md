@@ -1,5 +1,7 @@
 # 开发指南 v3
 
+源码通过实例管理员的直接导入流程安装为本机调试，安装时生成字节码；可读打包不等于正式编译。正式发布使用[编译 MCP](encrypted-delivery.md#编译-mcp-与正式发布)，以系统 OpenAPI Key 连接，由宿主通过现有接口实时验证癫影账号，在本地完成加密和签名出包。正式开发者名称取签名中的会员昵称。先查询宿主真实配置；缺少保护或本地签名材料时不得宣称成功。
+
 ## 最小目录
 
 ```text
@@ -94,12 +96,12 @@ export async function run(ctx, input) {
 
 ## 文件与 CD2
 
-插件不直接读写宿主文件内容。宿主文件操作仅接受允许的业务路径，也不能把宿主文件复制或移动进插件自己的目录，详见[安全限制](security.md)。文件只有两类路径：
+API 3.9 起，除受保护路径外，插件可直接读写宿主文件，包括 CD2 挂载路径；允许的宿主文件也可复制或移动到插件自有目录。路径保护规则见[安全限制](security.md)。依赖此能力时声明 `requires.api: "3.9"`。文件有两类路径：
 
 - **插件自有路径**（相对路径，位于插件 data/files）：可 read/write/append，用于配置导出、下载暂存、生成待交付文件；单次 read 最多 16 MiB（用 offset/length 分段）。不能通过 `..` 或符号链接逃出该目录，卸载时清空。
-- **宿主路径**（绝对 Linux 路径，CD2 文件写挂载路径）：只能做 list、stat、exists、walk、hash、mkdir、rename、move、copy、remove，由宿主执行，插件拿不到文件内容。read/write 宿主路径会被拒绝。
+- **宿主路径**（绝对 Linux 路径，CD2 文件写挂载路径）：可 read/write/append 及原有文件管理操作；内容读写直接使用文件系统，CD2 文件直接读写其挂载路径。单次 read 最多 16 MiB，可用 offset/length 分段。
 
-宿主路径按 CD2 挂载前缀（系统设置中的 CD2 挂载路径）自动分流：
+移动、复制等宿主文件管理操作按 CD2 挂载前缀（系统设置中的 CD2 挂载路径）自动分流；内容读写直接使用文件系统：
 
 | 源与目标 | 执行方式 | 进度 |
 | --- | --- | --- |
@@ -108,9 +110,10 @@ export async function run(ctx, input) {
 | 都是普通本地路径 | 系统命令；同文件系统 mv 为即时重命名 | 按字节 |
 
 ```js
-// 下载到插件目录，再交给宿主移动到 CD2（本地→挂载路径，系统命令执行，带字节进度）
-await ctx.http.request({ url, save_to: 'downloads/a.torrent' })
-await ctx.files.call({ operation: 'move', path: 'downloads/a.torrent', destination_dir: '/mnt/cd2/115/种子' })
+// 直接下载到 CD2 挂载目录，不再经过插件数据盘
+await ctx.http.request({ url, save_to: '/mnt/cd2/115/种子/a.torrent', timeout_seconds: 3600 })
+await ctx.files.call({ operation: 'write', path: '/mnt/cd2/115/种子/a.txt', content: 'hello' })
+const text = await ctx.files.call({ operation: 'read', path: '/mnt/cd2/115/种子/a.txt' })
 await ctx.files.call({ operation: 'move', paths: ['/mnt/inbox/A', '/mnt/inbox/B'], destination_dir: '/mnt/media/电影' })
 await ctx.files.call({ operation: 'rename', path: '/mnt/cd2/115/a.mkv', name: 'b.mkv' })
 ```
@@ -121,7 +124,9 @@ await ctx.files.call({ operation: 'rename', path: '/mnt/cd2/115/a.mkv', name: 'b
 
 **进度**：后台任务里调用 move/copy/remove 时，宿主每秒把进度写入当前任务（stage=`file:move`、progress 百分比、message 如“移动 a.mkv 1.2 GiB/4.0 GiB（1/3）”），任务队列页面实时可见；`progress:false` 关闭。页面通过 `ctx.files.call` 发起的宿主移动/复制/删除会作为“插件 X：文件移动”任务进入统一任务队列，默认等待完成并返回 `{task_id,result}`；`ctx.files.start(options)` 立即返回 `{task_id}`，在任务队列查看进度。CD2 gRPC 操作由 CD2 服务端完成，只有开始和完成两个进度点。
 
-页面：`ctx.files.downloadURL(path)` 与 `ctx.files.upload(path, file)` 只作用于插件自有路径。
+页面：`ctx.files.downloadURL(path)` 与 `ctx.files.upload(path, file)` 接受插件相对路径及允许的宿主绝对路径，包括 CD2 挂载路径。Webhook 返回的 `file`、HTTP `body_file` 和 multipart 的 `path` 使用相同路径规则。
+
+后台任务中，HTTP `save_to` 下载每秒将已下载字节、已知总量和平均速度更新到当前任务（stage=`file:download`）。页面用 `ctx.tasks.get(runId)` 读取 progress、stage、message，或在统一任务队列查看；未知总量时只报告字节和速度。总量已上报的批量任务仍保留整体百分比；HTTP 下载接口本身不会另建任务，页面应通过 `ctx.tasks.run` 启动后台下载。下载先写目标目录内临时文件，成功后改名，失败保留原目标并清理临时文件。
 
 115 返回的 name/fn/file_name 是不透明元数据，即使包含 `/` 或 `\` 也不据此拆层级。目录层级按节点 ID 与父 ID；投影到 Linux 文件名时才将 `/` 映射为 `／`，保留原始 name。
 

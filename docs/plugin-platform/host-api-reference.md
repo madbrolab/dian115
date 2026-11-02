@@ -2819,7 +2819,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/cookies/import', {
 
 <a id="post-api-extensions-v3-id-data-sqlite"></a>
 
-只读查询插件自有静态 SQLite。 API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件、宿主路径或扩展加载。
+只读查询插件自有静态 SQLite。 API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件或扩展加载；API 3.9 可读取允许的宿主/CD2 挂载文件，宿主敏感数据库仍受保护。
 
 **参数**
 
@@ -2835,7 +2835,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/cookies/import', {
 | `equals` | object |  | 列名到精确匹配值；ASCII NOCASE，与参数绑定，不接受 SQL |
 | `limit` | integer |  | 本次最多返回的条数 |
 | `offset` | integer |  | 跳过的条数，从 0 开始 |
-| `source` | string | 是 | 插件自有文件相对路径；只读、完整静态 SQLite，不读取宿主数据库或 WAL |
+| `source` | string | 是 | 插件相对路径或允许的宿主/CD2 挂载绝对路径；只读完整静态 SQLite，不读取宿主敏感数据库或 WAL |
 | `table` | string |  | 留空返回表目录 |
 
 **调用**
@@ -2883,7 +2883,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/data/sqlite', {
 
 <a id="post-api-extensions-v3-id-files"></a>
 
-文件操作：相对路径为插件自有（可读写内容）；绝对路径为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列。 3.3 新增 hardlink/symlink：只允许宿主本地路径、单个普通源文件与完整 destination，拒绝覆盖和 CD2；硬链接必须同文件系统。rmdir 只删除一个空目录（支持插件自有和宿主本地），非递归且不支持 CD2。
+文件操作：插件相对路径及非受保护的宿主绝对路径均可读写（含 CD2 挂载路径，API 3.9）。宿主 move/copy/remove 进入任务队列。 3.3 新增 hardlink/symlink：只允许宿主本地路径、单个普通源文件与完整 destination，拒绝覆盖和 CD2；硬链接必须同文件系统。rmdir 只删除一个空目录（支持插件自有和宿主本地），非递归且不支持 CD2。
 
 **参数**
 
@@ -2907,7 +2907,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/data/sqlite', {
 | `offset` | integer |  | 跳过的条数，从 0 开始 |
 | `operation` | "read" / "write" / "append" / "list" / "walk" / "stat" / "exists" / "hash" / "mkdir" / "rmdir" / "remove" / "rename" / "move" / "copy" / "hardlink" / "symlink" | 是 |  |
 | `overwrite` | boolean |  |  |
-| `path` | string |  | 插件相对路径，或宿主绝对 Linux 路径（CD2 写挂载路径）；内容读写仅限插件相对路径 |
+| `path` | string |  | 插件相对路径，或非受保护的宿主绝对 Linux 路径（CD2 使用挂载路径）；API 3.9 支持宿主内容读写 |
 | `paths` | string[] |  | 多个宿主绝对路径 |
 | `pattern` | string |  |  |
 
@@ -2946,14 +2946,14 @@ const res = await ctx.api.post('/api/extensions/v3/id/files', {
 
 <a id="get-api-extensions-v3-id-files-download"></a>
 
-下载插件自有文件（相对路径，支持 Range）。
+下载允许路径的文件（插件相对路径或宿主/CD2 挂载绝对路径，支持 Range）。
 
 **参数**
 
 | 名称 | 位置 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | `id` | path | string | 是 |  |
-| `path` | query | string | 是 | 插件 data/files 下的相对路径；不接受宿主绝对路径 |
+| `path` | query | string | 是 | 插件 data/files 相对路径或允许的宿主绝对路径（API 3.9，含 CD2 挂载路径） |
 | `inline` | query | "1" |  |  |
 
 **调用**
@@ -2968,14 +2968,14 @@ const res = await ctx.api.get('/api/extensions/v3/id/files/download?path=%2Fmnt%
 
 <a id="post-api-extensions-v3-id-files-upload"></a>
 
-流式上传到插件自有路径。
+流式上传到允许的插件相对路径或宿主/CD2 挂载绝对路径。
 
 **参数**
 
 | 名称 | 位置 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | `id` | path | string | 是 |  |
-| `path` | query | string |  | 插件 data/files 下的相对路径；不接受宿主绝对路径 |
+| `path` | query | string |  | 插件 data/files 相对路径或允许的宿主绝对路径（API 3.9，含 CD2 挂载路径） |
 
 **请求体**：application/octet-stream / multipart/form-data
 
@@ -3131,6 +3131,17 @@ const res = await ctx.api.delete('/api/extensions/v3/id/hook/%2Fmnt%2Fmedia%2F%E
 | `session` | string |  |  |
 | `timeout_seconds` | integer |  |  |
 | `url` | string | 是 |  |
+| `save_to` | string |  | 响应流式保存到插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）；后台任务自动反馈下载进度 |
+| `body_file` | string |  | 流式上传的插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） |
+| `multipart` | object |  |  |
+| `multipart.fields` | object |  |  |
+| `multipart.files` | object[] |  |  |
+| `multipart.files[].field` | string | 是 |  |
+| `multipart.files[].filename` | string |  |  |
+| `multipart.files[].content_type` | string |  |  |
+| `multipart.files[].path` | string |  | 插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） |
+| `multipart.files[].base64` | string |  |  |
+| `multipart.files[].text` | string |  |  |
 
 **调用**
 
@@ -3144,7 +3155,22 @@ const res = await ctx.api.post('/api/extensions/v3/id/http', {
   "proxy": "<proxy>",
   "session": "<session>",
   "timeout_seconds": 120,
-  "url": "<url>"
+  "url": "<url>",
+  "save_to": "<save_to>",
+  "body_file": "<body_file>",
+  "multipart": {
+    "fields": {},
+    "files": [
+      {
+        "field": "<field>",
+        "filename": "<filename>",
+        "content_type": "<content_type>",
+        "path": "/mnt/media/电影",
+        "base64": "<base64>",
+        "text": "<text>"
+      }
+    ]
+  }
 })
 ```
 
@@ -3477,7 +3503,7 @@ const res = await ctx.api.get('/api/extensions/v3/id/media/badges')
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `asset_url` | string | 是 | 必须是宿主 badge 目录返回的 URL，不接受任意 HTTP URL |
-| `save_to` | string |  | 可选插件相对路径；省略则返回 body_base64 |
+| `save_to` | string |  | 可选插件相对路径或允许的宿主/CD2 挂载绝对路径；省略则返回 body_base64 |
 
 **调用**
 
@@ -3512,7 +3538,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/media/badges/read', {
 
 <a id="post-api-extensions-v3-id-media-emby-image"></a>
 
-上传插件图片到 Emby 条目主图。 宿主插件 API 3.3。使用宿主 Emby 配置，源图片只读插件自有文件；覆盖指定条目的 Primary 图像。
+上传插件图片到 Emby 条目主图。 宿主插件 API 3.3。使用宿主 Emby 配置，源图片接受插件相对路径或允许的宿主/CD2 挂载路径；覆盖指定条目的 Primary 图像。
 
 **参数**
 
@@ -3526,7 +3552,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/media/badges/read', {
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `item_id` | string | 是 |  |
-| `source` | string | 是 | 插件自有图片相对路径；会转为 JPEG 后上传到 Emby 主图 |
+| `source` | string | 是 | 插件相对路径或允许的宿主/CD2 挂载图片路径；会转为 JPEG 后上传到 Emby 主图 |
 
 **调用**
 
@@ -3568,7 +3594,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/media/emby-image', {
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `crop` | "none" / "center" / "left" / "right" / "face" |  |  |
-| `destination` | string |  | 处理结果保存到插件 data/files 的相对路径；inspect=true 可省略 |
+| `destination` | string |  | 处理结果保存到插件相对路径或允许的宿主/CD2 挂载绝对路径；inspect=true 可省略 |
 | `fit` | "contain" / "cover" |  |  |
 | `format` | "jpeg" / "jpg" / "png" |  |  |
 | `height` | integer |  | 输出高度；0 保持/按宽度等比推导 |
@@ -3577,13 +3603,13 @@ const res = await ctx.api.post('/api/extensions/v3/id/media/emby-image', {
 | `overlays[].corner` | "top-left" / "top-right" / "bottom-left" / "bottom-right" |  |  |
 | `overlays[].opacity` | number |  | 默认 1 |
 | `overlays[].scale` | number |  | 相对输出图片宽度；默认 0.18 |
-| `overlays[].source` | string | 是 | 插件自有图片相对路径或目录接口返回的宿主 badge asset_url |
+| `overlays[].source` | string | 是 | 插件相对路径、允许的宿主/CD2 挂载图片路径或目录接口返回的宿主 badge asset_url |
 | `overlays[].width` | integer |  |  |
 | `overlays[].x` | integer |  | 距离所选角的横向像素偏移 |
 | `overlays[].y` | integer |  | 距离所选角的纵向像素偏移 |
 | `quality` | integer |  | JPEG 默认 92 |
 | `ratio` | number |  | 裁剪宽高比，默认 2/3；人脸未检测到时回退 right |
-| `source` | string | 是 | 插件图片相对路径或宿主 badge asset_url；绝对宿主文件路径不可读 |
+| `source` | string | 是 | 插件相对路径、允许的宿主/CD2 挂载图片路径或宿主 badge asset_url |
 | `width` | integer |  | 输出宽度；0 保持/按高度等比推导 |
 
 **调用**

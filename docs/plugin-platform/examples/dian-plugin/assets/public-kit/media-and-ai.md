@@ -18,7 +18,7 @@ const result = await ctx.api.post(`${base}/media/image`, {
 await ctx.files.call({operation:'move',path:result.path,destination:'/media/movie/poster.jpg',overwrite:true})
 ```
 
-`source` 和覆盖层 `source` 只接受插件 `data/files` 相对路径或目录接口返回的宿主 badge `asset_url`。不接受任意宿主文件或远程 URL；远程图片先用已有 HTTP 下载。页面上传自定义水印使用现有 `ctx.files.upload(path, file)`。
+`source`、覆盖层 `source` 和 `destination` 接受插件 `data/files` 相对路径及允许的宿主绝对路径（包括 CD2 挂载路径）；覆盖层也可使用目录接口返回的宿主 badge `asset_url`。所有文件路径沿用宿主保护规则；不接受远程 URL，远程图片先用已有 HTTP 下载。宿主绝对路径读写需要 API 3.9。页面上传自定义水印使用现有 `ctx.files.upload(path, file)`。
 
 `crop` 支持 `none/left/right/center/face`；人脸模式在宿主本地检测最大的人脸，无法检出时明确回退 `right`，结果 `image.faces`、`image.crop_applied` 可用于展示。`ratio` 为裁剪后的宽高比，默认 `2/3`；`width/height` 只填一项时等比缩放，均填写时 `fit:contain` 等比适应框，`cover` 填满后居中裁剪。`inspect:true` 只读栅格图片头或 SVG 尺寸，不解压像素、不渲染 SVG，不需要 `destination`；返回 JPEG EXIF 纠正后的宽高。检查通过不代表压缩像素完整，处理仍可能失败，候选图回退必须覆盖实际处理阶段。
 
@@ -69,7 +69,7 @@ const result = await ctx.api.post(`${base}/ai/complete`, {
 
 ## 文件整理与演员资料
 
-复用 `ctx.files.call` 的 `copy/move` 和现有任务进度。3.3 新增 `hardlink/symlink`：单个普通源文件、完整 `destination`，源和目标必须是 CD2 挂载之外的宿主本地路径；拒绝 `overwrite:true`，不自动创建目标父目录；硬链接要求同一文件系统。文件操作规则继续禁止访问系统目录、配置密钥和将宿主文件放入插件目录。`rmdir` 只删除一个空的插件或本地目录，不递归，不支持 CD2；自动清空源目录应使用它，不能用递归 `remove` 代替。
+复用 `ctx.files.call` 的 `copy/move` 和现有任务进度。3.3 新增 `hardlink/symlink`：单个普通源文件、完整 `destination`，源和目标必须是 CD2 挂载之外的宿主本地路径；拒绝 `overwrite:true`，不自动创建目标父目录；硬链接要求同一文件系统。文件操作继续保护系统目录和宿主敏感数据；允许的宿主文件可读写或放入插件目录。`rmdir` 只删除一个空的插件或本地目录，不递归，不支持 CD2；自动清空源目录应使用它，不能用递归 `remove` 代替。
 
 ```js
 await ctx.files.call({operation:'hardlink',path:'/incoming/movie.mkv',destination:'/media/movie.mkv'})
@@ -79,7 +79,7 @@ await ctx.api.put('/api/emby-control/items/person-id/metadata?proxy_id=1',{overv
 await ctx.api.post(`${base}/media/emby-image?proxy_id=1`,{item_id:'person-id',source:'actors/portrait.jpg'})
 ```
 
-`type=Person` 复用 Emby 条目查询的分页、实例选择与返回字段，宿主请求 Emby `/Persons`。头像接口只从插件自有图片读取，转为最长框 1200×1800 的 JPEG，使用宿主所持凭据上传为该条目的 Primary 图；属于覆盖操作。简介沿用现有元数据接口，刷新沿用现有媒体库/条目刷新接口。插件不需要读取 Emby API Key。
+`type=Person` 复用 Emby 条目查询的分页、实例选择与返回字段，宿主请求 Emby `/Persons`。头像接口从插件相对路径或允许的宿主/CD2 挂载路径读取图片，转为最长框 1200×1800 的 JPEG，使用宿主所持凭据上传为该条目的 Primary 图；属于覆盖操作。简介沿用现有元数据接口，刷新沿用现有媒体库/条目刷新接口。插件不需要读取 Emby API Key。
 
 PT 搜索与提交也继续用现有 `/api/pt/search`、`/api/pt/download`。新增可选 `mteam_mode:"normal"|"adult"` 只用于馒头适配器；模式参与搜索缓存键。选择 adult 时不附加电影/剧集分类。番号订阅应显式选择站点 ID、按番号复核候选并把 PT 种子只提交下载器；订阅状态与去重、重试策略由插件维护。
 
@@ -98,7 +98,7 @@ const page = await ctx.api.post(`${base}/data/sqlite`, {
 const metadata = await ctx.api.post(`${base}/media/nfo`, {path:'/media/example/movie.nfo'})
 ```
 
-SQLite 只接受插件自有相对路径，最大 512 MiB；不接受任意 SQL、连接字符串、宿主数据库路径、ATTACH 或扩展。查询验证表和列名，筛选值使用参数绑定；每个筛选条件用 AND 连接、精确比较及 SQLite ASCII NOCASE。最多 64 列、200 行、offset 1000000、5 秒。文本最多前 8192 个字符，BLOB 返回 null，总文本最多 2 MiB，超限应缩小查询。表必须是真实表，不能查询视图。省略 columns 返回该表所有列及列目录。
+SQLite 接受插件相对路径或允许的宿主绝对路径（API 3.9，包括 CD2 挂载路径），最大 512 MiB；宿主敏感数据库路径仍受保护，不接受任意 SQL、连接字符串、ATTACH 或扩展。查询验证表和列名，筛选值使用参数绑定；每个筛选条件用 AND 连接、精确比较及 SQLite ASCII NOCASE。最多 64 列、200 行、offset 1000000、5 秒。文本最多前 8192 个字符，BLOB 返回 null，总文本最多 2 MiB，超限应缩小查询。表必须是真实表，不能查询视图。省略 columns 返回该表所有列及列目录。
 
 文件按 `mode=ro&immutable=1` 打开，不读取外置 WAL。仅用于下载完成、已关闭并完成 checkpoint 的静态快照；不得查询仍被其他任务写入的数据库。第三方资料按需下载并缓存在插件自己的文件区，下载到临时路径、验证后再替换；不需要打包数据库驱动、整库或启动外部服务。数据库使用许可由资料提供者规定。
 

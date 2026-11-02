@@ -2,7 +2,7 @@
 
 插件与宿主共同运行：页面直接使用宿主 HTTP API，后台 JavaScript 编排业务，主项目负责实际转存、整理、通知与队列调度。无需主项目源码、WASM、Node、额外容器或内置浏览器。
 
-宿主插件 API 3.8 能力一览：宿主公开的业务 HTTP API、二进制 HTTP 与流式下载上传、后台任务进入宿主任务队列并显示任务级进度与计数（3.2）、由宿主执行并带进度的文件移动复制删除（CD2 gRPC/挂载路径自动分流）、实时目录监听（created/changed/removed）、宿主业务事件订阅、独立监听端口与 Webhook、Cookie/CookieCloud/FlareSolverr、CD2、通知、定时与消息触发、设置表单、侧栏菜单与图标，以及后台 fetch/URL/编码/加密/HTML/XML 标准库。
+宿主插件 API 3.9 能力一览：宿主公开的业务 HTTP API、二进制 HTTP 与流式下载上传、后台任务进入宿主任务队列并显示任务级进度与计数（3.2）、由宿主执行并带进度的文件移动复制删除（CD2 gRPC/挂载路径自动分流）、实时目录监听（created/changed/removed）、宿主业务事件订阅、独立监听端口与 Webhook、Cookie/CookieCloud/FlareSolverr、CD2、通知、定时与消息触发、设置表单、侧栏菜单与图标，以及后台 fetch/URL/编码/加密/HTML/XML 标准库。
 
 - [快速开始](quickstart.md)：10 分钟做出第一个插件。
 - [配方](cookbook.md)：命令、关键字、定时、监听、Webhook、长连接等可直接改用的写法。
@@ -18,6 +18,7 @@
 - [订阅与增量搜索](subscriptions.md)：磁力 / ED2K 缓存、馒头时间窗口、独立基线及中断续读。
 - [网络与登录](network.md)：账号密码、明文 CK、自定义站点、CookieCloud、FlareSolverr。
 - [加密交付](encrypted-delivery.md)：作者网页加密、直接离线安装、维护者审查。
+- [编译 MCP 与正式发布](encrypted-delivery.md#编译-mcp-与正式发布)：系统 Key 鉴权、癫影会员实时验证、本机源码调试及正式编译实施状态。
 - [页面与主题](ui-theme.md)：直接挂载页面和完整 HTML。
 - [安全限制](security.md)：调用权限、CookieCloud 与宿主文件保护、安装后防篡改。
 - [插件 API 完整参考](api-reference.md)：清单、页面与后台 ctx、文件、事件、处理器、限额一页列全。
@@ -31,6 +32,8 @@
 可信扩展可以影响宿主和外部文件，无法以进程内执行同时承诺强制内存隔离或完整撤销任意全局副作用。请选择信任的作者。每个插件的默认数据、任务与 Cookie 独立保存；卸载清空这部分全部本地数据。
 
 本目录保留的其他独立客户端和用户脚本示例不作为 v3 安装模板；开发本平台扩展请使用 complete-plugin 与当前 SDK。
+
+3.9 新增：除受保护路径外，宿主和 CD2 挂载路径开放内容读写，HTTP 下载可直接落盘至目标目录并反馈任务进度；双边 CD2 的移动/复制继续走 gRPC。依赖这些能力声明 `requires.api: "3.9"`。
 
 3.8 新增：[原生 TCP 客户端与服务端、对外 SSE 和流式响应](long-connections.md)；TCP 需要用户授权 `network.tcp`。
 

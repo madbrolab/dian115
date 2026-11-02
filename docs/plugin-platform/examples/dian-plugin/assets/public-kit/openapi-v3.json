@@ -682,7 +682,7 @@
       "type": "string"
      },
      "save_to": {
-      "description": "可选插件相对路径；省略则返回 body_base64",
+      "description": "可选插件相对路径或允许的宿主/CD2 挂载绝对路径；省略则返回 body_base64",
       "type": "string"
      }
     },
@@ -834,7 +834,7 @@
       "type": "string"
      },
      "source": {
-      "description": "插件自有图片相对路径；会转为 JPEG 后上传到 Emby 主图",
+      "description": "插件相对路径或允许的宿主/CD2 挂载图片路径；会转为 JPEG 后上传到 Emby 主图",
       "type": "string"
      }
     },
@@ -1091,7 +1091,7 @@
       "type": "number"
      },
      "source": {
-      "description": "插件自有图片相对路径或目录接口返回的宿主 badge asset_url",
+      "description": "插件相对路径、允许的宿主/CD2 挂载图片路径或目录接口返回的宿主 badge asset_url",
       "type": "string"
      },
      "width": {
@@ -1128,7 +1128,7 @@
       "type": "string"
      },
      "destination": {
-      "description": "处理结果保存到插件 data/files 的相对路径；inspect=true 可省略",
+      "description": "处理结果保存到插件相对路径或允许的宿主/CD2 挂载绝对路径；inspect=true 可省略",
       "type": "string"
      },
      "fit": {
@@ -1176,7 +1176,7 @@
       "type": "number"
      },
      "source": {
-      "description": "插件图片相对路径或宿主 badge asset_url；绝对宿主文件路径不可读",
+      "description": "插件相对路径、允许的宿主/CD2 挂载图片路径或宿主 badge asset_url",
       "type": "string"
      },
      "width": {
@@ -1197,7 +1197,7 @@
       "$ref": "#/components/schemas/ExtensionImageInfo"
      },
      "path": {
-      "description": "插件自有相对路径",
+      "description": "插件相对路径或允许的宿主/CD2 挂载绝对路径",
       "type": "string"
      },
      "sha256": {
@@ -2241,7 +2241,7 @@
       "type": "integer"
      },
      "source": {
-      "description": "插件自有文件相对路径；只读、完整静态 SQLite，不读取宿主数据库或 WAL",
+      "description": "插件相对路径或允许的宿主/CD2 挂载绝对路径；只读完整静态 SQLite，不读取宿主敏感数据库或 WAL",
       "type": "string"
      },
      "table": {
@@ -9314,7 +9314,7 @@
  "info": {
   "description": "可信扩展使用普通宿主 HTTP API。此公开目录提供稳定业务契约；不是访问白名单。所有接口沿用宿主登录、参数、授权版本与业务规则。",
   "title": "DIAN115 Trusted Extension API",
-  "version": "3.5.0"
+  "version": "3.9.0"
  },
  "openapi": "3.1.0",
  "paths": {
@@ -12555,7 +12555,7 @@
   },
   "/api/extensions/v3/{id}/data/sqlite": {
    "post": {
-    "description": "API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件、宿主路径或扩展加载。",
+    "description": "API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件或扩展加载；API 3.9 可读取允许的宿主/CD2 挂载文件，宿主敏感数据库仍受保护。",
     "operationId": "extension_post__data_sqlite",
     "parameters": [
      {
@@ -12736,7 +12736,7 @@
           "type": "boolean"
          },
          "path": {
-          "description": "插件相对路径，或宿主绝对 Linux 路径（CD2 写挂载路径）；内容读写仅限插件相对路径",
+          "description": "插件相对路径，或非受保护的宿主绝对 Linux 路径（CD2 使用挂载路径）；API 3.9 支持宿主内容读写",
           "type": "string"
          },
          "paths": {
@@ -12835,7 +12835,7 @@
       "description": "错误详情"
      }
     },
-    "summary": "文件操作：相对路径为插件自有（可读写内容）；绝对路径为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列"
+    "summary": "文件操作：插件相对路径及非受保护的宿主绝对路径均可读写（含 CD2 挂载路径，API 3.9）。宿主 move/copy/remove 进入任务队列"
    }
   },
   "/api/extensions/v3/{id}/files/download": {
@@ -12851,7 +12851,7 @@
       }
      },
      {
-      "description": "插件 data/files 下的相对路径；不接受宿主绝对路径",
+      "description": "插件 data/files 相对路径或允许的宿主绝对路径（API 3.9，含 CD2 挂载路径）",
       "in": "query",
       "name": "path",
       "required": true,
@@ -12922,7 +12922,7 @@
       "description": "错误详情"
      }
     },
-    "summary": "下载插件自有文件（相对路径，支持 Range）"
+    "summary": "下载允许路径的文件（插件相对路径或宿主/CD2 挂载绝对路径，支持 Range）"
    }
   },
   "/api/extensions/v3/{id}/files/upload": {
@@ -12938,7 +12938,7 @@
       }
      },
      {
-      "description": "插件 data/files 下的相对路径；不接受宿主绝对路径",
+      "description": "插件 data/files 相对路径或允许的宿主绝对路径（API 3.9，含 CD2 挂载路径）",
       "in": "query",
       "name": "path",
       "schema": {
@@ -13024,7 +13024,7 @@
       "description": "错误详情"
      }
     },
-    "summary": "流式上传到插件自有路径"
+    "summary": "流式上传到允许的插件相对路径或宿主/CD2 挂载绝对路径"
    }
   },
   "/api/extensions/v3/{id}/hook/{path}": {
@@ -13461,6 +13461,53 @@
          },
          "url": {
           "type": "string"
+         },
+         "save_to": {
+          "type": "string",
+          "description": "响应流式保存到插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）；后台任务自动反馈下载进度"
+         },
+         "body_file": {
+          "type": "string",
+          "description": "流式上传的插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）"
+         },
+         "multipart": {
+          "type": "object",
+          "properties": {
+           "fields": {
+            "type": "object",
+            "additionalProperties": true
+           },
+           "files": {
+            "type": "array",
+            "items": {
+             "type": "object",
+             "required": [
+              "field"
+             ],
+             "properties": {
+              "field": {
+               "type": "string"
+              },
+              "filename": {
+               "type": "string"
+              },
+              "content_type": {
+               "type": "string"
+              },
+              "path": {
+               "type": "string",
+               "description": "插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）"
+              },
+              "base64": {
+               "type": "string"
+              },
+              "text": {
+               "type": "string"
+              }
+             }
+            }
+           }
+          }
          }
         },
         "required": [
@@ -14079,7 +14126,7 @@
   },
   "/api/extensions/v3/{id}/media/emby-image": {
    "post": {
-    "description": "宿主插件 API 3.3。使用宿主 Emby 配置，源图片只读插件自有文件；覆盖指定条目的 Primary 图像。",
+    "description": "宿主插件 API 3.3。使用宿主 Emby 配置，源图片接受插件相对路径或允许的宿主/CD2 挂载路径；覆盖指定条目的 Primary 图像。",
     "operationId": "extension_post__media_emby-image",
     "parameters": [
      {

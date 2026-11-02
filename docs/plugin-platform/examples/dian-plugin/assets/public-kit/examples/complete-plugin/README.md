@@ -1,6 +1,6 @@
 # API 测试台 v3
 
-无 npm、WASM 或编译步骤。将本目录作为服务器源码目录安装，或生成 .dian115p 包后从插件中心上传。根目录包含 plugin.json、ui/page.js、ui/icon.svg、jobs/job.js、jobs/http.js（Webhook 与监听端口处理器）和 jobs/events.js（宿主业务事件）。安装后填写站点、账号密码、CK、FlareSolverr 与目录；默认没有站点账号，也不会自动登录、发通知或修改宿主文件。
+本机源码调试无需 npm 或 WASM 构建：由实例管理员导入本目录，或生成可读 .dian115p 包后直接上传。正式交付须通过 DIAN115 编译 MCP 完成会员校验、本地加密与签名出包，规则见[编译与交付](../../encrypted-delivery.md#编译-mcp-与正式发布)。根目录包含 plugin.json、ui/page.js、ui/icon.svg、jobs/job.js、jobs/http.js（Webhook 与监听端口处理器）和 jobs/events.js（宿主业务事件）。安装后填写站点、账号密码、CK、FlareSolverr 与目录；默认没有站点账号，也不会自动登录、发通知或修改宿主文件。
 
 按钮逐项测试宿主 GET、HTTP、二进制下载与下载链接、持久 Cookie、CookieCloud 读写、FlareSolverr、插件文件、CD2 列表、目录轮询与实时监听、监听端口与回调地址、宿主事件记录、存储分页、磁盘统计、统一任务与通知。插件页“设置”标签由清单 settings 生成，可填写公开回调令牌与测试端口；侧栏资源分组会出现本插件入口。账号密码表单字段演示 username/password；具体站点需按真实登录接口调整，不声称可以绕过交互验证码。
 

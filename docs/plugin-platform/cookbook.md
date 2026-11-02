@@ -113,11 +113,16 @@ export async function run(ctx, input) {
 }
 ```
 
-## 移动文件到 CD2
+## 直接下载和读写 CD2 挂载文件
+
+宿主插件 API 3.9，声明 `requires.api: "3.9"`。后台下载进度自动写入当前任务，页面可用 `ctx.tasks.get(runId)` 查询。
 
 ```js
-await ctx.http.request({ url, save_to: 'downloads/a.torrent' })
-await ctx.files.call({ operation: 'move', path: 'downloads/a.torrent', destination_dir: '/mnt/cd2/115/种子' })
+await ctx.http.request({ url, save_to: '/mnt/cd2/115/种子/a.torrent', timeout_seconds: 3600 })
+await ctx.files.call({ operation: 'write', path: '/mnt/cd2/115/下载/info.txt', content: 'hello' })
+const text = await ctx.files.call({ operation: 'read', path: '/mnt/cd2/115/下载/info.txt' })
+// 双边均为 CD2 挂载路径的移动/复制仍由 CD2 gRPC 执行
+await ctx.files.call({ operation: 'move', path: '/mnt/cd2/115/种子/a.torrent', destination_dir: '/mnt/cd2/115/收件箱' })
 ```
 
 ## 订阅宿主事件

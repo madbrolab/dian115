@@ -458,7 +458,7 @@
       ]
     },
     "POST /api/extensions/v3/{id}/data/sqlite": {
-      "description": "API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件、宿主路径或扩展加载。",
+      "description": "API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件或扩展加载；API 3.9 可读取允许的宿主/CD2 挂载文件，宿主敏感数据库仍受保护。",
       "body": {
         "source": "reference/actors.db",
         "table": "Names",

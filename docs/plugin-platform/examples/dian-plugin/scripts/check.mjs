@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Structure check, malware scan and optional packing in one step.
+// Structure check, malware scan and optional readable source packing.
+// This does not compile or attest a protected release.
 //   node check.mjs <插件目录> [--pack <目录外的输出.dian115p>]
 import { resolve } from 'node:path'
 import { checkProject } from '../assets/public-kit/conformance/project-check.mjs'
@@ -23,5 +24,5 @@ for (const item of report.findings.filter(finding => finding.severity === 'criti
 if (report.verdict === 'do-not-install') { console.error('存在高危特征，已停止。确认是误报后再单独运行 pack.mjs。'); process.exit(2) }
 if (output) {
   const packed = packPlugin(directory, output)
-  console.log('已打包：' + (packed?.output || output))
+  console.log('已生成可读源码包（用于本机调试或编译输入）：' + (packed?.output || output))
 }

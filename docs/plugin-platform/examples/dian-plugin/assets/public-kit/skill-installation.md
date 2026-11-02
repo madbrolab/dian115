@@ -13,7 +13,9 @@
 | 脚本 | 作用 |
 | --- | --- |
 | `init.mjs <绝对目录> <插件ID> [--template starter|bot|daemon|webhook|lab] [--name 名称] [--author 作者]` | 从模板创建插件 |
-| `check.mjs <目录> [--pack <输出.dian115p>]` | 结构检查、恶意代码扫描，可选打包 |
+| `check.mjs <目录> [--pack <输出.dian115p>]` | 结构检查、恶意代码扫描，可选生成可读源码调试包；不是正式编译 |
 | `audit.mjs <目录或.dian115p> [--json]` | 只读扫描，不运行插件 |
 
 skill 携带固定版本公开协议、SDK、完整 API 测试台和黑盒工具。同步脚本 `node docs/plugin-platform/conformance/sync-dev-skill.mjs` 更新内容，`--check` 核对摘要。使用本仓库当前版本的完整目录，勿混用旧版协议和 SDK。
+
+本机调试和正式交付规则见 skill 的 `references/compilation.md`。编译 MCP 使用系统 OpenAPI Key 连接，由宿主读取癫影账号的 API Key 实时验证；不要把这两把 Key 交给插件源码。查询环境的 `formal_compile_configured`，仅在编译工具成功并返回 `release_ready: true`、`package_base64` 及正确摘要后报告正式出包；缺少本地保护配置或会员校验失败时如实报告阻塞项。正式开发者展示使用 DIAN115 本地签名绑定的会员昵称；插件编译不要求会员服务新增接口或部署。

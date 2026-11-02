@@ -1,5 +1,7 @@
 # 市场规范 v3
 
+市场索引仍使用 v3 Schema。保护材料与准入存储就绪的宿主要求新正式安装与更新采用 `protected-v4` 编译包；已登记的具体历史内容保留兼容。本机源码调试包不能上架。编译和签发已在本地实现，线上可用性须查询宿主真实环境，参见[实施状态](encrypted-delivery.md#编译-mcp-与正式发布)。
+
 本文规定插件进入市场的要求。仓库是 HTTP/HTTPS 索引，格式见[索引 Schema](market-index.schema.json)。发布前运行：
 
 ```bash
@@ -17,13 +19,13 @@ node conformance/audit.mjs <插件目录>
 | `id` | 是 | 与 `plugin.json` 一致；小写字母、数字、点和连字符 |
 | `name` | 是 | 插件名称，不得冒充宿主或其他插件 |
 | `version` | 是 | 与 `plugin.json` 一致；同一 `id` 下不可重复 |
-| `author` | 是 | 作者署名，与 `plugin.json` 的 `author` 完全一致 |
+| `author` | 是 | 正式包为签名中的会员昵称；历史包与 `plugin.json.author` 一致 |
 | `description` | 是 | 说明插件做什么，不写宣传语 |
 | `homepage` | 是 | 项目主页或反馈地址，HTTP/HTTPS |
 | `changelog` | 是 | 本版本改了什么 |
 | `source_url` | 是 | 源码或加密 `.dian115p` 包的下载地址 |
 | `sha256` | 是 | 包文件的 SHA256 |
-| `delivery` | 是 | `source` 或 `encrypted` |
+| `delivery` | 是 | `protected-v4`；历史格式 `source`、`encrypted` |
 | `permissions` | 按需 | 须覆盖清单 `permissions` 的全部申请项 |
 | `declared_usage` | 否 | 作者说明，不代替宿主分析 |
 
@@ -32,14 +34,14 @@ node conformance/audit.mjs <插件目录>
 用户选择版本后，宿主依次：
 
 1. 下载包并核对 SHA256。
-2. 解密加密包，读取真实 `plugin.json`。
+2. 对正式包核验 DIAN115 本地来源签名和内容摘要，解密后读取真实 `plugin.json`，开发者署名取签名昵称。
 3. 核对 `id`、`version`、`author` 与条目一致，清单申请的权限不超出条目声明，不一致就拒绝。
 4. 分析实际代码，命中禁止接口就拒绝。
 5. 显示安装确认，由用户决定是否安装。
 
 插件中心打开时不等待远程索引，用户点击刷新后才汇总来源；单个来源失败独立显示，不影响其他来源。移除来源不卸载已安装插件。
 
-直接从地址或本地文件安装时不要求这些条目字段，缺少作者时显示“未署名”。
+直接从地址或本地文件安装时不要求这些市场条目字段，但正式包仍须通过相同验签。直接导入源码归为本机调试；历史及调试包缺少作者时显示“未署名”。
 
 ## 安装确认
 

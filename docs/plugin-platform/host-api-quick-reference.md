@@ -54,9 +54,9 @@
 | POST | `/api/extensions/v3/{id}/cookies` | 读取 Cookie 或写入明文 Cookie 头 |
 | POST | `/api/extensions/v3/{id}/cookies/import` | 导入 CookieCloud 格式 Cookie；保留属性 |
 | POST | `/api/extensions/v3/{id}/data/sqlite` | 只读查询插件自有静态 SQLite |
-| POST | `/api/extensions/v3/{id}/files` | 文件操作：相对路径为插件自有（可读写内容）；绝对路径为宿主路径，仅宿主执行管理操作。宿主 move/copy/remove 进入任务队列 |
-| GET | `/api/extensions/v3/{id}/files/download` | 下载插件自有文件（相对路径，支持 Range） |
-| POST | `/api/extensions/v3/{id}/files/upload` | 流式上传到插件自有路径 |
+| POST | `/api/extensions/v3/{id}/files` | 文件操作：插件相对路径及非受保护的宿主绝对路径均可读写（含 CD2 挂载路径，API 3.9）。宿主 move/copy/remove 进入任务队列 |
+| GET | `/api/extensions/v3/{id}/files/download` | 下载允许路径的文件（插件相对路径或宿主/CD2 挂载绝对路径，支持 Range） |
+| POST | `/api/extensions/v3/{id}/files/upload` | 流式上传到允许的插件相对路径或宿主/CD2 挂载绝对路径 |
 | GET | `/api/extensions/v3/{id}/hook/{path}` | 登录态 Webhook：交给清单 http 处理器同步响应 |
 | POST | `/api/extensions/v3/{id}/hook/{path}` | 登录态 Webhook：交给清单 http 处理器同步响应 |
 | PUT | `/api/extensions/v3/{id}/hook/{path}` | 登录态 Webhook：交给清单 http 处理器同步响应 |

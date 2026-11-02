@@ -1,4 +1,4 @@
-# 插件 API 完整参考（宿主插件 API 3.8）
+# 插件 API 完整参考（宿主插件 API 3.9）
 
 本页列出插件可用的全部能力。第一次开发先看[快速开始](quickstart.md)，字段规则见[清单参考](manifest.md)，常见写法见[配方](cookbook.md)。业务细节见[开发指南](developer-guide.md)、[网络](network.md)、[生命周期](storage-and-lifecycle.md)、[页面](ui-theme.md)；接口契约见 [OpenAPI](openapi-v3.json) 与[速查](host-api-quick-reference.md)；类型见 [SDK](examples/sdk/)。
 
@@ -34,7 +34,7 @@ UI、jobs、http 至少提供一项。
 | `http.request/cookies/importCookies/render` | 同后台，由宿主发出请求 |
 | `files.call(options)` | 见第 5 节；宿主移动/复制/删除进入任务队列，返回 `{task_id,result}` |
 | `files.start(options)` | 宿主移动/复制/删除立即返回 `{task_id}` |
-| `files.downloadURL(path)` / `files.upload(path, file)` | 插件自有文件的下载地址（Range）与流式上传 |
+| `files.downloadURL(path)` / `files.upload(path, file)` | 允许路径的下载地址（Range）与流式上传，包括宿主和 CD2 挂载路径 |
 | `cd2.call(method, options)` | list/stat/mkdir/rename/move/copy/remove/search |
 | `watch.list/add/remove` | 目录监听（第 6 节） |
 | `tasks.run(job, business_key, input)/list/get/cancel/retry` | 统一任务队列 |
@@ -76,16 +76,18 @@ UI、jobs、http 至少提供一项。
 
 入口：`/api/extensions/v3/<id>/hook/<路径>`（需登录）、`/plugin-hooks/<id>/<路径>`（`http.public`，插件自行鉴权）、`listeners` 与 `ctx.server.listen` 打开的端口。
 
-`req`：method、path、url、query、headers、remote_addr、host、source（hook/public/listener:&lt;id&gt;）、body、body_base64、json。返回字符串、null（204）或 `{status,headers,body|body_base64|json|file}`；`file` 为插件自有路径。ctx 与后台相同（无 task 进度持久化）。
+`req`：method、path、url、query、headers、remote_addr、host、source（hook/public/listener:&lt;id&gt;）、body、body_base64、json。返回字符串、null（204）或 `{status,headers,body|body_base64|json|file}`；`file` 为插件相对路径或允许的宿主绝对路径（含 CD2 挂载路径）。ctx 与后台相同（无 task 进度持久化）。
 
 ## 5. 文件
 
 | 路径 | 允许的操作 |
 | --- | --- |
 | 相对路径（插件 data/files） | read（≤16 MiB/次）、write、append、list、walk、stat、exists、hash、mkdir、rename、move、copy、remove |
-| 绝对路径（宿主，CD2 文件写挂载路径） | list、walk（仅本地）、stat、exists、hash（仅本地，sha256）、mkdir、rename、move、copy、remove；**不能 read/write** |
+| 绝对路径（宿主，CD2 文件写挂载路径） | read（≤16 MiB/次）、write、append、list、walk（仅本地）、stat、exists、hash（仅本地，sha256）、mkdir、rename、move、copy、remove |
 
-宿主路径分流：两边都在 CD2 挂载内走 CD2 gRPC；任一边不在 CD2 内走系统命令，CD2 一侧使用挂载路径。系统命令操作每秒报告字节进度。参数：path/paths、destination/destination_dir、name、overwrite、progress、pattern、limit。
+API 3.9 起，除受保护路径外，宿主和 CD2 挂载路径均开放内容读写；内容 I/O、HTTP `save_to`、`body_file` 和 multipart 文件路径直接使用文件系统，不经过 CD2 gRPC。需要此能力的插件声明 `requires.api: "3.9"`。
+
+宿主文件管理分流：两边都在 CD2 挂载内走 CD2 gRPC；任一边不在 CD2 内走系统命令，CD2 一侧使用挂载路径。系统命令操作每秒报告字节进度。参数：path/paths、destination/destination_dir、name、overwrite、progress、pattern、limit。
 
 ## 6. 监听与事件
 
@@ -107,7 +109,7 @@ UI、jobs、http 至少提供一项。
 | 项目 | 限额 |
 | --- | --- |
 | 脚本内存 | 宿主监测存活堆：运行插件脚本期间堆比空闲基线增长超过 `DIAN115_EXTENSION_MEMORY_MB`（默认 512 MiB）即中止正在运行的插件脚本，任务记为失败“内存超出预算”。只有一个脚本在运行时精确归属；多个同时运行时一并中止 |
-| 宿主文件内容 | 不进入插件；插件自有文件单次读 16 MiB |
+| 文件内容 | 允许路径均可读写；单次 read 最多 16 MiB，较大文件分段读取或流式传输 |
 | HTTP 响应 | 默认 64 MiB，不写盘最多 256 MiB；更大用 save_to |
 | HTTP 处理器 | 单插件并发 32，请求体 32 MiB，默认 60 秒 |
 | 异步宿主调用 | 全局 128（`DIAN115_EXTENSION_IO_CONCURRENCY`），满时立即报错 |

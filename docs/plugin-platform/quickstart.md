@@ -74,6 +74,8 @@ node conformance/pack.mjs /绝对路径/my-plugin /绝对路径/输出/my-plugin
 
 输出文件要放在源码目录之外。
 
+这一步生成可读源码包，供自己的 DIAN115 安装调试或作为编译输入，不代表已经正式编译。新格式发布规则与当前编译 MCP 能力见[编译与交付](encrypted-delivery.md#编译-mcp-与正式发布)。
+
 ## 6. 安装
 
 1. 打开插件中心的“第三方插件”，选择 `.dian115p` 文件。

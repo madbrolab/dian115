@@ -22,9 +22,9 @@ export interface FileTransfer {path?:FilePath;paths?:FilePath[];destination?:Fil
 export interface TransferResult {backend:'system'|'cd2'|'plugin';items?:{source:string;path:string;size:number}[];result?:JSONValue}
 export interface FileProgress {operation:string;backend:string;current?:string;items_done:number;items_total:number;bytes_done:number;bytes_total:number;message?:string}
 export interface Files {
- /** Plugin-owned only; at most 16 MiB per read. */
+ /** Plugin-relative or allowed host absolute path, including CD2 mounts; at most 16 MiB per read (host paths require API 3.9). */
  call(options:{operation:'read';path:string;encoding?:FileEncoding;offset?:number;length?:number}):Promise<string>;
- /** Plugin-owned only. */
+ /** Plugin-relative or allowed host absolute path, including direct CD2 mount writes (API 3.9). */
  call(options:{operation:'write'|'append';path:string;content:string;encoding?:FileEncoding}):Promise<FileWriteResult>;
  call(options:{operation:'list';path:FilePath}):Promise<FileInfo[]>;
  call(options:{operation:'walk';path:FilePath;pattern?:string;limit?:number}):Promise<FileInfo[]>;
