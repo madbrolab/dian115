@@ -40,21 +40,43 @@
   })
   document.addEventListener('keydown', e => {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); input.focus() }
-    if (e.key === 'Escape') { results.hidden = true; input.focus() }
+    if (e.key === 'Escape') { results.hidden = true; if (document.body.classList.contains('menu-open')) { document.body.classList.remove('menu-open'); const toggle = document.getElementById('menu-toggle'); toggle.setAttribute('aria-expanded', 'false'); toggle.focus() } else if (e.target.closest('.search')) input.focus() }
   })
   document.addEventListener('click', e => { if (!e.target.closest('.search')) results.hidden = true })
   document.getElementById('menu-toggle').addEventListener('click', e => {
     const expanded = e.currentTarget.getAttribute('aria-expanded') !== 'true'
     e.currentTarget.setAttribute('aria-expanded', String(expanded)); document.body.classList.toggle('menu-open', expanded)
   })
-  let dark = false
-  try { dark = localStorage.getItem('dian115-docs-theme') === 'dark' } catch {}
-  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  let dark = true
+  try { dark = (localStorage.getItem('dian-wiki-theme-v2') || localStorage.getItem('dian115-docs-theme') || 'dark') === 'dark' } catch {}
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme-switching', '')
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+    document.querySelector('meta[name="theme-color"]').content = dark ? '#080808' : '#fafaf8'
+    document.getElementById('theme-toggle').setAttribute('aria-label', dark ? '切换浅色主题' : '切换深色主题')
+    void document.documentElement.offsetHeight
+    requestAnimationFrame(() => document.documentElement.removeAttribute('data-theme-switching'))
+  }
+  applyTheme()
   document.getElementById('theme-toggle').addEventListener('click', () => {
-    dark = !dark; document.documentElement.dataset.theme = dark ? 'dark' : 'light'
-    try { localStorage.setItem('dian115-docs-theme', dark ? 'dark' : 'light') } catch {}
+    dark = !dark; applyTheme()
+    try { localStorage.setItem('dian115-docs-theme', dark ? 'dark' : 'light'); localStorage.setItem('dian-wiki-theme-v2', dark ? 'dark' : 'light') } catch {}
   })
-  let feedbackTimer
+  const progress = document.createElement('div'); progress.className = 'docs-reading-progress'; progress.setAttribute('aria-hidden', 'true'); progress.innerHTML = '<span></span>'; document.body.append(progress)
+  const tocLinks = [...document.querySelectorAll('.toc a[href^="#"]')]
+  let scrollFrame = 0
+  function updateReading() {
+    scrollFrame = 0
+    const total = document.documentElement.scrollHeight - innerHeight
+    progress.firstElementChild.style.transform = `scaleX(${total > 0 ? scrollY / total : 0})`
+    let active
+    for (const link of tocLinks) if (document.querySelector(link.getAttribute('href'))?.getBoundingClientRect().top < innerHeight * .35) active = link
+    for (const link of tocLinks) { link.classList.toggle('active', link === active); if (link === active) link.setAttribute('aria-current', 'location'); else link.removeAttribute('aria-current') }
+  }
+  addEventListener('scroll', () => { if (!scrollFrame) scrollFrame = requestAnimationFrame(updateReading) }, { passive: true })
+  addEventListener('resize', updateReading, { passive: true }); updateReading()
+  let statusTimer
+  const copyTimers = new WeakMap()
   document.addEventListener('click', async e => {
     const button = e.target.closest('[data-copy]')
     if (!button) return
@@ -63,7 +85,8 @@
       await navigator.clipboard.writeText(code)
       button.textContent = '已复制'
       const status = document.getElementById('copy-status'); status.textContent = '配置已复制'
-      clearTimeout(feedbackTimer); feedbackTimer = setTimeout(() => { button.textContent = '复制'; status.textContent = '' }, 2200)
+      clearTimeout(copyTimers.get(button)); copyTimers.set(button, setTimeout(() => { button.textContent = '复制'; copyTimers.delete(button) }, 2200))
+      clearTimeout(statusTimer); statusTimer = setTimeout(() => { status.textContent = '' }, 2200)
     } catch {
       const selection = getSelection(), range = document.createRange(); range.selectNodeContents(button.closest('.code-block').querySelector('code')); selection.removeAllRanges(); selection.addRange(range)
       document.getElementById('copy-status').textContent = '内容已选中，请按 Ctrl / ⌘ C 复制'

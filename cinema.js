@@ -1,138 +1,149 @@
 (() => {
   'use strict';
   const root = document.documentElement;
-  const $ = s => document.querySelector(s);
-  const scene = $('#heroArt');
-  const posters = [...document.querySelectorAll('.cinema-poster')];
-  const caption = $('.scene-caption');
+  const hero = document.querySelector('.hero');
+  const heroCopy = document.querySelector('.hero-copy');
+  const inner = document.querySelector('.orbit-inner');
+  const outer = document.querySelector('.orbit-outer');
+  const panels = [...document.querySelectorAll('.showcase-panel')];
   const fine = matchMedia('(hover: hover) and (pointer: fine)');
-  const films = [
-    {title:'银翼杀手 2049',meta:'BLADE RUNNER 2049 / 2017 · 科幻',color:'#d48b67'},
-    {title:'降临',meta:'ARRIVAL / 2016 · 科幻 · 剧情',color:'#90acb4'},
-    {title:'星际穿越',meta:'INTERSTELLAR / 2014 · 科幻 · 冒险',color:'#83aadd'},
-    {title:'沙丘 2',meta:'DUNE: PART TWO / 2024 · 科幻',color:'#d2a16f'},
-    {title:'盗梦空间',meta:'INCEPTION / 2010 · 科幻 · 悬疑',color:'#749cbf'}
-  ];
-  let active = 2, timer, inHero = true, hovered = false, focused = false;
   const full = () => root.dataset.motion === 'full';
-  const canRotate = () => full() && inHero && !hovered && !focused && !document.hidden && !document.querySelector('dialog[open]');
-  const restartTimeline = () => {
-    const bar = $('.scene-timeline span');
-    bar.style.animation = 'none';
-    void bar.offsetWidth;
-    bar.style.animation = '';
-    bar.style.animationPlayState = canRotate() ? 'running' : 'paused';
-  };
-  function schedule() {
-    clearTimeout(timer);
-    if (canRotate()) timer = setTimeout(() => { select(active + 1); }, 7000);
-    restartTimeline();
-  }
-  function select(index, animate = true) {
-    active = (index + films.length) % films.length;
-    posters.forEach((poster, i) => {
-      let slot = (i - active + films.length) % films.length;
-      if (slot > 2) slot -= films.length;
-      poster.style.setProperty('--slot', slot);
-      poster.style.setProperty('--depth', Math.abs(slot));
-      poster.classList.toggle('active', i === active);
-      poster.setAttribute('aria-pressed', String(i === active));
-    });
-    caption.classList.remove('changing');
-    $('#posterTitle').textContent = films[active].title;
-    $('#posterMeta').textContent = films[active].meta;
-    $('#posterCount').textContent = '0' + (active + 1) + ' / 05';
-    scene.style.setProperty('--scene-accent', films[active].color);
-    if (animate && full()) { void caption.offsetWidth; caption.classList.add('changing'); }
-    schedule();
-  }
-  posters.forEach((poster, i) => {
-    poster.addEventListener('click', () => select(i));
-  });
-  $('#posterPrev').addEventListener('click', () => select(active - 1));
-  $('#posterNext').addEventListener('click', () => select(active + 1));
-  scene.addEventListener('keydown', e => {
-    if (!e.target.closest('.cinema-poster') || !['ArrowLeft','ArrowRight'].includes(e.key)) return;
-    e.preventDefault(); select(active + (e.key === 'ArrowRight' ? 1 : -1)); posters[active].focus();
-  });
-  scene.addEventListener('pointerenter', e => { if(e.pointerType !== 'touch') { hovered = true; schedule(); } });
-  scene.addEventListener('pointerleave', () => {
-    hovered = false;
-    scene.style.setProperty('--rx', '0deg'); scene.style.setProperty('--ry', '0deg');
-    scene.style.setProperty('--light-x', '50%'); scene.style.setProperty('--light-y', '50%');
-    schedule();
-  });
-  scene.addEventListener('focusin', () => { focused = true; schedule(); });
-  scene.addEventListener('focusout', e => { if(!scene.contains(e.relatedTarget)) { focused = false; schedule(); } });
-  scene.addEventListener('pointermove', e => {
-    if (!full() || !fine.matches) return;
-    const r = scene.getBoundingClientRect(), x = (e.clientX-r.left)/r.width, y = (e.clientY-r.top)/r.height;
-    scene.style.setProperty('--rx', ((y-.5)*-9).toFixed(2)+'deg');
-    scene.style.setProperty('--ry', ((x-.5)*13).toFixed(2)+'deg');
-    scene.style.setProperty('--light-x', (x*100).toFixed(1)+'%');
-    scene.style.setProperty('--light-y', (y*100).toFixed(1)+'%');
-  });
-  const ribbon = $('#ribbonTrack');
-  const duplicate = ribbon.firstElementChild.cloneNode(true);
-  duplicate.setAttribute('aria-hidden', 'true'); ribbon.append(duplicate);
+  const visiblePanels = new Set();
+  let heroVisible = true, frame = 0;
 
-  // Keep pointer light and click feedback local to the actual interactive surface.
-  document.querySelectorAll('.workflow,.edition-card,.donation-card,.demo-card,.portal-directory').forEach(card=>{
-    card.classList.add('motion-card');
-    const light=document.createElement('span');light.className='card-light';light.setAttribute('aria-hidden','true');card.append(light);
-    let frame=0;
-    card.addEventListener('pointermove',e=>{
-      if(!full()||!fine.matches||frame)return;
-      frame=requestAnimationFrame(()=>{const r=card.getBoundingClientRect();card.style.setProperty('--spot-x',(e.clientX-r.left)+'px');card.style.setProperty('--spot-y',(e.clientY-r.top)+'px');frame=0;});
-    });
-    card.addEventListener('pointerleave',()=>{cancelAnimationFrame(frame);frame=0;card.style.removeProperty('--spot-x');card.style.removeProperty('--spot-y');});
-  });
-  document.querySelectorAll('.workflow,.edition-card,.donation-copy,.portal-intro-grid,.demo-card,.personal-routines').forEach(group=>{
-    const boundary=group.closest('.reveal');if(!boundary)return;
-    [...group.children].filter(el=>!el.classList.contains('card-light')).forEach((el,i)=>{el.classList.add('motion-part');el.style.setProperty('--part-delay',Math.min(i*65,325)+'ms');});
-  });
-  document.querySelectorAll('.mobile-menu a').forEach((el,i)=>el.style.setProperty('--menu-delay',i*30+'ms'));
-  document.addEventListener('pointerdown',e=>{
-    if(!full())return;
-    const button=e.target.closest('.button,.icon-button,.feature-tab,.portal-filter,.copy-code');if(!button)return;
-    const r=button.getBoundingClientRect(),ripple=document.createElement('span');ripple.className='interaction-ripple';ripple.setAttribute('aria-hidden','true');
-    ripple.style.setProperty('--ripple-x',(e.clientX-r.left)+'px');ripple.style.setProperty('--ripple-y',(e.clientY-r.top)+'px');ripple.style.setProperty('--ripple-size',Math.max(r.width,r.height)*2+'px');button.append(ripple);
-    ripple.addEventListener('animationend',()=>ripple.remove(),{once:true});setTimeout(()=>ripple.remove(),750);
-  },{passive:true});
-
-  const personal = $('.personal-art');
-  let pending = false;
-  function scrollScene() {
-    pending = false;
-    if(!full()) return;
-    const r = personal.getBoundingClientRect();
-    const p = Math.max(0, Math.min(1, (innerHeight-r.top)/(innerHeight+r.height)));
-    scene.style.setProperty('--scroll-shift', (-Math.min(scrollY/650,1)*38).toFixed(1)+'px');
-    personal.style.setProperty('--personal-shift', ((p-.5)*-38).toFixed(1)+'px');
-    personal.style.setProperty('--personal-rotate', (-12+p*19).toFixed(1)+'deg');
+  // A single linear scroll clock: no easing, scroll interception or wheel rewriting.
+  function updateScene() {
+    frame = 0;
+    if (!full() || document.hidden) return;
+    if (heroVisible) {
+      const rect = hero.getBoundingClientRect();
+      const progress = Math.max(0, Math.min(1, -rect.top / Math.max(1, rect.height - innerHeight)));
+      inner.style.transform = `scale(${1 + progress * .44}) rotate(${-progress * 42}deg)`;
+      outer.style.transform = `scale(${1 + progress * .65}) rotate(${progress * 55}deg)`;
+      heroCopy.style.opacity = String(1 - progress * .88);
+      heroCopy.style.transform = `translateY(${-progress * 35}px)`;
+    }
+    for (const panel of visiblePanels) {
+      const card = panel.querySelector('.showcase-card');
+      if (!fine.matches || innerWidth <= 800) { card.style.removeProperty('transform'); continue; }
+      const rect = panel.getBoundingClientRect();
+      const progress = Math.max(0, Math.min(1, (innerHeight - rect.top) / (innerHeight * .86)));
+      card.style.transform = `scale(${.66 + progress * .34})`;
+    }
   }
-  addEventListener('scroll', () => { if (!pending && full()) { pending = true; requestAnimationFrame(scrollScene); } }, {passive:true});
-  addEventListener('resize', scrollScene, {passive:true});
-  const observer = new IntersectionObserver(entries => {
-    for(const e of entries) {
-      if(e.target.id === 'top') {
-        inHero = e.isIntersecting; root.dataset.offscreen = String(!inHero); schedule();
-      } else {
-        e.target.classList.toggle('motion-paused', !e.isIntersecting);
-        if(e.isIntersecting) e.target.classList.add('scene-visible');
+  function requestScene() { if (!frame && full() && !document.hidden) frame = requestAnimationFrame(updateScene); }
+  addEventListener('scroll', requestScene, { passive: true });
+  addEventListener('resize', requestScene, { passive: true });
+
+  // Animate only the three presentation moments. Never hide content after scrolling past it.
+  if ('IntersectionObserver' in window) {
+    const reveal = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.remove('pending-reveal');
+        reveal.unobserve(entry.target);
+      });
+    }, { threshold: 0, rootMargin: '0px 0px -25px 0px' });
+    document.querySelectorAll('.reveal').forEach(el => {
+      if (full() && el.getBoundingClientRect().top > innerHeight) el.classList.add('pending-reveal');
+      reveal.observe(el);
+    });
+    const visibility = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        entry.target.classList.toggle('motion-paused', !entry.isIntersecting);
+        if (entry.target === hero) heroVisible = entry.isIntersecting;
+        if (entry.target.classList.contains('showcase-panel')) {
+          if (entry.isIntersecting) visiblePanels.add(entry.target);
+          else visiblePanels.delete(entry.target);
+        }
       }
+      requestScene();
+    }, { threshold: 0 });
+    document.querySelectorAll('.hero,.chapter,.closing,.type-marquee,.footer-marquee,.showcase-panel').forEach(el => visibility.observe(el));
+  } else panels.forEach(el => visiblePanels.add(el));
+
+  function resetSpatialMotion() {
+    [inner, outer, heroCopy, ...panels.map(p => p.querySelector('.showcase-card'))].forEach(el => {
+      el.style.removeProperty('transform');
+      el.style.removeProperty('opacity');
+    });
+    document.querySelectorAll('.pending-reveal').forEach(el => el.classList.remove('pending-reveal'));
+  }
+  new MutationObserver(() => { if (!full()) resetSpatialMotion(); else requestScene(); }).observe(root, { attributes: true, attributeFilter: ['data-motion'] });
+  document.addEventListener('visibilitychange', () => {
+    root.classList.toggle('motion-paused', document.hidden);
+    if (document.hidden) { cancelAnimationFrame(frame); frame = 0; }
+    else requestScene();
+  });
+  try {
+    if (full() && !sessionStorage.getItem('dian-wiki-intro-cyrclo')) {
+      hero.classList.add('intro-on');
+      sessionStorage.setItem('dian-wiki-intro-cyrclo', 'seen');
+      heroCopy.addEventListener('animationend', () => hero.classList.remove('intro-on'), { once: true });
     }
-  }, {threshold:0,rootMargin:'30px'});
-  observer.observe($('#top'));
-  document.querySelectorAll('.chapter,.media-ribbon,.closing').forEach(el => observer.observe(el));
+  } catch { /* Storage restrictions never delay the page. */ }
+
+  // Disclosure is interruptible: each click starts at the currently rendered height.
+  const faqStates = new WeakMap();
+  document.querySelectorAll('.faq-trigger').forEach(button => {
+    const region = document.getElementById(button.getAttribute('aria-controls'));
+    const state = { animation: null };
+    faqStates.set(region, state);
+    region.inert = region.hidden;
+    button.addEventListener('click', () => {
+      const opening = button.getAttribute('aria-expanded') !== 'true';
+      const from = region.hidden ? 0 : region.getBoundingClientRect().height;
+      const fromOpacity = region.hidden ? 0 : Number(getComputedStyle(region).opacity);
+      state.animation?.cancel();
+      button.setAttribute('aria-expanded', String(opening));
+      region.hidden = false;
+      region.inert = !opening;
+      region.style.height = 'auto';
+      const to = opening ? region.scrollHeight : 0;
+      if (!full()) { region.hidden = !opening; region.style.removeProperty('height'); return; }
+      region.style.height = to + 'px';
+      const animation = region.animate([
+        { height: from + 'px', opacity: fromOpacity },
+        { height: to + 'px', opacity: opening ? 1 : 0 },
+      ], { duration: opening ? 320 : 220, easing: 'cubic-bezier(.22,1,.36,1)' });
+      state.animation = animation;
+      animation.onfinish = () => {
+        if (state.animation !== animation) return;
+        region.hidden = !opening;
+        region.style.removeProperty('height');
+        state.animation = null;
+      };
+    });
+  });
   new MutationObserver(() => {
-    if(!full()) {
-      scene.style.setProperty('--rx','0deg'); scene.style.setProperty('--ry','0deg');
-      document.querySelectorAll('.magnetic').forEach(el => el.style.translate = '0 0');
-    }
-    schedule(); scrollScene();
-  }).observe(root, {attributes:true,attributeFilter:['data-motion']});
-  new MutationObserver(schedule).observe(document.body, {subtree:true,attributes:true,attributeFilter:['open']});
-  document.addEventListener('visibilitychange', () => { root.classList.toggle('motion-paused',document.hidden); schedule(); });
-  select(active,false); scrollScene();
+    if (full()) return;
+    document.querySelectorAll('.faq-answer').forEach(region => {
+      const state = faqStates.get(region);
+      state.animation?.cancel(); state.animation = null;
+      const opening = document.getElementById(region.getAttribute('aria-labelledby')).getAttribute('aria-expanded') === 'true';
+      region.hidden = !opening; region.inert = !opening; region.style.removeProperty('height');
+    });
+  }).observe(root, { attributes: true, attributeFilter: ['data-motion'] });
+  // Native horizontal scrolling also supports touch, trackpad, arrows and reduced motion.
+  const tour = document.getElementById('tourWindow');
+  const tourCards = [...tour.querySelectorAll('.tour-card')];
+  const tourPrev = document.getElementById('tourPrev'), tourNext = document.getElementById('tourNext');
+  function updateTour() {
+    const step = tourCards[0].getBoundingClientRect().width + parseFloat(getComputedStyle(tour).gap);
+    const start = Math.round(tour.scrollLeft / step);
+    const count = Math.max(1, Math.round(tour.clientWidth / step));
+    tourPrev.disabled = tour.scrollLeft <= 2;
+    tourNext.disabled = tour.scrollLeft >= tour.scrollWidth - tour.clientWidth - 2;
+    document.getElementById('tourStatus').textContent = `${String(start + 1).padStart(2, '0')}–${String(Math.min(start + count, tourCards.length)).padStart(2, '0')} / 04`;
+  }
+  function moveTour(direction) {
+    const step = tourCards[0].getBoundingClientRect().width + parseFloat(getComputedStyle(tour).gap);
+    tour.scrollBy({left: direction * step, behavior: full() ? 'smooth' : 'instant'});
+  }
+  tourPrev.addEventListener('click', () => moveTour(-1));
+  tourNext.addEventListener('click', () => moveTour(1));
+  tour.addEventListener('scroll', updateTour, {passive:true});
+  tour.addEventListener('keydown', e => {if(e.target!==tour || !['ArrowLeft','ArrowRight'].includes(e.key))return;e.preventDefault();moveTour(e.key==='ArrowRight'?1:-1);});
+  addEventListener('resize', updateTour, {passive:true}); updateTour();
+  requestScene();
 })();
