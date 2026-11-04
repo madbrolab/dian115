@@ -28,6 +28,11 @@ svg {display:block}
 :focus-visible {outline:2px solid currentColor;outline-offset:5px}
 ::selection {background:var(--ink);color:var(--bg)}
 .icon {width:21px;height:21px;stroke:currentColor;stroke-width:1.5;fill:none;flex-shrink:0}
+/* Draw decorative symbols directly so mobile fonts cannot turn them into emoji. */
+.symbol-svg {display:inline-block;width:1em;height:1em;vertical-align:-.1em;fill:currentColor;flex-shrink:0}
+.symbol-lines {fill:none;stroke:currentColor;stroke-width:1.5}
+.capability-symbol>.symbol-svg {display:block}
+.hero-star>.symbol-svg {display:block;margin-inline:auto}
 .section-width {width:min(1280px,calc(100% - 96px));margin-inline:auto}
 .eyebrow {display:block;font:500 11px/1.6 var(--sans);letter-spacing:1.8px;text-transform:uppercase}
 .muted-type {color:var(--muted)}
