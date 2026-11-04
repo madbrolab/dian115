@@ -1,0 +1,267 @@
+{
+  "checked": "2026-11-04",
+  "posters": [
+    {
+      "title": "Project Hail Mary",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg",
+      "page": "https://www.themoviedb.org/movie/687163",
+      "asset": "assets/current/poster-01.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/iOb2fjXLbpJgyQXe46n1WtGCnaa.jpg",
+      "sha256": "bd17c45988bbac7377459061db4af10f08af6d0732fa348a9d371456050ad036"
+    },
+    {
+      "title": "Zootopia 2",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/oJ7g2CifqpStmoYQyaLQgEU32qO.jpg",
+      "page": "https://www.themoviedb.org/movie/1084242",
+      "asset": "assets/current/poster-02.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/oJ7g2CifqpStmoYQyaLQgEU32qO.jpg",
+      "sha256": "c34d967f0762147d2aae57d256a2c40fe82b0f2401373631d628eb5844fcbb70"
+    },
+    {
+      "title": "Avatar: Fire and Ash",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/bRBeSHfGHwkEpImlhxPmOcUsaeg.jpg",
+      "page": "https://www.themoviedb.org/movie/83533",
+      "asset": "assets/current/poster-03.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/bRBeSHfGHwkEpImlhxPmOcUsaeg.jpg",
+      "sha256": "c9a424dc867710d5280b10800362ea24c568586b6d744608299765c66df9a2c0"
+    },
+    {
+      "title": "F1",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/phM9bb6s9c60LA8qwsdk7U1N2cS.jpg",
+      "page": "https://www.themoviedb.org/movie/911430",
+      "asset": "assets/current/poster-04.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/9PXZIUsSDh4alB80jheWX4fhZmy.jpg",
+      "sha256": "73c29e76bf8c11968a9f8c90e2c013cee4bcc5409b1fff0e5c606d3d9522baf0"
+    },
+    {
+      "title": "The Fantastic 4: First Steps",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/nf5qaSEvyYSNeFH0YhSs5EsBLX9.jpg",
+      "page": "https://www.themoviedb.org/movie/617126",
+      "asset": "assets/current/poster-05.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/nf5qaSEvyYSNeFH0YhSs5EsBLX9.jpg",
+      "sha256": "fe9f8ee8e9b01829613c6221ddbc48a9cfb3d0ec4039688af457c8fe5f117d63"
+    },
+    {
+      "title": "Superman",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/ldyfo0BKmz5rWtJJKCvwaNS4cJT.jpg",
+      "page": "https://www.themoviedb.org/movie/1061474",
+      "asset": "assets/current/poster-06.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/ldyfo0BKmz5rWtJJKCvwaNS4cJT.jpg",
+      "sha256": "9c5c0ae39e930316c798360c7c020cb60cda46386aed42316b2bfd3b55f26ef6"
+    },
+    {
+      "title": "Mission: Impossible - The Final Reckoning",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/iKPsC9EFUafRP9SrUznI61getVP.jpg",
+      "page": "https://www.themoviedb.org/movie/575265",
+      "asset": "assets/current/poster-07.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/iKPsC9EFUafRP9SrUznI61getVP.jpg",
+      "sha256": "4341fbd19e3d634363180cfffcf8b57e1014c4d84565da9125c521cffcf61b57"
+    },
+    {
+      "title": "KPop Demon Hunters",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/zT7Lhw3BhJbMkRqm9Zlx2YGMsY0.jpg",
+      "page": "https://www.themoviedb.org/movie/803796",
+      "asset": "assets/current/poster-08.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/zT7Lhw3BhJbMkRqm9Zlx2YGMsY0.jpg",
+      "sha256": "b63a492517998a7a76a9820d0d4a1183ccdcc297b6a4c459c095d10f852dd369"
+    },
+    {
+      "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/fWVSwgjpT2D78VUh6X8UBd2rorW.jpg",
+      "page": "https://www.themoviedb.org/movie/1311031",
+      "asset": "assets/current/poster-09.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/fWVSwgjpT2D78VUh6X8UBd2rorW.jpg",
+      "sha256": "f6e88fd691ba2eae237b2b432920bc0e42614f01854d6ecf526878357414568b"
+    },
+    {
+      "title": "How to Train Your Dragon",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg",
+      "page": "https://www.themoviedb.org/movie/1087192",
+      "asset": "assets/current/poster-10.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/53dsJ3oEnBhTBVMigWJ9tkA5bzJ.jpg",
+      "sha256": "2313d3f51d4c3a2acefdc768c1d602ed1bc744aaa9a628cac8827171bde6919d"
+    },
+    {
+      "title": "Ballerina",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/2VUmvqsHb6cEtdfscEA6fqqVzLg.jpg",
+      "page": "https://www.themoviedb.org/movie/541671",
+      "asset": "assets/current/poster-11.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/2VUmvqsHb6cEtdfscEA6fqqVzLg.jpg",
+      "sha256": "71dcf15853fffc9371fdffb436b1e6ff8d37403a4253f0e5728524cd3576b747"
+    },
+    {
+      "title": "Jurassic World Rebirth",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/1RICxzeoNCAO5NpcRMIgg1XT6fm.jpg",
+      "page": "https://www.themoviedb.org/movie/1234821",
+      "asset": "assets/current/poster-12.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/1RICxzeoNCAO5NpcRMIgg1XT6fm.jpg",
+      "sha256": "c3047d6d09b6957561a89d505ea20d7401fa80008262207959a70f8f62cd9b9a"
+    },
+    {
+      "title": "Thunderbolts*",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/hqcexYHbiTBfDIdDWxrxPtVndBX.jpg",
+      "page": "https://www.themoviedb.org/movie/986056",
+      "asset": "assets/current/poster-13.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/hqcexYHbiTBfDIdDWxrxPtVndBX.jpg",
+      "sha256": "58c689c288b38dc38450a4b321f42a3527bd6446452cebc62b6e8c2b0efec736"
+    },
+    {
+      "title": "Warfare",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/l39TlELomwysfsr37vrvCV6rmaQ.jpg",
+      "page": "https://www.themoviedb.org/movie/1241436",
+      "asset": "assets/current/poster-14.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/l39TlELomwysfsr37vrvCV6rmaQ.jpg",
+      "sha256": "3a76f33db903396737959ebb059f86fe6b9d28f679635c5db9b62f069630746c"
+    },
+    {
+      "title": "One Battle After Another",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/lbBWwxBht4JFP5PsuJ5onpMqugW.jpg",
+      "page": "https://www.themoviedb.org/movie/1054867",
+      "asset": "assets/current/poster-15.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/lbBWwxBht4JFP5PsuJ5onpMqugW.jpg",
+      "sha256": "a068553e255ddc87adaefc5a272783f1ddd918f1f70e0913807fb3cc2bfa92a7"
+    },
+    {
+      "title": "Frankenstein",
+      "poster": "https://media.themoviedb.org/t/p/w300_and_h450_face/g4JtvGlQO7DByTI6frUobqvSL3R.jpg",
+      "page": "https://www.themoviedb.org/movie/1062722",
+      "asset": "assets/current/poster-16.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/g4JtvGlQO7DByTI6frUobqvSL3R.jpg",
+      "sha256": "6a0f93e268652da52454760e6c63fcdfa711c231b99cf8bb64c957fb79fc906b"
+    },
+    {
+      "title": "Wildwood",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/8g7q6o54WfKWRmUQ0Ye8OskevUY.jpg",
+      "page": "https://www.themoviedb.org/movie/791523-wildwood",
+      "asset": "assets/current/poster-17.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/8g7q6o54WfKWRmUQ0Ye8OskevUY.jpg",
+      "sha256": "6ea5f8b5521493e8cf12815004e140f753d39ddb198c45e34436179899842ec4"
+    },
+    {
+      "title": "Verity",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/rmaNMA1seHqpjtnYKzyynFAr1g8.jpg",
+      "page": "https://www.themoviedb.org/movie/1283515-verity",
+      "asset": "assets/current/poster-18.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/rmaNMA1seHqpjtnYKzyynFAr1g8.jpg",
+      "sha256": "af6055e67711f3421341db1e69a9ca005d35e249dfaa55a36916f63521625537"
+    },
+    {
+      "title": "The Mongoose",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/eSS5mvSG84UUuvtbHel5Yu3Wik4.jpg",
+      "page": "https://www.themoviedb.org/movie/1294189-the-mongoose",
+      "asset": "assets/current/poster-19.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/eSS5mvSG84UUuvtbHel5Yu3Wik4.jpg",
+      "sha256": "292be605927aba844260229fedd990d095df0e9349301dbe425db3193433c8b5"
+    },
+    {
+      "title": "Clayface",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/9l1NuFjel2j89hiuiJbsxfblqjy.jpg",
+      "page": "https://www.themoviedb.org/movie/1400940-clayface",
+      "asset": "assets/current/poster-20.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/9l1NuFjel2j89hiuiJbsxfblqjy.jpg",
+      "sha256": "398985c405cf0d47d958e1f4946c47b0d6668a7a949129fcd4d925d78b0b9db2"
+    },
+    {
+      "title": "Crawlers",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/lNXeEpg4yLSRwXwOeR5lbPgwbqL.jpg",
+      "page": "https://www.themoviedb.org/movie/1376400-crawlers",
+      "asset": "assets/current/poster-21.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/lNXeEpg4yLSRwXwOeR5lbPgwbqL.jpg",
+      "sha256": "33e42ea2838b2ed8af88f05d8b19496ef9d730c778a055640ebf6e6c108836de"
+    },
+    {
+      "title": "LA BOLA NEGRA",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/jT5SR5qc9KvVg7HUEmjMWEUYMce.jpg",
+      "page": "https://www.themoviedb.org/movie/1422041-la-bola-negra",
+      "asset": "assets/current/poster-22.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/jT5SR5qc9KvVg7HUEmjMWEUYMce.jpg",
+      "sha256": "e599df9b2b402868e8f9403a3e9e79578f0a6521e4c2fa9e1b6c541f24ae7f36"
+    },
+    {
+      "title": "Mickey 17",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/oQffRNjK8e19rF7xVYEN8ew0j7b.jpg",
+      "page": "https://www.themoviedb.org/movie/696506",
+      "asset": "assets/current/poster-23.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/edKpE9B5qN3e559OuMCLZdW1iBZ.jpg",
+      "sha256": "741111b922303f29cd474ae12d983333a5fe5839ed9a0fb1ff04c30183627c4d"
+    },
+    {
+      "title": "Wicked: For Good",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/czsyPHosFNbh4PPqXfqWu1aBXnA.jpg",
+      "page": "https://www.themoviedb.org/movie/967941",
+      "asset": "assets/current/poster-24.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/si9tolnefLSUKaqQEGz1bWArOaL.jpg",
+      "sha256": "09af787394e53f5febcd0a8b7379ec7abadccff0a9073b7aba48c1ac8abe5daf"
+    },
+    {
+      "title": "Other Mommy",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/fGRNCssTRrhYZxNzykGGCoMsAVq.jpg",
+      "page": "https://www.themoviedb.org/movie/1400837-other-mommy",
+      "asset": "assets/current/poster-25.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/fGRNCssTRrhYZxNzykGGCoMsAVq.jpg",
+      "sha256": "4bf0b223d43f5ad82dc1013ff05410c56d22c9e7d57c4444bc73a918c560379b"
+    },
+    {
+      "title": "Sinners",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/Ap8QwmKfSjYbWC4XIP8w9pdn72O.jpg",
+      "page": "https://www.themoviedb.org/movie/1233413",
+      "asset": "assets/current/poster-26.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/fWPgbnt2LSqkQ6cdQc0SZN9CpLm.jpg",
+      "sha256": "7d8cff3791adebc714feca0c68d261f6d067733483ea9f276daadcee756491ac"
+    },
+    {
+      "title": "Street Fighter",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/ccxdepKqORLwccbzvO4eAGkN0IC.jpg",
+      "page": "https://www.themoviedb.org/movie/1153576-street-fighter",
+      "asset": "assets/current/poster-27.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/ccxdepKqORLwccbzvO4eAGkN0IC.jpg",
+      "sha256": "6b3d27734233f9b4efce1889b827b03a6dd30ddd12993c531b4bbbe1e0049319"
+    },
+    {
+      "title": "Beware Boiúna",
+      "poster": "https://media.themoviedb.org/t/p/w220_and_h330_face/uW5YMPxJUzT9bkafrCKHXjPTCoQ.jpg",
+      "page": "https://www.themoviedb.org/movie/1244523-beware-boiuna",
+      "asset": "assets/current/poster-28.jpg",
+      "image": "https://image.tmdb.org/t/p/w342/uW5YMPxJUzT9bkafrCKHXjPTCoQ.jpg",
+      "sha256": "fb42f0518183e196979d08a9f59f4c4769e35723e7261a82bd0760bead1a4921"
+    }
+  ],
+  "trailers": [
+    {
+      "title": "龙之家族",
+      "tmdb": "https://www.themoviedb.org/tv/94997-house-of-the-dragon/videos",
+      "youtube": "https://www.youtube.com/watch?v=DotnJ7tTA34",
+      "credit": "HBO Max",
+      "backdrop": "https://image.tmdb.org/t/p/w1280/577eXC8wFQT0eUrJcgznSiFPRmk.jpg",
+      "asset": "assets/current/house-of-the-dragon.mp4",
+      "startSeconds": 32,
+      "durationSeconds": 36,
+      "width": 1920,
+      "height": 1080,
+      "audio": false,
+      "encoding": "H.264 / CRF 18 / faststart",
+      "bytes": 10965354,
+      "sha256": "a5e921831313c74b5b54e12c062f3389e85058e287a7816b6d0bd902e0cce3dc",
+      "probe": "  Duration: 00:00:35.99, start: 0.041708, bitrate: 2437 kb/s\n  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 2434 kb/s, 23.98 fps, 23.98 tbr, 24k tbn, start 0.041708 (default)"
+    },
+    {
+      "title": "绝命毒师",
+      "tmdb": "https://www.themoviedb.org/tv/1396-breaking-bad/videos",
+      "youtube": "https://www.youtube.com/watch?v=VaOt6tXyf2Y",
+      "credit": "Breaking Bad & Better Call Saul (official channel)",
+      "backdrop": "https://image.tmdb.org/t/p/w1280/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg",
+      "tmdbListedVideo": "https://www.youtube.com/watch?v=VFkjBy2b50Q",
+      "selectionReason": "Selected the official 1080p programme trailer for clear background playback.",
+      "asset": "assets/current/breaking-bad.mp4",
+      "startSeconds": 12,
+      "durationSeconds": 36,
+      "width": 1920,
+      "height": 1080,
+      "audio": false,
+      "encoding": "H.264 / CRF 18 / faststart",
+      "bytes": 20063169,
+      "sha256": "ad9c8a20841ff04b57cdb19d775f10e618acc87cdc5c53278e896276d445649a",
+      "probe": "  Duration: 00:00:36.04, start: 0.000000, bitrate: 4454 kb/s\n  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 4451 kb/s, 23.98 fps, 23.98 tbr, 24k tbn (default)"
+    }
+  ]
+}

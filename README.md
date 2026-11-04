@@ -46,3 +46,7 @@ python -m http.server 8765 --bind 127.0.0.1
 ## SQLite → PostgreSQL 迁移脚本
 
 [公开脚本与详细教程](https://github.com/madbrolab/dian115/tree/main/tools/database-migration) · [在线迁移教程](https://madbrolab.github.io/dian115/docs/database-migration/)。脚本调用兼容镜像内的数据迁移工具；下载位置、网络、备份、参数与失败恢复方法均在教程中说明。
+
+## 高清背景
+
+首屏新增《龙之家族》和《绝命毒师》的本地 1080p 斜切背景，静音循环、无播放控件，离屏和后台停止播放。`trailers.js` 负责原生视频的调度。28 张近期影视封面已去重；下载来源与视频参数见 `assets/current/sources.json`。

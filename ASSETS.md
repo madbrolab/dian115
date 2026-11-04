@@ -24,3 +24,12 @@ RAVE 界面基于 [StreamVibe · Praha / Produce UI](https://www.figma.com/commu
 `demo/static/demo-catalog/` 保存真实歌手和演职人员头像、专辑封面、频道标志、漫画卷封、经典书籍封面及少量影视横图。完整出处、作者与许可见该目录的 [CREDITS.md](demo/static/demo-catalog/CREDITS.md)、`sources.json`、`attributions.json` 与 `backdrop-sources.json`。图片按展示尺寸下载，本地托管，保留署名来源。
 
 专辑与歌曲资料取自 Apple iTunes Lookup API，原始资料和公开试听地址保存在 `music-metadata.json`。Demo 不包含完整歌曲、影视正片、漫画正文或有声书朗读；观看进度、评分、收藏和直播排期为演示状态。
+
+## 2026-11-04 封面与背景预告片
+
+`assets/current/` 新增 28 张影视封面、两张剧集横图与两个本地背景视频。作品资料来自 TMDB；作品页、图片原地址及校验摘要见 [sources.json](assets/current/sources.json)。图片和影视内容的权利归原权利人，TMDB 不代表对本站的认可。
+
+背景片段保留原生 1920×1080，截取 36 秒并移除音轨，没有移除或重绘视频原有标识。
+
+- 《龙之家族》：[TMDB 条目](https://www.themoviedb.org/tv/94997-house-of-the-dragon/videos)，[HBO Max 官方预告片](https://www.youtube.com/watch?v=DotnJ7tTA34)，片段从第 32 秒开始。
+- 《绝命毒师》：[TMDB 条目](https://www.themoviedb.org/tv/1396-breaking-bad/videos)，[节目官方频道预告片](https://www.youtube.com/watch?v=VaOt6tXyf2Y)，片段从第 12 秒开始。
