@@ -28,7 +28,7 @@ RAVE 界面基于 [StreamVibe · Praha / Produce UI](https://www.figma.com/commu
 
 `assets/current/` 新增 28 张影视封面、两张剧集横图与两个本地背景视频。作品资料来自 TMDB；作品页、图片原地址及校验摘要见 [sources.json](assets/current/sources.json)。图片和影视内容的权利归原权利人，TMDB 不代表对本站的认可。
 
-背景片段保留原生 1920×1080，截取 36 秒并移除音轨，没有移除或重绘视频原有标识。
+背景片段保留原生 1920×1080，选取城市／巨龙远景和房车镜头制作平缓循环，移除音轨，没有移除或重绘视频原有标识。当前片段参数见 sources.json。
 
-- 《龙之家族》：[TMDB 条目](https://www.themoviedb.org/tv/94997-house-of-the-dragon/videos)，[HBO Max 官方预告片](https://www.youtube.com/watch?v=DotnJ7tTA34)，片段从第 32 秒开始。
-- 《绝命毒师》：[TMDB 条目](https://www.themoviedb.org/tv/1396-breaking-bad/videos)，[节目官方频道预告片](https://www.youtube.com/watch?v=VaOt6tXyf2Y)，片段从第 12 秒开始。
+- 《龙之家族》：[TMDB 条目](https://www.themoviedb.org/tv/94997-house-of-the-dragon/videos)，[HBO Max 官方预告片](https://www.youtube.com/watch?v=DotnJ7tTA34)，选用第 27 秒附近的城市／巨龙远景。
+- 《绝命毒师》：[TMDB 条目](https://www.themoviedb.org/tv/1396-breaking-bad/videos)，[节目官方频道预告片](https://www.youtube.com/watch?v=VaOt6tXyf2Y)，选用第 19.3 秒附近的房车镜头。
