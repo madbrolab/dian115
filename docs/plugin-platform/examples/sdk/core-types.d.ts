@@ -106,3 +106,17 @@ export interface MessagingContext {
  wecom:{users():Promise<KnownChat[]>;send(message:WeComMessage):Promise<{ok:true}>};
  messaging:{reply(input:unknown,options:ReplyOptions):Promise<unknown>};
 }
+
+/** Shared host Chromium, API 3.10. No renderer sandbox; browser grant required except status. */
+export interface BrowserStatus {state:'unconfigured'|'missing'|'downloading'|'extracting'|'ready'|'failed';available:boolean;configured:boolean;sandbox:false;architecture:string;version?:string;downloaded_bytes:number;total_bytes:number;active_sessions:number;error?:string}
+export interface BrowserEvent {sequence:number;method:string;params:JSONValue;truncated?:boolean}
+export interface BrowserEvents {events:BrowserEvent[];next_cursor:number;lost:boolean}
+export interface BrowserClient {
+ status():Promise<BrowserStatus>;
+ /** Proxy options require API 3.11. System domain routing is the default; changes apply to new sessions. */
+ open(options?:{profile?:string;proxy_mode?:'system'|'direct'|'custom';proxy_url?:string;timeout_seconds?:number}):Promise<{id:string;profile:string;proxy_mode:'system'|'direct'|'custom'}>;
+ /** Raw page CDP result; Runtime.evaluate returns result/exceptionDetails, not the JS value directly. */
+ command<T=Record<string,JSONValue>>(options:{session:string;method:string;params?:Record<string,JSONValue>;timeout_seconds?:number}):Promise<T>;
+ events(options:{session:string;after?:number;limit?:number;wait_ms?:number;timeout_seconds?:number}):Promise<BrowserEvents>;
+ close(session:string):Promise<OK>;
+}

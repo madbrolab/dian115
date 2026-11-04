@@ -17,7 +17,7 @@
 - [cache](#cache)（1）
 - [看板与历史](#看板与历史)（8）
 - [Emby](#emby)（10）
-- [插件平台](#插件平台)（54）
+- [插件平台](#插件平台)（55）
 - [媒体库](#媒体库)（1）
 - [宿主文件管理](#宿主文件管理)（18）
 - [整理](#整理)（24）
@@ -2363,11 +2363,13 @@ const res = await ctx.api.get('/api/extensions/v3/id')
         }
       ],
       "name": "<name>",
+      "queue": true,
       "schema_version": 3,
       "ui": {
         "entry": "<entry>"
       },
-      "version": "<version>"
+      "version": "<version>",
+      "repository_url": "https://example.com/"
     },
     "numeric_id": 0,
     "report": {
@@ -2424,9 +2426,11 @@ const res = await ctx.api.get('/api/extensions/v3/id')
 | `installation.manifest.id` | string |  |
 | `installation.manifest.jobs` | object[] |  |
 | `installation.manifest.name` | string | 名称 |
+| `installation.manifest.queue` | boolean | API 3.12：插件任务队列显示总开关，默认 true；false 隐藏所有后台任务及页面文件操作。任务级 queue 不能覆盖关闭的总开关。 |
 | `installation.manifest.schema_version` | 3 |  |
 | `installation.manifest.ui` | object |  |
 | `installation.manifest.version` | string |  |
+| `installation.manifest.repository_url` | string(uri) | 项目源码仓库地址，卡片优先展示 |
 | `installation.numeric_id` | integer |  |
 | `installation.report` | ExtensionReport |  |
 | `installation.report.code_digest` | string |  |
@@ -2554,6 +2558,71 @@ const res = await ctx.api.get('/api/extensions/v3/id/ai/providers')
 | `providers[].models` | string[] |  |
 | `providers[].name` | string | 名称 |
 | `providers[].protocol` | string |  |
+
+### POST `/api/extensions/v3/{id}/browser`
+
+<a id="post-api-extensions-v3-id-browser"></a>
+
+调用宿主共享浏览器（API 3.11）。 状态探测无需 browser 授权；其他操作需要声明并取得用户授权。仅操作当前插件的页面，运行包由宿主独立管理，Chromium 沙箱关闭。详见 browser.md。 API 3.11 支持系统域名分流、显式直连和插件自定义代理；代理配置仅在 open 时设置。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `id` | path | string | 是 |  |
+
+**请求体（JSON）**
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `after` | integer |  |  |
+| `limit` | integer |  | 本次最多返回的条数 |
+| `method` | string |  | 页面范围的 CDP 命令，详见 browser.md |
+| `operation` | "status" / "open" / "command" / "events" / "close" | 是 |  |
+| `params` | object |  |  |
+| `profile` | string |  |  |
+| `proxy_mode` | "system" / "direct" / "custom" |  | API 3.11；仅 open。system 按宿主域名清单分流，direct 全部直连，custom 全部使用 proxy_url。会话打开时固定策略，变更需重新打开。 |
+| `proxy_url` | string |  | API 3.11；仅 open 且 proxy_mode=custom 时填写完整 HTTP、HTTPS 或 SOCKS5 URL，可包含百分号编码的账号密码。不返回或记录代理凭据。 |
+| `session` | string |  | 除 status/open 外必填，来自当前插件 open 的 id |
+| `timeout_seconds` | integer |  |  |
+| `wait_ms` | integer |  |  |
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/extensions/v3/id/browser', {
+  "after": 0,
+  "limit": 20,
+  "method": "<method>",
+  "operation": "status",
+  "params": {},
+  "profile": "default",
+  "proxy_mode": "system",
+  "proxy_url": "<proxy_url>",
+  "session": "<session>",
+  "timeout_seconds": 30,
+  "wait_ms": 0
+})
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "active_sessions": 0,
+  "architecture": "<architecture>",
+  "available": true,
+  "configured": true,
+  "downloaded_bytes": 0,
+  "error": "<error>",
+  "sandbox": false,
+  "state": "unconfigured",
+  "total_bytes": 0,
+  "version": "<version>"
+}
+```
+
+响应为宿主或上游服务原样透传的 JSON，字段可能随上游变化；以 HTTP 2xx 判断成功。
 
 ### POST `/api/extensions/v3/{id}/cd2/{method}`
 
@@ -2814,6 +2883,39 @@ const res = await ctx.api.post('/api/extensions/v3/id/cookies/import', {
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `ok` | boolean |  |
+
+### GET `/api/extensions/v3/{id}/daemons`
+
+<a id="get-api-extensions-v3-id-daemons"></a>
+
+读取常驻任务状态。 读取清单中常驻任务的运行状态、重启次数、最后错误和最近日志。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `id` | path | string | 是 |  |
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/extensions/v3/id/daemons')
+```
+
+**响应 200**
+
+```json
+[
+  {
+    "job": "listen",
+    "logs": [],
+    "restarts": 0,
+    "running": true
+  }
+]
+```
+
+响应为宿主或上游服务原样透传的 JSON，字段可能随上游变化；以 HTTP 2xx 判断成功。
 
 ### POST `/api/extensions/v3/{id}/data/sqlite`
 
@@ -3123,54 +3225,54 @@ const res = await ctx.api.delete('/api/extensions/v3/id/hook/%2Fmnt%2Fmedia%2F%E
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `body` | string |  |  |
+| `body_file` | string |  | 流式上传的插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） |
 | `cache_seconds` | integer |  |  |
 | `headers` | object |  |  |
 | `max_bytes` | integer |  |  |
 | `method` | string |  |  |
-| `proxy` | string |  |  |
-| `session` | string |  |  |
-| `timeout_seconds` | integer |  |  |
-| `url` | string | 是 |  |
-| `save_to` | string |  | 响应流式保存到插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）；后台任务自动反馈下载进度 |
-| `body_file` | string |  | 流式上传的插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） |
 | `multipart` | object |  |  |
 | `multipart.fields` | object |  |  |
 | `multipart.files` | object[] |  |  |
+| `multipart.files[].base64` | string |  |  |
+| `multipart.files[].content_type` | string |  |  |
 | `multipart.files[].field` | string | 是 |  |
 | `multipart.files[].filename` | string |  |  |
-| `multipart.files[].content_type` | string |  |  |
 | `multipart.files[].path` | string |  | 插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） |
-| `multipart.files[].base64` | string |  |  |
 | `multipart.files[].text` | string |  |  |
+| `proxy` | string |  |  |
+| `save_to` | string |  | 响应流式保存到插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）；后台任务自动反馈下载进度 |
+| `session` | string |  |  |
+| `timeout_seconds` | integer |  |  |
+| `url` | string | 是 |  |
 
 **调用**
 
 ```js
 const res = await ctx.api.post('/api/extensions/v3/id/http', {
   "body": "<body>",
+  "body_file": "<body_file>",
   "cache_seconds": 0,
   "headers": {},
   "max_bytes": 67108864,
   "method": "<method>",
-  "proxy": "<proxy>",
-  "session": "<session>",
-  "timeout_seconds": 120,
-  "url": "<url>",
-  "save_to": "<save_to>",
-  "body_file": "<body_file>",
   "multipart": {
     "fields": {},
     "files": [
       {
+        "base64": "<base64>",
+        "content_type": "<content_type>",
         "field": "<field>",
         "filename": "<filename>",
-        "content_type": "<content_type>",
         "path": "/mnt/media/电影",
-        "base64": "<base64>",
         "text": "<text>"
       }
     ]
-  }
+  },
+  "proxy": "<proxy>",
+  "save_to": "<save_to>",
+  "session": "<session>",
+  "timeout_seconds": 120,
+  "url": "<url>"
 })
 ```
 
@@ -3850,6 +3952,40 @@ const res = await ctx.api.post('/api/extensions/v3/id/media/probe', {
 | `subtitle_tracks[].title` | string | 标题 |
 | `video_codec` | string |  |
 | `width` | integer |  |
+
+### POST `/api/extensions/v3/{id}/messaging/{operation}`
+
+<a id="post-api-extensions-v3-id-messaging-operation"></a>
+
+调用消息渠道。 调用已授权的消息渠道：Telegram 机器人、企业微信或 TG 监控账号。权限须在清单 permissions 中声明并由用户授权；结果不含令牌和渠道配置。后台与页面用 ctx.telegram、ctx.wecom、ctx.messaging。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `id` | path | string | 是 |  |
+| `operation` | path | "telegram.chats" / "telegram.send" / "telegram.edit" / "telegram.delete" / "wecom.users" / "wecom.send" / "account.status" / "account.dialogs" / "account.messages" / "account.send" / "reply" | 是 |  |
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/extensions/v3/id/messaging/telegram.chats', {
+  "chat_id": "123456789",
+  "format": "text",
+  "text": "任务完成"
+})
+```
+
+**响应 200**
+
+```json
+{
+  "message_id": 42,
+  "ok": true
+}
+```
+
+响应为宿主或上游服务原样透传的 JSON，字段可能随上游变化；以 HTTP 2xx 判断成功。
 
 ### GET `/api/extensions/v3/{id}/network-capabilities`
 
@@ -4742,73 +4878,6 @@ const res = await ctx.api.delete('/api/extensions/v3/id/watches/watch')
 | `path` | path | string | 是 | 宿主绝对 Linux 路径；位于 CD2 挂载路径下时由 CD2 处理 |
 
 **响应 200**：成功响应
-
-### POST `/api/extensions/v3/{id}/messaging/{operation}`
-
-<a id="post-api-extensions-v3-id-messaging-operation"></a>
-
-调用消息渠道。 调用已授权的消息渠道：Telegram 机器人、企业微信或 TG 监控账号。权限须在清单 permissions 中声明并由用户授权；结果不含令牌和渠道配置。后台与页面用 ctx.telegram、ctx.wecom、ctx.messaging。
-
-**参数**
-
-| 名称 | 位置 | 类型 | 必填 | 说明 |
-| --- | --- | --- | --- | --- |
-| `id` | path | string | 是 |  |
-| `operation` | path | "telegram.chats" / "telegram.send" / "telegram.edit" / "telegram.delete" / "wecom.users" / "wecom.send" / "account.status" / "account.dialogs" / "account.messages" / "account.send" / "reply" | 是 |  |
-
-**调用**
-
-```js
-const res = await ctx.api.post('/api/extensions/v3/id/messaging/telegram.chats', {
-  "chat_id": "123456789",
-  "text": "任务完成",
-  "format": "text"
-})
-```
-
-**响应 200**
-
-```json
-{
-  "ok": true,
-  "message_id": 42
-}
-```
-
-响应为宿主或上游服务原样透传的 JSON，字段可能随上游变化；以 HTTP 2xx 判断成功。
-
-### GET `/api/extensions/v3/{id}/daemons`
-
-<a id="get-api-extensions-v3-id-daemons"></a>
-
-读取常驻任务状态。 读取清单中常驻任务的运行状态、重启次数、最后错误和最近日志。
-
-**参数**
-
-| 名称 | 位置 | 类型 | 必填 | 说明 |
-| --- | --- | --- | --- | --- |
-| `id` | path | string | 是 |  |
-
-**调用**
-
-```js
-const res = await ctx.api.get('/api/extensions/v3/id/daemons')
-```
-
-**响应 200**
-
-```json
-[
-  {
-    "job": "listen",
-    "running": true,
-    "restarts": 0,
-    "logs": []
-  }
-]
-```
-
-响应为宿主或上游服务原样透传的 JSON，字段可能随上游变化；以 HTTP 2xx 判断成功。
 
 ## 媒体库
 
@@ -8492,10 +8561,92 @@ const res = await ctx.api.get('/api/tasks')
 **响应 200**（按契约结构生成的示例值）
 
 ```json
-{}
+[
+  {
+    "created_at": "2026-10-29T21:30:00+08:00",
+    "deleted_files": 0,
+    "end_time": "2026-10-29T21:30:00+08:00",
+    "error": "<error>",
+    "failed_files": 0,
+    "id": "<id>",
+    "logs": [
+      ""
+    ],
+    "merged_into_task_id": "<merged_into_task_id>",
+    "message": "<message>",
+    "name": "<name>",
+    "plugin_group": {
+      "cancelled": 0,
+      "completed": 0,
+      "failed": 0,
+      "installation_id": 0,
+      "pending": 0,
+      "running": 0,
+      "tasks": [
+        {
+          "id": "<id>",
+          "message": "<message>",
+          "name": "<name>",
+          "progress": 0,
+          "status": "<status>"
+        }
+      ],
+      "total": 0
+    },
+    "progress": 0,
+    "result": null,
+    "result_available": true,
+    "result_version": 0,
+    "rule_id": 1,
+    "rule_name": "<rule_name>",
+    "start_time": "2026-10-29T21:30:00+08:00",
+    "status": "<status>",
+    "sync_type": "<sync_type>",
+    "synced_files": 0,
+    "total_files": 0,
+    "type": "<type>"
+  }
+]
 ```
 
-响应为宿主或上游服务原样透传的 JSON，字段可能随上游变化；以 HTTP 2xx 判断成功。
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `[].created_at` | string(date-time) | 创建时间（RFC 3339） |
+| `[].deleted_files` | integer | 删除文件数 |
+| `[].end_time` | string(date-time) | 结束时间 |
+| `[].error` | string | 错误信息 |
+| `[].failed_files` | integer | 失败文件数 |
+| `[].id` | string | 任务 ID |
+| `[].logs` | string[] | 实时日志 |
+| `[].merged_into_task_id` | string | 去重后实际执行中的任务 ID |
+| `[].message` | string | 当前状态消息 |
+| `[].name` | string | 名称 |
+| `[].plugin_group` | object | 插件合并条目，按安装标识分组；计数为队列当前保留的可见记录，tasks 保留各次任务的独立 ID。普通任务省略。 |
+| `[].plugin_group.cancelled` | integer |  |
+| `[].plugin_group.completed` | integer |  |
+| `[].plugin_group.failed` | integer |  |
+| `[].plugin_group.installation_id` | integer |  |
+| `[].plugin_group.pending` | integer |  |
+| `[].plugin_group.running` | integer |  |
+| `[].plugin_group.tasks` | object[] |  |
+| `[].plugin_group.tasks[].id` | string |  |
+| `[].plugin_group.tasks[].message` | string | 给用户看的结果说明 |
+| `[].plugin_group.tasks[].name` | string | 名称 |
+| `[].plugin_group.tasks[].progress` | number |  |
+| `[].plugin_group.tasks[].status` | string |  |
+| `[].plugin_group.total` | integer | 符合条件的总条数 |
+| `[].progress` | number | 进度百分比 |
+| `[].result` | any | 通用后台任务最终结果（主要供 AI 长任务轮询） |
+| `[].result_available` | boolean | 是否有可读取的任务结果 |
+| `[].result_version` | integer |  |
+| `[].rule_id` | integer | 关联规则ID |
+| `[].rule_name` | string | 规则名称 |
+| `[].start_time` | string(date-time) | 开始时间 |
+| `[].status` | string | pending 等待中、running 运行中、completed 已完成、failed 失败、cancelled 已取消 |
+| `[].sync_type` | string | 同步类型 |
+| `[].synced_files` | integer | 已同步文件数 |
+| `[].total_files` | integer | 总文件数 |
+| `[].type` | string | 任务类型（如 file_operation、plugin 等） |
 
 ### GET `/api/tasks/{id}`
 
@@ -8531,6 +8682,24 @@ const res = await ctx.api.get('/api/tasks/id')
   "merged_into_task_id": "<merged_into_task_id>",
   "message": "<message>",
   "name": "<name>",
+  "plugin_group": {
+    "cancelled": 0,
+    "completed": 0,
+    "failed": 0,
+    "installation_id": 0,
+    "pending": 0,
+    "running": 0,
+    "tasks": [
+      {
+        "id": "<id>",
+        "message": "<message>",
+        "name": "<name>",
+        "progress": 0,
+        "status": "<status>"
+      }
+    ],
+    "total": 0
+  },
   "progress": 0,
   "result": null,
   "result_available": true,
@@ -8558,6 +8727,20 @@ const res = await ctx.api.get('/api/tasks/id')
 | `merged_into_task_id` | string | 去重后实际执行中的任务 ID |
 | `message` | string | 当前状态消息 |
 | `name` | string | 名称 |
+| `plugin_group` | object | 插件合并条目，按安装标识分组；计数为队列当前保留的可见记录，tasks 保留各次任务的独立 ID。普通任务省略。 |
+| `plugin_group.cancelled` | integer |  |
+| `plugin_group.completed` | integer |  |
+| `plugin_group.failed` | integer |  |
+| `plugin_group.installation_id` | integer |  |
+| `plugin_group.pending` | integer |  |
+| `plugin_group.running` | integer |  |
+| `plugin_group.tasks` | object[] |  |
+| `plugin_group.tasks[].id` | string |  |
+| `plugin_group.tasks[].message` | string | 给用户看的结果说明 |
+| `plugin_group.tasks[].name` | string | 名称 |
+| `plugin_group.tasks[].progress` | number |  |
+| `plugin_group.tasks[].status` | string |  |
+| `plugin_group.total` | integer | 符合条件的总条数 |
 | `progress` | number | 进度百分比 |
 | `result` | any | 通用后台任务最终结果（主要供 AI 长任务轮询） |
 | `result_available` | boolean | 是否有可读取的任务结果 |

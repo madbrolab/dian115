@@ -28,7 +28,7 @@
 - `操作过于频繁`：超过消息渠道限额，按提示等待。账号发送要控制频率，避免 Telegram 风控。
 - 常驻任务不运行：调用 `GET /api/extensions/v3/{id}/daemons` 看 `last_error` 和日志。反复重启时等待时间会增加到 5 分钟。
 - `每个插件最多同时保持 16 条长连接`：用完调用 `close()`，脚本结束时宿主也会全部关闭。SSE 连接也计入。
-- `permission network.tcp is not granted`：清单声明 `network.tcp`，并在插件卡片打开“原生 TCP”。
+- `permission network.tcp is not granted`：清单声明 `network.tcp`，并在插件管理页“权限与显示”中打开“网络端口”。
 - TCP 端口外部连不上：`host` 默认只绑定本机；Docker 部署还要映射端口。
 - `address already in use`：端口被占用，换端口。常驻任务重启时会自动重试。
 - SSE 收不到实时数据：反向代理开了缓冲，或处理器没有用 `ctx.response`。长时间无数据时用 `stream.comment()` 发心跳。

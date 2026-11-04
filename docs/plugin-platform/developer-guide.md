@@ -55,6 +55,25 @@ export async function recover(ctx, checkpoint) {
 
 后台 ctx 包含 api、storage.get/set/remove、http、files.call、watch.add/remove、cd2.call、notify、cookiecloud、sleep、settings.get、server、codec、crypto、html、xml、plugin（id/version/generation/revision/host_api），以及 task.id/update/log/checkpoint/checkpointValue。后台 storage.set 返回版本数字；页面 storage.set 返回 `{revision}`，分别对应进程内存储和普通 HTTP 响应。宿主返回的结构统一使用文档中的小写 JSON 字段名。
 
+## 按任务加载逻辑
+
+执行时只读取并实例化当前 job.entry 及其静态依赖，不会执行其他 job 入口或页面代码。单次任务内同一个模块只实例化一次，任务之间使用新的 JS 上下文。安装与编译阶段仍检查完整后台源码，这不代表每次运行加载全部模块。
+
+静态 import 会加载整条依赖链；一个大文件中的全部函数也属于同一个模块。将不同任务拆到独立入口，将可选的大功能拆到独立模块，进入分支后再动态导入：
+
+```js
+// plugin.json: jobs[].entry = "jobs/scan.js"
+export async function run(ctx, input) {
+  if (input.download) {
+    const { download } = await import('../lib/download.js')
+    return download(ctx, input)
+  }
+  return { scanned: true }
+}
+```
+
+不要让扫描入口静态导入导出全部功能的汇总模块，也不要把所有任务重新打包进同一个大文件；保留分开的模块文件，才能在运行时按任务和分支加载。模块认证与安装后防篡改检查继续生效。
+
 ## 后台标准库（宿主 API 3.1）
 
 后台没有 DOM 与 Node 内置模块，但提供常用 Web 基础对象，便于直接移植浏览器侧代码：
@@ -71,12 +90,13 @@ task.update 接收 stage、message、progress（0–100）以及任务级计数 
 
 ## 任务队列与进度
 
-（宿主插件 API 3.2 起提供 job `title`、`queue` 与任务级计数；较低版本宿主忽略这些字段。）每次后台运行（定时、监听、事件、页面 `ctx.tasks.run`）都会进入宿主的统一任务队列，任务队列页面实时显示，可在那里取消。
+（宿主插件 API 3.2 起提供 job `title`、`queue` 与任务级计数；API 3.12 起支持插件级 `queue` 总开关和按插件合并显示。）每次后台运行（定时、监听、事件、页面 `ctx.tasks.run`）进入宿主统一调度；作者决定是否显示，可见运行在任务队列中按插件合并，可在那里取消。
 
-- **名称**：显示为“插件名：标题”。标题取清单 job 的 `title`（不超过 40 字），省略时用任务 ID。
+- **名称与合并**：同一安装只显示一个以插件名命名的条目；连续或并行运行都更新这个条目。详情列出当前队列保留的各次任务，名称为“插件名：标题”。标题取 job 的 `title`（不超过 40 字），省略时用任务 ID。完整历史仍在插件数据库中。
 - **进度**：`ctx.task.update({progress})` 直接设置百分比，队列只显示进度条。批量处理时上报任务级计数 `total`、`done`、`failed`，队列显示“已处理 done / total”和失败数；只给计数不给 progress 时，进度按 (done + failed) ÷ total 计算。
 - **文件操作**：任务里调用宿主 move/copy/remove 时，宿主每秒把当前文件的进度写进 message（如“移动 a.mkv 1.2 GiB/4.0 GiB”）。上报了 total 的任务，整体进度只由计数决定，不会被单个文件的 0–100% 来回覆盖；没有上报计数的任务，文件进度就是任务进度。
-- **隐藏短任务**：job 设置 `"queue": false` 时不在任务队列页面显示，适合测试、预览这类由页面发起、几秒内完成的任务；运行记录、日志和结果仍保存在插件历史里。
+- **显示开关**：清单顶层 `"queue": false` 隐藏插件的全部任务队列活动，包括页面文件操作；默认 `true`。job 还可单独设置 `"queue": false` 隐藏探测、预览等任务。只有插件与 job 均允许显示时才进入可见条目；不影响实际执行与插件运行历史。
+- **进度与取消**：合并条目的百分比取当前活动任务的平均进度；详情保留每次任务各自的进度。取消条目会取消当前显示的运行中和等待中任务，隐藏任务不受影响。清除条目只删除队列记录。
 - **中断后的核对**：已开始执行的任务被宿主重启打断后记为“需要核对”（attention_required）。不允许重叠的 job 在核对前不接受新的运行，包括定时和监听触发，页面应提供 `ctx.tasks.retry(id)` 入口，由 recover 处理器判断完成、继续或继续等待核对。
 
 ```js
@@ -122,7 +142,7 @@ await ctx.files.call({ operation: 'rename', path: '/mnt/cd2/115/a.mkv', name: 'b
 - remove 可用 `paths` 批量；rename 用 `name`（只改名不换目录）；mkdir 递归创建；walk 仅限本地路径（CD2 请用 list 逐层）；hash 仅 sha256 且只限本地路径，避免通过挂载下载整个云端文件。
 - 返回：system 方式为 `{backend:'system',items:[{source,path,size}]}`；CD2 方式为 `{backend:'cd2',result}`；list/stat 条目含 name/path/is_dir/size/modified/backend。
 
-**进度**：后台任务里调用 move/copy/remove 时，宿主每秒把进度写入当前任务（stage=`file:move`、progress 百分比、message 如“移动 a.mkv 1.2 GiB/4.0 GiB（1/3）”），任务队列页面实时可见；`progress:false` 关闭。页面通过 `ctx.files.call` 发起的宿主移动/复制/删除会作为“插件 X：文件移动”任务进入统一任务队列，默认等待完成并返回 `{task_id,result}`；`ctx.files.start(options)` 立即返回 `{task_id}`，在任务队列查看进度。CD2 gRPC 操作由 CD2 服务端完成，只有开始和完成两个进度点。
+**进度**：后台任务里调用 move/copy/remove 时，宿主每秒把进度写入当前任务（stage=`file:move`、progress 百分比、message 如“移动 a.mkv 1.2 GiB/4.0 GiB（1/3）”），任务队列页面实时可见；`progress:false` 关闭。页面通过 `ctx.files.call` 发起的宿主移动/复制/删除进入统一调度，遵循插件顶层 `queue` 开关，可见时归入插件合并条目；默认等待完成并返回 `{task_id,result}`，`ctx.files.start(options)` 立即返回 `{task_id}`，该 ID 仍可读取单次文件任务的独立状态。CD2 gRPC 操作由 CD2 服务端完成，只有开始和完成两个进度点。
 
 页面：`ctx.files.downloadURL(path)` 与 `ctx.files.upload(path, file)` 接受插件相对路径及允许的宿主绝对路径，包括 CD2 挂载路径。Webhook 返回的 `file`、HTTP `body_file` 和 multipart 的 `path` 使用相同路径规则。
 
@@ -175,7 +195,7 @@ export async function handle(ctx, req) {
  "settings":[{"key":"site","label":"站点地址","type":"url","required":true},{"key":"token","label":"令牌","type":"password"},{"key":"mode","label":"模式","type":"select","options":[{"label":"快速","value":"fast"}],"default":"fast"}]}
 ```
 
-**设置放在插件页面里**：有页面的插件应把全部设置做在自己的页面内，默认值写在插件代码里，不要再声明清单 `settings`。清单 `settings` 只用于没有页面的插件：宿主据此在插件卡片上显示设置图标，点开后在“设置”标签渲染表单，类型有 text、password、textarea、number、boolean、select、path、url；值保存在插件 KV 的 `settings` 键，后台与页面 `ctx.settings.get()` 返回默认值叠加已保存值。
+**设置放在插件页面里**：有页面的插件应把全部设置做在自己的页面内，默认值写在插件代码里，不要再声明清单 `settings`。清单 `settings` 只用于没有页面的插件：宿主据此在插件卡片“更多”菜单中显示设置入口，点开后在“设置”标签渲染表单，类型有 text、password、textarea、number、boolean、select、path、url；值保存在插件 KV 的 `settings` 键，后台与页面 `ctx.settings.get()` 返回默认值叠加已保存值。
 
 **插件卡片**：主按钮“打开”进入插件页面；图标只用于设置（仅声明了清单 settings 时出现）、调试（任务运行与日志）和安装记录；启用开关和“侧边栏”开关在卡片上，更新与卸载在“更多”菜单。
 
@@ -200,3 +220,7 @@ export async function handle(ctx, req) {
 ### 订阅时间基线（API 3.5）
 
 复用 [订阅增量接口](subscriptions.md)，不按固定周期重复读取整份磁力 / ED2K 缓存或全部 PT 搜索结果。基线与未提交候选一起保存，完整空结果也推进；查询错误与未完成分页必须保留原基线。
+
+## 共享浏览器
+
+API 3.10 的 `ctx.browser` 在页面和后台共用同一宿主服务，先读[共享浏览器](browser.md)。声明并取得 browser 授权，不自行下载内核或暴露调试端口。后台会话随任务结束关闭，登录档案按 profile 保留；页面退出时主动 close。

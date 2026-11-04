@@ -10,7 +10,7 @@ const page=await ctx.http.request({url:'https://user.example/account',timeout_se
 
 http.request 返回 status、最终 url、headers（值为字符串数组）、body 文本、cached。文本按 Content-Type 或页面 meta 自动把 GBK/Big5 等转成 UTF-8，`charset` 可强制指定。
 
-请求体五选一：`body`（字符串）、`body_base64`（二进制，可直接传 Uint8Array）、`body_file`（插件相对路径或允许的宿主绝对路径，流式上传）、`form`（对象，自动 urlencoded）、`json`（自动序列化）、`multipart`（`{fields,files:[{field,filename,path|base64|text,content_type}，path 接受插件相对路径或允许的宿主绝对路径，含 CD2 挂载路径]}`，文件流式发送）。`response_type:'base64'` 返回 body_base64，`'json'` 额外返回解析后的 data。`save_to:'downloads/a.torrent'` 或 `save_to:'/mnt/cd2/115/下载/a.torrent'`把 2xx 响应流式写盘并返回 `{path,size,sha256}`，不受默认 64 MiB 限制（设置 max_bytes 才限制）；API 3.9 起可直接写入允许的宿主或 CD2 挂载目录，不需要下载后再移动。所有路径沿用宿主保护规则，插件声明 `requires.api: "3.9"`。后台任务下载每秒更新当前任务的字节、已知总量和平均速度，页面可通过 `ctx.tasks.get(runId)` 读取进度；批量任务整体计数不会被单次下载覆盖。未知总量时不估算百分比。临时文件位于目标目录，成功后改名，失败清理；非 2xx 不写文件而返回错误正文。`follow_redirects:false` 返回原始 3xx，`max_redirects` 默认 10。全局 `fetch` 是同一能力的标准写法。默认 GET、120 秒、64 MiB 单次响应；timeout_seconds 可设 1–86400，0 使用默认。不写盘的响应 max_bytes 最多 256 MiB（进入宿主共享内存）；更大的内容必须用 save_to。POST body 为字符串，表单用 application/x-www-form-urlencoded，JSON 自行 stringify 并设置 headers。HTTP 错误状态作为 status 返回；连接和超时抛错。请求不自动重发变更动作。默认复用宿主网络代理选择；proxy 可填写代理 URL 或 direct 直连。
+请求体五选一：`body`（字符串）、`body_base64`（二进制，可直接传 Uint8Array）、`body_file`（插件相对路径或允许的宿主绝对路径，流式上传）、`form`（对象，自动 urlencoded）、`json`（自动序列化）、`multipart`（`{fields,files:[{field,filename,path|base64|text,content_type}，path 接受插件相对路径或允许的宿主绝对路径，含 CD2 挂载路径]}`，文件流式发送）。`response_type:'base64'` 返回 body_base64，`'json'` 额外返回解析后的 data。`save_to:'downloads/a.torrent'` 或 `save_to:'/mnt/cd2/115/下载/a.torrent'`把 2xx 响应流式写盘并返回 `{path,size,sha256}`，不受默认 64 MiB 限制（设置 max_bytes 才限制）；API 3.9 起可直接写入允许的宿主或 CD2 挂载目录，不需要下载后再移动。所有路径沿用宿主保护规则，插件声明 `requires.api: "3.9"`。后台任务下载每秒更新当前任务的字节、已知总量和平均速度，页面可通过 `ctx.tasks.get(runId)` 读取进度；批量任务整体计数不会被单次下载覆盖。未知总量时不估算百分比。临时文件位于目标目录，成功后改名，失败清理；非 2xx 不写文件而返回错误正文。`follow_redirects:false` 返回原始 3xx，`max_redirects` 默认 10。全局 `fetch` 是同一能力的标准写法。默认 GET、120 秒、64 MiB 单次响应；timeout_seconds 可设 1–86400，0 使用默认。不写盘的响应 max_bytes 最多 256 MiB（进入宿主共享内存）；更大的内容必须用 save_to。POST body 为字符串，表单用 application/x-www-form-urlencoded，JSON 自行 stringify 并设置 headers。HTTP 错误状态作为 status 返回；连接和超时抛错。请求不自动重发变更动作。默认复用宿主网络代理选择；proxy 可填写代理 URL 或 direct 直连。共享浏览器使用独立的 proxy_mode/proxy_url 参数（API 3.11），详见[浏览器代理](browser.md#代理配置api-311)，不要混用参数。
 
 自动处理重定向各跳 Set-Cookie；插件内不同 session 独立记忆登录态，Cookie 属性及会话 Cookie 在重启后保留。未指定 User-Agent 时使用此前渲染取得的 UA。明文 Cookie 头只包含 name/value，不能表达原始 Path/HttpOnly/Secure 等属性；CookieCloud 导入使用 importCookies 保留属性。
 
@@ -25,17 +25,19 @@ CookieCloud 使用宿主已经配置并启用的本地服务。115 相关域名�
 
 每个插件 session 最多记忆 4096 条 Cookie。可选 cache_seconds（0–31536000 秒）只缓存显式请求的 GET 200；带 Set-Cookie 或 Cache-Control:no-store 不缓存。缓存按插件、URL、调用者请求头和 Cookie 区分，默认不缓存。缓存加密存放于插件 SQLite，最多 128 MiB，按到期时间淘汰；此容量不占用 KV 配额。缓存可能包含私密页面，使用适合业务的短 TTL。超时不再沿用普通管理接口的十秒上限。
 
-需要 JavaScript 挑战页面时复用宿主已有服务；省略 endpoint 由宿主内部读取 FlareSolverr 地址，不向插件开放系统设置：
+已确认遇到 Cloudflare 等站点挑战、需要尝试自动验证时，建议优先复用宿主 FlareSolverr；无需挑战但需要 JavaScript 渲染、DOM、点击或截图时，使用共享 Chromium 的 `ctx.browser`。普通接口和静态内容继续用 `ctx.http.request`。完整选用说明见[共享浏览器](browser.md#如何选择-chromium-与-flaresolverr)。这是调用方的选择，不会自动切换；FlareSolverr 也不保证每次挑战都能通过。
+
+省略 endpoint 由宿主内部读取 FlareSolverr 地址，不向插件开放系统设置：
 
 ```js
 const page=await ctx.http.render({url:'https://user.example',timeout_seconds:180})
 ```
 
-宿主不内置 Chromium。渲染等待 wait_seconds 可设 0–86400，整体仍受本次 timeout_seconds、任务截止时间及清理预算约束；共用 FlareSolverr 客户端单次 JSON 响应最多 16 MiB。FlareSolverr 每次使用独立临时会话并尝试销毁，结果 Cookie 回存插件 session；只用于页面请求，不提供完整自动化浏览器。HTTPStatusVerified=false 表示其合成的成功状态不能证明站点业务成功。支持正常的 HTTP/HTTPS 跨站重定向，返回最终文档与该文档的 Cookie。初始请求只注入匹配目标站点的 Cookie；需要跨站登录时应明确对登录站点完成登录，不能把临时渲染会话当作完整持久浏览器。会话回写处理 Cookie 删除，并保留并行 HTTP 操作已经更新的值。
+此接口仍使用 FlareSolverr；API 3.10 的完整页面控制另见[共享浏览器](browser.md)，两者不自动互换。渲染等待 wait_seconds 可设 0–86400，整体仍受本次 timeout_seconds、任务截止时间及清理预算约束；共用 FlareSolverr 客户端单次 JSON 响应最多 16 MiB。FlareSolverr 每次使用独立临时会话并尝试销毁，结果 Cookie 回存插件 session；只用于页面请求，不提供完整自动化浏览器。HTTPStatusVerified=false 表示其合成的成功状态不能证明站点业务成功。支持正常的 HTTP/HTTPS 跨站重定向，返回最终文档与该文档的 Cookie。初始请求只注入匹配目标站点的 Cookie；需要跨站登录时应明确对登录站点完成登录，不能把临时渲染会话当作完整持久浏览器。会话回写处理 Cookie 删除，并保留并行 HTTP 操作已经更新的值。
 
 GET `/api/extensions/v3/{id}/network-capabilities` 仅返回 `default_render_endpoint` 与 `render_configured` 布尔值，供插件识别默认渲染能力与配置状态，不返回地址或凭据。旧宿主没有此接口时返回 404，可保留用户已有的显式 endpoint 配置；新的显式 endpoint 仍优先于宿主默认。浏览器等待后的文档直接返回，补采 Cookie 的第二次导航不会覆盖该文档；同名同路径 Cookie 优先采用浏览器新生成的精确域 Cookie。
 
-这些新增渲染行为需要安装包含相应实现的宿主；仅声明 `requires.api=3.5` 不能代替能力探测。`network-capabilities` 的 404 才表示旧宿主；401、网络故障或其他错误不能被当作“未配置”。插件不得读取 `/api/settings` 来发现服务地址，也不提供浏览器表单点击、任意页面脚本执行或 `ready_selector` 参数。
+这些新增渲染行为需要安装包含相应实现的宿主；仅声明 `requires.api=3.5` 不能代替能力探测。`network-capabilities` 的 404 才表示旧宿主；401、网络故障或其他错误不能被当作“未配置”。插件不得读取 `/api/settings` 来发现服务地址，此 render 接口不提供表单点击、任意页面脚本执行或 `ready_selector` 参数；点击与页面脚本使用独立的 `ctx.browser`。
 
 ## 登录与自动验证
 

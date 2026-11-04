@@ -49,10 +49,12 @@
 | GET | `/api/extensions/v3/{id}` | 安装元数据、风险报告及资源基础地址 |
 | POST | `/api/extensions/v3/{id}/ai/complete` | 复用宿主 AI 生成或翻译文本 |
 | GET | `/api/extensions/v3/{id}/ai/providers` | 读取可用于插件的 AI 提供商与模型 |
+| POST | `/api/extensions/v3/{id}/browser` | 调用宿主共享浏览器（API 3.11） |
 | POST | `/api/extensions/v3/{id}/cd2/{method}` | 复用宿主 CD2 gRPC 客户端 |
 | POST | `/api/extensions/v3/{id}/cookiecloud/{operation}` | 读取或写入宿主本地 CookieCloud |
 | POST | `/api/extensions/v3/{id}/cookies` | 读取 Cookie 或写入明文 Cookie 头 |
 | POST | `/api/extensions/v3/{id}/cookies/import` | 导入 CookieCloud 格式 Cookie；保留属性 |
+| GET | `/api/extensions/v3/{id}/daemons` | 读取常驻任务状态 |
 | POST | `/api/extensions/v3/{id}/data/sqlite` | 只读查询插件自有静态 SQLite |
 | POST | `/api/extensions/v3/{id}/files` | 文件操作：插件相对路径及非受保护的宿主绝对路径均可读写（含 CD2 挂载路径，API 3.9）。宿主 move/copy/remove 进入任务队列 |
 | GET | `/api/extensions/v3/{id}/files/download` | 下载允许路径的文件（插件相对路径或宿主/CD2 挂载绝对路径，支持 Range） |
@@ -74,6 +76,7 @@
 | POST | `/api/extensions/v3/{id}/media/image` | 裁剪、缩放与合成插件图片 |
 | POST | `/api/extensions/v3/{id}/media/nfo` | 读取媒体 NFO 的结构化资料 |
 | POST | `/api/extensions/v3/{id}/media/probe` | 复用宿主 FFP 获取真实媒体信息 |
+| POST | `/api/extensions/v3/{id}/messaging/{operation}` | 调用消息渠道 |
 | GET | `/api/extensions/v3/{id}/network-capabilities` | 查询宿主默认渲染能力与配置状态（不返回地址和凭据） |
 | POST | `/api/extensions/v3/{id}/notify` | 发送插件通知（选择渠道、格式与按渠道内容） |
 | POST | `/api/extensions/v3/{id}/render` | 按需复用外部 FlareSolverr |
@@ -196,5 +199,3 @@
 | POST | `/v3/decrypt` | 管理员上传加密 .dian115p 并解密为源码包；不留档、不执行插件 |
 | GET | `/v3/info` | 读取加密 Worker 的插件包格式与上传容量 |
 | POST | `/v3/releases` | 公开上传完整源码 .dian115p 包并取得加密交付包，无需登录或口令 |
-| POST | `/api/extensions/v3/{id}/messaging/{operation}` | 调用消息渠道 |
-| GET | `/api/extensions/v3/{id}/daemons` | 读取常驻任务状态 |

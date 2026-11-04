@@ -68,6 +68,8 @@ test('manifest risk is reported', t => {
   assert.ok(rulesFor({ permissions: ['telegram.account'] }).includes('permission-account'))
   assert.ok(rulesFor({ author: '' }).includes('no-author'))
   assert.ok(rulesFor({ permissions: ['network.tcp'] }).includes('permission-tcp'))
+  assert.ok(rulesFor({ permissions: ['browser'] }).includes('permission-browser'))
+  assert.ok(rules(auditPlugin(plugin(t, 'await ctx.browser.open({})'))).includes('undeclared-browser'))
   assert.ok(rules(auditPlugin(plugin(t, 'await ctx.tcp.connect({})'))).includes('undeclared-tcp'))
   assert.ok(rules(auditPlugin(plugin(t, "await ctx.tcp.connect({ host: '10.0.0.5', port: 6379 })", { permissions: ['network.tcp'] }))).includes('sensitive-port'))
   assert.ok(rulesFor({ jobs: [{ id: 'job', entry: 'job.js', daemon: true }] }).includes('daemon'))

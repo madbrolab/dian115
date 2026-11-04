@@ -1,3 +1,4 @@
+import type { BrowserClient } from './core-types.js'
 import type { HostAPI, HTTPClient, Files, CD2Client, Notification, NotificationResult, NotifyChannelInfo, CookieCloudClient, WatchInput, JSONValue, ListenerState, MessagingContext, HTTPRequest, PluginWebSocket, HTTPStream, TCPSocket, TCPServer, ResponseStreams } from './core-types.js'
 export type Bytes = Uint8Array
 export type BinaryInput = string|Uint8Array|ArrayBuffer
@@ -13,6 +14,7 @@ export interface XMLNode {name:string;attrs:Record<string,string>;text:string;ch
 export interface AESOptions {mode?:'cbc'|'gcm'|'ctr'|'ecb';key:BinaryInput;iv?:BinaryInput;data:BinaryInput;aad?:BinaryInput;padding?:'pkcs7'|'none';output?:Output}
 export interface RSAOptions {key:string;data:BinaryInput;padding?:'pkcs1'|'oaep'|'pss';hash?:string;signature?:BinaryInput;output?:Output}
 export interface BackgroundContext extends MessagingContext {
+ browser:BrowserClient;
  ws:{connect(options:string|(HTTPRequest&{protocols?:string[];max_message_bytes?:number})):Promise<PluginWebSocket>};
  /** Requires the network.tcp grant. */
  tcp:{connect(options:{host:string;port:number;tls?:boolean;server_name?:string;insecure?:boolean;timeout_seconds?:number}):Promise<TCPSocket>;listen(options:{port:number;host?:string}):Promise<TCPServer>};

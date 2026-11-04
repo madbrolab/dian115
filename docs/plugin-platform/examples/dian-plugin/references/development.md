@@ -4,7 +4,9 @@
 
 - `run(ctx, input)` 是默认入口，所有异步操作必须 `await`。
 - `business_key` 要稳定：相同 key 和输入返回原任务，重试不重复执行。用户每次点击都是新业务时才带时间戳。
-- 任务写 `title`，队列显示“插件名：标题”。测试、预览这类短任务设 `queue: false`。
+- 任务写 `title`，用于队列明细中的运行名称。API 3.12 起，同一插件的可见任务合并为一个条目；批量取消作用于当前可见的运行和等待任务，执行上下文、结果与插件历史仍各自独立。
+- 测试、预览这类短任务在 job 设置 `queue: false`。插件顶层 `queue: false` 可关闭全部队列展示，包括页面文件操作；任务级开关不能覆盖关闭的总开关，使用顶层开关声明 `requires.api: "3.12"`。
+- 每个普通后台任务只加载自身入口及其依赖。把重逻辑拆成独立文件，在需要的分支 `await import('./heavy.js')`；静态导入会提前加载，巨型单文件不会自动按函数拆分。详见 `assets/public-kit/developer-guide.md` 的“按任务加载逻辑”。
 - 批量用 `ctx.task.update({total,done,failed,message})` 上报计数。
 - 不允许重叠的任务被重启打断后处于“需要核对”，会拒绝新运行。页面要提供 `ctx.tasks.retry(id)`。
 - 通知用稳定的 `dedupe_key`，不要换 key 绕过未知结果。
@@ -29,10 +31,14 @@
 
 ## 网络
 
+- 无需站点挑战的页面渲染和操作用共享 Chromium；已确认的挑战优先用 FlareSolverr 的 ctx.http.render。按 browser.md 的选用说明处理，FlareSolverr 不保证必过，也不提供完整页面操作；宿主目前不自动切换，两套会话状态也不会自动共享。
 - 站点登录、验证、慢响应先读 `network.md` 的“登录与自动验证”和“避免每次查询都等待浏览器”。
 - 大响应用 `save_to` 写盘，不读进内存。
 - FlareSolverr 用 `network-capabilities` 探测，不读全局设置。
+- 完整浏览器用 `ctx.browser`，先读 `browser.md`。后台会话随任务结束关闭，profile 登录状态保留；页面退出主动 close。检查 Runtime.evaluate 的 exceptionDetails 与事件 lost/truncated，不把超时当作未提交。
+- 浏览器 API 3.11 的 open 接受 proxy_mode 与 proxy_url；不要把 ctx.http 的 proxy 参数照搬到 browser。系统域名分流包含子资源和重定向，账号密码不返回插件；更换设置后关闭并重新 open。
 - 动态站点在 `declared_usage` 说明由用户配置。
+- 安装报告的固定 IP 加密 DNS 仅用于安装或更新前的快照；插件运行期网络仍按 `ctx.http`、浏览器或 FlareSolverr 自身的代理参数处理，不把快照当作业务请求的解析策略。
 
 ## 文件
 

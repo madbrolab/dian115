@@ -6,6 +6,7 @@ export function checkProject(directory) {
  const id=/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/
  if(manifest.schema_version!==3||!id.test(manifest.id)||manifest.id.length>128||!manifest.name||!manifest.version)errors.push('schema_version 3、有效 id、name、version 为必填')
  if(!manifest.ui&&!manifest.jobs?.length&&!manifest.http)errors.push('至少提供页面、任务或 HTTP 处理器')
+ if(manifest.queue!==undefined&&typeof manifest.queue!=='boolean')errors.push('插件 queue 须为布尔值')
  const validPath=name=>typeof name==='string'&&name!==''&&!name.includes('\\')&&!name.includes('\0')&&!name.startsWith('/')&&name.split('/').every(p=>p&&p!=='.'&&p!=='..')
  const exists=name=>{if(!validPath(name))return false;try{return lstatSync(resolve(root,name)).isFile()}catch{return false}}
  if(manifest.ui&&(!exists(manifest.ui.entry)||! /\.(js|html)$/.test(manifest.ui.entry)))errors.push('ui.entry 必须是目录内存在的 .js 或 .html')

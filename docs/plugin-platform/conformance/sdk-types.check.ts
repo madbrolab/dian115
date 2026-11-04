@@ -3,6 +3,11 @@ import type { OfflineTaskList, ShareReceiveResult, TmdbMovieDetail } from '../ex
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 const assert = <T extends true>() => {}
 export async function run(ctx: BackgroundContext) {
+  const browser = await ctx.browser.open({profile:'login',proxy_mode:'custom',proxy_url:'socks5://127.0.0.1:1080'})
+  assert<Equal<typeof browser.proxy_mode,'system'|'direct'|'custom'>>()
+  const browserEvents = await ctx.browser.events({session:browser.id,after:0,wait_ms:500})
+  assert<Equal<typeof browserEvents.next_cursor,number>>()
+  await ctx.browser.close(browser.id)
   const tasks = await ctx.api.get('/api/115/offline/tasks?page=1&status=downloading')
   assert<Equal<typeof tasks, OfflineTaskList>>()
   const first = tasks.items[0].progress

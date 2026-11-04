@@ -1,4 +1,4 @@
-# 插件 API 完整参考（宿主插件 API 3.9）
+# 插件 API 完整参考（宿主插件 API 3.11）
 
 本页列出插件可用的全部能力。第一次开发先看[快速开始](quickstart.md)，字段规则见[清单参考](manifest.md)，常见写法见[配方](cookbook.md)。业务细节见[开发指南](developer-guide.md)、[网络](network.md)、[生命周期](storage-and-lifecycle.md)、[页面](ui-theme.md)；接口契约见 [OpenAPI](openapi-v3.json) 与[速查](host-api-quick-reference.md)；类型见 [SDK](examples/sdk/)。
 
@@ -12,11 +12,11 @@
 | `requires.api` | 最低宿主插件 API，例如 `"3.1"`；宿主更低时拒绝安装。3.2 新增 job 的 `title`、`queue` 与 `task.update` 的 `total/done/failed`，较低宿主会忽略这些字段 |
 | `icon` | 包内 svg/png/webp，显示在插件中心与页面标题 |
 | `ui.entry` | `ui/page.js`（导出 `mount(el, ctx)`）或 `ui/index.html` |
-| `menu` | `{title, order}`，侧栏入口的标题与排序（需要 ui）；是否显示由用户在插件卡片的“侧边栏”开关决定，默认不显示 |
+| `menu` | `{title, order}`，侧栏入口的标题与排序（需要 ui）；是否显示由用户在插件管理页“权限与显示”的“显示在侧边栏”开关决定，默认不显示 |
 | `settings[]` | `{key,label,type,default,options,required,help,placeholder}`；type：text/password/textarea/number/boolean/select/path/url。值存在 KV 的 `settings` 键 |
 | `jobs[]` | `{id,entry,handler='run',recover,timeout_seconds,default_schedule|interval_seconds,allow_overlap,title,queue,daemon}`；`daemon:true` 是[常驻任务](long-connections.md)；`title`（≤40 字）是任务在宿主任务队列里的名称（显示为“插件名：标题”）；`queue:false` 不在任务队列页面显示，适合测试、预览等短任务 |
 | `events[]` | `message`（commands/prefixes/keywords/patterns/channels）、`account_message`（prefixes/keywords/patterns/all/peer_types/include_outgoing）、`callback`、`host`（types，支持 `*` 与前缀通配），见[清单参考](manifest.md) |
-| `permissions[]` | `telegram.bot`、`wecom`、`telegram.account`、`network.tcp`，用户授权后生效，见[消息渠道](messaging.md)和[长连接](long-connections.md) |
+| `permissions[]` | `telegram.bot`、`wecom`、`telegram.account`、`network.tcp`、`browser`，用户授权后生效，见[消息渠道](messaging.md)和[长连接](long-connections.md) |
 | `http` | `{entry,handler='handle',timeout_seconds≤3600,public}`：Webhook、公开回调与监听端口的处理器 |
 | `listeners[]` | `{id,port,host}`，启用时自动绑定的端口（需要 http） |
 | `declared_usage` | 作者声明（apis/sites/files/risk…），仅告知，不是权限白名单 |
@@ -51,7 +51,7 @@ UI、jobs、http 至少提供一项。
 | `api.*` | 进程内调用宿主 `/api/` 路由，返回原接口 JSON；失败抛错含 status/method/path/data |
 | `storage.get/set/remove` | set 返回版本号 |
 | `settings.get()` | 设置值 |
-| `task.id/checkpointValue/update({stage,message,progress,total,done,failed})/log(text)/checkpoint(value)` | 任务进度、日志（单条 ≤8 KiB，保留最近 500 条）、检查点；进度实时显示在宿主任务队列，见[开发指南](developer-guide.md#任务队列与进度) |
+| `task.id/checkpointValue/update({stage,message,progress,total,done,failed})/log(text)/checkpoint(value)` | 任务进度、日志（单条 ≤8 KiB，最多保留最近 500 条且总计 ≤256 KiB）、检查点；进度实时显示在宿主任务队列，见[开发指南](developer-guide.md#任务队列与进度) |
 | `http.request/cookies/importCookies/render` | 见[网络](network.md) |
 | `files.call(options)` | 见第 5 节，宿主文件进度自动写入当前任务 |
 | `notify(options)` / `notifications.send`、`notifications.channels()` | 通知：channels 选渠道、format 选 text/markdown/html、overrides 按渠道内容，返回逐渠道 deliveries（见[插件通知](notifications.md)） |
@@ -59,6 +59,7 @@ UI、jobs、http 至少提供一项。
 | `server.list/listen/close`、`server.hookPath/publicHookPath` | 端口与回调路径 |
 | `telegram.bot.*`、`telegram.account.*`、`wecom.*`、`messaging.reply` | 需授权，见[消息渠道](messaging.md) |
 | `ws.connect(options)`、`http.stream(options)` | 长连接与流式读取，仅后台，见[长连接](long-connections.md) |
+| `browser.status/open/command/events/close` | 宿主共享 Chromium，页面及后台可用，除 status 外需要 browser 授权，见[共享浏览器](browser.md) |
 | `tcp.connect(options)`、`tcp.listen(options)` | 原生 TCP，需要 `network.tcp` 授权，仅后台 |
 | `response.sse(options)`、`response.stream(options)` | 流式输出，仅 HTTP 处理器 |
 | `sleep(ms)` | 可取消等待，单次 ≤24 小时 |
@@ -114,10 +115,10 @@ API 3.9 起，除受保护路径外，宿主和 CD2 挂载路径均开放内容�
 | HTTP 处理器 | 单插件并发 32，请求体 32 MiB，默认 60 秒 |
 | 异步宿主调用 | 全局 128（`DIAN115_EXTENSION_IO_CONCURRENCY`），满时立即报错 |
 | 目录快照 | 并发 4（`DIAN115_EXTENSION_WATCH_CONCURRENCY`），实时监听 ≤8192 个目录 |
-| 任务 | 默认 30 分钟，最多 365 天；日志单条 8 KiB、保留 500 条 |
+| 任务 | 默认 30 分钟，最多 365 天；日志单条 8 KiB、最多 500 条且总计 256 KiB；后台任务共享 4 个执行名额，HTTP 脚本另共享 4 个，详见[资源调度](storage-and-lifecycle.md) |
 | HTTP 缓存 | 每插件 128 MiB；Cookie 每会话 4096 条 |
 | 长连接 | 每插件 16 条，含 WebSocket、流式读取、TCP 和对外推送；WebSocket 单条消息默认 1 MiB，最大 16 MiB；TCP 单次写入 16 MiB |
-| 常驻任务 | 重启等待 1 秒到 5 分钟；保留最近 200 条日志 |
+| 常驻任务 | 重启等待 1 秒到 5 分钟；最多保留最近 200 条日志且总计 256 KiB |
 | 消息渠道 | 每插件每分钟：机器人 30、企业微信 20、账号发送 20、账号读取 60 |
 | CD2 递归监听 | 最多 500 个目录，单次扫描 2 分钟 |
 

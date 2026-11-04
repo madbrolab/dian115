@@ -10,6 +10,8 @@ for(const item of index.plugins||[]){
  const label=`${item.id||'未命名'} ${item.version||''}`.trim(),key=`${item.id}\0${item.version}`
  if(seen.has(key))errors.push(`${label}：重复版本`);seen.add(key)
  for(const field of ['id','name','version','author','description','changelog','delivery'])if(!String(item[field]||'').trim())errors.push(`${label}：缺少 ${field}`)
+ for(const field of ['icon','repository_url'])if(item[field]!==undefined&&!url(item[field]))errors.push(`${label}：${field} 须为 HTTP/HTTPS 地址`)
+ if(item.keywords!==undefined&&(!Array.isArray(item.keywords)||item.keywords.some(word=>typeof word!=='string')))errors.push(`${label}：keywords 须为字符串数组`)
  if(!url(item.homepage))errors.push(`${label}：homepage 须为 HTTP/HTTPS 地址`)
  if(!url(item.source_url))errors.push(`${label}：source_url 须为 HTTP/HTTPS 地址`)
  if(!/^[a-fA-F0-9]{64}$/.test(item.sha256||''))errors.push(`${label}：sha256 须为 64 位十六进制`)

@@ -6,6 +6,11 @@ export function createPluginContext(id, request, options = {}) {
   const api = Object.fromEntries(['get','post','put','patch','delete','head'].map(method => [method, (path, body) => request(method.toUpperCase(), path, body, source)]))
   return {
     id, api,
+    browser: { status: () => own('POST', '/browser', { operation: 'status' }),
+      open: (options = {}) => own('POST', '/browser', { ...options, operation: 'open' }),
+      command: options => own('POST', '/browser', { ...options, operation: 'command' }),
+      events: options => own('POST', '/browser', { ...options, operation: 'events' }),
+      close: session => own('POST', '/browser', { operation: 'close', session }) },
     storage: { get: async key => (await own('GET', '/storage/' + encodeURIComponent(key))).value,
       set: (key, value, expected_revision) => own('PUT', '/storage/' + encodeURIComponent(key), { value, expected_revision }),
       remove: key => own('DELETE', '/storage/' + encodeURIComponent(key)),

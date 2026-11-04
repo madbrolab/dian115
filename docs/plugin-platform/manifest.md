@@ -13,10 +13,12 @@
 | `author` | 上架必填 | 作者署名，显示在插件卡片和安装确认；本地安装缺失时显示“未署名” |
 | `description` | 上架必填 | 说明插件做什么 |
 | `homepage` | 否 | 项目主页 |
+| `repository_url` | 否 | 项目源码仓库地址，卡片优先展示；省略时使用 `homepage` |
 | `icon` | 否 | 包内的 svg、png 或 webp |
 | `requires.api` | 建议 | 最低宿主插件 API，如 `"3.7"`；宿主更低时拒绝安装 |
 | `ui` | 三选一 | `{entry}`，存在的 `.js` 或 `.html` 文件 |
 | `jobs` | 三选一 | 后台任务数组 |
+| `queue` | 否 | API 3.12：插件任务队列显示总开关，默认 `true`；`false` 隐藏后台任务与页面文件操作 |
 | `http` | 三选一 | HTTP 处理器 |
 | `menu` | 否 | `{title, order}`，需要 `ui`；是否显示在侧栏由用户决定 |
 | `settings` | 否 | 宿主渲染的设置表单；有页面的插件建议把设置做在页面里 |
@@ -35,13 +37,15 @@
 | `entry` | 必填，存在的文件 |
 | `handler` | 导出的函数名，默认 `run` |
 | `recover` | 恢复函数名，见[开发指南](developer-guide.md) |
-| `title` | 任务队列里的名称，最多 40 字 |
-| `queue` | `false` 时不显示在任务队列页，适合短任务 |
+| `title` | 任务名称，最多 40 字，在插件合并条目的明细中显示 |
+| `queue` | `false` 隐藏此任务；顶层 `queue:false` 时所有任务均隐藏，不能由任务级 `true` 覆盖 |
 | `default_schedule` | 五段 cron |
 | `interval_seconds` | 固定间隔，优先于 `default_schedule`，最大 365 天 |
 | `timeout_seconds` | 默认 30 分钟，最大 365 天 |
 | `allow_overlap` | 是否允许同时运行多个实例 |
 | `daemon` | 常驻任务，不能同时设置定时或超时，见[长连接](long-connections.md) |
+
+同一安装的可见任务合并为一个稳定的插件条目，列表、SSE 与首页卡片一致；实际运行、取消上下文与插件历史仍按次独立。合并条目的取消操作只取消此插件当前显示的运行中和等待中任务；清除条目只清除队列记录，不删除插件内历史。使用顶层 `queue` 请声明 `requires.api: "3.12"`。
 
 ## events[]
 
@@ -59,7 +63,7 @@
 
 ## permissions[]
 
-可选值：`telegram.bot`、`wecom`、`telegram.account`、`network.tcp`。声明只是申请，用户在插件卡片上逐项开启后才生效。
+可选值：`telegram.bot`、`wecom`、`telegram.account`、`network.tcp`、`browser`。声明只是申请，用户在插件管理页“权限与显示”中逐项开启后才生效。
 
 ## settings[]
 
@@ -103,3 +107,5 @@
   }
 }
 ```
+
+使用共享浏览器需声明 `requires.api: "3.10"` 与 `permissions:["browser"]`，用户授权后才可打开页面。状态探测无需此授权；使用 proxy_mode/proxy_url 需将 requires.api 提升为 "3.11"，见[共享浏览器](browser.md)。

@@ -30,6 +30,7 @@ const RULES = [
   { id: 'decode-call', severity: 'medium', tags: ['decode'], title: '运行时解码数据', why: '解码本身常见，和动态执行或联网同时出现时要重点看。', pattern: /(?<![\w.$])atob\s*\(|base64Decode\s*\(|hexDecode\s*\(|\.aesDecrypt\s*\(/ },
   { id: 'split-path', severity: 'medium', tags: ['obfuscation'], title: '拼接接口路径', why: '把路径拆开拼接可以躲过安装扫描，security.md 明确禁止。', pattern: /['"`]\/?api\/?['"`]\s*\+|['"`]\/a?p?i?['"`]\s*\+\s*['"`]|\.join\(\s*['"`]\/['"`]\s*\)\s*\+?.*\bapi\b|['"`]\/api\/[a-z-]{1,6}['"`]\s*\+\s*['"`][a-z]/i },
   { id: 'dynamic-member', severity: 'medium', tags: ['obfuscation'], title: '动态属性访问宿主能力', why: '用变量取 ctx 成员会让安装报告认不出调用的是什么。', pattern: /\bctx\s*\[\s*[^'"`\]]/ },
+  { id: 'browser-control', severity: 'medium', tags: ['browser'], title: '使用宿主共享浏览器', why: '核对访问站点、页面脚本和登录档案的用途；接口不提供网页进程沙箱。', pattern: /\.browser\.(?:open|command|events)\s*\(/ },
   // Credentials and sessions.
   { id: 'browser-credentials', severity: 'high', tags: ['credential'], title: '读取浏览器登录数据', why: '插件页面和宿主同源，这些数据可能含登录状态。', pattern: /document\.cookie|(?:local|session)Storage\s*(?:\.\s*getItem\s*\(\s*|\[\s*)['"`][^'"`]*(?:token|auth|session|cookie|jwt|secret|password|credential)|(?:local|session)Storage\s*\.\s*key\s*\(|(?:keys|entries|stringify)\s*\(\s*(?:window\.)?(?:local|session)Storage/i },
   { id: 'browser-storage', severity: 'medium', tags: [], title: '读取浏览器本地存储', why: '插件数据应放在 ctx.storage。确认读的不是宿主的数据。', pattern: /(?:local|session)Storage\s*(?:\.\s*getItem|\[)/ },
@@ -153,6 +154,8 @@ function manifestChecks(files, tags, add) {
   const note = (id, severity, title, why) => add({ id, severity, title, why }, 'plugin.json', 0, '')
   const permissions = new Set(manifest.permissions || [])
   if (!String(manifest.author || '').trim()) note('no-author', 'medium', '没有署名', '无法追溯作者，也不能进入市场。')
+  if (permissions.has('browser')) note('permission-browser', 'medium', '申请浏览器控制权限', '可操作独立网页和登录状态，核对用途与站点。')
+  if (tags.has('browser') && !permissions.has('browser')) note('undeclared-browser', 'high', '使用浏览器但未声明权限', '运行时将被拒绝。')
   if (permissions.has('network.tcp')) note('permission-tcp', 'high', '申请原生 TCP 权限', '授权后能直连内网任意端口或开放端口，确认确有必要。')
   if (tags.has('tcp') && !permissions.has('network.tcp')) note('undeclared-tcp', 'high', '使用 TCP 但未声明权限', '运行时会被拒绝；声明和行为不符值得警惕。')
   if (permissions.has('telegram.account')) note('permission-account', 'high', '申请 TG 账号权限', '授权后能以用户本人身份读写聊天，确认确有必要。')

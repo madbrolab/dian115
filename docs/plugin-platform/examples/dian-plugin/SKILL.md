@@ -5,7 +5,7 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
 
 # DIAN115 插件开发与审查
 
-当前契约是宿主插件 API 3.9。先判断任务类型：
+当前契约是宿主插件 API 3.12。按实际使用的能力声明最低 `requires.api`，不要无故提高已有插件的最低版本。先判断任务类型：
 
 - **审查插件**（用户问是否安全、有没有恶意代码、能不能装）：读 [references/malware-review.md](references/malware-review.md) 并照做。全程只读，绝不运行插件，不写新代码。
 - **开发或修改插件**：继续看下面。
@@ -33,7 +33,7 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
    - 字段规则：`assets/public-kit/manifest.md`
    - ctx 全部能力：`assets/public-kit/api-reference.md`
    - 宿主接口：先搜 `assets/public-kit/host-api-quick-reference.md`，再查 `host-api-reference.md` 对应段落。这个文件超过一万行，只搜索，不要整篇读
-   - 按主题：`messaging.md`、`long-connections.md`、`network.md`、`subscriptions.md`、`media-and-ai.md`、`notifications.md`、`ui-theme.md`、`storage-and-lifecycle.md`
+   - 按主题：`messaging.md`、`long-connections.md`、`network.md`、`browser.md`、`subscriptions.md`、`media-and-ai.md`、`notifications.md`、`ui-theme.md`、`storage-and-lifecycle.md`
 4. 检查并生成可读源码包，供自己的 DIAN115 安装调试或作为编译输入：
 
    ```sh
@@ -54,7 +54,12 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
 - CD2 文件一律写挂载路径，比如 `/mnt/cd2/115/电影`，不要写 `cd2:`，`ctx.watch.add` 不要填 `kind`。
 - 除受保护路径外，插件可读写宿主和 CD2 挂载文件，HTTP save_to 可直接写目标目录；需要此能力声明 requires.api: "3.9"。内容读写走文件系统，双边 CD2 的移动/复制仍走 gRPC。Token 和渠道配置仍由宿主管理，不要绕过受限接口。
 - 外部写操作前保存检查点，`recover` 先核对结果。不确定是否已执行时返回 `attention`，不要换标识重做。
+- 后台按任务入口及依赖加载；重逻辑拆成独立模块，分支需要时再 `import()`，不要把所有功能聚合到每个任务入口。任务显示与模块加载规则见 `references/development.md`。
+- API 3.12 的插件级 `queue: false` 隐藏全部任务队列活动，job 可进一步隐藏；可见任务按插件合并，执行与历史各自独立。权限和侧边栏设置在“更多 → 权限管理与显示”，不放在插件卡片上。
 - 插件数据放 `ctx.storage`，账号密码放设置，不写进源码、日志或报告。
+- 网络选用：普通接口与静态内容用 ctx.http.request；无需站点挑战的页面渲染和操作用共享 Chromium 的 ctx.browser；已确认遇到挑战时优先 ctx.http.render（FlareSolverr）。先读 `assets/public-kit/browser.md` 的选用说明，不保证挑战必过，不把 403 一概视为挑战；两者不自动切换或共享 Cookie、档案与代理。
+- 需要页面脚本、点击、截图或网络事件时，先读 `assets/public-kit/browser.md`，使用宿主共享 `ctx.browser`；声明 API 3.10 与 browser 权限。运行包由宿主管理，不在插件中下载 Chromium，不接管 FlareSolverr 内部进程。Runtime.evaluate 表达式可用网页 DOM，后台脚本自身仍无 DOM。
+- 浏览器代理参数需要 API 3.11：open 默认 system 按宿主域名清单分流；direct 强制直连；custom 配合 proxy_url。主页面、子资源和重定向均按各自域名处理，策略在打开时固定，更换代理需重新打开。代理密码从设置读取，不放日志；ctx.http.render 仍独立使用 FlareSolverr。
 - 只申请用到的 `permissions`，TG 账号权限尽量配合关键字过滤。能用 HTTP 或 WebSocket 时不要申请 `network.tcp`。
 
 ## 验证边界

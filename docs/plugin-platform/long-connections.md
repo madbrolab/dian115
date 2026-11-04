@@ -25,7 +25,7 @@ export async function run(ctx) {
 - 处理函数结束或抛错后自动重启，等待时间从 1 秒翻倍到最多 5 分钟；连续运行满 1 分钟后恢复为 1 秒。所以连接断开时直接抛错即可，不用自己写重连。
 - 不进入任务队列，不能设置 `default_schedule`、`interval_seconds`、`timeout_seconds`。
 - 没有 `ctx.task.checkpoint` 恢复语义；需要保存的进度写入 `ctx.storage`。
-- 状态和最近 200 条日志可用 `GET /api/extensions/v3/{id}/daemons` 读取，`console.log` 会写入这里。
+- 状态和最近日志可用 `GET /api/extensions/v3/{id}/daemons` 读取，最多保留 200 条且总计不超过 256 KiB，`console.log` 会写入这里。
 - 超出内存预算时脚本被中止，随后按上述规则重启。
 
 ## WebSocket
@@ -112,7 +112,7 @@ await body.write(JSON.stringify({ n: 1 }) + '\n')
 
 ## 原生 TCP
 
-需要 `network.tcp` 权限，在清单声明，用户在插件卡片上开启后才能用。未授权时调用抛错。只在后台可用。
+需要 `network.tcp` 权限，在清单声明，用户在插件管理页“权限与显示”中开启后才能用。未授权时调用抛错。只在后台可用。
 
 ```js
 const socket = await ctx.tcp.connect({ host: 'redis.lan', port: 6379 })

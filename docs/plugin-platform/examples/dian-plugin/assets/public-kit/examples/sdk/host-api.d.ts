@@ -199,6 +199,59 @@ export type ExtensionBadgeReadResult = {
   size: number
 }
 
+export type ExtensionBrowserEvents = {
+  events: Array<{
+    method: string
+    params: unknown
+    sequence: number
+    truncated?: boolean
+  }>
+  lost: boolean
+  next_cursor: number
+}
+
+export type ExtensionBrowserRequest = {
+  after?: number
+  /** 本次最多返回的条数 */
+  limit?: number
+  /** 页面范围的 CDP 命令，详见 browser.md */
+  method?: string
+  operation: "status" | "open" | "command" | "events" | "close"
+  params?: {
+    [key: string]: unknown
+  }
+  profile?: string
+  /** API 3.11；仅 open。system 按宿主域名清单分流，direct 全部直连，custom 全部使用 proxy_url。会话打开时固定策略，变更需重新打开。 */
+  proxy_mode?: "system" | "direct" | "custom"
+  /** API 3.11；仅 open 且 proxy_mode=custom 时填写完整 HTTP、HTTPS 或 SOCKS5 URL，可包含百分号编码的账号密码。不返回或记录代理凭据。 */
+  proxy_url?: string
+  /** 除 status/open 外必填，来自当前插件 open 的 id */
+  session?: string
+  timeout_seconds?: number
+  wait_ms?: number
+}
+
+export type ExtensionBrowserSession = {
+  id: string
+  profile: string
+  /** 本会话采用的代理模式，不包含系统代理地址和凭据 */
+  proxy_mode: "system" | "direct" | "custom"
+}
+
+export type ExtensionBrowserStatus = {
+  active_sessions: number
+  architecture: string
+  available: boolean
+  configured: boolean
+  downloaded_bytes: number
+  /** 失败原因（原始业务错误） */
+  error?: string
+  sandbox: false
+  state: "unconfigured" | "missing" | "downloading" | "extracting" | "ready" | "failed"
+  total_bytes: number
+  version?: string
+}
+
 export type ExtensionCD2File = {
   id: string
   /** 是否为目录 */
@@ -409,20 +462,24 @@ export type ExtensionManifest = ({
     handler?: string
     id: string
     interval_seconds?: number
-    /** false 时不在宿主任务队列页面显示（适合测试、预览等短任务）；运行记录仍保存在插件历史中。默认 true */
+    /** false 隐藏此任务；仅在插件级 queue 也允许时显示。同一插件的可见运行合并展示。 */
     queue?: boolean
     recover?: string
     timeout_seconds?: number
-    /** 任务在宿主任务队列中的名称，显示为“插件名：标题”；省略时使用任务 ID */
+    /** 任务名称，显示在插件合并条目的明细中；省略时使用任务 ID */
     title?: string
   }>
   /** 名称 */
   name: string
+  /** API 3.12：插件任务队列显示总开关，默认 true；false 隐藏所有后台任务及页面文件操作。任务级 queue 不能覆盖关闭的总开关。 */
+  queue?: boolean
   schema_version: 3
   ui?: {
     entry: string
   }
   version: string
+  /** 项目源码仓库地址，卡片优先展示 */
+  repository_url?: string
 }) & (unknown | {
   jobs: unknown
 })
@@ -1667,6 +1724,26 @@ export type GetTasksByIdResponse = {
   message?: string
   /** 名称 */
   name?: string
+  /** 插件合并条目，按安装标识分组；计数为队列当前保留的可见记录，tasks 保留各次任务的独立 ID。普通任务省略。 */
+  plugin_group?: {
+    cancelled?: number
+    completed?: number
+    failed?: number
+    installation_id?: number
+    pending?: number
+    running?: number
+    tasks?: Array<{
+      id?: string
+      /** 给用户看的结果说明 */
+      message?: string
+      /** 名称 */
+      name?: string
+      progress?: number
+      status?: string
+    }>
+    /** 符合条件的总条数 */
+    total?: number
+  }
   /** 进度百分比 */
   progress?: number
   /** 通用后台任务最终结果（主要供 AI 长任务轮询） */
@@ -3587,6 +3664,10 @@ export interface HostRoutes {
   "POST /api/extensions/v3/{id}/ai/complete": { query: never; body: ExtensionAIRequest; response: ExtensionAICompletion }
   /** 读取可用于插件的 AI 提供商与模型。宿主插件 API 3.3。仅已启用提供商的 ID/名称/模型/协议和默认选择；不返回 URL、API Key。 */
   "GET /api/extensions/v3/{id}/ai/providers": { query: never; body: never; response: ExtensionAIProviders }
+  /** 调用宿主共享浏览器（API 3.11）。状态探测无需 browser 授权；其他操作需要声明并取得用户授权。仅操作当前插件的页面，运行包由宿主独立管理，Chromium 沙箱关闭。详见 browser.md。 API 3.11 支持系统域名分流、显式直连和插件自定义代理；代理配置仅在 open 时设置。 */
+  "POST /api/extensions/v3/{id}/browser": { query: never; body: ExtensionBrowserRequest; response: ExtensionBrowserStatus | ExtensionBrowserSession | ExtensionBrowserEvents | {
+      [key: string]: unknown
+    } }
   /** 复用宿主 CD2 gRPC 客户端 */
   "POST /api/extensions/v3/{id}/cd2/{method}": { query: never; body: {
       destination?: string
@@ -3636,6 +3717,8 @@ export interface HostRoutes {
       replace?: boolean
       session?: string
     }; response: ExtensionOK }
+  /** 读取常驻任务状态。读取清单中常驻任务的运行状态、重启次数、最后错误和最近日志。 */
+  "GET /api/extensions/v3/{id}/daemons": { query: never; body: never; response: unknown }
   /** 只读查询插件自有静态 SQLite。API 3.4；512 MiB 文件、5 秒、最多 200 行及 64 列。文本截取前 8192 字符，BLOB 返回 null，总文本最多 2 MiB。mode=ro&immutable=1，仅用于已关闭并完成 checkpoint 的静态资料库；不接受 SQL、连接串、附件或扩展加载；API 3.9 可读取允许的宿主/CD2 挂载文件，宿主敏感数据库仍受保护。 */
   "POST /api/extensions/v3/{id}/data/sqlite": { query: never; body: ExtensionSQLiteRequest; response: ExtensionSQLiteResult }
   /** 文件操作：插件相对路径及非受保护的宿主绝对路径均可读写（含 CD2 挂载路径，API 3.9）。宿主 move/copy/remove 进入任务队列。3.3 新增 hardlink/symlink：只允许宿主本地路径、单个普通源文件与完整 destination，拒绝覆盖和 CD2；硬链接必须同文件系统。rmdir 只删除一个空目录（支持插件自有和宿主本地），非递归且不支持 CD2。 */
@@ -3681,34 +3764,34 @@ export interface HostRoutes {
   /** 普通 HTTP，持久 Cookie，可选缓存及超时 */
   "POST /api/extensions/v3/{id}/http": { query: never; body: {
       body?: string
+      /** 流式上传的插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） */
+      body_file?: string
       cache_seconds?: number
       headers?: {
         [key: string]: Array<string>
       }
       max_bytes?: number
       method?: string
-      proxy?: string
-      session?: string
-      timeout_seconds?: number
-      url: string
-      /** 响应流式保存到插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）；后台任务自动反馈下载进度 */
-      save_to?: string
-      /** 流式上传的插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） */
-      body_file?: string
       multipart?: {
         fields?: {
           [key: string]: unknown
         }
         files?: Array<{
+          base64?: string
+          content_type?: string
           field: string
           filename?: string
-          content_type?: string
           /** 插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9） */
           path?: string
-          base64?: string
           text?: string
         }>
       }
+      proxy?: string
+      /** 响应流式保存到插件相对路径或允许的宿主/CD2 挂载绝对路径（API 3.9）；后台任务自动反馈下载进度 */
+      save_to?: string
+      session?: string
+      timeout_seconds?: number
+      url: string
     }; response: ExtensionHTTPResult }
   /** 插件清单 icon 图片 */
   "GET /api/extensions/v3/{id}/icon": { query: never; body: never; response: unknown }
@@ -3742,6 +3825,10 @@ export interface HostRoutes {
   "POST /api/extensions/v3/{id}/media/nfo": { query: never; body: ExtensionNFORequest; response: ExtensionNFOMetadata }
   /** 复用宿主 FFP 获取真实媒体信息。宿主插件 API 3.3。复用已有 SHA1 缓存和全局整理探测并发；无缓存时调用宿主 FFP。CD2 需要挂载；不返回直链、原始探测 JSON 或凭据。总时限 120 秒。 */
   "POST /api/extensions/v3/{id}/media/probe": { query: never; body: ExtensionMediaProbeRequest; response: ExtensionMediaProfile }
+  /** 调用消息渠道。调用已授权的消息渠道：Telegram 机器人、企业微信或 TG 监控账号。权限须在清单 permissions 中声明并由用户授权；结果不含令牌和渠道配置。后台与页面用 ctx.telegram、ctx.wecom、ctx.messaging。 */
+  "POST /api/extensions/v3/{id}/messaging/{operation}": { query: never; body: {
+      [key: string]: unknown
+    }; response: unknown }
   /** 查询宿主默认渲染能力与配置状态（不返回地址和凭据） */
   "GET /api/extensions/v3/{id}/network-capabilities": { query: never; body: never; response: {
       default_render_endpoint: boolean
@@ -3986,7 +4073,7 @@ export interface HostRoutes {
   /** 查询订阅记录。查询某个媒体的订阅记录，可用于判断是否已订阅。 */
   "GET /api/subscribe/records": { query: { channel?: "aggregate"; media_type?: "movie" | "tv"; season?: number; tmdb_id?: string }; body: never; response: SubscribeRecordsResult }
   /** 列出后台任务。列出统一任务队列中的近期任务（含插件任务与文件任务），数组元素结构同 GET /api/tasks/{id}。 */
-  "GET /api/tasks": { query: never; body: never; response: GenericHostObject }
+  "GET /api/tasks": { query: never; body: never; response: Array<GetTasksByIdResponse> }
   /** 读取任务详情。查询统一任务队列中的任务。status 常见值 pending、running、completed、failed、cancelled；进度看 total_files/synced_files/failed_files 与 message。 */
   "GET /api/tasks/{id}": { query: never; body: never; response: GetTasksByIdResponse }
   /** 取消任务。取消运行中或排队中的任务。外部已提交的业务（例如 115 已接受的转存）不会回滚。 */
@@ -4007,12 +4094,6 @@ export interface HostRoutes {
   "GET /api/tmdb/tv/{id}": { query: { raw_episode_counts?: boolean }; body: never; response: TmdbTVDetail }
   /** 读取工作队列统计。读取宿主工作队列统计。 */
   "GET /api/workqueue/stats": { query: never; body: never; response: GenericHostObject }
-  /** 调用消息渠道。调用已授权的消息渠道：Telegram 机器人、企业微信或 TG 监控账号。权限须在清单 permissions 中声明并由用户授权；结果不含令牌和渠道配置。后台与页面用 ctx.telegram、ctx.wecom、ctx.messaging。 */
-  "POST /api/extensions/v3/{id}/messaging/{operation}": { query: never; body: {
-      [key: string]: unknown
-    }; response: unknown }
-  /** 读取常驻任务状态。读取清单中常驻任务的运行状态、重启次数、最后错误和最近日志。 */
-  "GET /api/extensions/v3/{id}/daemons": { query: never; body: never; response: unknown }
 }
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD'
