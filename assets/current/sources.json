@@ -233,53 +233,53 @@
       "youtube": "https://www.youtube.com/watch?v=DotnJ7tTA34",
       "credit": "HBO Max",
       "asset": "assets/current/house-of-the-dragon.mp4",
-      "startSeconds": 27,
-      "durationSeconds": 2.58,
+      "startSeconds": 0,
+      "durationSeconds": 163.0,
       "width": 1920,
       "height": 1080,
       "audio": false,
-      "encoding": "H.264 / CRF 18 / faststart",
-      "bytes": 1618814,
-      "sha256": "0dfffa4fba4ff505352c1deddfd6c7063a396eabcf7ba64e9a61bfb84d940fa3",
-      "probe": "  Duration: 00:00:02.58, start: 0.000000, bitrate: 5013 kb/s\n  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 5008 kb/s, 24 fps, 24 tbr, 12288 tbn (default)",
+      "encoding": "H.264 / original video stream / faststart",
+      "bytes": 25953573,
+      "sha256": "6fe9c4f00d33c57947f1513d28fdd8b2b140274f6f60d6a7676808cd9db873f8",
+      "probe": "  Duration: 00:02:43.00, start: 0.000000, bitrate: 1273 kb/s\n  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 1271 kb/s, 23.98 fps, 23.98 tbr, 24k tbn (default)",
       "sourceSegments": [
         [
-          27,
-          29.1
+          0,
+          163.0
         ]
       ],
-      "loopTreatment": "Single city-and-dragon wide shot with slower presentation and a short blended loop.",
+      "loopTreatment": "Complete trailer at original speed, including opening and ending. No shot trimming, slow motion or reverse playback.",
       "originalTmdbBackdrop": "https://image.tmdb.org/t/p/w1280/577eXC8wFQT0eUrJcgznSiFPRmk.jpg",
       "backdropAsset": "assets/current/house-of-the-dragon-backdrop.jpg",
-      "backdropSource": "Still frame from the local video."
+      "backdropSource": "Still frame from the source trailer."
     },
     {
       "title": "绝命毒师",
       "tmdb": "https://www.themoviedb.org/tv/1396-breaking-bad/videos",
-      "youtube": "https://www.youtube.com/watch?v=VaOt6tXyf2Y",
-      "credit": "Breaking Bad & Better Call Saul (official channel)",
+      "youtube": "https://www.youtube.com/watch?v=VFkjBy2b50Q",
+      "credit": "itemax (TMDB-listed series trailer)",
       "tmdbListedVideo": "https://www.youtube.com/watch?v=VFkjBy2b50Q",
-      "selectionReason": "Selected the official 1080p programme trailer for clear background playback.",
+      "selectionReason": "Full 1080p series trailer listed by TMDB, retaining the original sequence and all shots.",
       "asset": "assets/current/breaking-bad.mp4",
-      "startSeconds": 19.3,
-      "durationSeconds": 3.42,
+      "startSeconds": 0,
+      "durationSeconds": 174.72,
       "width": 1920,
       "height": 1080,
       "audio": false,
-      "encoding": "H.264 / CRF 18 / faststart",
-      "bytes": 2652790,
-      "sha256": "528de6bbde8ec75e14fba41167514e76c1688b9b7c9d422bca241fbfd857060e",
-      "probe": "  Duration: 00:00:03.42, start: 0.000000, bitrate: 6211 kb/s\n  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 6207 kb/s, 24 fps, 24 tbr, 12288 tbn (default)",
+      "encoding": "H.264 / original video stream / faststart",
+      "bytes": 58754696,
+      "sha256": "fb0cc96c3e821256cbd25b4fc5c8ae6d73c92692ec84bb7df0255c8153358fdd",
+      "probe": "  Duration: 00:02:54.72, start: 0.000000, bitrate: 2690 kb/s\n  Stream #0:0[0x1](und): Video: h264 (High) (avc1 / 0x31637661), yuv420p(tv, bt709, progressive), 1920x1080 [SAR 1:1 DAR 16:9], 2688 kb/s, 23.98 fps, 23.98 tbr, 24k tbn (default)",
       "sourceSegments": [
         [
-          19.3,
-          20.65
+          0,
+          174.72
         ]
       ],
-      "loopTreatment": "Stationary RV with a slow forward/reverse camera drift; no dialogue cuts.",
+      "loopTreatment": "Complete trailer at original speed, including opening and ending. No shot trimming, slow motion or reverse playback.",
       "originalTmdbBackdrop": "https://image.tmdb.org/t/p/w1280/tsRy63Mu5cu8etL1X7ZLyf7UP1M.jpg",
       "backdropAsset": "assets/current/breaking-bad-backdrop.jpg",
-      "backdropSource": "Still frame from the local video."
+      "backdropSource": "Still frame from the source trailer."
     }
   ]
 }

@@ -28,7 +28,7 @@ RAVE 界面基于 [StreamVibe · Praha / Produce UI](https://www.figma.com/commu
 
 `assets/current/` 新增 28 张影视封面、两张剧集横图与两个本地背景视频。作品资料来自 TMDB；作品页、图片原地址及校验摘要见 [sources.json](assets/current/sources.json)。图片和影视内容的权利归原权利人，TMDB 不代表对本站的认可。
 
-背景片段保留原生 1920×1080，选取城市／巨龙远景和房车镜头制作平缓循环，移除音轨，没有移除或重绘视频原有标识。当前片段参数见 sources.json。
+两个视频使用完整的原生 1920×1080 预告片，保留原片镜头顺序、速度、片头、片尾和标识，只移除音轨并优化 MP4 起播位置。直接复制原始视频流，没有再次压缩、裁剪、慢放或倒放。完整参数见 sources.json。
 
-- 《龙之家族》：[TMDB 条目](https://www.themoviedb.org/tv/94997-house-of-the-dragon/videos)，[HBO Max 官方预告片](https://www.youtube.com/watch?v=DotnJ7tTA34)，选用第 27 秒附近的城市／巨龙远景。
-- 《绝命毒师》：[TMDB 条目](https://www.themoviedb.org/tv/1396-breaking-bad/videos)，[节目官方频道预告片](https://www.youtube.com/watch?v=VaOt6tXyf2Y)，选用第 19.3 秒附近的房车镜头。
+- 《龙之家族》：2 分 43 秒，[TMDB 条目](https://www.themoviedb.org/tv/94997-house-of-the-dragon/videos)，[HBO Max 官方预告片](https://www.youtube.com/watch?v=DotnJ7tTA34)。
+- 《绝命毒师》：2 分 54.72 秒，[TMDB 条目](https://www.themoviedb.org/tv/1396-breaking-bad/videos)，[TMDB 收录的全剧预告片](https://www.youtube.com/watch?v=VFkjBy2b50Q)，上传者 itemax。
