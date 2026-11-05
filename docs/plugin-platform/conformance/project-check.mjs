@@ -1,17 +1,27 @@
 import { readFileSync, readdirSync, lstatSync } from 'node:fs'
 import { resolve, relative, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
+// 与宿主共用 manifest.schema.json：Schema 未列出的字段多为拼写错误，宿主会忽略。
+const schema=JSON.parse(readFileSync(new URL('../manifest.schema.json',import.meta.url),'utf8'))
+export function unknownFields(value,node=schema,at=''){
+ const out=[]
+ if(Array.isArray(value)){if(node?.items)value.forEach((v,i)=>out.push(...unknownFields(v,node.items,`${at}[${i}]`)));return out}
+ if(!value||typeof value!=='object'||!node?.properties)return out
+ for(const [key,child] of Object.entries(value)){const name=at?`${at}.${key}`:key;if(!(key in node.properties)){if(node.additionalProperties===false)out.push(name);continue}out.push(...unknownFields(child,node.properties[key],name))}
+ return out
+}
 export function checkProject(directory) {
  const root=resolve(directory), manifest=JSON.parse(readFileSync(resolve(root,'plugin.json'),'utf8')), errors=[]
  const id=/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/
  if(manifest.schema_version!==3||!id.test(manifest.id)||manifest.id.length>128||!manifest.name||!manifest.version)errors.push('schema_version 3、有效 id、name、version 为必填')
  if(!manifest.ui&&!manifest.jobs?.length&&!manifest.http)errors.push('至少提供页面、任务或 HTTP 处理器')
  if(manifest.queue!==undefined&&typeof manifest.queue!=='boolean')errors.push('插件 queue 须为布尔值')
+ for(const field of unknownFields(manifest))errors.push('plugin.json 中的 '+field+' 不是清单字段（多为拼写错误），宿主会忽略它')
  const validPath=name=>typeof name==='string'&&name!==''&&!name.includes('\\')&&!name.includes('\0')&&!name.startsWith('/')&&name.split('/').every(p=>p&&p!=='.'&&p!=='..')
  const exists=name=>{if(!validPath(name))return false;try{return lstatSync(resolve(root,name)).isFile()}catch{return false}}
  if(manifest.ui&&(!exists(manifest.ui.entry)||! /\.(js|html)$/.test(manifest.ui.entry)))errors.push('ui.entry 必须是目录内存在的 .js 或 .html')
  const jobs=new Set()
- for(const j of manifest.jobs||[]){if(!id.test(j.id)||jobs.has(j.id)||!exists(j.entry))errors.push('任务 ID 重复或入口无效：'+j.id);jobs.add(j.id);for(const k of ['timeout_seconds','interval_seconds'])if(j[k]!==undefined&&(!Number.isInteger(j[k])||j[k]<0||j[k]>31536000))errors.push('任务时限无效：'+k);if(j.default_schedule&&j.interval_seconds)errors.push('cron 与 interval_seconds 不能并用');if(j.title!==undefined&&(typeof j.title!=='string'||[...j.title].length>40))errors.push('任务标题须为不超过 40 字的字符串：'+j.id);if(j.queue!==undefined&&typeof j.queue!=='boolean')errors.push('任务 queue 须为布尔值：'+j.id)}
+ for(const j of manifest.jobs||[]){if(!id.test(j.id)||jobs.has(j.id)||!exists(j.entry))errors.push('任务 ID 重复或入口无效：'+j.id);jobs.add(j.id);for(const k of ['timeout_seconds','interval_seconds'])if(j[k]!==undefined&&(!Number.isInteger(j[k])||j[k]<0||j[k]>31536000))errors.push('任务时限无效：'+k);if(j.default_schedule&&j.interval_seconds)errors.push('cron 与 interval_seconds 不能并用');if(j.title!==undefined&&(typeof j.title!=='string'||[...j.title].length>40))errors.push('任务标题须为不超过 40 字的字符串：'+j.id);if(j.queue!==undefined&&typeof j.queue!=='boolean')errors.push('任务 queue 须为布尔值：'+j.id);if(j.retry!==undefined&&(j.daemon||!Number.isInteger(j.retry?.attempts)||j.retry.attempts<1||j.retry.attempts>10||(j.retry.delay_seconds!==undefined&&(!Number.isInteger(j.retry.delay_seconds)||j.retry.delay_seconds<0||j.retry.delay_seconds>3600))))errors.push('retry 须为 {attempts:1-10, delay_seconds:0-3600}，常驻任务不可设置：'+j.id)}
  for(const event of manifest.events||[])if(!jobs.has(event.job)||!['message','callback','host','account_message'].includes(event.event)||(event.event==='message'&&!event.commands?.length&&!event.prefixes?.length&&!event.keywords?.length&&!event.patterns?.length)||(event.event==='account_message'&&!manifest.permissions?.includes('telegram.account'))||(event.event==='host'&&!event.types?.length))errors.push('消息或宿主事件触发配置无效')
  if(manifest.http&&!exists(manifest.http.entry))errors.push('http.entry 必须是目录内存在的文件')
  if(manifest.icon&&(!exists(manifest.icon)||!/\.(svg|png|webp)$/.test(manifest.icon)))errors.push('icon 必须是目录内存在的 svg/png/webp')

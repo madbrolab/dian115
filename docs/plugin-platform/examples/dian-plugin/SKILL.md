@@ -5,7 +5,7 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
 
 # DIAN115 插件开发与审查
 
-当前契约是宿主插件 API 3.12。按实际使用的能力声明最低 `requires.api`，不要无故提高已有插件的最低版本。先判断任务类型：
+当前契约是宿主插件 API 3.13。按实际使用的能力声明最低 `requires.api`，不要无故提高已有插件的最低版本。先判断任务类型：
 
 - **审查插件**（用户问是否安全、有没有恶意代码、能不能装）：读 [references/malware-review.md](references/malware-review.md) 并照做。全程只读，绝不运行插件，不写新代码。
 - **开发或修改插件**：继续看下面。
@@ -60,6 +60,11 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
 - 网络选用：普通接口与静态内容用 ctx.http.request；无需站点挑战的页面渲染和操作用共享 Chromium 的 ctx.browser；已确认遇到挑战时优先 ctx.http.render（FlareSolverr）。先读 `assets/public-kit/browser.md` 的选用说明，不保证挑战必过，不把 403 一概视为挑战；两者不自动切换或共享 Cookie、档案与代理。
 - 需要页面脚本、点击、截图或网络事件时，先读 `assets/public-kit/browser.md`，使用宿主共享 `ctx.browser`；声明 API 3.10 与 browser 权限。运行包由宿主管理，不在插件中下载 Chromium，不接管 FlareSolverr 内部进程。Runtime.evaluate 表达式可用网页 DOM，后台脚本自身仍无 DOM。
 - 浏览器代理参数需要 API 3.11：open 默认 system 按宿主域名清单分流；direct 强制直连；custom 配合 proxy_url。主页面、子资源和重定向均按各自域名处理，策略在打开时固定，更换代理需重新打开。代理密码从设置读取，不放日志；ctx.http.render 仍独立使用 FlareSolverr。
+- 错误要带码（API 3.13）：失败时 `throw Object.assign(new Error('原因'), {code})`，code 用 invalid_input、not_found、forbidden、conflict、unavailable、busy、timeout、upstream；宿主调用失败的 `e.code`/`e.retryable` 可直接判断。只有 busy/timeout/unavailable/upstream 会触发自动重试。
+- 瞬时失败交给宿主重试：job 声明 `"retry": {"attempts": 3, "delay_seconds": 30}`，不要在脚本里写重试循环；处理函数必须可安全重跑，或配合 checkpoint + `recover`。daemon 不设 retry。
+- 长循环看 `ctx.remaining()`，余量不足先保存 checkpoint 再返回；日志用 `console.info/warn/error`（对象自动转 JSON）。
+- 每次运行最多同时 32 个宿主调用、1000 个定时器、10000 层调用：`Promise.all` 分批，递归改循环。
+- 清单不写 Schema 之外的字段；拼错的字段宿主会忽略，`scripts/check.mjs` 会报错。
 - 只申请用到的 `permissions`，TG 账号权限尽量配合关键字过滤。能用 HTTP 或 WebSocket 时不要申请 `network.tcp`。
 
 ## 验证边界

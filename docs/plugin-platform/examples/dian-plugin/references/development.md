@@ -75,6 +75,12 @@
 | `permission ... is not granted` | 用户没开授权，或清单没声明 |
 | 安装报引用了禁止接口 | 用了受保护的接口，换成公开能力 |
 | 插件被停用，提示代码被修改 | 安装后不能改代码，提高版本重新打包更新 |
+| `本次运行同时进行的宿主调用超过 32 个`（busy） | 一次发出太多宿主调用，按 16～32 个分批 |
+| `同时存在的定时器超过 1000 个` | 定时器没清理，或改用循环加 `ctx.sleep` |
+| `Maximum call stack size exceeded` | 递归超过 10000 层，改成循环 |
+| `console.warn is not a function` | 宿主低于 API 3.13，声明 `requires.api: "3.13"` 或只用 `console.log` |
+| 检查报 `… 不是清单字段` | 清单字段拼错，宿主会忽略它；按 manifest.md 改正 |
+| 任务等待中且带 `retry_at` | 声明了 retry，正在等自动重试 |
 
 ## 交付
 

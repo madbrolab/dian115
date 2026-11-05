@@ -2358,18 +2358,19 @@ const res = await ctx.api.get('/api/extensions/v3/id')
           "interval_seconds": null,
           "queue": null,
           "recover": null,
+          "retry": null,
           "timeout_seconds": null,
           "title": null
         }
       ],
       "name": "<name>",
       "queue": true,
+      "repository_url": "https://example.com/",
       "schema_version": 3,
       "ui": {
         "entry": "<entry>"
       },
-      "version": "<version>",
-      "repository_url": "https://example.com/"
+      "version": "<version>"
     },
     "numeric_id": 0,
     "report": {
@@ -2427,10 +2428,10 @@ const res = await ctx.api.get('/api/extensions/v3/id')
 | `installation.manifest.jobs` | object[] |  |
 | `installation.manifest.name` | string | 名称 |
 | `installation.manifest.queue` | boolean | API 3.12：插件任务队列显示总开关，默认 true；false 隐藏所有后台任务及页面文件操作。任务级 queue 不能覆盖关闭的总开关。 |
+| `installation.manifest.repository_url` | string(uri) | 项目源码仓库地址，卡片优先展示 |
 | `installation.manifest.schema_version` | 3 |  |
 | `installation.manifest.ui` | object |  |
 | `installation.manifest.version` | string |  |
-| `installation.manifest.repository_url` | string(uri) | 项目源码仓库地址，卡片优先展示 |
 | `installation.numeric_id` | integer |  |
 | `installation.report` | ExtensionReport |  |
 | `installation.report.code_digest` | string |  |
@@ -2642,7 +2643,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/browser', {
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `destination` | string |  |  |
-| `force_refresh` | boolean |  |  |
+| `force_refresh` | boolean |  | 已忽略：宿主读取 CD2 自己的目录缓存，不强制 CD2 回源 115 |
 | `fuzzy` | boolean |  | 是否模糊匹配 |
 | `name` | string |  | 名称 |
 | `parent` | string |  |  |
@@ -3359,12 +3360,14 @@ const res = await ctx.api.post('/api/extensions/v3/id/jobs/job', {
 
 ```json
 {
+  "attempt": 0,
   "attempted": true,
   "business_key": "<business_key>",
   "checkpoint": null,
   "created_at": "2026-10-29T21:30:00+08:00",
   "done": 0,
   "error": "<error>",
+  "error_code": "invalid_input",
   "failed": 0,
   "id": "<id>",
   "input": null,
@@ -3375,6 +3378,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/jobs/job', {
   "message": "<message>",
   "progress": 0,
   "result": null,
+  "retry_at": "2026-10-29T21:30:00+08:00",
   "revision": "<revision>",
   "stage": "<stage>",
   "status": "queued",
@@ -3385,12 +3389,14 @@ const res = await ctx.api.post('/api/extensions/v3/id/jobs/job', {
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
+| `attempt` | integer | API 3.13：已进行的自动重试次数 |
 | `attempted` | boolean |  |
 | `business_key` | string |  |
 | `checkpoint` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
 | `created_at` | string(date-time) | 创建时间（RFC 3339） |
 | `done` | integer | 任务级已完成项数 |
 | `error` | string | 失败原因（原始业务错误） |
+| `error_code` | "invalid_input" / "not_found" / "forbidden" / "conflict" / "unavailable" / "busy" / "timeout" / "upstream" / "cancelled" / "failed" | API 3.13：错误分类。busy、timeout、unavailable、upstream 为瞬时错误，可自动重试；另有 invalid_input、not_found、forbidden、conflict、cancelled、failed |
 | `failed` | integer | 任务级失败项数 |
 | `id` | string |  |
 | `input` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
@@ -3399,6 +3405,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/jobs/job', {
 | `message` | string | 给用户看的结果说明 |
 | `progress` | number |  |
 | `result` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
+| `retry_at` | string(date-time) | API 3.13：等待自动重试时的计划开始时间；此时 status 为 queued |
 | `revision` | string |  |
 | `stage` | string |  |
 | `status` | "queued" / "running" / "failed" / "succeeded" / "cancelled" / "attention_required" |  |
@@ -4216,12 +4223,14 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs')
 ```json
 [
   {
+    "attempt": 0,
     "attempted": true,
     "business_key": "<business_key>",
     "checkpoint": null,
     "created_at": "2026-10-29T21:30:00+08:00",
     "done": 0,
     "error": "<error>",
+    "error_code": "invalid_input",
     "failed": 0,
     "id": "<id>",
     "input": null,
@@ -4232,6 +4241,7 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs')
     "message": "<message>",
     "progress": 0,
     "result": null,
+    "retry_at": "2026-10-29T21:30:00+08:00",
     "revision": "<revision>",
     "stage": "<stage>",
     "status": "queued",
@@ -4243,12 +4253,14 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs')
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
+| `[].attempt` | integer | API 3.13：已进行的自动重试次数 |
 | `[].attempted` | boolean |  |
 | `[].business_key` | string |  |
 | `[].checkpoint` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
 | `[].created_at` | string(date-time) | 创建时间（RFC 3339） |
 | `[].done` | integer | 任务级已完成项数 |
 | `[].error` | string | 失败原因（原始业务错误） |
+| `[].error_code` | "invalid_input" / "not_found" / "forbidden" / "conflict" / "unavailable" / "busy" / "timeout" / "upstream" / "cancelled" / "failed" | API 3.13：错误分类。busy、timeout、unavailable、upstream 为瞬时错误，可自动重试；另有 invalid_input、not_found、forbidden、conflict、cancelled、failed |
 | `[].failed` | integer | 任务级失败项数 |
 | `[].id` | string |  |
 | `[].input` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
@@ -4257,6 +4269,7 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs')
 | `[].message` | string | 给用户看的结果说明 |
 | `[].progress` | number |  |
 | `[].result` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
+| `[].retry_at` | string(date-time) | API 3.13：等待自动重试时的计划开始时间；此时 status 为 queued |
 | `[].revision` | string |  |
 | `[].stage` | string |  |
 | `[].status` | "queued" / "running" / "failed" / "succeeded" / "cancelled" / "attention_required" |  |
@@ -4286,12 +4299,14 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs/run')
 
 ```json
 {
+  "attempt": 0,
   "attempted": true,
   "business_key": "<business_key>",
   "checkpoint": null,
   "created_at": "2026-10-29T21:30:00+08:00",
   "done": 0,
   "error": "<error>",
+  "error_code": "invalid_input",
   "failed": 0,
   "id": "<id>",
   "input": null,
@@ -4302,6 +4317,7 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs/run')
   "message": "<message>",
   "progress": 0,
   "result": null,
+  "retry_at": "2026-10-29T21:30:00+08:00",
   "revision": "<revision>",
   "stage": "<stage>",
   "status": "queued",
@@ -4312,12 +4328,14 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs/run')
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
+| `attempt` | integer | API 3.13：已进行的自动重试次数 |
 | `attempted` | boolean |  |
 | `business_key` | string |  |
 | `checkpoint` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
 | `created_at` | string(date-time) | 创建时间（RFC 3339） |
 | `done` | integer | 任务级已完成项数 |
 | `error` | string | 失败原因（原始业务错误） |
+| `error_code` | "invalid_input" / "not_found" / "forbidden" / "conflict" / "unavailable" / "busy" / "timeout" / "upstream" / "cancelled" / "failed" | API 3.13：错误分类。busy、timeout、unavailable、upstream 为瞬时错误，可自动重试；另有 invalid_input、not_found、forbidden、conflict、cancelled、failed |
 | `failed` | integer | 任务级失败项数 |
 | `id` | string |  |
 | `input` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
@@ -4326,6 +4344,7 @@ const res = await ctx.api.get('/api/extensions/v3/id/runs/run')
 | `message` | string | 给用户看的结果说明 |
 | `progress` | number |  |
 | `result` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
+| `retry_at` | string(date-time) | API 3.13：等待自动重试时的计划开始时间；此时 status 为 queued |
 | `revision` | string |  |
 | `stage` | string |  |
 | `status` | "queued" / "running" / "failed" / "succeeded" / "cancelled" / "attention_required" |  |
@@ -4386,12 +4405,14 @@ const res = await ctx.api.post('/api/extensions/v3/id/runs/run/retry', {})
 
 ```json
 {
+  "attempt": 0,
   "attempted": true,
   "business_key": "<business_key>",
   "checkpoint": null,
   "created_at": "2026-10-29T21:30:00+08:00",
   "done": 0,
   "error": "<error>",
+  "error_code": "invalid_input",
   "failed": 0,
   "id": "<id>",
   "input": null,
@@ -4402,6 +4423,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/runs/run/retry', {})
   "message": "<message>",
   "progress": 0,
   "result": null,
+  "retry_at": "2026-10-29T21:30:00+08:00",
   "revision": "<revision>",
   "stage": "<stage>",
   "status": "queued",
@@ -4412,12 +4434,14 @@ const res = await ctx.api.post('/api/extensions/v3/id/runs/run/retry', {})
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
+| `attempt` | integer | API 3.13：已进行的自动重试次数 |
 | `attempted` | boolean |  |
 | `business_key` | string |  |
 | `checkpoint` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
 | `created_at` | string(date-time) | 创建时间（RFC 3339） |
 | `done` | integer | 任务级已完成项数 |
 | `error` | string | 失败原因（原始业务错误） |
+| `error_code` | "invalid_input" / "not_found" / "forbidden" / "conflict" / "unavailable" / "busy" / "timeout" / "upstream" / "cancelled" / "failed" | API 3.13：错误分类。busy、timeout、unavailable、upstream 为瞬时错误，可自动重试；另有 invalid_input、not_found、forbidden、conflict、cancelled、failed |
 | `failed` | integer | 任务级失败项数 |
 | `id` | string |  |
 | `input` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
@@ -4426,6 +4450,7 @@ const res = await ctx.api.post('/api/extensions/v3/id/runs/run/retry', {})
 | `message` | string | 给用户看的结果说明 |
 | `progress` | number |  |
 | `result` | any | 插件自己的任意 JSON 业务值；结构由该插件定义。 |
+| `retry_at` | string(date-time) | API 3.13：等待自动重试时的计划开始时间；此时 status 为 queued |
 | `revision` | string |  |
 | `stage` | string |  |
 | `status` | "queued" / "running" / "failed" / "succeeded" / "cancelled" / "attention_required" |  |

@@ -3,6 +3,7 @@ import { resolve, relative, sep, isAbsolute } from 'node:path'
 import { deflateRawSync } from 'node:zlib'
 import { createHash } from 'node:crypto'
 import { pathToFileURL } from 'node:url'
+import { unknownFields } from './project-check.mjs'
 
 const crcTable = Uint32Array.from({ length: 256 }, (_, n) => { for (let i = 0; i < 8; i++) n = n & 1 ? 0xedb88320 ^ n >>> 1 : n >>> 1; return n >>> 0 })
 function crc32(body) { let value = 0xffffffff; for (const n of body) value = crcTable[(value ^ n) & 255] ^ value >>> 8; return (value ^ 0xffffffff) >>> 0 }
@@ -12,6 +13,8 @@ export function packPlugin(directory, output) {
   if (!targetRelative.startsWith('..' + sep) && !isAbsolute(targetRelative)) throw Error('请将生成包放在源码目录之外，避免重复打包')
   const manifest = JSON.parse(readFileSync(resolve(root, 'plugin.json'), 'utf8'))
   if (manifest.schema_version !== 3 || !/^[a-z0-9]+(?:[.-][a-z0-9]+)*$/.test(manifest.id) || !manifest.name || !manifest.version) throw Error('plugin.json 需要有效的 v3 清单')
+  const unknown = unknownFields(manifest)
+  if (unknown.length) throw Error('plugin.json 含有宿主不认识的字段（多为拼写错误）：' + unknown.join('、'))
   const sources = []
   let total = 0
   function visit(directory) {

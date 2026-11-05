@@ -465,6 +465,13 @@ export type ExtensionManifest = ({
     /** false 隐藏此任务；仅在插件级 queue 也允许时显示。同一插件的可见运行合并展示。 */
     queue?: boolean
     recover?: string
+    /** API 3.13：瞬时失败（error_code 为 busy、timeout、unavailable、upstream）后自动重新运行。处理函数须可安全重跑，或提供 recover 从 checkpoint 续跑；间隔按次翻倍，最长 1 小时；daemon 任务不可设置 */
+    retry?: {
+      /** 最多自动重试次数 */
+      attempts: number
+      /** 首次重试前等待秒数，默认 10 */
+      delay_seconds?: number
+    }
     timeout_seconds?: number
     /** 任务名称，显示在插件合并条目的明细中；省略时使用任务 ID */
     title?: string
@@ -473,13 +480,13 @@ export type ExtensionManifest = ({
   name: string
   /** API 3.12：插件任务队列显示总开关，默认 true；false 隐藏所有后台任务及页面文件操作。任务级 queue 不能覆盖关闭的总开关。 */
   queue?: boolean
+  /** 项目源码仓库地址，卡片优先展示 */
+  repository_url?: string
   schema_version: 3
   ui?: {
     entry: string
   }
   version: string
-  /** 项目源码仓库地址，卡片优先展示 */
-  repository_url?: string
 }) & (unknown | {
   jobs: unknown
 })
@@ -694,6 +701,8 @@ export type ExtensionReport = {
 }
 
 export type ExtensionRun = {
+  /** API 3.13：已进行的自动重试次数 */
+  attempt?: number
   attempted: boolean
   business_key: string
   /** 插件自己的任意 JSON 业务值；结构由该插件定义。 */
@@ -704,6 +713,8 @@ export type ExtensionRun = {
   done?: number
   /** 失败原因（原始业务错误） */
   error?: string
+  /** API 3.13：错误分类。busy、timeout、unavailable、upstream 为瞬时错误，可自动重试；另有 invalid_input、not_found、forbidden、conflict、cancelled、failed */
+  error_code?: "invalid_input" | "not_found" | "forbidden" | "conflict" | "unavailable" | "busy" | "timeout" | "upstream" | "cancelled" | "failed"
   /** 任务级失败项数 */
   failed?: number
   id: string
@@ -716,6 +727,8 @@ export type ExtensionRun = {
   progress: number
   /** 插件自己的任意 JSON 业务值；结构由该插件定义。 */
   result?: unknown
+  /** API 3.13：等待自动重试时的计划开始时间；此时 status 为 queued */
+  retry_at?: string
   revision: string
   stage: string
   status: "queued" | "running" | "failed" | "succeeded" | "cancelled" | "attention_required"
@@ -3671,6 +3684,7 @@ export interface HostRoutes {
   /** 复用宿主 CD2 gRPC 客户端 */
   "POST /api/extensions/v3/{id}/cd2/{method}": { query: never; body: {
       destination?: string
+      /** 已忽略：宿主读取 CD2 自己的目录缓存，不强制 CD2 回源 115 */
       force_refresh?: boolean
       /** 是否模糊匹配 */
       fuzzy?: boolean

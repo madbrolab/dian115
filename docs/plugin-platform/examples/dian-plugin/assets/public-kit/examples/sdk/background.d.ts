@@ -26,6 +26,10 @@ export interface BackgroundContext extends MessagingContext {
  task:{id:string;checkpointValue:JSONValue;/** total/done/failed 为任务级计数：宿主任务队列显示“已处理 done/total”；只给计数时进度按 (done+failed)/total 计算，宿主文件移动的进度不再覆盖整体进度。 */update(value:{stage?:string;message?:string;progress?:number;total?:number;done?:number;failed?:number}):Promise<void>;log(message:string):Promise<void>;checkpoint(value:JSONValue):Promise<void>};
  watch:{add(value:WatchInput):Promise<void>;remove(id:string):Promise<void>};sleep(milliseconds:number):Promise<void>;
  settings:{get<T=Record<string,JSONValue>>():Promise<T>};
+ /** API 3.13：本次运行的截止时间（Unix 毫秒）；daemon 等无时限运行为 null。 */
+ deadline:number|null;
+ /** API 3.13：距截止还剩的毫秒数，无时限时为 Infinity。长循环应在余量不足时保存 checkpoint 并返回。 */
+ remaining():number;
  plugin:{id:string;name:string;version:string;generation:string;revision:string;host_api:string};
  server:{list():Promise<ListenerState[]>;listen(options:{id:string;port:number;host?:string}):Promise<ListenerState>;close(id:string):Promise<void>;hookPath:string;publicHookPath?:string};
  codec:{utf8Encode(text:string):Bytes;utf8Decode(data:BinaryInput):string;encode(text:string,charset?:string):Bytes;decode(data:BinaryInput,charset?:string,options?:{fatal?:boolean}):string;

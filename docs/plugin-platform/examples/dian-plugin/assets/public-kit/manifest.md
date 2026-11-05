@@ -4,6 +4,8 @@
 
 ## 顶层字段
 
+清单中没有列出的字段（多为拼写错误，例如 `timout_seconds`）不会生效：宿主为兼容已发布的包仍允许安装，但会在安装预览的“分析缺口”里逐个列出；`project-check.mjs` 和 `pack.mjs` 会直接报错。Schema 对每个对象都设置了 `additionalProperties: false`，编辑器会当场标红。顶层可写 `$schema` 指向 Schema 地址，宿主忽略它。
+
 | 字段 | 必填 | 规则 |
 | --- | --- | --- |
 | `schema_version` | 是 | 固定为 `3` |
@@ -44,6 +46,7 @@
 | `timeout_seconds` | 默认 30 分钟，最大 365 天 |
 | `allow_overlap` | 是否允许同时运行多个实例 |
 | `daemon` | 常驻任务，不能同时设置定时或超时，见[长连接](long-connections.md) |
+| `retry` | API 3.13：`{attempts, delay_seconds}`，瞬时失败（error_code 为 busy/timeout/unavailable/upstream）后自动重跑；attempts 1–10，delay_seconds 0–3600（默认 10），间隔按次翻倍，最长 1 小时；daemon 不可设置。见[错误码与自动重试](developer-guide.md#错误码与自动重试api-313) |
 
 同一安装的可见任务合并为一个稳定的插件条目，列表、SSE 与首页卡片一致；实际运行、取消上下文与插件历史仍按次独立。合并条目的取消操作只取消此插件当前显示的运行中和等待中任务；清除条目只清除队列记录，不删除插件内历史。使用顶层 `queue` 请声明 `requires.api: "3.12"`。
 

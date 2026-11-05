@@ -51,9 +51,49 @@ export async function recover(ctx, checkpoint) {
 
 任务由统一工作队列执行，插件 SQLite 保存独立历史。提交必须带稳定 business_key；相同 job、标识和输入返回原记录，改变输入返回冲突。默认不重叠，包括尚未核对的中断记录。需要并行的任务显式设置 allow_overlap。
 
+### 错误码与自动重试（API 3.13）
+
+宿主调用失败时，错误对象带 `code` 和 `retryable`；插件也可以抛出带 `code` 的错误。任务记录保存为 `error_code`：
+
+| code | 含义 | 可自动重试 |
+| --- | --- | --- |
+| `invalid_input` | 参数或输入不合规，改调用 | 否 |
+| `not_found` | 目标不存在 | 否 |
+| `forbidden` | 无权执行或路径受保护 | 否 |
+| `conflict` | 状态或业务标识冲突 | 否 |
+| `unavailable` | 插件、宿主服务或依赖暂不可用 | 是 |
+| `busy` | 并发或队列已满 | 是 |
+| `timeout` | 超时 | 是 |
+| `upstream` | 网络或远端服务失败 | 是 |
+| `cancelled` | 用户或宿主取消 | 否 |
+| `failed` | 其他错误，包括未带 code 的异常 | 否 |
+
+```js
+export async function run(ctx, input) {
+  const res = await ctx.http.request({ url: input.url, max_bytes: 1 << 20 })
+  if (res.status >= 500) throw Object.assign(new Error('源站 ' + res.status), { code: 'upstream' })
+  return res.json
+}
+```
+
+job 声明 `"retry": {"attempts": 3, "delay_seconds": 30}` 后，`error_code` 为可重试类时宿主自动再运行：间隔按次翻倍，最长 1 小时；等待期间 `status` 为 `queued`，`retry_at` 给出计划时间，`attempt` 记录已重试次数，可在任务记录中取消。失败的一次可能已产生外部副作用，所以只有声明了 retry 的任务才会自动重跑：处理函数应能安全重跑，或提供 `recover` 从 checkpoint 续跑（有 checkpoint 时自动重试先调用 recover）。宿主重启后，等待中的重试按原计划继续。daemon 任务自带重启，不能设置 retry。
+
+### 运行时限（API 3.13）
+
+`ctx.deadline` 是本次运行的截止时间（Unix 毫秒，无时限为 null），`ctx.remaining()` 返回剩余毫秒数。长循环应在余量不足时保存 checkpoint 并返回，而不是被宿主中途取消。
+
+```js
+for (const item of items) {
+  if (ctx.remaining() < 30_000) { await ctx.task.checkpoint({ next: item.id }); return { partial: true } }
+  await handle(item)
+}
+```
+
+每次运行另有三项保护，均不影响其他插件：嵌套调用最多 10000 层，无限递归立即失败（以前会一直占用内存，直到共享内存保护中止所有正在运行的插件）；同时进行的宿主异步调用最多 32 个，超过时返回 `busy`，请分批等待；同时存在的 setTimeout/setInterval 最多 1000 个。
+
 通知见[插件通知](notifications.md)：`ctx.notify({title, body, format, channels, overrides})` 可选择 Telegram / 企业微信、内容格式与按渠道内容，并返回逐渠道结果。
 
-后台 ctx 包含 api、storage.get/set/remove、http、files.call、watch.add/remove、cd2.call、notify、cookiecloud、sleep、settings.get、server、codec、crypto、html、xml、plugin（id/version/generation/revision/host_api），以及 task.id/update/log/checkpoint/checkpointValue。后台 storage.set 返回版本数字；页面 storage.set 返回 `{revision}`，分别对应进程内存储和普通 HTTP 响应。宿主返回的结构统一使用文档中的小写 JSON 字段名。
+后台 ctx 包含 api、storage.get/set/remove、http、files.call、watch.add/remove、cd2.call、notify、cookiecloud、sleep、settings.get、server、codec、crypto、html、xml、plugin（id/version/generation/revision/host_api）、deadline、remaining()，以及 task.id/update/log/checkpoint/checkpointValue。后台 storage.set 返回版本数字；页面 storage.set 返回 `{revision}`，分别对应进程内存储和普通 HTTP 响应。宿主返回的结构统一使用文档中的小写 JSON 字段名。
 
 ## 按任务加载逻辑
 
@@ -150,16 +190,16 @@ await ctx.files.call({ operation: 'rename', path: '/mnt/cd2/115/a.mkv', name: 'b
 
 115 返回的 name/fn/file_name 是不透明元数据，即使包含 `/` 或 `\` 也不据此拆层级。目录层级按节点 ID 与父 ID；投影到 Linux 文件名时才将 `/` 映射为 `／`，保留原始 name。
 
-`ctx.cd2.call(method, options)` 复用主项目连接，路径可写挂载路径或 CD2 路径，传挂载路径时结果也返回挂载路径：list/stat/mkdir/rename/move/copy/remove/search。list 接收 path、force_refresh，返回 path/name/id/size/modified/is_dir 数组；mkdir 用 parent/name，rename 用 path/name，move/copy 用 path/destination，search 用 path/query/fuzzy。rename/move 返回逐项 path/file/error/retryable，宿主做身份与结果核对；move 使用 Skip 冲突策略。stat/search 返回相同文件结构；mkdir 返回 file/result，copy/remove 返回 success/error_message/paths。其他变更接口遇到超时，作者必须先查询业务结果，不应直接重发。
+`ctx.cd2.call(method, options)` 复用主项目连接，路径可写挂载路径或 CD2 路径，传挂载路径时结果也返回挂载路径：list/stat/mkdir/rename/move/copy/remove/search。list 接收 path，返回 path/name/id/size/modified/is_dir 数组；mkdir 用 parent/name，rename 用 path/name，move/copy 用 path/destination，search 用 path/query/fuzzy。rename/move 返回逐项 path/file/error/retryable，宿主做身份与结果核对；move 使用 Skip 冲突策略。stat/search 返回相同文件结构；mkdir 返回 file/result，copy/remove 返回 success/error_message/paths。其他变更接口遇到超时，作者必须先查询业务结果，不应直接重发。
 
 ## 目录监听和消息触发
 
 ```js
 await ctx.watch.add({id:'inbox',path:'/mnt/inbox',job:'organize',interval_seconds:5})
-await ctx.watch.add({id:'cloud',path:'/mnt/cd2/115/Inbox',job:'organize',interval_seconds:15})
+await ctx.watch.add({id:'cloud',path:'/mnt/cd2/115/Inbox',job:'organize',interval_seconds:60})
 ```
 
-宿主按 CD2 挂载前缀判断路径：挂载目录内的路径走 CD2 接口，其余是本地监听，`kind` 不用填。事件的 `path` 是挂载路径，CD2 监听同时带 `cd2_path`。CD2 监听默认只看一层，`recursive:true` 时递归，最多 500 个目录；每个目录都是一次云端请求，请把 `interval_seconds` 设得足够大。
+宿主按 CD2 挂载前缀判断路径：挂载目录内的路径走 CD2 接口，其余是本地监听，`kind` 不用填。事件的 `path` 是挂载路径，CD2 监听同时带 `cd2_path`。CD2 监听默认只看一层，`recursive:true` 时递归，最多 500 个目录。CD2 监听的 `interval_seconds` 默认 60、最小 30（更小的值自动提到 30）：宿主读取的是 CD2 自己的目录缓存，通过 CD2 做的改动立即可见，其他来源（如 115 App）的改动要等 CD2 的目录缓存时间过后才可见，轮询更快只是重复读同一份缓存。CD2 监听与内置整理、插件 `ctx.cd2.call` 共用宿主的全局列目录额度，同一目录的同时请求会合并。
 
 local 监听默认实时：宿主用 inotify 订阅目录，事件发生后经 `debounce_ms`（默认 500）立即做一次快照比较；interval_seconds 仍作为兜底全量扫描，可调大（例如 300）。`realtime:false` 关闭实时；`patterns:['*.mkv','*.mp4']` 按文件名过滤；`recursive:false` 只看第一层。超过 8192 个目录或系统 inotify 上限时自动退回轮询。cd2 为当前目录的完整 gRPC 列表轮询。首次快照建立基线，后续变化以 `{watch,changes:[{path,kind:'created|changed|removed'}]}` 提交任务。目录读取、挂载或 CD2 流失败会保留上次快照与错误，不把失败当作删除。待提交事件持久保存；后台任务恢复仍由插件核对。替换监听先 remove 再 add。此功能不改变内置整理的轮询策略。
 

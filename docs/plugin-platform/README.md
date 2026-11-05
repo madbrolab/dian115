@@ -2,7 +2,7 @@
 
 插件与宿主共同运行：页面直接使用宿主 HTTP API，后台 JavaScript 编排业务，主项目负责实际转存、整理、通知与队列调度。无需主项目源码、WASM、Node 或额外容器；需要浏览器时调用宿主统一管理的运行包。
 
-宿主插件 API 3.12 能力一览：宿主公开的业务 HTTP API、二进制 HTTP 与流式下载上传、后台任务进入宿主任务队列并显示任务级进度与计数（3.2）、由宿主执行并带进度的文件移动复制删除（CD2 gRPC/挂载路径自动分流）、实时目录监听（created/changed/removed）、宿主业务事件订阅、独立监听端口与 Webhook、Cookie/CookieCloud/FlareSolverr、CD2、通知、定时与消息触发、设置表单、侧栏菜单与图标，以及后台 fetch/URL/编码/加密/HTML/XML 标准库。
+宿主插件 API 3.13 能力一览：宿主公开的业务 HTTP API、二进制 HTTP 与流式下载上传、后台任务进入宿主任务队列并显示任务级进度与计数（3.2）、由宿主执行并带进度的文件移动复制删除（CD2 gRPC/挂载路径自动分流）、实时目录监听（created/changed/removed）、宿主业务事件订阅、独立监听端口与 Webhook、Cookie/CookieCloud/FlareSolverr、CD2、通知、定时与消息触发、设置表单、侧栏菜单与图标，以及后台 fetch/URL/编码/加密/HTML/XML 标准库。
 
 - [快速开始](quickstart.md)：10 分钟做出第一个插件。
 - [配方](cookbook.md)：命令、关键字、定时、监听、Webhook、长连接等可直接改用的写法。
@@ -35,6 +35,8 @@
 本目录保留的其他独立客户端和用户脚本示例不作为 v3 安装模板；开发本平台扩展请使用 complete-plugin 与当前 SDK。
 
 3.10 新增：[共享浏览器](browser.md)，页面和后台均提供 `ctx.browser`，除状态探测外需要用户授权 `browser`。运行包独立下载，不进入 payload 或镜像。
+
+3.13 新增：统一错误码（宿主调用失败带 `code`/`retryable`，任务记录 `error_code`）、job `retry` 自动重试瞬时失败、`ctx.deadline`/`ctx.remaining()`、`console.info/warn/error/debug`，以及每次运行的调用栈、并发宿主调用和定时器上限，见[错误码与自动重试](developer-guide.md#错误码与自动重试api-313)。宿主同时改为复用已解析的插件代码、日志按行存储、插件数据库 synchronous=NORMAL，单次运行开销大幅下降，见[资源调度](storage-and-lifecycle.md)。
 
 3.12 新增：插件级任务队列 `queue` 总开关；同一插件的可见任务合并为一个条目，支持汇总进度、逐次明细与批量取消，见[任务队列与进度](developer-guide.md#任务队列与进度)。后台按入口及依赖加载，可选逻辑支持动态导入，见[按任务加载逻辑](developer-guide.md#按任务加载逻辑)。
 

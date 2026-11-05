@@ -20,6 +20,12 @@
 - 通知没有收到：看返回的 `deliveries`。`skipped/disabled` 表示用户在该渠道关闭了插件通知，`quiet_hours` 为该渠道静默时段，`not_configured` 为渠道未配置；`failed` 的 `error` 给出脱敏原因（如 Telegram 拒绝 HTML 时的解析错误）。
 - 企业微信里 markdown 显示“不支持”：个人微信（微信插件）不渲染企业微信 markdown，可用 `overrides.wecom.format:'text'`。
 
+- `本次运行同时进行的宿主调用超过 32 个`（`busy`）：一次 `Promise.all` 发出了太多宿主调用，按 16～32 个一批等待完成再发下一批。
+- `同时存在的定时器超过 1000 个`：清理不再需要的 setTimeout/setInterval，或改用一个循环加 `ctx.sleep`。
+- `Maximum call stack size exceeded`：递归超过 10000 层，多为没有终止条件的递归，改成循环。
+- `console.warn is not a function`（旧宿主）：API 3.13 前后台只有 `console.log`；需要 warn/error 时声明 `requires.api: "3.13"`。
+- 安装预览提示 `plugin.json 中的 … 不是清单字段`：清单里有拼写错误的字段，宿主会忽略它，例如 `timout_seconds`。发布前运行 `project-check.mjs`，它会直接报错。
+- 任务一直显示等待中且带 `retry_at`：任务声明了 retry，正在等待自动重试；可在任务记录中取消。
 - `Cannot read property 'xxx' of undefined or null`：代码读取了不存在的对象的属性，比如写错 ctx 成员。错误末尾的括号是文件和行号。后台 ctx 没有 `tasks`、`events`、`usage`，可用成员见 [API 参考](api-reference.md)。
 - `SyntaxError ... for await`：脚本引擎不支持 `for await` 和异步生成器，循环调用 `next()`，见[长连接](long-connections.md)。
 - `permission ... is not granted`：清单声明了权限但用户没开，到插件卡片打开；或者代码用了清单没声明的渠道。
@@ -33,6 +39,7 @@
 - `address already in use`：端口被占用，换端口。常驻任务重启时会自动重试。
 - SSE 收不到实时数据：反向代理开了缓冲，或处理器没有用 `ctx.response`。长时间无数据时用 `stream.comment()` 发心跳。
 - CD2 目录监听很慢或扫描超时：路径写挂载路径，让宿主走 CD2 接口；减少 `recursive` 范围，调大 `interval_seconds`。
+- CD2 监听没发现 115 App 里刚做的改动：宿主不强制 CD2 回源 115，要等 CD2 的目录缓存时间过后才能看到；`ctx.cd2.call('list')` 的 `force_refresh` 参数已被忽略。
 - 市场仓库报 `is missing author, ...`：条目缺少必填字段，见[市场规范](market.md)，发布前运行 `market-check.mjs`。
 - 安装报“引用了禁止调用的宿主接口”：代码写了受保护的接口，改用公开能力，比如消息用 `ctx.telegram`，不要调用账号客户端接口。
 

@@ -6,7 +6,7 @@ ctx 是 [SDK](examples/sdk/index.js) 客户端，并增加 signal 和 theme。th
 
 完整 HTML 可用 `ui.entry: "ui/index.html"`，在普通同源无 sandbox 的文档容器里显示，保留页面自身结构。宿主注入资源 base 与 `window.DIAN115Plugin`；主题模式与上述变量同步。脚本可直接读取该对象，也可监听 dian115:ready。页面同样有宿主权限；容器仅管理文档与挂载生命周期，不提供权限隔离。
 
-安装代码 revision 参与资源 URL。每次打开获取新的资源视图地址，避免复用失败的模块导入；同次打开的相对依赖共享该地址前缀。资源成功或失败响应都不缓存，确保停用后再次启用能够重新加载。更新、停用或卸载使旧资源 URL 失效。ESM、图片、样式可以用相对路径。宿主注入的客户端自动携带 X-DIAN115-Extension、X-DIAN115-Extension-Generation、X-DIAN115-Extension-Revision，绑定安装与代码版本的生命周期。停用、更新和重装后的迟到调用会明确失败；长请求保留取消信号。这些标记不是权限凭据，不限制当前用户能调用的接口；普通 HTTP 继续使用原有宿主登录。源码资源只接受有效安装资源链接，禁止目录逃逸；这与业务 API 调用权限无关。
+安装代码 revision 参与资源 URL，同一版本的资源地址固定：浏览器缓存页面的 JS、样式、图片和字体（`private, max-age=31536000, immutable`，带 ETag），再次打开插件不再重新下载。更新或重装改变地址，旧缓存自然失效；失败响应不缓存，停用后再次启用能够重新加载。每次打开时入口模块带一次性参数重新执行，`mount` 总在新的入口实例中运行；入口相对引用的其他模块在同一浏览器页面内复用，模块顶层状态会保留，需要每次重置的状态请放在 `mount` 里。某个模块导入失败时，宿主自动换一次性地址重试一次。加密发行包的资源在服务端解密一次后复用，不再每个文件重新解密整个发行包。ESM、图片、样式可以用相对路径。宿主注入的客户端自动携带 X-DIAN115-Extension、X-DIAN115-Extension-Generation、X-DIAN115-Extension-Revision，绑定安装与代码版本的生命周期。停用、更新和重装后的迟到调用会明确失败；长请求保留取消信号。这些标记不是权限凭据，不限制当前用户能调用的接口；普通 HTTP 继续使用原有宿主登录。源码资源只接受有效安装资源链接，禁止目录逃逸；这与业务 API 调用权限无关。
 
 有页面的插件把设置做在页面内，不声明清单 `settings`（仅无页面插件使用，由宿主渲染表单）；侧栏入口由用户在插件管理页“权限与显示”的“显示在侧边栏”开关决定，`menu` 只提供标题与排序；`icon` 显示在插件中心卡片与页面标题。页面 SDK 另有 files.downloadURL/upload、server.list/listen/close/hookURL/publicHookURL、settings.get/set、events.catalog。
 

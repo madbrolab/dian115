@@ -1,6 +1,6 @@
 # 宿主共享浏览器（API 3.10；代理配置需 3.11）
 
-DIAN115 管理一份 Chromium 运行包，供主程序功能和第三方插件共同调用。运行包不进入主程序 payload 或 Docker 镜像：默认使用 `madbrolab/dian115-browser-runtime` 的固定版本清单及 SHA256，管理员可覆盖或清除来源；宿主在授权激活后的启动阶段后台下载，校验、解压并缓存到数据目录的 `browser/`。下载失败不阻止主程序启动；升级失败保留已安装版本。没有配置来源、缺少当前架构或尚未安装时，不能打开浏览器。
+DIAN115 管理一份 Chromium 运行包，供主程序功能和第三方插件共同调用。运行包不进入主程序 payload 或 Docker 镜像：使用 `madbrolab/dian115-browser-runtime` 的固定版本清单及 SHA256，版本随宿主发布更新，不能在设置或插件中修改；宿主在授权激活后的启动阶段后台下载，校验、解压并缓存到数据目录的 `browser/`。下载失败不阻止主程序启动；升级失败保留已安装版本。缺少当前架构或尚未安装完成时，不能打开浏览器。
 
 浏览器在 **DIAN115 的 Linux 后端**运行，APK 和浏览器前端均通过宿主接口调用，无需给 APK 或页面再装一份内核。当前使用无界面的 Chromium headless shell，支持网页渲染、页面脚本、输入、截图和网络观察；不是可远程观看的桌面 Chrome，也不承诺任意网站验证一定通过。
 
@@ -167,8 +167,8 @@ try {
 - 运行包支持 Linux amd64/arm64 按清单选择，当前已验证的二进制为 amd64，不能把架构选择代码视为 ARM64 实测通过。
 - FlareSolverr 的 `ctx.http.render` 保持独立，仍是一次页面请求；不会自动升级成 browser，也不复用它的内部浏览器。
 
-## 运行包来源（宿主管理员）
+## 运行包来源
 
-默认来源是[独立仓库 Releases](https://github.com/madbrolab/dian115-browser-runtime/releases/tag/chromium-153.0.8010.0-r1)，新安装在授权激活后自动后台下载，缓存完整时不重复下载。更换来源时，在设置 → 基础设置 → 共享浏览器填写 `manifest.json` HTTPS 地址和生成时的清单 SHA256。更换版本时同时更换这两项；不盲目跟随 latest。管理员也可通过登录后的 `GET/PUT /api/browser/config`、`POST /api/browser/install`、`GET /api/browser/status` 管理。插件不得调用这些管理接口。
+来源是[独立仓库 Releases](https://github.com/madbrolab/dian115-browser-runtime/releases/tag/chromium-153.0.8010.0-r1)，地址和清单 SHA256 写在宿主代码里，随宿主版本一起升级，不跟随 latest。新安装在授权激活后自动后台下载，缓存完整时不重复下载。来源没有读取或修改接口；`GET /api/browser/status` 查询状态，`POST /api/browser/install` 在失败后重试安装。
 
-清单固定为 `schema_version:1`、`version` 与 `platforms`；平台键如 `linux-amd64`，每项包含 `url`、`sha256`、`size`，指向固定布局的 `.tar.br` 运行包。清单摘要必须匹配管理员保存的值，压缩包摘要及大小必须匹配清单。解压拒绝路径穿越、链接和特殊文件；压缩包最多 512 MiB，解压最多 1 GiB、4096 项。缓存和安装档案位于数据目录 `browser/`，不开放给插件文件接口。
+清单固定为 `schema_version:1`、`version` 与 `platforms`；平台键如 `linux-amd64`，每项包含 `url`、`sha256`、`size`，指向固定布局的 `.tar.br` 运行包。清单摘要必须匹配宿主内置的值，压缩包摘要及大小必须匹配清单。解压拒绝路径穿越、链接和特殊文件；压缩包最多 512 MiB，解压最多 1 GiB、4096 项。缓存和安装档案位于数据目录 `browser/`，不开放给插件文件接口。

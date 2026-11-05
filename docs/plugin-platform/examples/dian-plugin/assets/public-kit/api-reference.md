@@ -71,7 +71,7 @@ UI、jobs、http 至少提供一项。
 
 `recover(ctx, checkpoint)` 返回 `{action:'complete',result}`、`{action:'resume'}` 或 `{action:'attention'}`。
 
-后台全局：`fetch`、`WebSocket`、`Headers`、`Response`、`URL`、`URLSearchParams`、`TextEncoder`、`TextDecoder`、`atob`、`btoa`、`setTimeout/setInterval/clear*`、`queueMicrotask`、`structuredClone`、`AbortController`、`crypto.randomUUID/getRandomValues`、`console.log`（写入任务日志）。没有 DOM、Node 内置模块、`require` 和子进程。脚本引擎支持 async/await，不支持 `for await` 和异步生成器。后台 ctx 没有 `tasks`、`events`、`usage`，这些只在页面提供；任务报错的文字末尾带文件和行号。
+后台全局：`fetch`、`WebSocket`、`Headers`、`Response`、`URL`、`URLSearchParams`、`TextEncoder`、`TextDecoder`、`atob`、`btoa`、`setTimeout/setInterval/clear*`、`queueMicrotask`、`structuredClone`、`AbortController`、`crypto.randomUUID/getRandomValues`、`console.log/info/debug/warn/error`（写入任务日志，warn/error 带 `[warn]`/`[error]` 前缀，对象按 JSON 输出）。没有 DOM、Node 内置模块、`require` 和子进程。脚本引擎支持 async/await，不支持 `for await` 和异步生成器。后台 ctx 没有 `tasks`、`events`、`usage`，这些只在页面提供；任务报错的文字末尾带文件和行号。
 
 ## 4. HTTP 处理器（`export async function handle(ctx, req)`）
 
@@ -92,7 +92,7 @@ API 3.9 起，除受保护路径外，宿主和 CD2 挂载路径均开放内容�
 
 ## 6. 监听与事件
 
-- 目录监听：`{id,path,job,kind?,interval_seconds,realtime,debounce_ms,patterns,recursive}`，`kind` 通常省略，由宿主按 CD2 挂载前缀判定；任务输入 `{watch,changes:[{path,cd2_path?,kind:'created'|'changed'|'removed'}]}`。
+- 目录监听：`{id,path,job,kind?,interval_seconds,realtime,debounce_ms,patterns,recursive}`（CD2 监听的 `interval_seconds` 默认 60、最小 30），`kind` 通常省略，由宿主按 CD2 挂载前缀判定；任务输入 `{watch,changes:[{path,cd2_path?,kind:'created'|'changed'|'removed'}]}`。
 - 宿主事件：任务输入 `{id,type,title,content,data,at}`；类型列表 `GET /api/extensions/v3/_events`。
 - 消息与按钮：`message`/`callback` 事件，输入为宿主投影的消息或回调。
 - 定时：`default_schedule`（五段 cron）或 `interval_seconds`。
@@ -113,9 +113,11 @@ API 3.9 起，除受保护路径外，宿主和 CD2 挂载路径均开放内容�
 | 文件内容 | 允许路径均可读写；单次 read 最多 16 MiB，较大文件分段读取或流式传输 |
 | HTTP 响应 | 默认 64 MiB，不写盘最多 256 MiB；更大用 save_to |
 | HTTP 处理器 | 单插件并发 32，请求体 32 MiB，默认 60 秒 |
-| 异步宿主调用 | 全局 128（`DIAN115_EXTENSION_IO_CONCURRENCY`），满时立即报错 |
+| 异步宿主调用 | 全局 128（`DIAN115_EXTENSION_IO_CONCURRENCY`），每次运行最多同时 32 个；满时立即报错，错误码 `busy` |
+| 调用栈与定时器 | 每次运行嵌套调用 ≤10000 层，同时存在的定时器 ≤1000 个 |
+| 代码缓存 | 已安装代码解析、校验一次后在内存中复用，空闲 10 分钟释放；总量按估算堆计 64 MiB（`DIAN115_EXTENSION_CODE_CACHE_MB`，0 为关闭） |
 | 目录快照 | 并发 4（`DIAN115_EXTENSION_WATCH_CONCURRENCY`），实时监听 ≤8192 个目录 |
-| 任务 | 默认 30 分钟，最多 365 天；日志单条 8 KiB、最多 500 条且总计 256 KiB；后台任务共享 4 个执行名额，HTTP 脚本另共享 4 个，详见[资源调度](storage-and-lifecycle.md) |
+| 任务 | 默认 30 分钟，最多 365 天；日志单条 8 KiB、最多 500 条且总计 256 KiB，已结束 30 天后删除日志，宿主自动发起的运行（定时、事件、监听、消息）整条删除；可声明 retry 自动重试瞬时失败（API 3.13）；后台任务共享 4 个执行名额，HTTP 脚本另共享 4 个，详见[资源调度](storage-and-lifecycle.md) |
 | HTTP 缓存 | 每插件 128 MiB；Cookie 每会话 4096 条 |
 | 长连接 | 每插件 16 条，含 WebSocket、流式读取、TCP 和对外推送；WebSocket 单条消息默认 1 MiB，最大 16 MiB；TCP 单次写入 16 MiB |
 | 常驻任务 | 重启等待 1 秒到 5 分钟；最多保留最近 200 条日志且总计 256 KiB |

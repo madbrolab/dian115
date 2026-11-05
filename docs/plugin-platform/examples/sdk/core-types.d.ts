@@ -44,7 +44,7 @@ export interface CD2File extends FileInfo {id:string;path:string}
 export interface CD2Result {success:boolean;error_message:string;paths:string[]|null}
 export interface CD2Outcome {path:string;file:CD2File|null;retryable:boolean;error:string}
 export interface CD2Operations {
- list:{input:{path:string;force_refresh?:boolean};output:CD2File[]};
+ list:{input:{path:string;/** @deprecated 已忽略：宿主读取 CD2 自己的目录缓存，不强制回源 115 */force_refresh?:boolean};output:CD2File[]};
  stat:{input:{path:string};output:CD2File|null};
  mkdir:{input:{parent:string;name:string};output:{file:CD2File|null;result:CD2Result|null}};
  rename:{input:{path:string;name:string};output:CD2Outcome[]};
@@ -82,7 +82,15 @@ export interface CookieCloudClient {
  (operation:'write',options:{domains:string[];cookies:Cookie[];revision:string}):Promise<{revision:string}>;
 }
 export interface KVEntry {key:string;revision:number;encrypted_bytes:number}
-export interface Run {id:string;job_id:string;business_key:string;revision:string;status:'queued'|'running'|'failed'|'succeeded'|'cancelled'|'attention_required';attempted:boolean;stage:string;progress:number;message:string;total?:number;done?:number;failed?:number;input?:JSONValue;result?:JSONValue;checkpoint?:JSONValue;error?:string;logs?:string[];created_at:string;updated_at:string}
+export interface Run {id:string;job_id:string;business_key:string;revision:string;status:'queued'|'running'|'failed'|'succeeded'|'cancelled'|'attention_required';attempted:boolean;stage:string;progress:number;message:string;total?:number;done?:number;failed?:number;input?:JSONValue;result?:JSONValue;checkpoint?:JSONValue;error?:string;
+ /** API 3.13：错误分类；busy/timeout/unavailable/upstream 为瞬时错误。 */error_code?:ErrorCode;
+ /** API 3.13：已进行的自动重试次数。 */attempt?:number;
+ /** API 3.13：等待自动重试时的计划开始时间，此时 status 为 queued。 */retry_at?:string;
+ logs?:string[];created_at:string;updated_at:string}
+/** API 3.13 错误码。宿主调用失败时 err.code/err.retryable 取自这里；插件也可抛出带 code 的错误：throw Object.assign(new Error('…'),{code:'upstream'})。 */
+export type ErrorCode='invalid_input'|'not_found'|'forbidden'|'conflict'|'unavailable'|'busy'|'timeout'|'upstream'|'cancelled'|'failed'
+/** 宿主调用被拒绝时的错误对象（API 3.13 起带 code 与 retryable）。 */
+export interface HostError extends Error {code:ErrorCode;retryable:boolean;status?:number;method?:string;path?:string;data?:unknown}
 export interface APIError extends Error {status:number;method:string;path:string;data:unknown}
 
 export interface KnownChat {channel:'telegram'|'wecom';id:string;type?:string;title?:string;username?:string;last_seen:number}
