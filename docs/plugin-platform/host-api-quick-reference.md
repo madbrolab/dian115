@@ -34,6 +34,9 @@
 | GET | `/api/browse` | 浏览 CD2 |
 | GET | `/api/cache/magnet/changes` | 按时间窗口增量查询磁力和 ED2K 缓存 |
 | GET | `/api/cd2/clouds` | 列出 CD2 云盘 |
+| GET | `/api/connectors/moviepilot/options` | 读取 MoviePilot 站点、下载器与目录 |
+| POST | `/api/connectors/moviepilot/request` | 通过公共连接器调用 MoviePilot HTTP API |
+| GET | `/api/connectors/moviepilot/status` | 读取 MoviePilot 公共连接器状态 |
 | GET | `/api/dashboard/emby-latest` | 读取看板最新媒体 |
 | GET | `/api/dashboard/library` | 读取看板媒体库 |
 | GET | `/api/dashboard/quick-stats` | 读取看板快报 |
@@ -139,6 +142,16 @@
 | GET | `/api/organize/tmdb-cache/stats` | 读取 TMDB 缓存统计 |
 | GET | `/api/organize/tmdb/search` | 整理模块搜索 TMDB |
 | GET | `/api/organize/wash-version/default` | 读取洗版默认配置 |
+| GET | `/api/plugin-host/dianying/accounts` | 读取癫影账号选项 |
+| GET | `/api/plugin-host/dianying/availability` | 读取癫影服务可用性 |
+| POST | `/api/plugin-host/dianying/checkin` | 癫影账号签到 |
+| POST | `/api/plugin-host/dianying/community/my-shares` | 查询我的癫影分享 |
+| GET | `/api/plugin-host/dianying/community/profile` | 读取癫影社区资料 |
+| POST | `/api/plugin-host/dianying/community/ranking` | 查询癫影社区排行 |
+| GET | `/api/plugin-host/dianying/ffp-stats` | 读取癫影文件指纹统计 |
+| POST | `/api/plugin-host/dianying/resources/list-shares` | 查询癫影资源分享 |
+| POST | `/api/plugin-host/dianying/resources/unlock` | 解锁癫影资源 |
+| GET | `/api/plugin-host/dianying/rss/options` | 读取癫影资源筛选选项 |
 | GET | `/api/plugin-host/emby/episodes` | 读取 Emby 缺集 |
 | GET | `/api/plugin-host/emby/instances` | 列出 Emby 实例 |
 | GET | `/api/plugin-host/emby/items` | 查询 Emby 媒体 |

@@ -119,6 +119,65 @@ export type DeleteRulesByIdTreeResponse = {
   message?: string
 }
 
+export type DianyingPluginAccount = {
+  auto_share: boolean
+  /** 是否启用 */
+  enabled: boolean
+  id: string
+  is_vip: boolean
+  /** 名称 */
+  name: string
+  points: number
+  status: string
+}
+
+export type DianyingResourceQuery = {
+  /** 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 */
+  account_id?: string
+  audio?: string
+  chn_sub?: boolean
+  codec?: string
+  fps?: string
+  hdr?: string
+  max_size_gb?: number
+  /** 媒体类型：movie 电影、tv 剧集 */
+  media_type?: "movie" | "tv"
+  min_episodes?: number
+  min_size_gb?: number
+  mode?: string
+  /** 页码，通常从 1 开始 */
+  page?: number
+  res?: string
+  resource_id?: number
+  /** 季号，0 表示特别篇 */
+  season?: number
+  share_kind?: string
+  sharer_id?: number
+  /** 每页数量 */
+  size?: number
+  sort?: string
+  source?: string
+  source_tag?: string
+  tags?: Array<string>
+  /** TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 */
+  tmdb_id?: number
+}
+
+export type DianyingUnlockRequest = {
+  /** 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 */
+  account_id?: string
+  /** 媒体类型：movie 电影、tv 剧集 */
+  media_type?: string
+  /** 癫影资源编号 */
+  resource_id?: number
+  /** 季号，0 为特别篇 */
+  season?: number
+  /** 癫影分享编号 */
+  share_id?: number
+  /** TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 */
+  tmdb_id?: number
+}
+
 export type ExtensionAICompletion = {
   /** 原样返回终止原因；调用方须检查截断和内容格式 */
   finish_reason: string
@@ -1551,6 +1610,88 @@ export type GetOrganizeWashVersionDefaultResponse = {
   }
 }
 
+export type GetPluginHostDianyingAvailabilityResponse = {
+  account_id?: string
+  available?: boolean
+  code?: string
+  /** 给用户看的结果说明 */
+  message?: string
+}
+
+export type GetPluginHostDianyingCommunityProfileResponse = {
+  account_id?: string
+  account_name?: string
+  cache?: {
+    cached_at?: string
+    /** 失败原因（原始业务错误） */
+    error?: string
+    expires_at?: string
+    refreshing?: boolean
+    stale?: boolean
+  }
+  data?: unknown
+}
+
+export type GetPluginHostDianyingFfpStatsResponse = {
+  call_count?: number
+  contributor_count?: number
+  emby_madby_success?: number
+  match_count?: number
+  organize_ffp_success?: number
+  site_cache_fresh_seconds?: number
+  site_cache_ready?: boolean
+  site_cache_stale?: boolean
+  site_cache_ttl_seconds?: number
+  site_cached_at?: string
+  site_error?: string
+  site_last_updated_at?: string
+  site_record_count?: number
+}
+
+export type GetPluginHostDianyingRssOptionsResponse = {
+  categories?: Array<{
+    label?: string
+    /** 媒体类型：movie 电影、tv 剧集 */
+    media_type?: string
+    value?: string
+  }>
+  classification_version?: string
+  code?: string
+  media_types?: Array<{
+    label?: string
+    /** 媒体类型：movie 电影、tv 剧集 */
+    media_type?: string
+    value?: string
+  }>
+  presets?: Array<{
+    filter?: {
+      categories?: Array<unknown>
+      media_types?: Array<unknown>
+      regions?: Array<unknown>
+      tags?: {
+        [key: string]: unknown
+      }
+    }
+    label?: string
+  }>
+  regions?: Array<{
+    label?: string
+    /** 媒体类型：movie 电影、tv 剧集 */
+    media_type?: string
+    value?: string
+  }>
+  tag_groups?: Array<{
+    key?: string
+    label?: string
+    options?: Array<{
+      label?: unknown
+      /** 媒体类型：movie 电影、tv 剧集 */
+      media_type?: unknown
+      value?: unknown
+    }>
+  }>
+}
+
 export type GetPluginHostEmbyEpisodesResponse = {
   complete?: boolean
   /** 已拥有的集数集合，格式如 "1-3,5" */
@@ -1929,6 +2070,79 @@ export type MessageResult = {
   message: string
 }
 
+export type MoviePilotConnectorRequest = {
+  /** 原始 JSON 请求体，与 body_base64 互斥。 */
+  body?: unknown
+  /** 二进制或 multipart/form-data 的完整请求体 Base64，与 body 互斥。 */
+  body_base64?: string
+  /** body_base64 的媒体类型；JSON 默认 application/json。 */
+  content_type?: string
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"
+  /** 相对于 MoviePilot /api/v1 的路径，例如 /search/media/71；不能是 URL、含 query、目录跳转或重定向目标。 */
+  path: string
+  /** 每个键对应字符串数组；禁止传入认证参数。 */
+  query?: {
+    [key: string]: Array<string>
+  }
+  timeout_seconds?: number
+}
+
+export type MoviePilotConnectorResponse = {
+  code: "ok"
+  data: {
+    /** 上游原始 JSON，通常为 success/message/data；上游非 2xx 也从这里读取。 */
+    body?: unknown
+    /** 非 JSON 响应的 Base64；与 body 二选一。 */
+    body_base64?: string
+    /** Content-Type、X-Total-Count、X-Page、X-Count、Retry-After；不转发认证或 Cookie。 */
+    headers: {
+      [key: string]: string
+    }
+    status: number
+  }
+}
+
+export type MoviePilotConnectorStatus = {
+  code: "ok"
+  data: {
+    api_version: "auto" | "v2" | "v3"
+    configured: boolean
+    /** 是否启用 */
+    enabled: boolean
+  }
+}
+
+export type MoviePilotExecutionOptionsResponse = {
+  code: "ok"
+  data: {
+    api_version: "v2" | "v3"
+    downloaders: Array<{
+      /** 名称 */
+      name: string
+      type: string
+    }>
+    /** 多个宿主绝对路径 */
+    paths: Array<{
+      download_path: string
+      /** 名称 */
+      name: string
+      save_path: string
+    }>
+    server_version?: string
+    sites: Array<{
+      id: number
+      is_active: boolean
+      /** 名称 */
+      name: string
+      pri: number
+      /** 远端站点规范域名。 */
+      domain?: string
+      /** 远端站点访问地址。 */
+      url?: string
+    }>
+  }
+}
+
 export type OfflineAddRequest = {
   account?: AccountSelector
   /** 离线下载保存目录的 115 节点 ID；主账号省略时使用账号默认离线目录，备用账号必须提供 */
@@ -2228,7 +2442,7 @@ export type PoolIntent = {
   covered_episodes: string
   /** 创建时间（RFC 3339） */
   created_at: string
-  /** JSON 数组字符串。 */
+  /** JSON 数组字符串；当前来源为 dianying、pt。历史数据可能包含待迁移的 moviepilot。PT 执行引擎由宿主系统设置统一选择。 */
   enabled_sources: string
   /** follow 自动跟随新集；fixed 只获取指定集数范围 */
   episode_scope_mode: "follow" | "fixed"
@@ -2278,14 +2492,22 @@ export type PoolIntent = {
 export type PoolIntentCreateRequest = {
   /** TMDB 背景图相对路径，拼接 https://image.tmdb.org/t/p/w1280 使用 */
   backdrop_path?: string
-  /** 启用的资源来源；省略使用宿主默认来源 */
-  enabled_sources?: Array<string>
+  /** DIAN115 配置的 PT 下载器名称；留空继承本机默认。内置与 MoviePilot 来源均由宿主直连该下载器。 */
+  downloader?: string
+  /** 启用的资源来源；省略使用宿主默认。pt 统一使用宿主设置中的内置 PT 或 MoviePilot 站点来源，下载始终由宿主直连下载器。 */
+  enabled_sources?: Array<"dianying" | "pt">
   /** follow 自动跟随新集；fixed 只获取 initial_needed_episodes 指定的集 */
   episode_scope_mode?: "follow" | "fixed"
+  /** PT 共同过滤参数 JSON 字符串，MoviePilot 候选同样生效。 */
+  filter_params?: string
+  /** 可选 IMDb 媒体身份。 */
+  imdb_id?: string
   /** 创建时已拥有的集数集合，格式如 "1-3" */
   initial_covered_episodes?: string
   /** 创建时需要获取的集数集合，格式如 "4-10" */
   initial_needed_episodes?: string
+  /** 可选资源匹配关键词。 */
+  keyword?: string
   library_snapshot_provided?: boolean
   /** 媒体类型：movie 电影、tv 剧集 */
   media_type: "movie" | "tv"
@@ -2293,8 +2515,12 @@ export type PoolIntentCreateRequest = {
   poster_path?: string
   /** Emby 实例 ID，来自 GET /api/plugin-host/emby/instances；省略使用默认实例 */
   proxy_id?: number
+  /** DIAN115 原有 Linux 下载工作目录；内置与 MoviePilot 来源共用，不映射 MP 路径或目录别名。 */
+  save_path?: string
   /** 季号，0 为特别篇 */
   season?: number
+  /** 本机 PT 站点 ID 的 JSON 数组字符串；留空使用本机启用的搜索站点。MoviePilot 模式由宿主按站点域名及内置别名自动识别远端站点，无需手工映射。 */
+  sites?: string
   /** 标题 */
   title: string
   /** TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 */
@@ -2843,6 +3069,62 @@ export type PostOrganizeRulesResponse = {
   use_ffprobe?: boolean
   /** 一级类型目录（电影/电视剧） */
   use_type_folder?: boolean
+}
+
+export type PostPluginHostDianyingResourcesUnlockResponse = {
+  account_id?: string
+  account_name?: string
+  already?: boolean
+  code?: string
+  /** 创建时间（RFC 3339） */
+  created_at?: string
+  file_extension?: string
+  file_name?: string
+  library_check_error?: string
+  library_checked?: boolean
+  /** 媒体类型：movie 电影、tv 剧集 */
+  media_type?: string
+  new_balance?: number
+  offline_options?: Array<{
+    /** 集号 */
+    episode?: number
+    episode_count?: number
+    episode_end?: number
+    episodes?: Array<number>
+    existing?: boolean
+    existing_count?: number
+    label?: string
+    /** 名称 */
+    name?: string
+    /** 季号，0 为特别篇 */
+    season?: number
+    url?: string
+  }>
+  offline_type?: string
+  owner?: boolean
+  payload?: {
+    [key: string]: unknown
+  }
+  resource_id?: number
+  /** 季号，0 为特别篇 */
+  season?: number
+  share_id?: number
+  share_kind?: string
+  tag?: string
+  tag_decoded?: {
+    [key: string]: unknown
+  }
+  /** 标题 */
+  title?: string
+  /** TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 */
+  tmdb_id?: number
+  token_used?: boolean
+  total_size_bytes?: number
+  unlock?: {
+    [key: string]: unknown
+  }
+  /** 年份 */
+  year?: number
 }
 
 export type PostPtDownloadResponse = {
@@ -3644,6 +3926,12 @@ export interface HostRoutes {
   "GET /api/cache/magnet/changes": { query: { keyword: string; since?: string; until?: string; cursor_time?: string; cursor_id?: number; limit?: number }; body: never; response: MagnetChangesResult }
   /** 列出 CD2 云盘。列出 CD2 中已挂载的云盘。path 为 CD2 路径，加上系统设置中的 CD2 挂载前缀即为宿主路径。 */
   "GET /api/cd2/clouds": { query: never; body: never; response: CD2CloudList }
+  /** 读取 MoviePilot 站点、下载器与目录。使用宿主保存的连接检测 V2/V3，并返回脱敏站点、可用下载器和目录。站点不含 Cookie 或密钥；新版保存路径保留存储前缀，旧 V2 回退 download_path。 */
+  "GET /api/connectors/moviepilot/options": { query: never; body: never; response: MoviePilotExecutionOptionsResponse }
+  /** 通过公共连接器调用 MoviePilot HTTP API。覆盖已连接 MoviePilot 实例的 HTTP API 能力：媒体、搜索、下载、站点、订阅、历史、整理、插件等。宿主注入 X-API-KEY；插件不读取或修改宿主连接配置。data.status 是上游 HTTP 状态，data.body.success 是上游业务状态；宿主 HTTP 200 不代表上游成功。写操作结果不明确时返回 uncertain=true，禁止盲目重发。单次请求体和响应体分别最多 8 MiB，最长 300 秒；不提供无限流或 WebSocket 隧道。系统订阅仅使用 MP 站点搜索与取种，种子解析及下载器提交由宿主直接执行；不创建远端订阅，提交下载成功即按本系统规则结算。 */
+  "POST /api/connectors/moviepilot/request": { query: never; body: MoviePilotConnectorRequest; response: MoviePilotConnectorResponse }
+  /** 读取 MoviePilot 公共连接器状态。仅返回是否启用和已配置，不包含实例密钥。插件可据此探测当前宿主是否具有连接器。 */
+  "GET /api/connectors/moviepilot/status": { query: never; body: never; response: MoviePilotConnectorStatus }
   /** 读取看板最新媒体。读取看板最新入库媒体。 */
   "GET /api/dashboard/emby-latest": { query: { limit?: number; proxy_id?: number }; body: never; response: GetDashboardEmbyLatestResponse }
   /** 读取看板媒体库。读取看板媒体库视图。 */
@@ -4004,6 +4292,55 @@ export interface HostRoutes {
   "GET /api/organize/tmdb/search": { query: { media_type?: string; page?: number; q?: string }; body: never; response: GetOrganizeTmdbSearchResponse }
   /** 读取洗版默认配置。读取默认洗版配置。 */
   "GET /api/organize/wash-version/default": { query: never; body: never; response: GetOrganizeWashVersionDefaultResponse }
+  /** 读取癫影账号选项。返回脱敏账号与可用性，不返回 API Key 或认证配置。 */
+  "GET /api/plugin-host/dianying/accounts": { query: never; body: never; response: {
+      availability: {
+        [key: string]: unknown
+      }
+      items: Array<DianyingPluginAccount>
+    } }
+  /** 读取癫影服务可用性。区分未配置、未授权及上游不可用；account_id 可选。 */
+  "GET /api/plugin-host/dianying/availability": { query: { account_id?: string }; body: never; response: GetPluginHostDianyingAvailabilityResponse }
+  /** 癫影账号签到。复用宿主已配置账号执行签到。 */
+  "POST /api/plugin-host/dianying/checkin": { query: never; body: {
+      /** 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 */
+      account_id?: string
+    }; response: {
+      [key: string]: unknown
+    } }
+  /** 查询我的癫影分享。account_id/refresh 为宿主选项，其他 JSON 字段按社区接口传入。 */
+  "POST /api/plugin-host/dianying/community/my-shares": { query: never; body: {
+      [key: string]: unknown
+    }; response: {
+      [key: string]: unknown
+    } }
+  /** 读取癫影社区资料。account_id 和 refresh 查询参数可选；上游业务 JSON 原样返回。 */
+  "GET /api/plugin-host/dianying/community/profile": { query: { account_id?: string; refresh?: string }; body: never; response: GetPluginHostDianyingCommunityProfileResponse }
+  /** 查询癫影社区排行。account_id/refresh 为宿主选项，其他 JSON 字段传给当前癫影社区业务。 */
+  "POST /api/plugin-host/dianying/community/ranking": { query: never; body: {
+      [key: string]: unknown
+    }; response: {
+      [key: string]: unknown
+    } }
+  /** 读取癫影文件指纹统计。返回宿主现有统计结果。 */
+  "GET /api/plugin-host/dianying/ffp-stats": { query: { account_id?: string }; body: never; response: GetPluginHostDianyingFfpStatsResponse }
+  /** 查询癫影资源分享。按 TMDB、季号、编码、分辨率等筛选，响应直接为 code/account_id/items/total/page/size/sort。 */
+  "POST /api/plugin-host/dianying/resources/list-shares": { query: never; body: DianyingResourceQuery; response: {
+      account_id?: string
+      account_name?: string
+      code?: string
+      items?: Array<{
+        [key: string]: unknown
+      }>
+      page?: number
+      size?: number
+      sort?: string
+      total?: number
+    } }
+  /** 解锁癫影资源。可能消耗当前账号积分；share_id/resource_id 按实际查询结果填写。 */
+  "POST /api/plugin-host/dianying/resources/unlock": { query: never; body: DianyingUnlockRequest; response: PostPluginHostDianyingResourcesUnlockResponse }
+  /** 读取癫影资源筛选选项。供资源查询及订阅筛选构建选项。 */
+  "GET /api/plugin-host/dianying/rss/options": { query: { account_id?: string }; body: never; response: GetPluginHostDianyingRssOptionsResponse }
   /** 读取 Emby 缺集。按 TMDB ID 查询 Emby 中某季已有与缺失的集数，适合订阅补集。 */
   "GET /api/plugin-host/emby/episodes": { query: { proxy_id?: number; season?: number; tmdb_id?: string; total_episodes?: number }; body: never; response: GetPluginHostEmbyEpisodesResponse }
   /** 列出 Emby 实例。列出 Emby 实例。多实例时其他 Emby 接口用 proxy_id 指定；id 为 0 的旧版单实例调用时省略 proxy_id。 */

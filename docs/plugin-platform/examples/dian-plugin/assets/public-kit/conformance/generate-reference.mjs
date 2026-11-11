@@ -11,11 +11,13 @@ const quick = '# 宿主接口速查\n\n插件通过普通 HTTP 调用宿主 API�
   ops.map(({ path, method, op }) => `| ${method.toUpperCase()} | \`${path}\` | ${cell(op.summary)} |`).join('\n') + '\n'
 
 const groupOf = path => {
+  if (path.startsWith('/api/plugin-host/dianying')) return 'dianying'
+  if (path.startsWith('/api/connectors/moviepilot')) return 'moviepilot'
   if (path.startsWith('/plugin-hooks') || path.startsWith('/api/extensions')) return '插件平台'
   if (path.startsWith('/v3/')) return '加密服务'
   return path.split('/')[2] || '其他'
 }
-const groupTitles = { '115': '115 账号、离线与分享', 'local-files': '宿主文件管理', 'local-dirs': '宿主文件管理', browse: 'CD2', cd2: 'CD2', 'plugin-host': 'Emby', 'emby-control': 'Emby', organize: '整理', rules: '同步规则与 STRM', subscribe: '订阅', tmdb: 'TMDB', tasks: '任务队列', workqueue: '任务队列', scheduler: '任务队列', dashboard: '看板与历史', history: '看板与历史', library: '媒体库' }
+const groupTitles = { dianying: '癫影业务', moviepilot: 'MoviePilot 公共连接器', '115': '115 账号、离线与分享', 'local-files': '宿主文件管理', 'local-dirs': '宿主文件管理', browse: 'CD2', cd2: 'CD2', 'plugin-host': 'Emby', 'emby-control': 'Emby', organize: '整理', rules: '同步规则与 STRM', subscribe: '订阅', tmdb: 'TMDB', tasks: '任务队列', workqueue: '任务队列', scheduler: '任务队列', dashboard: '看板与历史', history: '看板与历史', library: '媒体库' }
 const anchor = (method, path) => `${method}-${path}`.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 function pathWithSamples(path, op) {

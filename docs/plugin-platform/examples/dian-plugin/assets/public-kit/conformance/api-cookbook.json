@@ -540,7 +540,7 @@
     "PoolIntent.retry_count": "已重试次数",
     "PoolIntent.last_check_at": "最近一次检查时间",
     "PoolIntentCreateRequest.episode_scope_mode": "follow 自动跟随新集；fixed 只获取 initial_needed_episodes 指定的集",
-    "PoolIntentCreateRequest.enabled_sources": "启用的资源来源；省略使用宿主默认来源",
+    "PoolIntentCreateRequest.enabled_sources": "启用的资源来源；省略使用宿主默认。pt 统一使用宿主设置中的内置 PT 或 MoviePilot 站点来源，下载始终由宿主直连下载器。",
     "GetTasksByIdResponse.id": "任务 ID",
     "GetTasksByIdResponse.status": "pending 等待中、running 运行中、completed 已完成、failed 失败、cancelled 已取消",
     "GetTasksByIdResponse.type": "任务类型（如 file_operation、plugin 等）",

@@ -47,3 +47,9 @@ const { torrents, window } = response.data
 4. 超时、任务中断、响应丢失不能证明未提交。先核对远端；无法确认时等待人工核对，禁止自动重发。ED2K 的 MD4 不应与 BTIH 混用来核对任务。
 
 外部 HTTP 数据库接口也必须真实接收 `since/until/cursor` 并在来源端过滤；建议返回 `{ items, complete, next_cursor }`。未提供这一能力的传统接口可兼容使用，但应明确显示全量模式，不能假装设置本地时间就减少了远端读取。敏感请求头和带签名 URL 不写日志。
+
+## 癫影与 MoviePilot 搜索下载
+
+[公共连接器专题](dianying-and-moviepilot.md)提供癫影查询、解锁、签到和脱敏账号信息，以及 MoviePilot 完整 HTTP API 的调用方式。癫影其他操作不开放给第三方插件。系统订阅继续由 DIAN115 管理，`enabled_sources` 使用 `dianying`、`pt`；`pt` 在系统设置中统一选择内置或 MoviePilot 站点来源；MoviePilot 负责搜索与取种，DIAN115 解析种子并直连自己配置的下载器；成功提交下载即结算本轮获取，不在 MoviePilot 创建订阅，不轮询下载进度。插件可独立使用 MoviePilot 连接器的其他能力，包括其自有远端订阅业务。
+
+PT 的本机站点 ID 在切换站点来源时保持不变。MoviePilot 模式由宿主按域名及内置别名自动识别远端站点，不保存手工映射；站点导入在宿主管理页执行，不属于插件接口。

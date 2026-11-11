@@ -15,12 +15,14 @@
 - [115 账号、离线与分享](#115-账号-离线与分享)（27）
 - [CD2](#cd2)（2）
 - [cache](#cache)（1）
+- [MoviePilot 公共连接器](#moviepilot-公共连接器)（3）
 - [看板与历史](#看板与历史)（8）
 - [Emby](#emby)（10）
 - [插件平台](#插件平台)（55）
 - [媒体库](#媒体库)（1）
 - [宿主文件管理](#宿主文件管理)（18）
 - [整理](#整理)（24）
+- [癫影业务](#癫影业务)（10）
 - [pt](#pt)（4）
 - [同步规则与 STRM](#同步规则与-strm)（13）
 - [任务队列](#任务队列)（6）
@@ -1254,6 +1256,168 @@ const res = await ctx.api.get('/api/cache/magnet/changes?keyword=SSIS-001&since=
 | `items[].title` | string | 标题 |
 | `items[].updated_at` | string | 更新时间（RFC 3339） |
 | `until` | string(date-time) | 本次固定窗口的排他上界；只有 complete=true 才能作为下一次基线。 |
+
+## MoviePilot 公共连接器
+
+### GET `/api/connectors/moviepilot/options`
+
+<a id="get-api-connectors-moviepilot-options"></a>
+
+读取 MoviePilot 站点、下载器与目录。 使用宿主保存的连接检测 V2/V3，并返回脱敏站点、可用下载器和目录。站点不含 Cookie 或密钥；新版保存路径保留存储前缀，旧 V2 回退 download_path。
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/connectors/moviepilot/options')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "code": "ok",
+  "data": {
+    "api_version": "v2",
+    "downloaders": [
+      {
+        "name": "<name>",
+        "type": "<type>"
+      }
+    ],
+    "paths": [
+      {
+        "download_path": "<download_path>",
+        "name": "<name>",
+        "save_path": "<save_path>"
+      }
+    ],
+    "server_version": "<server_version>",
+    "sites": [
+      {
+        "id": 0,
+        "is_active": true,
+        "name": "<name>",
+        "pri": 0,
+        "domain": "<domain>",
+        "url": "<url>"
+      }
+    ]
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `code` | "ok" |  |
+| `data` | object |  |
+| `data.api_version` | "v2" / "v3" |  |
+| `data.downloaders` | object[] |  |
+| `data.downloaders[].name` | string | 名称 |
+| `data.downloaders[].type` | string |  |
+| `data.paths` | object[] | 多个宿主绝对路径 |
+| `data.paths[].download_path` | string |  |
+| `data.paths[].name` | string | 名称 |
+| `data.paths[].save_path` | string |  |
+| `data.server_version` | string |  |
+| `data.sites` | object[] |  |
+| `data.sites[].id` | integer |  |
+| `data.sites[].is_active` | boolean |  |
+| `data.sites[].name` | string | 名称 |
+| `data.sites[].pri` | integer |  |
+| `data.sites[].domain` | string | 远端站点规范域名。 |
+| `data.sites[].url` | string | 远端站点访问地址。 |
+
+### POST `/api/connectors/moviepilot/request`
+
+<a id="post-api-connectors-moviepilot-request"></a>
+
+通过公共连接器调用 MoviePilot HTTP API。 覆盖已连接 MoviePilot 实例的 HTTP API 能力：媒体、搜索、下载、站点、订阅、历史、整理、插件等。宿主注入 X-API-KEY；插件不读取或修改宿主连接配置。data.status 是上游 HTTP 状态，data.body.success 是上游业务状态；宿主 HTTP 200 不代表上游成功。写操作结果不明确时返回 uncertain=true，禁止盲目重发。单次请求体和响应体分别最多 8 MiB，最长 300 秒；不提供无限流或 WebSocket 隧道。系统订阅仅使用 MP 站点搜索与取种，种子解析及下载器提交由宿主直接执行；不创建远端订阅，提交下载成功即按本系统规则结算。
+
+**请求体（JSON）**
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `body` | any |  | 原始 JSON 请求体，与 body_base64 互斥。 |
+| `body_base64` | string |  | 二进制或 multipart/form-data 的完整请求体 Base64，与 body 互斥。 |
+| `content_type` | string |  | body_base64 的媒体类型；JSON 默认 application/json。 |
+| `method` | "GET" / "POST" / "PUT" / "PATCH" / "DELETE" / "HEAD" / "OPTIONS" |  |  |
+| `path` | string | 是 | 相对于 MoviePilot /api/v1 的路径，例如 /search/media/71；不能是 URL、含 query、目录跳转或重定向目标。 |
+| `query` | object |  | 每个键对应字符串数组；禁止传入认证参数。 |
+| `timeout_seconds` | integer |  |  |
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/connectors/moviepilot/request', {
+  "method": "GET",
+  "path": "/search/media/71",
+  "query": {
+    "media_source": [
+      "themoviedb"
+    ],
+    "mtype": [
+      "电影"
+    ]
+  },
+  "timeout_seconds": 300
+})
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "code": "ok",
+  "data": {
+    "body": null,
+    "body_base64": "<body_base64>",
+    "headers": {},
+    "status": 100
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `code` | "ok" |  |
+| `data` | object |  |
+| `data.body` | any | 上游原始 JSON，通常为 success/message/data；上游非 2xx 也从这里读取。 |
+| `data.body_base64` | string | 非 JSON 响应的 Base64；与 body 二选一。 |
+| `data.headers` | object | Content-Type、X-Total-Count、X-Page、X-Count、Retry-After；不转发认证或 Cookie。 |
+| `data.status` | integer |  |
+
+### GET `/api/connectors/moviepilot/status`
+
+<a id="get-api-connectors-moviepilot-status"></a>
+
+读取 MoviePilot 公共连接器状态。 仅返回是否启用和已配置，不包含实例密钥。插件可据此探测当前宿主是否具有连接器。
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/connectors/moviepilot/status')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "code": "ok",
+  "data": {
+    "api_version": "auto",
+    "configured": true,
+    "enabled": true
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `code` | "ok" |  |
+| `data` | object |  |
+| `data.api_version` | "auto" / "v2" / "v3" |  |
+| `data.configured` | boolean |  |
+| `data.enabled` | boolean | 是否启用 |
 
 ## 看板与历史
 
@@ -7651,6 +7815,573 @@ const res = await ctx.api.get('/api/organize/wash-version/default')
 | `excludes.hdr_types` | string[] | 排除的 HDR 类型 |
 | `excludes.resolutions` | string[] | 排除的分辨率 |
 
+## 癫影业务
+
+### GET `/api/plugin-host/dianying/accounts`
+
+<a id="get-api-plugin-host-dianying-accounts"></a>
+
+读取癫影账号选项。 返回脱敏账号与可用性，不返回 API Key 或认证配置。
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/plugin-host/dianying/accounts')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "availability": {},
+  "items": [
+    {
+      "auto_share": true,
+      "enabled": true,
+      "id": "<id>",
+      "is_vip": true,
+      "name": "<name>",
+      "points": 0,
+      "status": "<status>"
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `availability` | object |  |
+| `items` | DianyingPluginAccount[] |  |
+| `items[].auto_share` | boolean |  |
+| `items[].enabled` | boolean | 是否启用 |
+| `items[].id` | string |  |
+| `items[].is_vip` | boolean |  |
+| `items[].name` | string | 名称 |
+| `items[].points` | integer |  |
+| `items[].status` | string |  |
+
+### GET `/api/plugin-host/dianying/availability`
+
+<a id="get-api-plugin-host-dianying-availability"></a>
+
+读取癫影服务可用性。 区分未配置、未授权及上游不可用；account_id 可选。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `account_id` | query | string |  | 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 |
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/plugin-host/dianying/availability')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "account_id": 2,
+  "available": true,
+  "code": "<code>",
+  "message": "<message>"
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `account_id` | string |  |
+| `available` | boolean |  |
+| `code` | string |  |
+| `message` | string | 给用户看的结果说明 |
+
+### POST `/api/plugin-host/dianying/checkin`
+
+<a id="post-api-plugin-host-dianying-checkin"></a>
+
+癫影账号签到。 复用宿主已配置账号执行签到。
+
+**请求体（JSON）**
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `account_id` | string |  | 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 |
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/plugin-host/dianying/checkin', {
+  "account_id": 2
+})
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{}
+```
+
+### POST `/api/plugin-host/dianying/community/my-shares`
+
+<a id="post-api-plugin-host-dianying-community-my-shares"></a>
+
+查询我的癫影分享。 account_id/refresh 为宿主选项，其他 JSON 字段按社区接口传入。
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/plugin-host/dianying/community/my-shares', {})
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{}
+```
+
+### GET `/api/plugin-host/dianying/community/profile`
+
+<a id="get-api-plugin-host-dianying-community-profile"></a>
+
+读取癫影社区资料。 account_id 和 refresh 查询参数可选；上游业务 JSON 原样返回。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `account_id` | query | string |  | 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 |
+| `refresh` | query | string |  |  |
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/plugin-host/dianying/community/profile')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "account_id": 2,
+  "account_name": "<account_name>",
+  "cache": {
+    "cached_at": "2026-10-29T21:30:00+08:00",
+    "error": "<error>",
+    "expires_at": "2026-10-29T21:30:00+08:00",
+    "refreshing": true,
+    "stale": true
+  },
+  "data": null
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `account_id` | string |  |
+| `account_name` | string |  |
+| `cache` | object |  |
+| `cache.cached_at` | string(date-time) |  |
+| `cache.error` | string | 失败原因（原始业务错误） |
+| `cache.expires_at` | string(date-time) |  |
+| `cache.refreshing` | boolean |  |
+| `cache.stale` | boolean |  |
+| `data` | any |  |
+
+### POST `/api/plugin-host/dianying/community/ranking`
+
+<a id="post-api-plugin-host-dianying-community-ranking"></a>
+
+查询癫影社区排行。 account_id/refresh 为宿主选项，其他 JSON 字段传给当前癫影社区业务。
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/plugin-host/dianying/community/ranking', {})
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{}
+```
+
+### GET `/api/plugin-host/dianying/ffp-stats`
+
+<a id="get-api-plugin-host-dianying-ffp-stats"></a>
+
+读取癫影文件指纹统计。 返回宿主现有统计结果。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `account_id` | query | string |  | 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 |
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/plugin-host/dianying/ffp-stats')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "call_count": 0,
+  "contributor_count": 0,
+  "emby_madby_success": 0,
+  "match_count": 0,
+  "organize_ffp_success": 0,
+  "site_cache_fresh_seconds": 0,
+  "site_cache_ready": true,
+  "site_cache_stale": true,
+  "site_cache_ttl_seconds": 0,
+  "site_cached_at": "<site_cached_at>",
+  "site_error": "<site_error>",
+  "site_last_updated_at": "<site_last_updated_at>",
+  "site_record_count": 0
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `call_count` | integer |  |
+| `contributor_count` | integer |  |
+| `emby_madby_success` | integer |  |
+| `match_count` | integer |  |
+| `organize_ffp_success` | integer |  |
+| `site_cache_fresh_seconds` | integer |  |
+| `site_cache_ready` | boolean |  |
+| `site_cache_stale` | boolean |  |
+| `site_cache_ttl_seconds` | integer |  |
+| `site_cached_at` | string |  |
+| `site_error` | string |  |
+| `site_last_updated_at` | string |  |
+| `site_record_count` | integer |  |
+
+### POST `/api/plugin-host/dianying/resources/list-shares`
+
+<a id="post-api-plugin-host-dianying-resources-list-shares"></a>
+
+查询癫影资源分享。 按 TMDB、季号、编码、分辨率等筛选，响应直接为 code/account_id/items/total/page/size/sort。
+
+**请求体（JSON）**
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `account_id` | string |  | 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 |
+| `audio` | string |  |  |
+| `chn_sub` | boolean |  |  |
+| `codec` | string |  |  |
+| `fps` | string |  |  |
+| `hdr` | string |  |  |
+| `max_size_gb` | number |  |  |
+| `media_type` | "movie" / "tv" |  | 媒体类型：movie 电影、tv 剧集 |
+| `min_episodes` | integer |  |  |
+| `min_size_gb` | number |  |  |
+| `mode` | string |  |  |
+| `page` | integer |  | 页码，通常从 1 开始 |
+| `res` | string |  |  |
+| `resource_id` | integer |  |  |
+| `season` | integer |  | 季号，0 表示特别篇 |
+| `share_kind` | string |  |  |
+| `sharer_id` | integer |  |  |
+| `size` | integer |  | 每页数量 |
+| `sort` | string |  |  |
+| `source` | string |  |  |
+| `source_tag` | string |  |  |
+| `tags` | string[] |  |  |
+| `tmdb_id` | integer |  | TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 |
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/plugin-host/dianying/resources/list-shares', {
+  "account_id": 2,
+  "audio": "<audio>",
+  "chn_sub": true,
+  "codec": "<codec>",
+  "fps": "<fps>",
+  "hdr": "<hdr>",
+  "max_size_gb": 0,
+  "media_type": "tv",
+  "min_episodes": 0,
+  "min_size_gb": 0,
+  "mode": "<mode>",
+  "page": 1,
+  "res": "<res>",
+  "resource_id": 0,
+  "season": 1,
+  "share_kind": "<share_kind>",
+  "sharer_id": 0,
+  "size": 1,
+  "sort": "<sort>",
+  "source": "<source>",
+  "source_tag": "<source_tag>",
+  "tags": [
+    ""
+  ],
+  "tmdb_id": 1399
+})
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "account_id": 2,
+  "account_name": "<account_name>",
+  "code": "<code>",
+  "items": [
+    {}
+  ],
+  "page": 1,
+  "size": 0,
+  "sort": "<sort>",
+  "total": 0
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `account_id` | string |  |
+| `account_name` | string |  |
+| `code` | string |  |
+| `items` | object[] |  |
+| `page` | integer |  |
+| `size` | integer |  |
+| `sort` | string |  |
+| `total` | integer |  |
+
+### POST `/api/plugin-host/dianying/resources/unlock`
+
+<a id="post-api-plugin-host-dianying-resources-unlock"></a>
+
+解锁癫影资源。 可能消耗当前账号积分；share_id/resource_id 按实际查询结果填写。
+
+**请求体（JSON）**
+
+| 字段 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| `account_id` | string |  | 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 |
+| `media_type` | string |  | 媒体类型：movie 电影、tv 剧集 |
+| `resource_id` | integer |  | 癫影资源编号 |
+| `season` | integer |  | 季号，0 为特别篇 |
+| `share_id` | integer |  | 癫影分享编号 |
+| `tmdb_id` | integer |  | TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 |
+
+**调用**
+
+```js
+const res = await ctx.api.post('/api/plugin-host/dianying/resources/unlock', {
+  "account_id": 2,
+  "media_type": "tv",
+  "resource_id": 1,
+  "season": 1,
+  "share_id": 1,
+  "tmdb_id": 1399
+})
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "account_id": 2,
+  "account_name": "<account_name>",
+  "already": true,
+  "code": "<code>",
+  "created_at": "<created_at>",
+  "file_extension": "<file_extension>",
+  "file_name": "<file_name>",
+  "library_check_error": "<library_check_error>",
+  "library_checked": true,
+  "media_type": "tv",
+  "new_balance": 0,
+  "offline_options": [
+    {
+      "episode": 1,
+      "episode_count": 0,
+      "episode_end": 0,
+      "episodes": [
+        0
+      ],
+      "existing": true,
+      "existing_count": 0,
+      "label": "<label>",
+      "name": "<name>",
+      "season": 1,
+      "url": "<url>"
+    }
+  ],
+  "offline_type": "<offline_type>",
+  "owner": true,
+  "payload": {},
+  "resource_id": 0,
+  "season": 1,
+  "share_id": 0,
+  "share_kind": "<share_kind>",
+  "tag": "<tag>",
+  "tag_decoded": {},
+  "title": "<title>",
+  "tmdb_id": 1399,
+  "token_used": true,
+  "total_size_bytes": 0,
+  "unlock": {},
+  "year": 0
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `account_id` | string |  |
+| `account_name` | string |  |
+| `already` | boolean |  |
+| `code` | string |  |
+| `created_at` | string | 创建时间（RFC 3339） |
+| `file_extension` | string |  |
+| `file_name` | string |  |
+| `library_check_error` | string |  |
+| `library_checked` | boolean |  |
+| `media_type` | string | 媒体类型：movie 电影、tv 剧集 |
+| `new_balance` | integer |  |
+| `offline_options` | object[] |  |
+| `offline_options[].episode` | integer | 集号 |
+| `offline_options[].episode_count` | integer |  |
+| `offline_options[].episode_end` | integer |  |
+| `offline_options[].episodes` | integer[] |  |
+| `offline_options[].existing` | boolean |  |
+| `offline_options[].existing_count` | integer |  |
+| `offline_options[].label` | string |  |
+| `offline_options[].name` | string | 名称 |
+| `offline_options[].season` | integer | 季号，0 为特别篇 |
+| `offline_options[].url` | string |  |
+| `offline_type` | string |  |
+| `owner` | boolean |  |
+| `payload` | object |  |
+| `resource_id` | integer |  |
+| `season` | integer | 季号，0 为特别篇 |
+| `share_id` | integer |  |
+| `share_kind` | string |  |
+| `tag` | string |  |
+| `tag_decoded` | object |  |
+| `title` | string | 标题 |
+| `tmdb_id` | integer | TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 |
+| `token_used` | boolean |  |
+| `total_size_bytes` | integer |  |
+| `unlock` | object |  |
+| `year` | integer | 年份 |
+
+### GET `/api/plugin-host/dianying/rss/options`
+
+<a id="get-api-plugin-host-dianying-rss-options"></a>
+
+读取癫影资源筛选选项。 供资源查询及订阅筛选构建选项。
+
+**参数**
+
+| 名称 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| `account_id` | query | string |  | 癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。 |
+
+**调用**
+
+```js
+const res = await ctx.api.get('/api/plugin-host/dianying/rss/options')
+```
+
+**响应 200**（按契约结构生成的示例值）
+
+```json
+{
+  "categories": [
+    {
+      "label": "<label>",
+      "media_type": "tv",
+      "value": "<value>"
+    }
+  ],
+  "classification_version": "<classification_version>",
+  "code": "<code>",
+  "media_types": [
+    {
+      "label": "<label>",
+      "media_type": "tv",
+      "value": "<value>"
+    }
+  ],
+  "presets": [
+    {
+      "filter": {
+        "categories": [
+          null
+        ],
+        "media_types": [
+          null
+        ],
+        "regions": [
+          null
+        ],
+        "tags": {}
+      },
+      "label": "<label>"
+    }
+  ],
+  "regions": [
+    {
+      "label": "<label>",
+      "media_type": "tv",
+      "value": "<value>"
+    }
+  ],
+  "tag_groups": [
+    {
+      "key": "<key>",
+      "label": "<label>",
+      "options": [
+        {
+          "label": null,
+          "media_type": "tv",
+          "value": null
+        }
+      ]
+    }
+  ]
+}
+```
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `categories` | object[] |  |
+| `categories[].label` | string |  |
+| `categories[].media_type` | string | 媒体类型：movie 电影、tv 剧集 |
+| `categories[].value` | string |  |
+| `classification_version` | string |  |
+| `code` | string |  |
+| `media_types` | object[] |  |
+| `media_types[].label` | string |  |
+| `media_types[].media_type` | string | 媒体类型：movie 电影、tv 剧集 |
+| `media_types[].value` | string |  |
+| `presets` | object[] |  |
+| `presets[].filter` | object |  |
+| `presets[].filter.categories` | any[] |  |
+| `presets[].filter.media_types` | any[] |  |
+| `presets[].filter.regions` | any[] |  |
+| `presets[].filter.tags` | object |  |
+| `presets[].label` | string |  |
+| `regions` | object[] |  |
+| `regions[].label` | string |  |
+| `regions[].media_type` | string | 媒体类型：movie 电影、tv 剧集 |
+| `regions[].value` | string |  |
+| `tag_groups` | object[] |  |
+| `tag_groups[].key` | string |  |
+| `tag_groups[].label` | string |  |
+| `tag_groups[].options` | object[] |  |
+| `tag_groups[].options[].label` | any |  |
+| `tag_groups[].options[].media_type` | any | 媒体类型：movie 电影、tv 剧集 |
+| `tag_groups[].options[].value` | any |  |
+
 ## pt
 
 ### POST `/api/pt/download`
@@ -9262,7 +9993,7 @@ const res = await ctx.api.get('/api/subscribe/pool/intents')
 | `data[].baseline_tag` | string |  |
 | `data[].covered_episodes` | string | 已拥有的集数集合，格式如 "1-3,5" |
 | `data[].created_at` | string(date-time) | 创建时间（RFC 3339） |
-| `data[].enabled_sources` | string | JSON 数组字符串。 |
+| `data[].enabled_sources` | string | JSON 数组字符串；当前来源为 dianying、pt。历史数据可能包含待迁移的 moviepilot。PT 执行引擎由宿主系统设置统一选择。 |
 | `data[].episode_scope_mode` | "follow" / "fixed" | follow 自动跟随新集；fixed 只获取指定集数范围 |
 | `data[].id` | integer(int64) | 订阅 ID，用于 GET/DELETE /api/subscribe/pool/intents/{id} |
 | `data[].is_upgrade` | 0 / 1 | 1 表示洗版订阅（已有资源，寻找更好版本） |
@@ -9299,15 +10030,21 @@ const res = await ctx.api.get('/api/subscribe/pool/intents')
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
 | `backdrop_path` | string |  | TMDB 背景图相对路径，拼接 https://image.tmdb.org/t/p/w1280 使用 |
-| `enabled_sources` | string[] |  | 启用的资源来源；省略使用宿主默认来源 |
+| `downloader` | string |  | DIAN115 配置的 PT 下载器名称；留空继承本机默认。内置与 MoviePilot 来源均由宿主直连该下载器。 |
+| `enabled_sources` | "dianying" / "pt"[] |  | 启用的资源来源；省略使用宿主默认。pt 统一使用宿主设置中的内置 PT 或 MoviePilot 站点来源，下载始终由宿主直连下载器。 |
 | `episode_scope_mode` | "follow" / "fixed" |  | follow 自动跟随新集；fixed 只获取 initial_needed_episodes 指定的集 |
+| `filter_params` | string |  | PT 共同过滤参数 JSON 字符串，MoviePilot 候选同样生效。 |
+| `imdb_id` | string |  | 可选 IMDb 媒体身份。 |
 | `initial_covered_episodes` | string |  | 创建时已拥有的集数集合，格式如 "1-3" |
 | `initial_needed_episodes` | string |  | 创建时需要获取的集数集合，格式如 "4-10" |
+| `keyword` | string |  | 可选资源匹配关键词。 |
 | `library_snapshot_provided` | boolean |  |  |
 | `media_type` | "movie" / "tv" | 是 | 媒体类型：movie 电影、tv 剧集 |
 | `poster_path` | string |  | TMDB 海报相对路径，拼接 https://image.tmdb.org/t/p/w500 使用 |
 | `proxy_id` | integer(int64) |  | Emby 实例 ID，来自 GET /api/plugin-host/emby/instances；省略使用默认实例 |
+| `save_path` | string |  | DIAN115 原有 Linux 下载工作目录；内置与 MoviePilot 来源共用，不映射 MP 路径或目录别名。 |
 | `season` | integer |  | 季号，0 为特别篇 |
+| `sites` | string |  | 本机 PT 站点 ID 的 JSON 数组字符串；留空使用本机启用的搜索站点。MoviePilot 模式由宿主按站点域名及内置别名自动识别远端站点，无需手工映射。 |
 | `title` | string | 是 | 标题 |
 | `tmdb_id` | integer | 是 | TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用 |
 | `total_episodes` | integer |  | 该季总集数，0 表示未知 |
@@ -9378,7 +10115,7 @@ const res = await ctx.api.post('/api/subscribe/pool/intents', {
 | `data.baseline_tag` | string |  |
 | `data.covered_episodes` | string | 已拥有的集数集合，格式如 "1-3,5" |
 | `data.created_at` | string(date-time) | 创建时间（RFC 3339） |
-| `data.enabled_sources` | string | JSON 数组字符串。 |
+| `data.enabled_sources` | string | JSON 数组字符串；当前来源为 dianying、pt。历史数据可能包含待迁移的 moviepilot。PT 执行引擎由宿主系统设置统一选择。 |
 | `data.episode_scope_mode` | "follow" / "fixed" | follow 自动跟随新集；fixed 只获取指定集数范围 |
 | `data.id` | integer(int64) | 订阅 ID，用于 GET/DELETE /api/subscribe/pool/intents/{id} |
 | `data.is_upgrade` | 0 / 1 | 1 表示洗版订阅（已有资源，寻找更好版本） |
@@ -9471,7 +10208,7 @@ const res = await ctx.api.get('/api/subscribe/pool/intents/1')
 | `data.baseline_tag` | string |  |
 | `data.covered_episodes` | string | 已拥有的集数集合，格式如 "1-3,5" |
 | `data.created_at` | string(date-time) | 创建时间（RFC 3339） |
-| `data.enabled_sources` | string | JSON 数组字符串。 |
+| `data.enabled_sources` | string | JSON 数组字符串；当前来源为 dianying、pt。历史数据可能包含待迁移的 moviepilot。PT 执行引擎由宿主系统设置统一选择。 |
 | `data.episode_scope_mode` | "follow" / "fixed" | follow 自动跟随新集；fixed 只获取指定集数范围 |
 | `data.id` | integer(int64) | 订阅 ID，用于 GET/DELETE /api/subscribe/pool/intents/{id} |
 | `data.is_upgrade` | 0 / 1 | 1 表示洗版订阅（已有资源，寻找更好版本） |
@@ -9606,7 +10343,7 @@ const res = await ctx.api.patch('/api/subscribe/pool/intents/1/episodes', {
 | `data.baseline_tag` | string |  |
 | `data.covered_episodes` | string | 已拥有的集数集合，格式如 "1-3,5" |
 | `data.created_at` | string(date-time) | 创建时间（RFC 3339） |
-| `data.enabled_sources` | string | JSON 数组字符串。 |
+| `data.enabled_sources` | string | JSON 数组字符串；当前来源为 dianying、pt。历史数据可能包含待迁移的 moviepilot。PT 执行引擎由宿主系统设置统一选择。 |
 | `data.episode_scope_mode` | "follow" / "fixed" | follow 自动跟随新集；fixed 只获取指定集数范围 |
 | `data.id` | integer(int64) | 订阅 ID，用于 GET/DELETE /api/subscribe/pool/intents/{id} |
 | `data.is_upgrade` | 0 / 1 | 1 表示洗版订阅（已有资源，寻找更好版本） |

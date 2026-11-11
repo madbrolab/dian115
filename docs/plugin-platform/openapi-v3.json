@@ -478,6 +478,191 @@
     },
     "type": "object"
    },
+   "DianyingPluginAccount": {
+    "additionalProperties": false,
+    "properties": {
+     "auto_share": {
+      "type": "boolean"
+     },
+     "enabled": {
+      "type": "boolean",
+      "description": "是否启用"
+     },
+     "id": {
+      "description": "",
+      "type": "string"
+     },
+     "is_vip": {
+      "type": "boolean"
+     },
+     "name": {
+      "description": "名称",
+      "type": "string"
+     },
+     "points": {
+      "description": "",
+      "minimum": 0,
+      "type": "integer"
+     },
+     "status": {
+      "description": "",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "enabled",
+     "status",
+     "points",
+     "is_vip",
+     "auto_share"
+    ],
+    "type": "object"
+   },
+   "DianyingResourceQuery": {
+    "additionalProperties": false,
+    "properties": {
+     "account_id": {
+      "description": "癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。",
+      "type": "string"
+     },
+     "audio": {
+      "description": "",
+      "type": "string"
+     },
+     "chn_sub": {
+      "type": "boolean"
+     },
+     "codec": {
+      "description": "",
+      "type": "string"
+     },
+     "fps": {
+      "description": "",
+      "type": "string"
+     },
+     "hdr": {
+      "description": "",
+      "type": "string"
+     },
+     "max_size_gb": {
+      "minimum": 0,
+      "type": "number"
+     },
+     "media_type": {
+      "enum": [
+       "movie",
+       "tv"
+      ],
+      "type": "string",
+      "description": "媒体类型：movie 电影、tv 剧集"
+     },
+     "min_episodes": {
+      "description": "",
+      "minimum": 0,
+      "type": "integer"
+     },
+     "min_size_gb": {
+      "minimum": 0,
+      "type": "number"
+     },
+     "mode": {
+      "description": "",
+      "type": "string"
+     },
+     "page": {
+      "description": "页码，通常从 1 开始",
+      "minimum": 1,
+      "type": "integer"
+     },
+     "res": {
+      "description": "",
+      "type": "string"
+     },
+     "resource_id": {
+      "description": "",
+      "minimum": 0,
+      "type": "integer"
+     },
+     "season": {
+      "description": "季号，0 表示特别篇",
+      "minimum": 0,
+      "type": "integer"
+     },
+     "share_kind": {
+      "description": "",
+      "type": "string"
+     },
+     "sharer_id": {
+      "description": "",
+      "minimum": 0,
+      "type": "integer"
+     },
+     "size": {
+      "description": "每页数量",
+      "minimum": 1,
+      "type": "integer"
+     },
+     "sort": {
+      "description": "",
+      "type": "string"
+     },
+     "source": {
+      "description": "",
+      "type": "string"
+     },
+     "source_tag": {
+      "description": "",
+      "type": "string"
+     },
+     "tags": {
+      "items": {
+       "description": "",
+       "type": "string"
+      },
+      "type": "array"
+     },
+     "tmdb_id": {
+      "description": "TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用",
+      "minimum": 0,
+      "type": "integer"
+     }
+    },
+    "type": "object"
+   },
+   "DianyingUnlockRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "account_id": {
+      "description": "癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。",
+      "type": "string"
+     },
+     "media_type": {
+      "type": "string",
+      "description": "媒体类型：movie 电影、tv 剧集"
+     },
+     "resource_id": {
+      "description": "癫影资源编号",
+      "minimum": 1,
+      "type": "integer"
+     },
+     "season": {
+      "type": "integer",
+      "description": "季号，0 为特别篇"
+     },
+     "share_id": {
+      "description": "癫影分享编号",
+      "minimum": 1,
+      "type": "integer"
+     },
+     "tmdb_id": {
+      "type": "integer",
+      "description": "TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用"
+     }
+    },
+    "type": "object"
+   },
    "ExtensionAICompletion": {
     "properties": {
      "finish_reason": {
@@ -4314,6 +4499,227 @@
     },
     "type": "object"
    },
+   "GetPluginHostDianyingAvailabilityResponse": {
+    "properties": {
+     "account_id": {
+      "type": "string"
+     },
+     "available": {
+      "type": "boolean"
+     },
+     "code": {
+      "type": "string"
+     },
+     "message": {
+      "type": "string",
+      "description": "给用户看的结果说明"
+     }
+    },
+    "type": "object"
+   },
+   "GetPluginHostDianyingCommunityProfileResponse": {
+    "properties": {
+     "account_id": {
+      "type": "string"
+     },
+     "account_name": {
+      "type": "string"
+     },
+     "cache": {
+      "properties": {
+       "cached_at": {
+        "format": "date-time",
+        "type": "string"
+       },
+       "error": {
+        "type": "string",
+        "description": "失败原因（原始业务错误）"
+       },
+       "expires_at": {
+        "format": "date-time",
+        "type": "string"
+       },
+       "refreshing": {
+        "type": "boolean"
+       },
+       "stale": {
+        "type": "boolean"
+       }
+      },
+      "type": "object"
+     },
+     "data": {}
+    },
+    "type": "object"
+   },
+   "GetPluginHostDianyingFfpStatsResponse": {
+    "properties": {
+     "call_count": {
+      "type": "integer"
+     },
+     "contributor_count": {
+      "type": "integer"
+     },
+     "emby_madby_success": {
+      "type": "integer"
+     },
+     "match_count": {
+      "type": "integer"
+     },
+     "organize_ffp_success": {
+      "type": "integer"
+     },
+     "site_cache_fresh_seconds": {
+      "type": "integer"
+     },
+     "site_cache_ready": {
+      "type": "boolean"
+     },
+     "site_cache_stale": {
+      "type": "boolean"
+     },
+     "site_cache_ttl_seconds": {
+      "type": "integer"
+     },
+     "site_cached_at": {
+      "type": "string"
+     },
+     "site_error": {
+      "type": "string"
+     },
+     "site_last_updated_at": {
+      "type": "string"
+     },
+     "site_record_count": {
+      "type": "integer"
+     }
+    },
+    "type": "object"
+   },
+   "GetPluginHostDianyingRssOptionsResponse": {
+    "properties": {
+     "categories": {
+      "items": {
+       "properties": {
+        "label": {
+         "type": "string"
+        },
+        "media_type": {
+         "type": "string",
+         "description": "媒体类型：movie 电影、tv 剧集"
+        },
+        "value": {
+         "type": "string"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "classification_version": {
+      "type": "string"
+     },
+     "code": {
+      "type": "string"
+     },
+     "media_types": {
+      "items": {
+       "properties": {
+        "label": {
+         "type": "string"
+        },
+        "media_type": {
+         "type": "string",
+         "description": "媒体类型：movie 电影、tv 剧集"
+        },
+        "value": {
+         "type": "string"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "presets": {
+      "items": {
+       "properties": {
+        "filter": {
+         "properties": {
+          "categories": {
+           "items": {},
+           "type": "array"
+          },
+          "media_types": {
+           "items": {},
+           "type": "array"
+          },
+          "regions": {
+           "items": {},
+           "type": "array"
+          },
+          "tags": {
+           "additionalProperties": {},
+           "type": "object"
+          }
+         },
+         "type": "object"
+        },
+        "label": {
+         "type": "string"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "regions": {
+      "items": {
+       "properties": {
+        "label": {
+         "type": "string"
+        },
+        "media_type": {
+         "type": "string",
+         "description": "媒体类型：movie 电影、tv 剧集"
+        },
+        "value": {
+         "type": "string"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "tag_groups": {
+      "items": {
+       "properties": {
+        "key": {
+         "type": "string"
+        },
+        "label": {
+         "type": "string"
+        },
+        "options": {
+         "items": {
+          "properties": {
+           "label": {},
+           "media_type": {
+            "description": "媒体类型：movie 电影、tv 剧集"
+           },
+           "value": {}
+          },
+          "type": "object"
+         },
+         "type": "array"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
+     }
+    },
+    "type": "object"
+   },
    "GetPluginHostEmbyEpisodesResponse": {
     "properties": {
      "complete": {
@@ -5301,6 +5707,259 @@
     ],
     "type": "object"
    },
+   "MoviePilotConnectorRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "body": {
+      "description": "原始 JSON 请求体，与 body_base64 互斥。"
+     },
+     "body_base64": {
+      "description": "二进制或 multipart/form-data 的完整请求体 Base64，与 body 互斥。",
+      "type": "string"
+     },
+     "content_type": {
+      "description": "body_base64 的媒体类型；JSON 默认 application/json。",
+      "type": "string"
+     },
+     "method": {
+      "default": "GET",
+      "enum": [
+       "GET",
+       "POST",
+       "PUT",
+       "PATCH",
+       "DELETE",
+       "HEAD",
+       "OPTIONS"
+      ],
+      "type": "string"
+     },
+     "path": {
+      "description": "相对于 MoviePilot /api/v1 的路径，例如 /search/media/71；不能是 URL、含 query、目录跳转或重定向目标。",
+      "type": "string"
+     },
+     "query": {
+      "additionalProperties": {
+       "items": {
+        "type": "string"
+       },
+       "type": "array"
+      },
+      "description": "每个键对应字符串数组；禁止传入认证参数。",
+      "type": "object"
+     },
+     "timeout_seconds": {
+      "default": 60,
+      "maximum": 300,
+      "minimum": 1,
+      "type": "integer"
+     }
+    },
+    "required": [
+     "path"
+    ],
+    "type": "object"
+   },
+   "MoviePilotConnectorResponse": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "const": "ok",
+      "type": "string"
+     },
+     "data": {
+      "additionalProperties": false,
+      "properties": {
+       "body": {
+        "description": "上游原始 JSON，通常为 success/message/data；上游非 2xx 也从这里读取。"
+       },
+       "body_base64": {
+        "description": "非 JSON 响应的 Base64；与 body 二选一。",
+        "type": "string"
+       },
+       "headers": {
+        "additionalProperties": {
+         "type": "string"
+        },
+        "description": "Content-Type、X-Total-Count、X-Page、X-Count、Retry-After；不转发认证或 Cookie。",
+        "type": "object"
+       },
+       "status": {
+        "maximum": 599,
+        "minimum": 100,
+        "type": "integer"
+       }
+      },
+      "required": [
+       "status",
+       "headers"
+      ],
+      "type": "object"
+     }
+    },
+    "required": [
+     "code",
+     "data"
+    ],
+    "type": "object"
+   },
+   "MoviePilotConnectorStatus": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "const": "ok",
+      "type": "string"
+     },
+     "data": {
+      "additionalProperties": false,
+      "properties": {
+       "api_version": {
+        "enum": [
+         "auto",
+         "v2",
+         "v3"
+        ],
+        "type": "string"
+       },
+       "configured": {
+        "type": "boolean"
+       },
+       "enabled": {
+        "type": "boolean",
+        "description": "是否启用"
+       }
+      },
+      "required": [
+       "enabled",
+       "configured",
+       "api_version"
+      ],
+      "type": "object"
+     }
+    },
+    "required": [
+     "code",
+     "data"
+    ],
+    "type": "object"
+   },
+   "MoviePilotExecutionOptionsResponse": {
+    "additionalProperties": false,
+    "properties": {
+     "code": {
+      "const": "ok",
+      "type": "string"
+     },
+     "data": {
+      "additionalProperties": false,
+      "properties": {
+       "api_version": {
+        "enum": [
+         "v2",
+         "v3"
+        ],
+        "type": "string"
+       },
+       "downloaders": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "name": {
+           "type": "string",
+           "description": "名称"
+          },
+          "type": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "name",
+          "type"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       },
+       "paths": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "download_path": {
+           "type": "string"
+          },
+          "name": {
+           "type": "string",
+           "description": "名称"
+          },
+          "save_path": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "name",
+          "download_path",
+          "save_path"
+         ],
+         "type": "object"
+        },
+        "type": "array",
+        "description": "多个宿主绝对路径"
+       },
+       "server_version": {
+        "type": "string"
+       },
+       "sites": {
+        "items": {
+         "additionalProperties": false,
+         "properties": {
+          "id": {
+           "type": "integer"
+          },
+          "is_active": {
+           "type": "boolean"
+          },
+          "name": {
+           "type": "string",
+           "description": "名称"
+          },
+          "pri": {
+           "type": "integer"
+          },
+          "domain": {
+           "type": "string",
+           "description": "远端站点规范域名。"
+          },
+          "url": {
+           "type": "string",
+           "description": "远端站点访问地址。"
+          }
+         },
+         "required": [
+          "id",
+          "name",
+          "is_active",
+          "pri"
+         ],
+         "type": "object"
+        },
+        "type": "array"
+       }
+      },
+      "required": [
+       "api_version",
+       "sites",
+       "downloaders",
+       "paths"
+      ],
+      "type": "object"
+     }
+    },
+    "required": [
+     "code",
+     "data"
+    ],
+    "type": "object"
+   },
    "OfflineAddRequest": {
     "additionalProperties": false,
     "properties": {
@@ -6244,7 +6903,7 @@
       "type": "string"
      },
      "enabled_sources": {
-      "description": "JSON 数组字符串。",
+      "description": "JSON 数组字符串；当前来源为 dianying、pt。历史数据可能包含待迁移的 moviepilot。PT 执行引擎由宿主系统设置统一选择。",
       "type": "string"
      },
      "episode_scope_mode": {
@@ -6406,9 +7065,17 @@
       "description": "TMDB 背景图相对路径，拼接 https://image.tmdb.org/t/p/w1280 使用",
       "type": "string"
      },
+     "downloader": {
+      "description": "DIAN115 配置的 PT 下载器名称；留空继承本机默认。内置与 MoviePilot 来源均由宿主直连该下载器。",
+      "type": "string"
+     },
      "enabled_sources": {
-      "description": "启用的资源来源；省略使用宿主默认来源",
+      "description": "启用的资源来源；省略使用宿主默认。pt 统一使用宿主设置中的内置 PT 或 MoviePilot 站点来源，下载始终由宿主直连下载器。",
       "items": {
+       "enum": [
+        "dianying",
+        "pt"
+       ],
        "type": "string"
       },
       "type": "array"
@@ -6421,12 +7088,24 @@
       ],
       "type": "string"
      },
+     "filter_params": {
+      "description": "PT 共同过滤参数 JSON 字符串，MoviePilot 候选同样生效。",
+      "type": "string"
+     },
+     "imdb_id": {
+      "description": "可选 IMDb 媒体身份。",
+      "type": "string"
+     },
      "initial_covered_episodes": {
       "description": "创建时已拥有的集数集合，格式如 \"1-3\"",
       "type": "string"
      },
      "initial_needed_episodes": {
       "description": "创建时需要获取的集数集合，格式如 \"4-10\"",
+      "type": "string"
+     },
+     "keyword": {
+      "description": "可选资源匹配关键词。",
       "type": "string"
      },
      "library_snapshot_provided": {
@@ -6449,11 +7128,19 @@
       "format": "int64",
       "type": "integer"
      },
+     "save_path": {
+      "description": "DIAN115 原有 Linux 下载工作目录；内置与 MoviePilot 来源共用，不映射 MP 路径或目录别名。",
+      "type": "string"
+     },
      "season": {
       "default": 1,
       "description": "季号，0 为特别篇",
       "minimum": 0,
       "type": "integer"
+     },
+     "sites": {
+      "description": "本机 PT 站点 ID 的 JSON 数组字符串；留空使用本机启用的搜索站点。MoviePilot 模式由宿主按站点域名及内置别名自动识别远端站点，无需手工映射。",
+      "type": "string"
      },
      "title": {
       "description": "标题",
@@ -7766,6 +8453,142 @@
      "use_type_folder": {
       "description": "一级类型目录（电影/电视剧）",
       "type": "boolean"
+     }
+    },
+    "type": "object"
+   },
+   "PostPluginHostDianyingResourcesUnlockResponse": {
+    "properties": {
+     "account_id": {
+      "type": "string"
+     },
+     "account_name": {
+      "type": "string"
+     },
+     "already": {
+      "type": "boolean"
+     },
+     "code": {
+      "type": "string"
+     },
+     "created_at": {
+      "type": "string",
+      "description": "创建时间（RFC 3339）"
+     },
+     "file_extension": {
+      "type": "string"
+     },
+     "file_name": {
+      "type": "string"
+     },
+     "library_check_error": {
+      "type": "string"
+     },
+     "library_checked": {
+      "type": "boolean"
+     },
+     "media_type": {
+      "type": "string",
+      "description": "媒体类型：movie 电影、tv 剧集"
+     },
+     "new_balance": {
+      "type": "integer"
+     },
+     "offline_options": {
+      "items": {
+       "properties": {
+        "episode": {
+         "type": "integer",
+         "description": "集号"
+        },
+        "episode_count": {
+         "type": "integer"
+        },
+        "episode_end": {
+         "type": "integer"
+        },
+        "episodes": {
+         "items": {
+          "type": "integer"
+         },
+         "type": "array"
+        },
+        "existing": {
+         "type": "boolean"
+        },
+        "existing_count": {
+         "type": "integer"
+        },
+        "label": {
+         "type": "string"
+        },
+        "name": {
+         "type": "string",
+         "description": "名称"
+        },
+        "season": {
+         "type": "integer",
+         "description": "季号，0 为特别篇"
+        },
+        "url": {
+         "type": "string"
+        }
+       },
+       "type": "object"
+      },
+      "type": "array"
+     },
+     "offline_type": {
+      "type": "string"
+     },
+     "owner": {
+      "type": "boolean"
+     },
+     "payload": {
+      "additionalProperties": {},
+      "type": "object"
+     },
+     "resource_id": {
+      "type": "integer"
+     },
+     "season": {
+      "type": "integer",
+      "description": "季号，0 为特别篇"
+     },
+     "share_id": {
+      "type": "integer"
+     },
+     "share_kind": {
+      "type": "string"
+     },
+     "tag": {
+      "type": "string"
+     },
+     "tag_decoded": {
+      "additionalProperties": {},
+      "type": "object"
+     },
+     "title": {
+      "type": "string",
+      "description": "标题"
+     },
+     "tmdb_id": {
+      "type": "integer",
+      "description": "TMDB 媒体 ID；电影与剧集分别编号，需配合 media_type 使用"
+     },
+     "token_used": {
+      "type": "boolean"
+     },
+     "total_size_bytes": {
+      "type": "integer"
+     },
+     "unlock": {
+      "additionalProperties": {},
+      "type": "object"
+     },
+     "year": {
+      "type": "integer",
+      "description": "年份"
      }
     },
     "type": "object"
@@ -11420,6 +12243,125 @@
     ],
     "x-dian115-category": "cd2",
     "x-dian115-host-credentials": true,
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/connectors/moviepilot/options": {
+   "get": {
+    "description": "使用宿主保存的连接检测 V2/V3，并返回脱敏站点、可用下载器和目录。站点不含 Cookie 或密钥；新版保存路径保留存储前缀，旧 V2 回退 download_path。",
+    "operationId": "directHost_388ca16b5823af14",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MoviePilotExecutionOptionsResponse"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "读取 MoviePilot 站点、下载器与目录",
+    "tags": [
+     "MoviePilot 连接器"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/connectors/moviepilot/request": {
+   "post": {
+    "description": "覆盖已连接 MoviePilot 实例的 HTTP API 能力：媒体、搜索、下载、站点、订阅、历史、整理、插件等。宿主注入 X-API-KEY；插件不读取或修改宿主连接配置。data.status 是上游 HTTP 状态，data.body.success 是上游业务状态；宿主 HTTP 200 不代表上游成功。写操作结果不明确时返回 uncertain=true，禁止盲目重发。单次请求体和响应体分别最多 8 MiB，最长 300 秒；不提供无限流或 WebSocket 隧道。系统订阅仅使用 MP 站点搜索与取种，种子解析及下载器提交由宿主直接执行；不创建远端订阅，提交下载成功即按本系统规则结算。",
+    "operationId": "directHost_0554aa3a4209ea57",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "example": {
+        "method": "GET",
+        "path": "/search/media/71",
+        "query": {
+         "media_source": [
+          "themoviedb"
+         ],
+         "mtype": [
+          "电影"
+         ]
+        },
+        "timeout_seconds": 300
+       },
+       "schema": {
+        "$ref": "#/components/schemas/MoviePilotConnectorRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MoviePilotConnectorResponse"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "通过公共连接器调用 MoviePilot HTTP API",
+    "tags": [
+     "MoviePilot 连接器"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "write"
+   }
+  },
+  "/api/connectors/moviepilot/status": {
+   "get": {
+    "description": "仅返回是否启用和已配置，不包含实例密钥。插件可据此探测当前宿主是否具有连接器。",
+    "operationId": "directHost_171064968b26c7f4",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/MoviePilotConnectorStatus"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "读取 MoviePilot 公共连接器状态",
+    "tags": [
+     "MoviePilot 连接器"
+    ],
     "x-dian115-in-process-only": true,
     "x-dian115-risk": "read"
    }
@@ -18748,6 +19690,508 @@
     ],
     "x-dian115-category": "organize",
     "x-dian115-host-credentials": false,
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/accounts": {
+   "get": {
+    "description": "返回脱敏账号与可用性，不返回 API Key 或认证配置。",
+    "operationId": "directHost_885d59c182935718",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": false,
+         "properties": {
+          "availability": {
+           "additionalProperties": true,
+           "properties": {},
+           "type": "object"
+          },
+          "items": {
+           "items": {
+            "$ref": "#/components/schemas/DianyingPluginAccount"
+           },
+           "type": "array"
+          }
+         },
+         "required": [
+          "items",
+          "availability"
+         ],
+         "type": "object"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "读取癫影账号选项",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/availability": {
+   "get": {
+    "description": "区分未配置、未授权及上游不可用；account_id 可选。",
+    "operationId": "directHost_fb6ed28fb1a24a52",
+    "parameters": [
+     {
+      "description": "癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。",
+      "in": "query",
+      "name": "account_id",
+      "required": false,
+      "schema": {
+       "description": "",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GetPluginHostDianyingAvailabilityResponse"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "读取癫影服务可用性",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/checkin": {
+   "post": {
+    "description": "复用宿主已配置账号执行签到。",
+    "operationId": "directHost_125313fd1a9757c0",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "additionalProperties": false,
+        "properties": {
+         "account_id": {
+          "description": "癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。",
+          "type": "string"
+         }
+        },
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "properties": {},
+         "type": "object"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "癫影账号签到",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "write"
+   }
+  },
+  "/api/plugin-host/dianying/community/my-shares": {
+   "post": {
+    "description": "account_id/refresh 为宿主选项，其他 JSON 字段按社区接口传入。",
+    "operationId": "directHost_96532781a3041b9c",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "additionalProperties": true,
+        "properties": {},
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "properties": {},
+         "type": "object"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "查询我的癫影分享",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/community/profile": {
+   "get": {
+    "description": "account_id 和 refresh 查询参数可选；上游业务 JSON 原样返回。",
+    "operationId": "directHost_77bb58fdf4d2ee96",
+    "parameters": [
+     {
+      "description": "癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。",
+      "in": "query",
+      "name": "account_id",
+      "required": false,
+      "schema": {
+       "description": "",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "refresh",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GetPluginHostDianyingCommunityProfileResponse"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "读取癫影社区资料",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/community/ranking": {
+   "post": {
+    "description": "account_id/refresh 为宿主选项，其他 JSON 字段传给当前癫影社区业务。",
+    "operationId": "directHost_2c159b89fc80dace",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "additionalProperties": true,
+        "properties": {},
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "properties": {},
+         "type": "object"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "查询癫影社区排行",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/ffp-stats": {
+   "get": {
+    "description": "返回宿主现有统计结果。",
+    "operationId": "directHost_073794ced02bb443",
+    "parameters": [
+     {
+      "description": "癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。",
+      "in": "query",
+      "name": "account_id",
+      "required": false,
+      "schema": {
+       "description": "",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GetPluginHostDianyingFfpStatsResponse"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "读取癫影文件指纹统计",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/resources/list-shares": {
+   "post": {
+    "description": "按 TMDB、季号、编码、分辨率等筛选，响应直接为 code/account_id/items/total/page/size/sort。",
+    "operationId": "directHost_1c768fcf23818562",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DianyingResourceQuery"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": false,
+         "properties": {
+          "account_id": {
+           "description": "",
+           "type": "string"
+          },
+          "account_name": {
+           "description": "",
+           "type": "string"
+          },
+          "code": {
+           "description": "",
+           "type": "string"
+          },
+          "items": {
+           "items": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+           },
+           "type": "array"
+          },
+          "page": {
+           "description": "",
+           "minimum": 0,
+           "type": "integer"
+          },
+          "size": {
+           "description": "",
+           "minimum": 0,
+           "type": "integer"
+          },
+          "sort": {
+           "description": "",
+           "type": "string"
+          },
+          "total": {
+           "description": "",
+           "minimum": 0,
+           "type": "integer"
+          }
+         },
+         "type": "object"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "查询癫影资源分享",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "read"
+   }
+  },
+  "/api/plugin-host/dianying/resources/unlock": {
+   "post": {
+    "description": "可能消耗当前账号积分；share_id/resource_id 按实际查询结果填写。",
+    "operationId": "directHost_2b775096a320fb36",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DianyingUnlockRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PostPluginHostDianyingResourcesUnlockResponse"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "解锁癫影资源",
+    "tags": [
+     "癫影"
+    ],
+    "x-dian115-in-process-only": true,
+    "x-dian115-risk": "write"
+   }
+  },
+  "/api/plugin-host/dianying/rss/options": {
+   "get": {
+    "description": "供资源查询及订阅筛选构建选项。",
+    "operationId": "directHost_c99eb706eb1e13d4",
+    "parameters": [
+     {
+      "description": "癫影账号 ID，从 /api/plugin-host/dianying/accounts 读取；省略由宿主选择。",
+      "in": "query",
+      "name": "account_id",
+      "required": false,
+      "schema": {
+       "description": "",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/GetPluginHostDianyingRssOptionsResponse"
+        }
+       }
+      },
+      "description": "调用结果"
+     },
+     "default": {
+      "$ref": "#/components/responses/HostError"
+     }
+    },
+    "security": [
+     {
+      "HostSession": []
+     }
+    ],
+    "summary": "读取癫影资源筛选选项",
+    "tags": [
+     "癫影"
+    ],
     "x-dian115-in-process-only": true,
     "x-dian115-risk": "read"
    }

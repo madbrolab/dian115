@@ -32,7 +32,6 @@ const violations = files.filter((file) => alwaysForbidden.some((pattern) => patt
 const publicContractFiles = files.filter((file) => /^(?:docs\/plugin-platform|plugin-market)\//.test(file))
 const textExtensions = new Set(['.css', '.go', '.html', '.js', '.json', '.md', '.mjs', '.ts', '.vue', '.yaml', '.yml'])
 const obsoleteContractPatterns = [
-  { pattern: /movie[\s-]?pilot/i, label: 'forbidden reference-project name' },
   { pattern: new RegExp(['Direct', 'Response'].join('')), label: 'opaque OpenAPI response placeholder' },
   { pattern: /与对应主项目接口一致/, label: 'private-source response placeholder' },
   { pattern: /(?:declarative\s+UI|声明式\s*UI)/i, label: 'removed declarative UI model' },
