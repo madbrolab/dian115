@@ -8,6 +8,14 @@
 
 本目录提供完整源码和打包脚本，不提供 MoviePilot 插件商店索引；不能将本仓库地址作为 MoviePilot 商店直接添加。
 
+### 直接下载安装
+
+下载 [dian115bridge-1.1.0.zip](https://github.com/madbrolab/dian115/releases/download/moviepilot-bridge-v1.1.0/dian115bridge-1.1.0.zip)，在 MoviePilot 的 **LocalPluginInstall → 本地安装** 中上传，然后启用“DIAN115 PT 连接”。无需自行打包或解压。
+
+[发布页面](https://github.com/madbrolab/dian115/releases/tag/moviepilot-bridge-v1.1.0)提供版本说明和 SHA-256 校验文件。请选择 `dian115bridge-1.1.0.zip` 附件，GitHub 自动生成的 Source code ZIP 不能用于插件本地安装。
+
+### 从源码打包
+
 1. 下载本目录的 [package.py](package.py) 和 [插件源码](plugins.v2/dian115bridge/__init__.py)，保留相对目录结构；也可以下载整个仓库。
 2. 在本目录运行以下命令，使用 Python 3 生成本地安装包：
 
