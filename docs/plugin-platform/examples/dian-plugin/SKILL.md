@@ -50,12 +50,13 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
 
 - 后台脚本不支持 `for await` 和异步生成器，没有 DOM、Node 模块、`require`。
 - 后台 ctx 没有 `tasks`、`events`、`usage`，这些只在页面。`ws`、`tcp`、`http.stream` 只在后台，`response` 只在 HTTP 处理器。
+- 插件页面没有宿主顶栏和容器内边距，需自行适配手机安全区并提供可见的返回入口：ESM 调用 `ctx.navigation.close()`，HTML 调用 `window.DIAN115Plugin.navigation.close()`。仅关闭页面，不停止后台任务；完整规则见 `assets/public-kit/ui-theme.md`。
 - 所有异步调用都要 `await`，处理函数返回后脚本结束，未完成的连接会被关闭。
 - CD2 文件一律写挂载路径，比如 `/mnt/cd2/115/电影`，不要写 `cd2:`，`ctx.watch.add` 不要填 `kind`。
 - 除受保护路径外，插件可读写宿主和 CD2 挂载文件，HTTP save_to 可直接写目标目录；需要此能力声明 requires.api: "3.9"。内容读写走文件系统，双边 CD2 的移动/复制仍走 gRPC。Token 和渠道配置仍由宿主管理，不要绕过受限接口。
 - 外部写操作前保存检查点，`recover` 先核对结果。不确定是否已执行时返回 `attention`，不要换标识重做。
 - 后台按任务入口及依赖加载；重逻辑拆成独立模块，分支需要时再 `import()`，不要把所有功能聚合到每个任务入口。任务显示与模块加载规则见 `references/development.md`。
-- API 3.12 的插件级 `queue: false` 隐藏全部任务队列活动，job 可进一步隐藏；可见任务按插件合并，执行与历史各自独立。权限和侧边栏设置在“更多 → 权限管理与显示”，不放在插件卡片上。
+- API 3.12 的插件级 `queue: false` 隐藏全部任务队列活动，job 可进一步隐藏；可见任务按插件合并，执行与历史各自独立。权限设置在“更多 → 权限管理与显示”；添加到侧边栏也可通过卡片更多菜单操作，分组与排序由用户在宿主侧栏统一管理。
 - 插件数据放 `ctx.storage`，账号密码放设置，不写进源码、日志或报告。
 - 网络选用：普通接口与静态内容用 ctx.http.request；无需站点挑战的页面渲染和操作用共享 Chromium 的 ctx.browser；已确认遇到挑战时优先 ctx.http.render（FlareSolverr）。先读 `assets/public-kit/browser.md` 的选用说明，不保证挑战必过，不把 403 一概视为挑战；两者不自动切换或共享 Cookie、档案与代理。
 - 需要页面脚本、点击、截图或网络事件时，先读 `assets/public-kit/browser.md`，使用宿主共享 `ctx.browser`；声明 API 3.10 与 browser 权限。运行包由宿主管理，不在插件中下载 Chromium，不接管 FlareSolverr 内部进程。Runtime.evaluate 表达式可用网页 DOM，后台脚本自身仍无 DOM。

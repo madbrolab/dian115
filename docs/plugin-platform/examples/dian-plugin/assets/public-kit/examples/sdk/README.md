@@ -18,3 +18,5 @@ API 3.10 的页面与后台均提供 `ctx.browser.status/open/command/events/clo
 API 3.11 为 open 增加 proxy_mode（system/direct/custom）与 proxy_url；会话返回 proxy_mode。默认继承宿主域名清单，代理策略在打开会话时固定，变更后需重新打开。
 
 API 3.12 支持清单顶层 queue 总开关与按插件合并的任务队列条目；后台仍按入口及依赖加载，按分支加载大功能使用动态 import()。详见[开发指南](../../developer-guide.md)。
+
+页面调用 `await ctx.navigation.close()` 返回插件中心并释放当前页面；HTML 使用 `window.DIAN115Plugin.navigation.close()`。这不会停用插件或取消后台任务。独立创建客户端时须传入 `{ close: () => ... }` 导航回调，未提供时调用会明确报错。手机页面的边距和安全区由插件自行安排。

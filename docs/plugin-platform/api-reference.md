@@ -12,7 +12,7 @@
 | `requires.api` | 最低宿主插件 API，例如 `"3.1"`；宿主更低时拒绝安装。3.2 新增 job 的 `title`、`queue` 与 `task.update` 的 `total/done/failed`，较低宿主会忽略这些字段 |
 | `icon` | 包内 svg/png/webp，显示在插件中心与页面标题 |
 | `ui.entry` | `ui/page.js`（导出 `mount(el, ctx)`）或 `ui/index.html` |
-| `menu` | `{title, order}`，侧栏入口的标题与排序（需要 ui）；是否显示由用户在插件管理页“权限与显示”的“显示在侧边栏”开关决定，默认不显示 |
+| `menu` | `{title, order}`，侧栏入口的默认标题与排序（需要 ui）；用户在卡片更多菜单或“权限与显示”中添加，默认不显示。宿主侧栏支持分组和排序，只有插件入口可改名、换图标或移除 |
 | `settings[]` | `{key,label,type,default,options,required,help,placeholder}`；type：text/password/textarea/number/boolean/select/path/url。值存在 KV 的 `settings` 键 |
 | `jobs[]` | `{id,entry,handler='run',recover,timeout_seconds,default_schedule|interval_seconds,allow_overlap,title,queue,daemon}`；`daemon:true` 是[常驻任务](long-connections.md)；`title`（≤40 字）是任务在宿主任务队列里的名称（显示为“插件名：标题”）；`queue:false` 不在任务队列页面显示，适合测试、预览等短任务 |
 | `events[]` | `message`（commands/prefixes/keywords/patterns/channels）、`account_message`（prefixes/keywords/patterns/all/peer_types/include_outgoing）、`callback`、`host`（types，支持 `*` 与前缀通配），见[清单参考](manifest.md) |
@@ -28,6 +28,7 @@ UI、jobs、http 至少提供一项。
 | 成员 | 说明 |
 | --- | --- |
 | `id`、`signal`、`theme.mode`、`theme.subscribe(fn)` | 插件 ID、页面关闭中止信号、明暗主题 |
+| `navigation.close()` | 关闭当前页面并返回插件中心；不停止后台任务。页面须提供可见的返回入口，手机安全区与内边距由插件处理，详见[页面契约](ui-theme.md) |
 | `api.get/post/put/patch/delete/head(path, body)` | 调用任意宿主 `/api/` 接口，沿用登录与业务校验 |
 | `storage.get/set(key,value,expected_revision)/remove/list` | 插件 KV（加密），CAS 用 expected_revision |
 | `settings.get()` / `settings.set(value)` | 默认值叠加已保存设置 / 保存 |

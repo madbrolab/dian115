@@ -24,3 +24,12 @@ test('public SDK uses ordinary host API and plugin-owned namespaces',async()=>{c
 test('sample recovery verifies observed state and avoids duplicate write',async()=>{let count=0,checkpoint;const ctx={storage:{get:async()=>count,set:async(k,v)=>{count=v}},task:{checkpoint:async value=>{checkpoint=value},update:async()=>{}}};const result=await run(ctx,{x:1});assert.equal(count,1);assert.deepEqual(await recover(ctx,checkpoint),{action:'complete',result});assert.deepEqual(await recover(ctx,{stage:'before-write',previous:0}),{action:'complete',result:{count:1,recovered:true}});assert.deepEqual(await recover(ctx,{stage:'before-write',previous:1}),{action:'resume'});assert.deepEqual(await recover(ctx,{stage:'unknown'}),{action:'attention'})})
 test('current complete sample passes source inspection',()=>{assert.deepEqual(checkProject(fileURLToPath(new URL('../examples/complete-plugin',import.meta.url))).errors,[])})
 test('standalone SDK binds installation and code version without changing API bodies',async()=>{let actual;const client=createPluginContext('example.a',async(method,path,body,source)=>{actual={method,path,body,source};return {ok:true}},{generation:'install-A',revision:'code-A'});await client.api.post('/api/115/share/receive',{share_url:'https://example.test/share'});assert.deepEqual(actual.source,{plugin_id:'example.a',generation:'install-A',revision:'code-A'});assert.deepEqual(actual.body,{share_url:'https://example.test/share'})})
+
+
+test('page close delegates to its host without sending a request or stopping jobs', async () => {
+  let closes = 0
+  const ctx = createPluginContext('example.page', () => { throw Error('unexpected HTTP request') }, { close: async () => { closes++ } })
+  await ctx.navigation.close()
+  assert.equal(closes, 1)
+  await assert.rejects(createPluginContext('standalone', async () => {}).navigation.close(), /未连接宿主页面导航/)
+})

@@ -24,6 +24,7 @@
 ## 页面
 
 - `mount(element, ctx)` 返回清理函数，异步请求传 `ctx.signal` 或在清理时取消。
+- 宿主隐藏顶栏，不添加容器内边距。页面自行设置手机安全区与间距，并提供调用 `ctx.navigation.close()` 的返回入口；HTML 使用 `window.DIAN115Plugin.navigation.close()`。关闭仅卸载页面，不停用插件或取消后台任务。
 - 跟随明暗主题，用 `--app-bg`、`--app-surface`、`--app-text`、`--app-text-secondary`、`--app-border`、`--app-accent`。
 - 显示状态和原始业务错误，表单要有标签。不要把 Script error 或 ResizeObserver 提示当业务失败。
 - 有页面的插件把设置做在页面里，不声明 `settings`。

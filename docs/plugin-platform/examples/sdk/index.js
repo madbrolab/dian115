@@ -6,6 +6,10 @@ export function createPluginContext(id, request, options = {}) {
   const api = Object.fromEntries(['get','post','put','patch','delete','head'].map(method => [method, (path, body) => request(method.toUpperCase(), path, body, source)]))
   return {
     id, api,
+    navigation: { close: async () => {
+      if (!options.close) throw new Error('当前客户端未连接宿主页面导航')
+      await options.close()
+    } },
     browser: { status: () => own('POST', '/browser', { operation: 'status' }),
       open: (options = {}) => own('POST', '/browser', { ...options, operation: 'open' }),
       command: options => own('POST', '/browser', { ...options, operation: 'command' }),

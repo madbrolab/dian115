@@ -27,6 +27,7 @@ export async function mount(root, ctx) {
   let disposed=false
   const buttons=[]
   function action(title, fn) { const b=doc.createElement('button');b.type='button';b.textContent=title;buttons.push(b);actions.append(b);b.addEventListener('click',async()=>{buttons.forEach(x=>x.disabled=true);output.textContent='正在调用…';try{const result=await fn(read());if(!disposed)output.textContent=JSON.stringify(result??{ok:true},null,2)}catch(e){if(!disposed)output.textContent=e.message||String(e)}finally{if(!disposed)buttons.forEach(x=>x.disabled=false)}}) }
+  action('返回插件中心', () => ctx.navigation.close())
   action('保存配置', value=>ctx.storage.set('site',value))
   action('调用宿主 GET', value=>ctx.api.get(value.api))
   action('HTTP 页面', value=>ctx.http.request({url:value.url,timeout_seconds:Number(value.timeout)}))

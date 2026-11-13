@@ -16,6 +16,7 @@
 - [安装与数据生命周期](storage-and-lifecycle.md)：更新、停用、恢复、卸载。
 - [插件通知](notifications.md)：选择 Telegram / 企业微信渠道、text / markdown / html 格式、按渠道内容、图片按钮及逐渠道结果。
 - [癫影与 MoviePilot 公共连接器](dianying-and-moviepilot.md)：癫影业务接口、MoviePilot 完整 HTTP 调用、系统订阅的外置搜索下载。
+- [MoviePilot PT 连接插件](https://github.com/madbrolab/dian115/tree/main/docs/plugin-platform/examples/moviepilot-bridge)：在 MoviePilot 添加本仓库后直接安装，附源码与备用 ZIP 安装说明。
 - [订阅与增量搜索](subscriptions.md)：磁力 / ED2K 缓存、馒头时间窗口、独立基线及中断续读。
 - [共享浏览器](browser.md)：宿主和插件共用 Chromium、独立登录档案、页面控制和网络事件。
 - [网络与登录](network.md)：账号密码、明文 CK、自定义站点、CookieCloud、FlareSolverr。
