@@ -16,6 +16,8 @@
 
 ## MoviePilot 通用 HTTP 调用
 
+系统使用外置 MoviePilot 站点能力时，需要在 MoviePilot 安装并启用配套的 [DIAN115 PT 连接插件](examples/moviepilot-bridge/README.md)。该目录提供 Python 源码、打包脚本和安装说明；它安装在 MoviePilot，使用 ZIP 本地安装。
+
 ```js
 const status = await ctx.api.get('/api/connectors/moviepilot/status')
 // api_version 是配置值：auto、v2 或 v3。
