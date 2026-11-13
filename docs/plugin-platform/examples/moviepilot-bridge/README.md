@@ -6,9 +6,21 @@
 
 ## 下载与安装
 
-本目录提供完整源码和打包脚本，不提供 MoviePilot 插件商店索引；不能将本仓库地址作为 MoviePilot 商店直接添加。
+### 添加仓库安装（推荐）
 
-### 直接下载安装
+适用于 MoviePilot **V2.15.6 及后续 V2 版本**，无需安装 LocalPluginInstall，也无需手动下载 ZIP。
+
+1. 打开 MoviePilot 的插件页面，在仓库管理中添加 [https://github.com/madbrolab/dian115](https://github.com/madbrolab/dian115)。添加仓库根地址，不要填写示例目录或 ZIP 链接。
+2. 保存并刷新插件市场，搜索 **“DIAN115 PT 连接”**，点击安装。
+3. 安装完成后，在已安装插件中打开配置，启用 **“DIAN115 PT 连接”** 并保存。
+
+已经通过 ZIP 安装过 1.1.0 时，插件 ID 和配置保持一致；如果市场显示已安装，可使用插件的重装功能选择此仓库，无需先卸载。
+
+本仓库由 MoviePilot 原生安装器读取根目录 `package.v2.json`，再下载 `Dian115Bridge_v1.1.0` Release 中的 `dian115bridge_v1.1.0.zip`。需要 MoviePilot 能访问 GitHub API 和 Release 下载。源码保留在本示例目录，当前仓库安装依赖 Release 资产；Release 无法下载时，应先解决网络或 GitHub 访问问题。
+
+本轮已用 MoviePilot V2.15.6 原生安装逻辑验证索引发现、版本选择及 ZIP 解包。V3 暂未上架市场，避免将尚未完成实例验证的兼容逻辑当作正式支持。
+
+### ZIP 本地安装（备用）
 
 下载 [dian115bridge-1.1.0.zip](https://github.com/madbrolab/dian115/releases/download/moviepilot-bridge-v1.1.0/dian115bridge-1.1.0.zip)，在 MoviePilot 的 **LocalPluginInstall → 本地安装** 中上传，然后启用“DIAN115 PT 连接”。无需自行打包或解压。
 

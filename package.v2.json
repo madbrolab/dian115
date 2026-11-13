@@ -1,0 +1,19 @@
+{
+  "Dian115Bridge": {
+    "name": "DIAN115 PT 连接",
+    "description": "提供站点搜索与取种；种子解析、筛选、下载及订阅由 DIAN115 管理。",
+    "labels": "站点,工具",
+    "version": "1.1.0",
+    "icon": "",
+    "author": "DIAN115",
+    "level": 1,
+    "v2": true,
+    "v3": false,
+    "release": true,
+    "system_version": ">=2.15.6,<3.0.0",
+    "plugin_readme": "https://github.com/madbrolab/dian115/blob/main/docs/plugin-platform/examples/moviepilot-bridge/README.md",
+    "history": {
+      "v1.1.0": "提供站点搜索、RSS、统计和取种；支持添加仓库直接安装。"
+    }
+  }
+}
