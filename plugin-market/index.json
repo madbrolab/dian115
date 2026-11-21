@@ -338,13 +338,13 @@
     {
       "id": "quandouyao.music",
       "name": "听序",
-      "version": "1.5.0",
+      "version": "1.5.1",
       "author": "癫哥",
       "description": "多平台音乐播放、自定义 LX 音源、歌曲下载、逐句歌词与 OpenSubsonic。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "新增下载目录和歌单下载，改善播放器切换、界面动效和短页面背景覆盖。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/quandouyao.music-7043e052-e6e9-4345-8e31-cda5c0b98a2a.dian115p",
-      "sha256": "9b4075ca8b8963d4973282b64cf73a307569579525902d083a07748939f86c06",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-1.5.1",
+      "changelog": "外部播放器默认优先直连可用的 HTTPS 音源，支持切换为主机转发。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-1.5.1/quandouyao.music-d81a36c3-99a1-4d84-b8d4-718ddc8feb2f.dian115p",
+      "sha256": "846f3e160638ef813ec86c3ca87273ba166b988b2eb1d0e11a16a21684b049e0",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
@@ -356,7 +356,7 @@
         "LX"
       ],
       "declared_usage": {
-        "purpose": "搜索音乐、浏览网易云热歌榜、播放上游明确提供的音频及歌词。 用户主动下载歌曲或歌单时，音频流式保存到插件自有 downloads 目录或管理员设置的可写服务端目录，校验格式后提供已登录用户保存到设备；失败只清理本次任务的临时文件。保存目录时在该目录写入并删除唯一的可写性检查文件。用户可配置独立 HTTP 监听端口，提供需要账号认证的 OpenSubsonic 服务。音频和封面由服务端转发，不上传歌词。 支持 OpenSubsonic 客户端旧版十六进制密码格式。媒体 CDN 按平台域名限制。 播放器账号共享收藏、歌单、播放历史和队列数据。 为兼容播放器，使用宿主图片接口按尺寸转码封面；处理后仅删除插件自身 cover-render 目录下由当前请求创建的临时图片。 LX 音源由管理员添加、命名及启停。通过 HTTPS 下载并保存脚本，在已启用的音源参与播放或管理员主动试播时，用共享 Chromium 中的 QuickJS 隔离环境解析。脚本没有宿主接口、浏览器对象或直接网络能力；仅转发歌曲匹配所需公开资料到音源关联的已允许服务，丢弃 Cookie 请求头，播放地址与跳转经过域名检查。",
+        "purpose": "搜索音乐、浏览网易云热歌榜、播放上游明确提供的音频及歌词。 用户主动下载歌曲或歌单时，音频流式保存到插件自有 downloads 目录或管理员设置的可写服务端目录，校验格式后提供已登录用户保存到设备；失败只清理本次任务的临时文件。保存目录时在该目录写入并删除唯一的可写性检查文件。用户可配置独立 HTTP 监听端口，提供需要账号认证的 OpenSubsonic 服务。第三方播放器可通过已校验的 HTTPS 原始音频地址直连，也可配置为主机转发。网页播放和封面由主机提供，不上传歌词。 支持 OpenSubsonic 客户端旧版十六进制密码格式。媒体 CDN 按平台域名限制。 播放器账号共享收藏、歌单、播放历史和队列数据。 为兼容播放器，使用宿主图片接口按尺寸转码封面；处理后仅删除插件自身 cover-render 目录下由当前请求创建的临时图片。 LX 音源由管理员添加、命名及启停。通过 HTTPS 下载并保存脚本，在已启用的音源参与播放或管理员主动试播时，用共享 Chromium 中的 QuickJS 隔离环境解析。脚本没有宿主接口、浏览器对象或直接网络能力；仅转发歌曲匹配所需公开资料到音源关联的已允许服务，丢弃 Cookie 请求头，播放地址与跳转经过域名检查。",
         "sites": [
           "music.163.com",
           "music-api.gdstudio.xyz",
