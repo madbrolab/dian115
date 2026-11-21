@@ -1,1 +1,389 @@
-{"$schema":"./index.schema.json","schema_version":3,"repository":{"id":"madbrolab.dian115","name":"DIAN115 官方市场","homepage":"https://github.com/madbrolab/dian115"},"plugins":[]}
+{
+  "$schema": "./index.schema.json",
+  "schema_version": 3,
+  "repository": {
+    "id": "madbrolab.dian115",
+    "name": "DIAN115 官方市场",
+    "homepage": "https://github.com/madbrolab/dian115"
+  },
+  "plugins": [
+    {
+      "id": "bot.guanying.v3",
+      "name": "观影 · 订阅管家",
+      "version": "3.6.1",
+      "author": "癫哥",
+      "description": "多站点观影资源检索、季集匹配、115 离线与分享转存、入库核对和订阅集数回写。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "优化观影页面的按钮、切换反馈和触屏操作，修复短页面底部露底。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.guanying.v3-045ac9bd-00a7-4515-a113-c705cde1b11b.dian115p",
+      "sha256": "6919f0cec697cf34bcaee5fb688427220068b1af5f8410210a8958ea2b80fd0a",
+      "delivery": "protected-v4",
+      "permissions": [
+        "browser"
+      ],
+      "keywords": [
+        "观影",
+        "订阅",
+        "115"
+      ],
+      "declared_usage": {
+        "apis": [
+          "GET /api/subscribe/pool/intents",
+          "GET /api/subscribe/pool/intents/{id}",
+          "PATCH /api/subscribe/pool/intents/{id}/episodes",
+          "GET /api/115/accounts/options",
+          "POST /api/115/offline/add",
+          "GET /api/115/offline/tasks",
+          "POST /api/115/share/receive",
+          "GET /api/plugin-host/emby/episodes",
+          "GET /api/plugin-host/emby/items",
+          "GET /api/cache/magnet/changes",
+          "GET /api/extensions/v3/{id}/storage/{key}",
+          "PUT /api/extensions/v3/{id}/storage/{key}",
+          "GET /api/tmdb/movie/{id}",
+          "GET /api/tmdb/tv/{id}",
+          "POST /api/extensions/v3/{id}/cookies",
+          "POST /api/extensions/v3/{id}/cookies/import",
+          "GET /api/extensions/v3/{id}/network-capabilities",
+          "GET /api/extensions/v3/{id}/runs/{run}",
+          "POST /api/extensions/v3/{id}/browser"
+        ],
+        "sites": [
+          "https://www.xn--wcv59z.com；安装后由用户填写的观影镜像地址",
+          "https://static.1234cdn.com：只读页面引用的登录协议脚本，不执行代码，不发送账号或站点Cookie",
+          "用户配置的 FlareSolverr 服务，仅用于已确认的站点安全挑战；普通动态页面使用宿主共享 Chromium",
+          "站点HTML中返回的HTTP(S)海报CDN（例如 s.tutu.pm），页面直接加载且不发送 Referer",
+          "https://115.com、https://115cdn.com、https://anxia.com：分享链接识别和规范化，实际接收由宿主115接口执行，不读取115 Cookie",
+          "https://www.imdb.com：作品链接展示与编号识别，不携带站点Cookie访问",
+          "page.invalid：本地相对URL解析占位，不发起网络请求",
+          "https://vuejs.org、https://www.w3.org：Vue错误说明链接与SVG命名空间常量，不作为业务请求目标"
+        ],
+        "files": [],
+        "notifications": false,
+        "risk": "保存用户填写的站点账号密码到插件加密 KV；保存独立站点 Cookie，支持所选域名 CookieCloud 导入；可登录所选站点、向固定115账号目录提交磁力离线或分享转存；核对后按用户开关回写订阅集数。定时查询与自动转存默认关闭。观影接口为全量快照；可选宿主缓存采用3.5增量窗口。未知提交结果停止重发，停用/卸载由宿主停止任务；共享 Chromium 执行所选站点页面脚本，按站点与账号会话隔离档案，显式双向同步 Cookie；浏览器代理来自插件私有设置，任务结束关闭会话。不使用浏览器提交账号、转存或订阅写入。；只读浏览遇到瞬时失败由宿主按退避计划重试，登录、115转存和订阅回写不自动重发；时间不足时保存进度，取消立即终止后续请求。"
+      }
+    },
+    {
+      "id": "bot.wangyougu",
+      "name": "忘忧谷",
+      "version": "1.0.3",
+      "author": "癫哥",
+      "description": "忘忧谷发现、搜索、磁力订阅与会话失效通知。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "整理导航与分页按钮的触控反馈，修复短页面底部露底。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.wangyougu-3d9beba3-43da-449f-b544-a27c282511f6.dian115p",
+      "sha256": "227597556f2e902b82cd10b2aa97a496223bfff9132aa63d315f988ba85fc45e",
+      "delivery": "protected-v4",
+      "permissions": [],
+      "keywords": [
+        "忘忧谷",
+        "搜索",
+        "订阅"
+      ],
+      "declared_usage": {
+        "apis": [
+          "GET /api/subscribe/pool/intents",
+          "POST /api/subscribe/pool/intents",
+          "GET /api/subscribe/pool/intents/{id}",
+          "PATCH /api/subscribe/pool/intents/{id}/episodes",
+          "GET /api/tmdb/search",
+          "GET /api/tmdb/movie/{id}",
+          "GET /api/tmdb/tv/{id}",
+          "GET /api/115/accounts/options",
+          "POST /api/115/offline/add",
+          "GET /api/115/offline/tasks",
+          "GET /api/plugin-host/emby/items",
+          "GET /api/plugin-host/emby/episodes",
+          "GET /api/extensions/v3/{id}/storage/{key}",
+          "PUT /api/extensions/v3/{id}/storage/{key}",
+          "GET /api/extensions/v3/_notify/channels"
+        ],
+        "sites": [
+          "https://wangyougu.net：列表、搜索、作品、资源、验证码及账号登录；可由用户更改为其可信同站镜像",
+          "页面海报仅来自配置站点 /Uploads/Picture/ 或 TMDB https://image.tmdb.org"
+        ],
+        "files": [],
+        "notifications": true,
+        "risk": "用户配置的站点账号、临时验证码保存在插件加密KV，会话Cookie独立保存；验证码登录、创建宿主订阅、固定115账号目录的磁力离线、媒体库核对后可选集数回写。仅磁力，不下载种子或其他网盘链接。定时更新、自动提交、集数回写和失效通知默认关闭。通知使用宿主Telegram/企业微信渠道并持久去重。站点为快照查询，无时间增量接口。任务中断或未知提交结果先核对，禁止自动重发。停用/卸载由宿主取消任务并清理默认数据。"
+      }
+    },
+    {
+      "id": "bot.zhuiguang",
+      "name": "追光",
+      "version": "1.0.1",
+      "author": "癫哥",
+      "description": "豆瓣影视与 Bangumi 新番追新，固定 Emby 实例、120 条订阅上限与持久停订保护。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "优化追新页的主操作和筛选按钮，修复窄屏和短页面的背景覆盖。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.zhuiguang-218445c1-b1d8-4c67-b371-c8ef4160e11c.dian115p",
+      "sha256": "e2d260c7c091eff2f3efedcb6285df3b1ceabf85098f18ec3071fa221b758dbd",
+      "delivery": "protected-v4",
+      "permissions": [],
+      "keywords": [
+        "豆瓣",
+        "Bangumi",
+        "追新"
+      ],
+      "declared_usage": {
+        "apis": [
+          "GET /api/subscribe/pool/intents",
+          "GET /api/subscribe/pool/intents/{id}",
+          "POST /api/subscribe/pool/intents",
+          "DELETE /api/subscribe/pool/intents/{id}",
+          "GET /api/plugin-host/emby/instances",
+          "GET /api/plugin-host/emby/episodes",
+          "GET /api/plugin-host/emby/items",
+          "GET /api/tmdb/search",
+          "GET /api/tmdb/movie/{id}",
+          "GET /api/tmdb/tv/{id}",
+          "GET /api/extensions/v3/{id}/storage/{key}",
+          "PUT /api/extensions/v3/{id}/storage/{key}",
+          "GET /api/extensions/v3/{id}/network-capabilities"
+        ],
+        "sites": [
+          "https://movie.douban.com：公开热门电影/剧集列表、建议搜索、作品详情，不登录",
+          "https://api.bgm.tv：公开放送日历、动画搜索、作品详情，不登录",
+          "海报图片来自 https://*.doubanio.com、https://lain.bgm.tv、https://image.tmdb.org；来源链接仅由用户点击打开"
+        ],
+        "files": [],
+        "notifications": false,
+        "risk": "默认关闭自动订阅，用户选择固定且非零 Emby 实例后启用。创建宿主聚合订阅会触发宿主已配置来源的搜索和转存。最多管理120条占用中的订阅（含提交中和未知结果）；已完成及确认删除的记录不占用。宿主确认404或用户停止订阅后持久停订，同一媒体跨来源不自动重建，手动恢复方可解除。结果未知先核对，不自动重发。外部目录使用快照查询并标注获取时间，不冒充时间增量；资源搜索与转存交给宿主，无插件全量缓存扫描。用户在页面停止订阅会删除对应宿主订阅，不删除媒体文件。数据仅存插件KV；停用/卸载由宿主取消任务，卸载清除默认数据，已创建宿主订阅不撤销。"
+      }
+    },
+    {
+      "id": "bot.zlibrary",
+      "name": "Z-Library 书库",
+      "version": "1.2.1",
+      "author": "癫哥",
+      "description": "纸张手帐风格的电子书插件：账号/CK/CookieCloud 登录，搜索与版本选择，批量下载、恢复核对、保存到宿主或 CD2/115，附 EPUB/PDF/TXT 轻量预览。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "统一书库控制与按压反馈，按宿主可用高度显示书库并保留独立滚动。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.zlibrary-b4bdb146-7eac-4012-91bd-9fb46750d39f.dian115p",
+      "sha256": "6386b1f592dde0df2237dddbde4faf8d4c2b1a3ecc371fd4612c99d19805df38",
+      "delivery": "protected-v4",
+      "permissions": [],
+      "keywords": [
+        "电子书",
+        "下载",
+        "书库"
+      ],
+      "declared_usage": {
+        "purpose": "用户主动登录、导入 CK、搜索与浏览电子书、获取所选具体版本、保存到目录、阅读已保存文件及管理收藏和缓存。",
+        "apis": [
+          "插件自身 settings、storage、HTTP、cookies/import、jobs/runs、files/download 和网络能力探测",
+          "GET /api/local-dirs：只读选择宿主和 CD2 挂载目录",
+          "用户点击 CookieCloud 登录时仅 read 当前站点匹配域，不调用 write，不读取 115 Cookie",
+          "用户点击宿主网页验证时，先查询本插件 network-capabilities，再调用 http.render；不读取系统设置"
+        ],
+        "sites": [
+          "https://z-library.biz：用户指定的初始入口；其他公开 HTTPS 入口由用户在账号设置中明确填写，不自动向镜像轮流发送凭据",
+          "所配置站点 API 返回的公开 HTTPS 封面与电子书 CDN；封面使用独立匿名会话，下载凭据仅由宿主 Cookie 域规则匹配，拒绝 IP/本地域/115 凭据域",
+          "不加载远程 JavaScript；UI 仅打包 Vue、Lucide、fflate 和 DOMPurify。PDF 使用浏览器原生能力。"
+        ],
+        "credentials": "真实凭据不包含在插件中。账号密码通过页面 HTTP 直接登录，不写入任务 input 或日志；仅在用户勾选记住密码时写入加密 settings。CK 导入独立 Cookie 会话；页面输入完成后清空。多账号按配置及站点用户 ID 隔离书库。签名下载 URL 临时保存在加密 KV，不返回 UI 和任务日志，完成后删除。",
+        "files": "先用 save_to 流式写入插件 staging，校验类型、大小和 SHA-256，再写入插件 library。用户配置的宿主/CD2 挂载目录以真实绝对路径复制保存，不使用 115 离线下载。未知复制结果先核对，不覆盖文件。清理缓存只删除当前账号 library 内记录对应文件，移除记录不删除外部文件。",
+        "reader": "仅提供常见格式的轻量预览。PDF 使用浏览器原生预览，不内置 PDF.js、WASM 或解码器；EPUB 使用 fflate 解压并限额，DOMPurify 消毒，章节在 allow-scripts 且不含 allow-same-origin 的独立沙箱 srcdoc 中显示，CSP 禁止网络和书内脚本，仅可信非外部脚本上报章节链接与滚动位置。TXT 以转义的纯文本显示。预览器不持有 SDK、CK 或任意宿主文件读取能力。",
+        "writes": "下载链接解析可能消耗站点下载额度。解析、写盘与复制前后保存检查点；超时不盲目重新申请链接。用户主动点击时才向站点写入收藏；远端收藏结果未知时要求核对。 查询和下载使用宿主 API 3.13 重试；传输仅复用原签名链接，链接申请结果未知保持 conflict 并人工核对；远端收藏不自动重试。",
+        "bundled_libraries": "Vue、Lucide、fflate、DOMPurify 及许可证。无 WebAssembly、PDF 引擎、浏览器存储模块、运行时 eval 或 Function 构造器。标准命名空间和库文档链接不用于联网。",
+        "notifications": false,
+        "network_listeners": false,
+        "ui": "页面采用本地纸张主题，跟随宿主明暗模式，适配容器宽度与手机安全区；返回入口仅调用 ctx.navigation.close 卸载页面，不停止下载任务。原生 dialog 内显示操作反馈，不覆盖宿主全局样式。"
+      }
+    },
+    {
+      "id": "dian115.audiobook-organizer",
+      "name": "有声书整理刮削",
+      "version": "1.2.1",
+      "author": "癫哥",
+      "description": "部分源码来自@烤地瓜。有声书 PT 搜索下载、监听清洗与结构化归档，支持书库识别、多源刮削、批次撤销、元数据写回和目录改名。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "优化整理、刮削和导航按钮，支持减少动态效果，改善短内容显示。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/dian115.audiobook-organizer-c04e6914-c6fc-493b-8d25-804a6cd9eca4.dian115p",
+      "sha256": "2727aecce4ef3c2d239ddd7fb71c27a5ebc3b8ce874fa83189e36005028125e8",
+      "delivery": "protected-v4",
+      "permissions": [],
+      "keywords": [
+        "有声书",
+        "刮削",
+        "整理"
+      ],
+      "declared_usage": {
+        "purpose": "有声书搜索下载、整理和刮削。PT 复用宿主站点与下载器，保存目录仅本地；整理来源和目标支持本地及 CD2，通过清洗名称识别后按模板归档。",
+        "apis": [
+          "GET /api/local-dirs",
+          "/api/extensions/v3/dian115.audiobook-organizer/hook/*",
+          "POST /api/extensions/v3/dian115.audiobook-organizer/jobs/{job}",
+          "GET /api/extensions/v3/dian115.audiobook-organizer/runs/{run}",
+          "POST /api/extensions/v3/dian115.audiobook-organizer/media/image",
+          "GET /api/extensions/v3/dian115.audiobook-organizer/storage/{key}",
+          "PUT /api/extensions/v3/dian115.audiobook-organizer/storage/{key}",
+          "GET /api/local-files",
+          "GET /api/pt/sites",
+          "GET /api/pt/downloaders",
+          "POST /api/pt/search",
+          "POST /api/pt/download"
+        ],
+        "sites": [
+          "https://www.ximalaya.com",
+          "https://search.ximalaya.com",
+          "https://search.qingting.fm",
+          "http://search.kuwo.cn",
+          "https://m.qidian.com",
+          "https://book.douban.com",
+          "https://itunes.apple.com",
+          "封面图片域名：*.xmcdn.com、*.doubanio.com、*.mzstatic.com、*.qtfm.cn、*.kuwo.cn、*.yuewen.com、*.qpic.cn",
+          "用户在编辑页手动填写的封面图片地址",
+          "PT 请求由宿主按用户已配置的站点与下载器执行，插件不保存站点或下载器凭据",
+          "https://www.qingting.fm",
+          "https://bookcover.yuewen.com",
+          "https://imagev2.xmcdn.com",
+          "http://img1.kuwo.cn"
+        ],
+        "files": [
+          "读取：用户添加的储存库文件夹（含 CD2 挂载路径），只读取目录列表、metadata.json/简介.txt 与音频文件头部标签",
+          "写入插件目录：covers/（刮削与内嵌封面）、tmp/、upload/",
+          "写入书籍文件夹：仅在用户确认“写回文件夹”后写 metadata.json、cover.jpg/png/webp/gif、简介.txt；使用固定暂存内容与摘要检查点，失败时先核对",
+          "改名：确认计划后重命名书籍文件夹；归档：手动确认计划或明确启用规则后，按结构化目录复制/移动来源书籍（包括音频及附件），目标同名不覆盖",
+          "删除：清理插件 covers/、tmp/、upload/ 下的单个缓存文件，以及归档任务自建且已核对为空的 .audiobook-* 暂存目录；不额外删除书库原文件，移动由宿主 move 完成",
+          "归档暂存：目标父目录下建立任务专属 .audiobook-* 文件夹，按原名转入，核对文件树与大小后在暂存目录内改名，再发布到最终目录；只清理本任务的空暂存目录"
+        ],
+        "notifications": false,
+        "risk": "下载提交前与转移前后保存检查点；结果不明时要求核对，不自动重发。下载目录排除 CD2。自动归档默认关闭，用户开启后等待目录连续稳定；复制保留来源供做种，移动会改变原路径。临时下载文件不处理，冲突与未识别书目留待处理。",
+        "ui": "页面 DOM 操作仅用于插件挂载区域、样式加载、图片预览、原生 dialog 弹层与焦点；navigation.close 仅返回插件中心，不停止后台任务；www.w3.org 只用于 SVG 命名空间，不联网；无 eval 或 Function 动态执行。"
+      }
+    },
+    {
+      "id": "dian115.missing-subscribe",
+      "name": "缺集自动订阅",
+      "version": "1.2.1",
+      "author": "癫哥",
+      "description": "按多条规则筛选宿主缺集结果，自动创建或合并聚合订阅，支持试运行、审核队列与观察期。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "修复空页面露底，切换审核与记录时保留键盘焦点，并改善主按钮对比度。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/dian115.missing-subscribe-ad246a2e-78e1-43bf-a71f-ca6248570db1.dian115p",
+      "sha256": "5fc02265b5ee278bf89e4f6c1f1445f37d667a596d6915fab0aab7b8f342f0dd",
+      "delivery": "protected-v4",
+      "permissions": [],
+      "keywords": [
+        "缺集",
+        "订阅",
+        "审核"
+      ],
+      "declared_usage": {
+        "apis": [
+          "GET /api/emby-manager/missing/report",
+          "GET /api/plugin-host/emby/instances",
+          "GET /api/plugin-host/emby/libraries",
+          "GET /api/plugin-host/emby/items",
+          "GET /api/plugin-host/emby/episodes",
+          "GET /api/tmdb/tv/{id}",
+          "GET /api/subscribe/pool/intents",
+          "GET /api/subscribe/pool/intents/{id}",
+          "POST /api/subscribe/pool/intents",
+          "PATCH /api/subscribe/pool/intents/{id}/episodes",
+          "GET /api/emby-manager/tmdb-image"
+        ],
+        "sites": [],
+        "files": [],
+        "notifications": true,
+        "risk": "按用户规则创建或合并聚合订阅，宿主随后可能自动搜索和转存；自动运行默认关闭。提交前保存意图、回执与检查点；未知结果保留待核对且不自动重发。读取缺集报告会让宿主校准读到的剧集，该接口尚不属于稳定公开契约。页面仅修改自己的 DOM，使用宿主图片代理展示 TMDB 海报。",
+        "storage": "保留 settings、rules、ledger、review、ignored、history、preview、last_run；pending_action 保存尚待核对的订阅意图，不保存宿主凭据"
+      }
+    },
+    {
+      "id": "dian115.ximalaya",
+      "name": "喜马拉雅下载",
+      "version": "0.1.3",
+      "author": "癫哥",
+      "description": "复用 DIAN115 的 HTTP、APK 协议与共享 Chromium，下载有权访问的喜马拉雅单曲、专辑和指定区间，支持恢复与任务管理。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "修复空列表和运行记录页露底，优化下载及导航按钮。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/dian115.ximalaya-c152bdb7-74a8-4b5c-b828-f5c1e101e633.dian115p",
+      "sha256": "8e2d0b5a78489d978be8135e5144b8c9d3f64572102e8828298551d69172fd5c",
+      "delivery": "protected-v4",
+      "permissions": [
+        "browser"
+      ],
+      "keywords": [
+        "喜马拉雅",
+        "音频",
+        "下载"
+      ],
+      "declared_usage": {
+        "purpose": "复刻 Ximalaya-Downloader-Next 的四种音源后端与下载管理，使用当前账号有权访问的内容。",
+        "apis": [
+          "/api/extensions/v3/dian115.ximalaya/runs/{id}",
+          "/api/extensions/v3/dian115.ximalaya/storage/{key}",
+          "/api/extensions/v3/dian115.ximalaya/hook/rpc",
+          "/api/extensions/v3/dian115.ximalaya/cookiecloud/read"
+        ],
+        "sites": [
+          "https://www.ximalaya.com",
+          "https://pc.ximalaya.com",
+          "https://passport.ximalaya.com",
+          "https://mobile.ximalaya.com",
+          "*.xmcdn.com",
+          "https://hdaa.shuzilm.cn",
+          "https://static.geetest.com",
+          "*.geetest.com",
+          "用户显式配置的 HTTP/HTTPS/SOCKS5 代理和宿主配置的 FlareSolverr"
+        ],
+        "files": [
+          "插件自有下载目录",
+          "用户填写的 Linux 绝对下载目录，包括 CD2 挂载目录"
+        ],
+        "risk": "登录、发短信、验证与下载仅在用户主动操作时执行；网页与 APK 协议身份分开保存，密码与短信通过私有同步接口传递，不写任务输入。任务记录删除不删除音频文件。图形验证按需加载 GeeTest 官方脚本；Vue/Naive UI 会插入页面样式及测量浮层。 Chromium 仅在后台渲染及抓取页面数据，不提供浏览器显示或输入界面；读取宿主 CookieCloud 时仅选择 ximalaya.com，不写回共享 CookieCloud。"
+      }
+    },
+    {
+      "id": "quandouyao.music",
+      "name": "听序",
+      "version": "1.5.0",
+      "author": "癫哥",
+      "description": "多平台音乐播放、自定义 LX 音源、歌曲下载、逐句歌词与 OpenSubsonic。",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
+      "changelog": "新增下载目录和歌单下载，改善播放器切换、界面动效和短页面背景覆盖。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/quandouyao.music-7043e052-e6e9-4345-8e31-cda5c0b98a2a.dian115p",
+      "sha256": "9b4075ca8b8963d4973282b64cf73a307569579525902d083a07748939f86c06",
+      "delivery": "protected-v4",
+      "permissions": [
+        "browser"
+      ],
+      "keywords": [
+        "音乐",
+        "歌词",
+        "OpenSubsonic",
+        "LX"
+      ],
+      "declared_usage": {
+        "purpose": "搜索音乐、浏览网易云热歌榜、播放上游明确提供的音频及歌词。 用户主动下载歌曲或歌单时，音频流式保存到插件自有 downloads 目录或管理员设置的可写服务端目录，校验格式后提供已登录用户保存到设备；失败只清理本次任务的临时文件。保存目录时在该目录写入并删除唯一的可写性检查文件。用户可配置独立 HTTP 监听端口，提供需要账号认证的 OpenSubsonic 服务。音频和封面由服务端转发，不上传歌词。 支持 OpenSubsonic 客户端旧版十六进制密码格式。媒体 CDN 按平台域名限制。 播放器账号共享收藏、歌单、播放历史和队列数据。 为兼容播放器，使用宿主图片接口按尺寸转码封面；处理后仅删除插件自身 cover-render 目录下由当前请求创建的临时图片。 LX 音源由管理员添加、命名及启停。通过 HTTPS 下载并保存脚本，在已启用的音源参与播放或管理员主动试播时，用共享 Chromium 中的 QuickJS 隔离环境解析。脚本没有宿主接口、浏览器对象或直接网络能力；仅转发歌曲匹配所需公开资料到音源关联的已允许服务，丢弃 Cookie 请求头，播放地址与跳转经过域名检查。",
+        "sites": [
+          "music.163.com",
+          "music-api.gdstudio.xyz",
+          "c.y.qq.com",
+          "u.y.qq.com",
+          "search.kuwo.cn",
+          "musicapi.haitangw.net",
+          "songsearch.kugou.com",
+          "m.kugou.com",
+          "app.c.nf.migu.cn",
+          "api.vsaa.cn",
+          "lrclib.net",
+          "music.126.net",
+          "music.gdstudio.xyz",
+          "y.qq.com",
+          "y.gtimg.cn",
+          "aqqmusic.tc.qq.com",
+          "www.kuwo.cn",
+          "www.kugou.com",
+          "music.migu.cn",
+          "mobilecdnbj.kugou.com",
+          "m.kuwo.cn",
+          "管理员填写的 HTTPS LX 脚本和明确允许的接口及媒体地址",
+          "raw.githubusercontent.com",
+          "ghproxy.net"
+        ]
+      }
+    }
+  ]
+}
