@@ -10,13 +10,13 @@
     {
       "id": "bot.guanying.v3",
       "name": "观影 · 订阅管家",
-      "version": "3.6.1",
+      "version": "3.6.2",
       "author": "癫哥",
       "description": "多站点观影资源检索、季集匹配、115 离线与分享转存、入库核对和订阅集数回写。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "优化观影页面的按钮、切换反馈和触屏操作，修复短页面底部露底。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.guanying.v3-045ac9bd-00a7-4515-a113-c705cde1b11b.dian115p",
-      "sha256": "6919f0cec697cf34bcaee5fb688427220068b1af5f8410210a8958ea2b80fd0a",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "手机页头可打开主菜单、返回插件中心，编辑订阅时弹窗随可用高度调整。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/bot.guanying.v3-850a6d24-39f4-48ad-94fd-6e3f44b24306.dian115p",
+      "sha256": "1ed8bfb2c7ebdcb51e9847b3938be621c156c876a844240b073aea26ff406337",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
@@ -66,13 +66,13 @@
     {
       "id": "bot.wangyougu",
       "name": "忘忧谷",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "author": "癫哥",
       "description": "忘忧谷发现、搜索、磁力订阅与会话失效通知。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "整理导航与分页按钮的触控反馈，修复短页面底部露底。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.wangyougu-3d9beba3-43da-449f-b544-a27c282511f6.dian115p",
-      "sha256": "227597556f2e902b82cd10b2aa97a496223bfff9132aa63d315f988ba85fc45e",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "手机可直接打开主菜单或返回插件中心，作品详情弹层跟随窗口大小。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/bot.wangyougu-8fa157c5-8415-479d-8130-285f111598a7.dian115p",
+      "sha256": "6f067e70a436f444c550d11ff353bb221f36665779f16411b9bf3759d5bcd663",
       "delivery": "protected-v4",
       "permissions": [],
       "keywords": [
@@ -110,13 +110,13 @@
     {
       "id": "bot.zhuiguang",
       "name": "追光",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "author": "癫哥",
       "description": "豆瓣影视与 Bangumi 新番追新，固定 Emby 实例、120 条订阅上限与持久停订保护。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "优化追新页的主操作和筛选按钮，修复窄屏和短页面的背景覆盖。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.zhuiguang-218445c1-b1d8-4c67-b371-c8ef4160e11c.dian115p",
-      "sha256": "e2d260c7c091eff2f3efedcb6285df3b1ceabf85098f18ec3071fa221b758dbd",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "页头加入手机主菜单和返回入口，优化横屏详情弹窗与窄屏排布。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/bot.zhuiguang-6b9c39c0-6d87-4dbf-a064-3fe1807bb084.dian115p",
+      "sha256": "1924f83ec211b92f1cae6c6a83fc752f52ae9280763e28df0812dce7b4dc9b03",
       "delivery": "protected-v4",
       "permissions": [],
       "keywords": [
@@ -153,13 +153,13 @@
     {
       "id": "bot.zlibrary",
       "name": "Z-Library 书库",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "author": "癫哥",
       "description": "纸张手帐风格的电子书插件：账号/CK/CookieCloud 登录，搜索与版本选择，批量下载、恢复核对、保存到宿主或 CD2/115，附 EPUB/PDF/TXT 轻量预览。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "统一书库控制与按压反馈，按宿主可用高度显示书库并保留独立滚动。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/bot.zlibrary-b4bdb146-7eac-4012-91bd-9fb46750d39f.dian115p",
-      "sha256": "6386b1f592dde0df2237dddbde4faf8d4c2b1a3ecc371fd4612c99d19805df38",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "书库增加手机主菜单，阅读器和详情弹窗跟随宿主安全区调整。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/bot.zlibrary-3fa7d602-970c-4c8c-b620-32d4bfadf89a.dian115p",
+      "sha256": "78e9cffef500f2df74f0575d2003150a2415cb2c3539c8ebb83278d5997e315b",
       "delivery": "protected-v4",
       "permissions": [],
       "keywords": [
@@ -193,13 +193,13 @@
     {
       "id": "dian115.audiobook-organizer",
       "name": "有声书整理刮削",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "author": "癫哥",
       "description": "部分源码来自@烤地瓜。有声书 PT 搜索下载、监听清洗与结构化归档，支持书库识别、多源刮削、批次撤销、元数据写回和目录改名。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "优化整理、刮削和导航按钮，支持减少动态效果，改善短内容显示。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/dian115.audiobook-organizer-c04e6914-c6fc-493b-8d25-804a6cd9eca4.dian115p",
-      "sha256": "2727aecce4ef3c2d239ddd7fb71c27a5ebc3b8ce874fa83189e36005028125e8",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "书库增加手机主菜单，整理弹层与批量操作栏适配横屏及底部手势区。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/dian115.audiobook-organizer-e8b2989e-88af-4fc1-b799-544a1dd972a9.dian115p",
+      "sha256": "39579c100cd3cd836e97bd402b6ef7d1fcab34a33b29108ff8039c470062d3d4",
       "delivery": "protected-v4",
       "permissions": [],
       "keywords": [
@@ -255,13 +255,13 @@
     {
       "id": "dian115.missing-subscribe",
       "name": "缺集自动订阅",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "author": "癫哥",
       "description": "按多条规则筛选宿主缺集结果，自动创建或合并聚合订阅，支持试运行、审核队列与观察期。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "修复空页面露底，切换审核与记录时保留键盘焦点，并改善主按钮对比度。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/dian115.missing-subscribe-ad246a2e-78e1-43bf-a71f-ca6248570db1.dian115p",
-      "sha256": "5fc02265b5ee278bf89e4f6c1f1445f37d667a596d6915fab0aab7b8f342f0dd",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "手机页头增加主菜单和返回入口，编辑规则收起后可继续操作原按钮。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/dian115.missing-subscribe-f57129a9-c9c4-4fa9-a984-89719447d935.dian115p",
+      "sha256": "c80a2d5f772dac32f6c8ec7c9df8706351912dcb8c31f2517a2240ae1d104da7",
       "delivery": "protected-v4",
       "permissions": [],
       "keywords": [
@@ -293,13 +293,13 @@
     {
       "id": "dian115.ximalaya",
       "name": "喜马拉雅下载",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "author": "癫哥",
       "description": "复用 DIAN115 的 HTTP、APK 协议与共享 Chromium，下载有权访问的喜马拉雅单曲、专辑和指定区间，支持恢复与任务管理。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-20261121",
-      "changelog": "修复空列表和运行记录页露底，优化下载及导航按钮。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-20261121/dian115.ximalaya-c152bdb7-74a8-4b5c-b828-f5c1e101e633.dian115p",
-      "sha256": "8e2d0b5a78489d978be8135e5144b8c9d3f64572102e8828298551d69172fd5c",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "手机可打开主菜单、返回插件中心，登录弹窗和选择器在插件页面内显示。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/dian115.ximalaya-63cc376d-8b44-41ab-82dd-3e3424d2352d.dian115p",
+      "sha256": "39affc0dc9ddc5102fd3d46f709a83d1c625304e7af3f46637fbd4466594d034",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
@@ -338,13 +338,13 @@
     {
       "id": "quandouyao.music",
       "name": "听序",
-      "version": "1.5.1",
+      "version": "1.5.2",
       "author": "癫哥",
       "description": "多平台音乐播放、自定义 LX 音源、歌曲下载、逐句歌词与 OpenSubsonic。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-1.5.1",
-      "changelog": "外部播放器默认优先直连可用的 HTTPS 音源，支持切换为主机转发。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-1.5.1/quandouyao.music-d81a36c3-99a1-4d84-b8d4-718ddc8feb2f.dian115p",
-      "sha256": "846f3e160638ef813ec86c3ca87273ba166b988b2eb1d0e11a16a21684b049e0",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "手机页头可直接打开主菜单，播放器与队列随可用空间调整。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/quandouyao.music-2e02ff61-27c3-4c51-85be-ca6f2512507d.dian115p",
+      "sha256": "579f5012948dd52dc5f86e0dd039082feaeed42087e477943b988db5442970cd",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
@@ -384,6 +384,39 @@
           "ghproxy.net"
         ]
       }
+    },
+    {
+      "id": "example.api-lab",
+      "name": "插件 API 测试台",
+      "description": "测试网络、二进制下载、凭据、CookieCloud、存储、文件、监听、宿主事件、Webhook、任务及通知；站点地址在安装后填写。",
+      "version": "3.1.2",
+      "author": "癫哥",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
+      "changelog": "测试台增加手机主菜单，公开回调令牌与监听端口可在页面内配置。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/example.api-lab-55f5d4e7-0636-48be-a365-c5a22e4bae25.dian115p",
+      "sha256": "6290435567801feb171b90a49db16525d7c9c655be476b569c4366ee0a4d220b",
+      "delivery": "protected-v4",
+      "permissions": [],
+      "declared_usage": {
+        "apis": [
+          "GET /api/dashboard/stats"
+        ],
+        "sites": [
+          "用户配置的 HTTP/HTTPS 站点",
+          "用户配置的 FlareSolverr"
+        ],
+        "files": [
+          "插件 data/files 内的 probe.txt",
+          "用户显式填写的监听或 CD2 路径"
+        ],
+        "notifications": true,
+        "risk": "可读写插件数据；点击对应按钮时才执行登录、通知、下载、监听端口；公开回调需令牌"
+      },
+      "keywords": [
+        "开发者",
+        "SDK",
+        "接口测试"
+      ]
     }
   ]
 }
