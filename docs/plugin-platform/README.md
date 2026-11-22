@@ -22,7 +22,7 @@
 - [网络与登录](network.md)：账号密码、明文 CK、自定义站点、CookieCloud、FlareSolverr。
 - [加密交付](encrypted-delivery.md)：作者网页加密、直接离线安装、维护者审查。
 - [编译 MCP 与正式发布](encrypted-delivery.md#编译-mcp-与正式发布)：系统 Key 鉴权、癫影会员实时验证、本机源码调试及正式编译实施状态。
-- [页面与主题](ui-theme.md)：直接挂载页面和完整 HTML。
+- [页面与主题](ui-theme.md) 同时涵盖 ESM 和完整 HTML 页面，手机界面须遵守其中的 [iPhone PWA 适配契约](ui-theme.md#iphone-pwa-页面适配契约)。
 - [安全限制](security.md)：调用权限、CookieCloud 与宿主文件保护、安装后防篡改。
 - [插件 API 完整参考](api-reference.md)：清单、页面与后台 ctx、文件、事件、处理器、限额一页列全。
 - [宿主接口参考](host-api-reference.md)：逐个接口的参数、请求与响应字段、`ctx.api` 调用写法和示例；[速查](host-api-quick-reference.md)为一行一个接口。

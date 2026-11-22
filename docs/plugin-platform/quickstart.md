@@ -46,13 +46,33 @@ export async function run(ctx, input) {
 
 ## 4. 写页面
 
-`ui/page.js`：
+使用开发 skill 的 `starter` 模板时，页面已有手机导航和滚动区。手工建目录时，可以将下面的最小页面保存为 `ui/page.js`。完整 HTML 和 ESM 模块遵守同一份 [iPhone PWA 适配契约](ui-theme.md#iphone-pwa-页面适配契约)。
 
 ```js
 export function mount(element, ctx) {
-  element.innerHTML = '<button id="run">检查</button><pre id="out"></pre>'
-  const out = element.querySelector('#out')
-  element.querySelector('#run').onclick = async () => {
+  element.innerHTML = `
+    <section class="status-plugin">
+      <style>
+        .status-plugin { padding: 16px; color: var(--app-text); }
+        .status-plugin header { display: flex; flex-wrap: wrap; gap: 8px; }
+        .status-plugin button { min-width: 44px; min-height: 44px; font: inherit; }
+        .status-plugin pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+        .status-plugin [data-menu] { display: none; }
+        @media (max-width:768px), (max-height:500px) and (hover:none) and (pointer:coarse) {
+          .status-plugin [data-menu]:not([hidden]) { display: inline-block; }
+        }
+      </style>
+      <header><button type="button" data-menu hidden>主菜单</button><button type="button" data-back hidden>返回插件中心</button></header>
+      <p><button type="button" data-run>检查</button></p><pre role="status"></pre>
+    </section>`
+  for (const [selector, method] of [['[data-menu]', 'openSidebar'], ['[data-back]', 'close']]) {
+    if (!ctx.navigation?.[method]) continue
+    const button = element.querySelector(selector)
+    button.hidden = false
+    button.onclick = () => ctx.navigation[method]()
+  }
+  const out = element.querySelector('pre')
+  element.querySelector('[data-run]').onclick = async () => {
     try {
       const run = await ctx.tasks.run('status', 'status:' + Date.now())
       out.textContent = '已提交：' + run.id
@@ -60,7 +80,7 @@ export function mount(element, ctx) {
       out.textContent = '失败：' + error.message
     }
   }
-  return () => { element.innerHTML = '' }
+  return () => element.replaceChildren()
 }
 ```
 

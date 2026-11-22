@@ -50,7 +50,7 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
 
 - 后台脚本不支持 `for await` 和异步生成器，没有 DOM、Node 模块、`require`。
 - 后台 ctx 没有 `tasks`、`events`、`usage`，这些只在页面。`ws`、`tcp`、`http.stream` 只在后台，`response` 只在 HTTP 处理器。
-- 插件页面没有宿主顶栏和容器内边距，需自行适配手机安全区并提供可见的返回入口：ESM 调用 `ctx.navigation.close()`，HTML 调用 `window.DIAN115Plugin.navigation.close()`。仅关闭页面，不停止后台任务；完整规则见 `assets/public-kit/ui-theme.md`。
+- 页面自行提供返回入口，调用 `ctx.navigation.close()` 返回插件中心。手机主菜单入口也由插件安排，调用 `ctx.navigation.openSidebar()` 打开宿主侧栏。HTML 使用 `window.DIAN115Plugin.navigation`。宿主预留安全区，插件设置内容间距。页面必须遵守 `assets/public-kit/ui-theme.md` 的 iPhone PWA 适配契约，按其中的横竖屏、键盘与恢复场景验收。
 - 所有异步调用都要 `await`，处理函数返回后脚本结束，未完成的连接会被关闭。
 - CD2 文件一律写挂载路径，比如 `/mnt/cd2/115/电影`，不要写 `cd2:`，`ctx.watch.add` 不要填 `kind`。
 - 除受保护路径外，插件可读写宿主和 CD2 挂载文件，HTTP save_to 可直接写目标目录；需要此能力声明 requires.api: "3.9"。内容读写走文件系统，双边 CD2 的移动/复制仍走 gRPC。Token 和渠道配置仍由宿主管理，不要绕过受限接口。

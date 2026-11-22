@@ -33,3 +33,12 @@ test('page close delegates to its host without sending a request or stopping job
   assert.equal(closes, 1)
   await assert.rejects(createPluginContext('standalone', async () => {}).navigation.close(), /未连接宿主页面导航/)
 })
+
+test('opening the sidebar calls only its host callback and reports a missing connection', async () => {
+  let opens = 0
+  const unexpected = () => assert.fail('unexpected request or navigation')
+  const ctx = createPluginContext('example.page', unexpected, { close: unexpected, openSidebar: () => { opens++ } })
+  await ctx.navigation.openSidebar()
+  assert.equal(opens, 1)
+  await assert.rejects(createPluginContext('standalone', unexpected).navigation.openSidebar(), /未连接宿主侧边栏/)
+})

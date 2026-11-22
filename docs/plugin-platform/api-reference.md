@@ -28,7 +28,8 @@ UI、jobs、http 至少提供一项。
 | 成员 | 说明 |
 | --- | --- |
 | `id`、`signal`、`theme.mode`、`theme.subscribe(fn)` | 插件 ID、页面关闭中止信号、明暗主题 |
-| `navigation.close()` | 关闭当前页面并返回插件中心；不停止后台任务。页面须提供可见的返回入口，手机安全区与内边距由插件处理，详见[页面契约](ui-theme.md) |
+| `navigation.close()` | 关闭当前页面并返回插件中心，后台任务继续运行。页面须提供可见的返回入口。 |
+| `navigation.openSidebar()` | 在当前插件页面上打开宿主的手机主菜单。入口由插件自行安排，重复调用保持打开，桌面布局下调用无效果。详见[页面契约](ui-theme.md)。 |
 | `api.get/post/put/patch/delete/head(path, body)` | 调用任意宿主 `/api/` 接口，沿用登录与业务校验 |
 | `storage.get/set(key,value,expected_revision)/remove/list` | 插件 KV（加密），CAS 用 expected_revision |
 | `settings.get()` / `settings.set(value)` | 默认值叠加已保存设置 / 保存 |

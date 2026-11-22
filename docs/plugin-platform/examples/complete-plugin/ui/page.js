@@ -3,8 +3,48 @@ export async function mount(root, ctx) {
   const wrapper = doc.createElement('section')
   wrapper.className = 'api-lab'
   const style = doc.createElement('style')
-  style.textContent = `.api-lab{background:var(--app-surface);color:var(--app-text);padding:20px;border-radius:12px}.api-lab form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}.api-lab label{display:grid;gap:6px}.api-lab input,.api-lab textarea,.api-lab button{font:inherit;color:inherit;background:var(--app-bg);border:1px solid var(--app-border);border-radius:6px;padding:10px;box-sizing:border-box;min-height:44px}.api-lab .actions{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.api-lab pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:50vh;overflow:auto}.api-lab button:focus-visible{outline:2px solid var(--app-accent)}.api-lab button:disabled{opacity:.55}`
+  style.textContent = `
+    .api-lab{box-sizing:border-box;min-block-size:100%;background:var(--app-surface);color:var(--app-text);padding:clamp(16px,4vw,32px)}
+    .api-lab header{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-block-end:12px}
+    .api-lab h2{margin-block-start:0}
+    .api-lab form{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+    .api-lab label{display:grid;min-width:0;gap:6px}
+    .api-lab input{min-width:0;max-width:100%}
+    .api-lab :is(input,textarea,button){font:inherit;color:inherit;background:var(--app-bg);border:1px solid var(--app-border);border-radius:12px;padding:10px;box-sizing:border-box;min-block-size:44px}
+    .api-lab button{min-inline-size:44px;border-radius:999px;padding-inline:16px;cursor:pointer;touch-action:manipulation}
+    .api-lab .mobile-menu{display:none}
+    @media (max-width:768px), (max-height:500px) and (hover:none) and (pointer:coarse){
+      .api-lab .mobile-menu{display:inline-block}
+    }
+    .api-lab button[data-primary]{background:color-mix(in srgb,var(--app-accent) 17%,var(--app-surface));font-weight:650}
+    .api-lab .actions{display:flex;flex-wrap:wrap;gap:8px;margin-block:20px}
+    .api-lab pre{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto}
+    .api-lab :is(button,input,textarea):focus-visible{outline:2px solid var(--app-accent);outline-offset:2px}
+    .api-lab button:disabled{opacity:.55;cursor:default}
+    .api-lab button:active:not(:disabled){opacity:.75}
+    @media (prefers-reduced-motion: no-preference){
+      .api-lab button{transition:scale 160ms cubic-bezier(.2,.75,.25,1),opacity 140ms ease}
+      .api-lab button:active:not(:disabled){scale:.98;transition-duration:0ms}
+    }
+  `
   wrapper.append(style)
+  const header = doc.createElement('header')
+  const output = doc.createElement('pre')
+  output.setAttribute('aria-live', 'polite')
+  function addNavigation(label, method, mobileOnly = false) {
+    if (typeof ctx.navigation?.[method] !== 'function') return
+    const button = doc.createElement('button')
+    button.type = 'button'
+    button.textContent = label
+    if (mobileOnly) button.className = 'mobile-menu'
+    button.addEventListener('click', async () => {
+      try { await ctx.navigation[method]() } catch (error) { output.textContent = error.message }
+    })
+    header.append(button)
+  }
+  addNavigation('打开主菜单', 'openSidebar', true)
+  addNavigation('返回插件中心', 'close')
+  wrapper.append(header)
   const title = doc.createElement('h2'); title.textContent = '插件 API 测试台'; wrapper.append(title)
   const note = doc.createElement('p'); note.textContent = '地址与账号在安装后填写。登录、CookieCloud 写入、监听和通知只在点击相应按钮时执行。'; wrapper.append(note)
   const form = doc.createElement('form'); form.addEventListener('submit', event => event.preventDefault())
@@ -22,13 +62,12 @@ export async function mount(root, ctx) {
   }
   wrapper.append(form)
   const actions = doc.createElement('div'); actions.className='actions';wrapper.append(actions)
-  const output = doc.createElement('pre'); output.setAttribute('aria-live','polite'); wrapper.append(output)
+  wrapper.append(output)
   const read = () => Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.value]))
   let disposed=false
   const buttons=[]
-  function action(title, fn) { const b=doc.createElement('button');b.type='button';b.textContent=title;buttons.push(b);actions.append(b);b.addEventListener('click',async()=>{buttons.forEach(x=>x.disabled=true);output.textContent='正在调用…';try{const result=await fn(read());if(!disposed)output.textContent=JSON.stringify(result??{ok:true},null,2)}catch(e){if(!disposed)output.textContent=e.message||String(e)}finally{if(!disposed)buttons.forEach(x=>x.disabled=false)}}) }
-  action('返回插件中心', () => ctx.navigation.close())
-  action('保存配置', value=>ctx.storage.set('site',value))
+  function action(title, fn, primary = false) { const b=doc.createElement('button');b.type='button';b.textContent=title;b.toggleAttribute('data-primary',primary);buttons.push(b);actions.append(b);b.addEventListener('click',async()=>{buttons.forEach(x=>x.disabled=true);output.textContent='正在调用…';try{const result=await fn(read());if(!disposed)output.textContent=JSON.stringify(result??{ok:true},null,2)}catch(e){if(!disposed)output.textContent=e.message||String(e)}finally{if(!disposed)buttons.forEach(x=>x.disabled=false)}}) }
+  action('保存配置', value=>ctx.storage.set('site',value), true)
   action('调用宿主 GET', value=>ctx.api.get(value.api))
   action('HTTP 页面', value=>ctx.http.request({url:value.url,timeout_seconds:Number(value.timeout)}))
   action('提交账号密码登录', value=>ctx.http.request({url:value.login,method:'POST',headers:{'Content-Type':['application/x-www-form-urlencoded']},body:new URLSearchParams({username:value.username,password:value.password}).toString(),timeout_seconds:Number(value.timeout)}))
