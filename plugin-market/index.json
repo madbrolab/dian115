@@ -338,13 +338,13 @@
     {
       "id": "tingxu.music",
       "name": "听序",
-      "version": "2.1.1",
+      "version": "2.1.2",
       "author": "癫哥",
       "description": "多平台音乐播放，支持 LX 音源、多线路回退、逐句歌词、下载及 OpenSubsonic 曲库与封面。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-2.1.1",
-      "changelog": "OpenSubsonic 服务器统一显示「听序」，插件 ID 改为 tingxu.music。使用 2.1.0 及更早版本的用户请先停用并保留旧版，再安装新版、重设账号和监听端口。原歌单和缓存在旧插件中。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-2.1.1/tingxu.music-2.1.1.dian115p",
-      "sha256": "c2231dcd033df792e36bed641cbeee57934b59a09acba8b52ff014c71abc133b",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-2.1.2",
+      "changelog": "修复慢音源导致的起播卡住，改善播放器探测、直连和自动转发。曲库同步改为读取本地缓存，重复打开榜单与电台更快。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-2.1.2/tingxu.music-2.1.2.dian115p",
+      "sha256": "54fc079411cf106e695437ffd299272883c6f376a1949271b04587b797a0274d",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
@@ -359,7 +359,7 @@
         "封面"
       ],
       "declared_usage": {
-        "purpose": "搜索音乐、浏览五平台榜单、场景电台与风格曲库、播放上游明确提供的音频及歌词。 用户主动下载歌曲或歌单时，音频流式保存到插件自有 downloads 目录或管理员设置的可写服务端目录，校验格式后提供已登录用户保存到设备；失败只清理本次任务的临时文件。保存目录时在该目录写入并删除唯一的可写性检查文件。用户可配置独立 HTTP 监听端口，提供需要账号认证的 OpenSubsonic 服务。第三方播放器可通过已校验的 HTTPS 原始音频地址直连，也可配置为主机转发。网页播放和封面由主机提供，不上传歌词。 支持 OpenSubsonic 客户端旧版十六进制密码格式。媒体 CDN 按平台域名限制。 插件本地缓存栏目曲目目录与近期取得的封面，供网页和第三方播放器读取。包内包含 9 张离线栏目 JPEG 封面。 播放器账号共享收藏、歌单、播放历史和队列数据。 为兼容播放器，使用宿主图片接口按尺寸转码封面；处理后仅删除插件自身 cover-render 目录下由当前请求创建的临时图片。 LX 音源由管理员添加、命名及启停。通过 HTTPS 下载并保存脚本，在已启用的音源参与播放或管理员主动试播时，用共享 Chromium 中的 QuickJS 隔离环境解析。脚本没有宿主接口、浏览器对象或直接网络能力；仅转发歌曲匹配所需公开资料到音源关联的已允许服务，丢弃 Cookie 请求头，播放地址与跳转经过域名检查。 自动线路依次尝试启用的 LX、原平台及匹配录音的酷我、网易云公开音源。按歌名、歌手与时长匹配备用音频和歌词。网页播放会话在插件存储中保存队列、进度与播放偏好。",
+        "purpose": "搜索音乐、浏览五平台榜单、场景电台与风格曲库、播放上游明确提供的音频及歌词。 用户主动下载歌曲或歌单时，音频流式保存到插件自有 downloads 目录或管理员设置的可写服务端目录，校验格式后提供已登录用户保存到设备；失败只清理本次任务的临时文件。保存目录时在该目录写入并删除唯一的可写性检查文件。用户可配置独立 HTTP 监听端口，提供需要账号认证的 OpenSubsonic 服务。第三方播放器可通过已校验的 HTTPS 原始音频地址直连，也可配置为主机转发。插件在本地短时保存已验证的播放地址，并识别同一客户端未跟随跳转的重试，以便转发音频。网页播放和封面由主机提供，不上传歌词。 支持 OpenSubsonic 客户端旧版十六进制密码格式。媒体 CDN 按平台域名限制。 插件本地缓存栏目曲目目录与近期取得的封面，供网页和第三方播放器读取。包内包含 9 张离线栏目 JPEG 封面。 播放器账号共享收藏、歌单、播放历史和队列数据。 为兼容播放器，使用宿主图片接口按尺寸转码封面；处理后仅删除插件自身 cover-render 目录下由当前请求创建的临时图片。 LX 音源由管理员添加、命名及启停。通过 HTTPS 下载并保存脚本，在已启用的音源参与播放或管理员主动试播时，用共享 Chromium 中的 QuickJS 隔离环境解析。脚本没有宿主接口、浏览器对象或直接网络能力；仅转发歌曲匹配所需公开资料到音源关联的已允许服务，丢弃 Cookie 请求头，播放地址与跳转经过域名检查。 自动线路依次尝试启用的 LX、原平台及匹配录音的酷我、网易云公开音源。按歌名、歌手与时长匹配备用音频和歌词。网页播放会话在插件存储中保存队列、进度与播放偏好。",
         "sites": [
           "music.163.com",
           "music-api.gdstudio.xyz",
