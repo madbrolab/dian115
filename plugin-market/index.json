@@ -338,13 +338,13 @@
     {
       "id": "tingxu.music",
       "name": "听序",
-      "version": "2.1.5",
+      "version": "2.1.6",
       "author": "癫哥",
       "description": "多平台音乐播放，支持 LX 音源、多线路回退、逐句歌词、下载及 OpenSubsonic 曲库与封面。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-2.1.5",
-      "changelog": "第三方播放器默认从听序读取音频，兼容首段探测和拖动进度。修正流派显示为数字的问题，保留手动音源直连。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-2.1.5/tingxu.music-2.1.5.dian115p",
-      "sha256": "4e5887828a5f29cdf76d3ae2d905c9f554a707d5fec25ae67fc7c2d01fa20dd9",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-2.1.6",
+      "changelog": "加快 Subsonic 播放器起播，减少探测和分段取流时重复解析音源。优化曲库分页和封面加载。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-2.1.6/tingxu.music-2.1.6.dian115p",
+      "sha256": "49860a97b88ad2becd72cf770176db5e8c4ea4e8e24d7c3657b8562c165105b8",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
