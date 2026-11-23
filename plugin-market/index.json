@@ -291,51 +291,6 @@
       }
     },
     {
-      "id": "dian115.ximalaya",
-      "name": "喜马拉雅下载",
-      "version": "0.1.4",
-      "author": "癫哥",
-      "description": "复用 DIAN115 的 HTTP、APK 协议与共享 Chromium，下载有权访问的喜马拉雅单曲、专辑和指定区间，支持恢复与任务管理。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
-      "changelog": "手机可打开主菜单、返回插件中心，登录弹窗和选择器在插件页面内显示。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/dian115.ximalaya-63cc376d-8b44-41ab-82dd-3e3424d2352d.dian115p",
-      "sha256": "39affc0dc9ddc5102fd3d46f709a83d1c625304e7af3f46637fbd4466594d034",
-      "delivery": "protected-v4",
-      "permissions": [
-        "browser"
-      ],
-      "keywords": [
-        "喜马拉雅",
-        "音频",
-        "下载"
-      ],
-      "declared_usage": {
-        "purpose": "复刻 Ximalaya-Downloader-Next 的四种音源后端与下载管理，使用当前账号有权访问的内容。",
-        "apis": [
-          "/api/extensions/v3/dian115.ximalaya/runs/{id}",
-          "/api/extensions/v3/dian115.ximalaya/storage/{key}",
-          "/api/extensions/v3/dian115.ximalaya/hook/rpc",
-          "/api/extensions/v3/dian115.ximalaya/cookiecloud/read"
-        ],
-        "sites": [
-          "https://www.ximalaya.com",
-          "https://pc.ximalaya.com",
-          "https://passport.ximalaya.com",
-          "https://mobile.ximalaya.com",
-          "*.xmcdn.com",
-          "https://hdaa.shuzilm.cn",
-          "https://static.geetest.com",
-          "*.geetest.com",
-          "用户显式配置的 HTTP/HTTPS/SOCKS5 代理和宿主配置的 FlareSolverr"
-        ],
-        "files": [
-          "插件自有下载目录",
-          "用户填写的 Linux 绝对下载目录，包括 CD2 挂载目录"
-        ],
-        "risk": "登录、发短信、验证与下载仅在用户主动操作时执行；网页与 APK 协议身份分开保存，密码与短信通过私有同步接口传递，不写任务输入。任务记录删除不删除音频文件。图形验证按需加载 GeeTest 官方脚本；Vue/Naive UI 会插入页面样式及测量浮层。 Chromium 仅在后台渲染及抓取页面数据，不提供浏览器显示或输入界面；读取宿主 CookieCloud 时仅选择 ximalaya.com，不写回共享 CookieCloud。"
-      }
-    },
-    {
       "id": "tingxu.music",
       "name": "听序",
       "version": "2.1.10",
@@ -391,39 +346,6 @@
           "d.musicapp.migu.cn"
         ]
       }
-    },
-    {
-      "id": "example.api-lab",
-      "name": "插件 API 测试台",
-      "description": "测试网络、二进制下载、凭据、CookieCloud、存储、文件、监听、宿主事件、Webhook、任务及通知；站点地址在安装后填写。",
-      "version": "3.1.2",
-      "author": "癫哥",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
-      "changelog": "测试台增加手机主菜单，公开回调令牌与监听端口可在页面内配置。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/example.api-lab-55f5d4e7-0636-48be-a365-c5a22e4bae25.dian115p",
-      "sha256": "6290435567801feb171b90a49db16525d7c9c655be476b569c4366ee0a4d220b",
-      "delivery": "protected-v4",
-      "permissions": [],
-      "declared_usage": {
-        "apis": [
-          "GET /api/dashboard/stats"
-        ],
-        "sites": [
-          "用户配置的 HTTP/HTTPS 站点",
-          "用户配置的 FlareSolverr"
-        ],
-        "files": [
-          "插件 data/files 内的 probe.txt",
-          "用户显式填写的监听或 CD2 路径"
-        ],
-        "notifications": true,
-        "risk": "可读写插件数据；点击对应按钮时才执行登录、通知、下载、监听端口；公开回调需令牌"
-      },
-      "keywords": [
-        "开发者",
-        "SDK",
-        "接口测试"
-      ]
     }
   ]
 }
