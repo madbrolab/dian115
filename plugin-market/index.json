@@ -293,13 +293,13 @@
     {
       "id": "tingxu.music",
       "name": "听序",
-      "version": "2.2.3",
+      "version": "2.2.4",
       "author": "癫哥",
       "description": "听序音乐播放器，聚合五平台榜单、场景电台、风格曲库、跨平台回退与同步歌词，支持收藏、下载及 OpenSubsonic。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-2.2.3",
-      "changelog": "自动起播先用已知线路，原平台缺歌或直链失效时，按需跨平台补搜同一录音，LX 音源也可接续。\n歌词优先从当前平台读取，慢或缺词时逐步尝试其他来源，同一首歌最多同时查两路。\n确认无歌词、查询超时、上游故障各有 48 条随机趣味提示，临时失败后再次打开可重新取词。\n修复部分旧版 Subsonic 播放器歌词空白，加快重复打开歌手目录和网页重播时的歌词加载。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-2.2.3/tingxu.music-2.2.3.dian115p",
-      "sha256": "7c0929bbf5f45f06cd89cd4c8f509ec00ee80685080988b067525c329d834c27",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/tingxu-2.2.4",
+      "changelog": "刷新榜单和电台时复用未变曲目，只有资料变动才更新歌曲。\n重复搜索相同曲目时跳过重复写入，播放器分段读取同一首歌时复用已有播放记录。\n第三方播放器连续上报进度时合并保存，暂停、拖动和听歌历史仍及时记录。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/tingxu-2.2.4/tingxu.music-2.2.4.dian115p",
+      "sha256": "ba122fd4bf73e7d14457e5b4c7f506fa0e2173b8bab0dc33310dfa52d818f64a",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
