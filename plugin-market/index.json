@@ -153,13 +153,13 @@
     {
       "id": "bot.zlibrary",
       "name": "Z-Library 书库",
-      "version": "1.2.2",
+      "version": "1.2.4",
       "author": "癫哥",
       "description": "纸张手帐风格的电子书插件：账号/CK/CookieCloud 登录，搜索与版本选择，批量下载、恢复核对、保存到宿主或 CD2/115，附 EPUB/PDF/TXT 轻量预览。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
-      "changelog": "书库增加手机主菜单，阅读器和详情弹窗跟随宿主安全区调整。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/bot.zlibrary-3fa7d602-970c-4c8c-b620-32d4bfadf89a.dian115p",
-      "sha256": "78e9cffef500f2df74f0575d2003150a2415cb2c3539c8ebb83278d5997e315b",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/zlibrary-1.2.4",
+      "changelog": "修复部分站点已登录后浏览、搜索仍提示 Access denied 的问题。书目被拒绝时区分会话过期和站点限制。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/zlibrary-1.2.4/bot.zlibrary-1.2.4.dian115p",
+      "sha256": "1c640261e70cdc253067a9522764192c4b4da7d29a53759ad99d17a51a5b0c30",
       "delivery": "protected-v4",
       "permissions": [],
       "keywords": [
@@ -171,6 +171,7 @@
         "purpose": "用户主动登录、导入 CK、搜索与浏览电子书、获取所选具体版本、保存到目录、阅读已保存文件及管理收藏和缓存。",
         "apis": [
           "插件自身 settings、storage、HTTP、cookies/import、jobs/runs、files/download 和网络能力探测",
+          "本站 EAPI 请求从当前插件会话读取匹配该请求的账号 Cookie，用于同源账号认证头。书目明确拒绝访问时，可再读取一次账号资料以核验会话。",
           "GET /api/local-dirs：只读选择宿主和 CD2 挂载目录",
           "用户点击 CookieCloud 登录时仅 read 当前站点匹配域，不调用 write，不读取 115 Cookie",
           "用户点击宿主网页验证时，先查询本插件 network-capabilities，再调用 http.render；不读取系统设置"
