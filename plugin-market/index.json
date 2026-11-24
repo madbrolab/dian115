@@ -153,13 +153,13 @@
     {
       "id": "bot.zlibrary",
       "name": "Z-Library 书库",
-      "version": "1.2.5",
+      "version": "1.2.6",
       "author": "癫哥",
       "description": "纸张手帐风格的电子书插件：账号/CK/CookieCloud 登录，搜索与版本选择，批量下载、恢复核对、保存到宿主或 CD2/115，附 EPUB/PDF/TXT 轻量预览。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/zlibrary-1.2.5",
-      "changelog": "修复账号已登录、能查看下载额度，但打开中文热门书籍或搜索书名仍提示「Access denied」的问题。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/zlibrary-1.2.5/bot.zlibrary-1.2.5.dian115p",
-      "sha256": "be63be5a3c9d997ad7d9e44a2a9c3e2f71eef0fa29c3d5af59792fc85ffe821b",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/zlibrary-1.2.6",
+      "changelog": "修复电子书传完后校验失败、无法入库的问题。下载任务顶部可直接处理待核对书籍。已传完的文件可恢复到书库，无需再次消耗下载额度。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/zlibrary-1.2.6/bot.zlibrary-1.2.6.dian115p",
+      "sha256": "223ee8a6131bbd9ee15b53401582b599fec5dfa52f733bc142184ea26e29e0b9",
       "delivery": "protected-v4",
       "permissions": [],
       "keywords": [
