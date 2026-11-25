@@ -13,7 +13,7 @@
 
 | 入口 | 内容 |
 | --- | --- |
-| **安装与升级** | [Docker 部署](docs/user/installation.md#部署指南) · [授权激活](docs/user/installation.md#授权激活) · [升级维护](docs/user/installation.md#更新与维护) · [数据库迁移](tools/database-migration/README.md) |
+| **安装与升级** | Docker Compose 新装推荐 PostgreSQL · [Host 网络](docs/user/installation.md#host-网络) · [桥接网络](docs/user/installation.md#桥接网络) · [授权激活](docs/user/installation.md#授权激活) · [升级维护](docs/user/installation.md#更新与维护) · [SQLite 数据迁移](tools/database-migration/README.md) |
 | **使用与体验** | [用户 Wiki](https://madbrolab.github.io/dian115/) · [管理端 Demo](https://madbrolab.github.io/dian115/demo/#/overview) · [用户门户](https://madbrolab.github.io/dian115/demo/portal/) · [音乐播放器](https://madbrolab.github.io/dian115/demo/music/) · [项目截图](docs/assets/screenshots/) |
 | **插件商店** | 在 DIAN115 的插件中心安装与更新 · [官方插件安装包和版本说明](https://github.com/madbrolab/dian115-plugin-releases/releases) |
 | **插件开发与集成** | [开发文档](docs/plugin-platform/README.md) · [快速开始](docs/plugin-platform/guides/quickstart.md) · [MoviePilot PT 连接](docs/plugin-platform/examples/moviepilot-bridge/README.md) |

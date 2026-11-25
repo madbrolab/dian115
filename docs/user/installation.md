@@ -8,29 +8,61 @@
 
 ## 部署指南
 
-**优先推荐 Host 网络部署（Linux / NAS）。** DIAN-115 直接使用宿主机网络，Web 管理端、Emby 代理和音乐服务无需逐项配置 Docker 端口映射，适合多实例代理场景。下方完整 Compose 示例默认采用 Host 网络；需要 Docker 网络隔离时，可选择桥接模式。
+**新装推荐 PostgreSQL（PGSQL）。** 下面两套 Docker Compose 都包含 DIAN115 和 PostgreSQL，选一套即可。已有 SQLite 数据的实例先按[迁移流程](#postgresql-与旧-sqlite-数据迁移)处理。
+
+| 部署方式 | 适用场景 | 数据库连接 |
+| --- | --- | --- |
+| [Host 网络](#host-网络) | 推荐用于 Linux / NAS，尤其适合多个 Emby 代理实例和独立音乐服务 | 应用通过宿主机回环地址连接 PostgreSQL |
+| [桥接网络](#桥接网络) | 按需映射应用端口，使用独立的 Docker 网络 | 应用在 Compose 网络内通过服务名 `postgres` 连接 |
 
 ### 环境准备
 
 - 使用 Linux / NAS 主机，安装 Docker Engine 与 Docker Compose v2。
-- 准备持久化配置目录、媒体目录和云盘挂载目录。
+- 新建部署目录，创建 `config` 和 `dian115AI` 子目录，选一种网络方式，将相应示例保存为 `compose.yml`。按实际情况替换媒体和云盘挂载的宿主机路径。
+- 在同一目录新建 `.env`，运行 `openssl rand -hex 24` 生成密码，填到 `POSTGRES_PASSWORD=` 后。两套示例都直接用这个值初始化 PostgreSQL 并构造连接串，十六进制密码可以直接写入连接串。
 - 使用 CD2 时，先完成 FUSE、共享挂载、API Token 和云盘挂载设置，参见 [CD2 部署与接入](https://madbrolab.github.io/dian115/#guide/cd2)。
 - 为 DIAN-115 与 Emby 配置一致的媒体目录和云盘目录，参见 [路径搭配指南](https://madbrolab.github.io/dian115/#guide/paths)。
 
-### 推荐部署：Docker Compose · Host 网络
+```dotenv
+POSTGRES_PASSWORD=
+```
 
-新建部署目录，创建 `config` 和 `dian115AI` 子目录，将下面示例保存为 `compose.yml`。`/mnt/user/media` 与 `/mnt/cache/CloudNAS` 是宿主机示例路径，部署前替换为实际目录。
+### Host 网络
+
+DIAN115 直接使用宿主机端口。PostgreSQL 只把端口映射到宿主机的 `127.0.0.1:15432`。
 
 ```yaml
 services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dian115
+      POSTGRES_USER: dian115
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?请在 .env 设置数据库密码}"
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "dian115", "-d", "dian115"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
   dian115:
     image: madbrolab/dian115:latest
     container_name: dian115
     restart: unless-stopped
     network_mode: host
+    depends_on:
+      postgres:
+        condition: service_healthy
     environment:
-      - PORT=8095
-      - TZ=Asia/Shanghai
+      PORT: "8095"
+      TZ: Asia/Shanghai
+      DIAN115_DB_DRIVER: pgsql
+      DIAN115_PG_DSN: "postgres://dian115:${POSTGRES_PASSWORD}@127.0.0.1:15432/dian115?sslmode=disable"
     volumes:
       - ./config:/config
       - ./dian115AI:/dian115AI
@@ -40,29 +72,68 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock
 ```
 
-启动并查看状态：
+Emby 代理和独立音乐服务直接使用各自在页面中配置的宿主机端口。多个实例应设置不同端口。
+
+### 桥接网络
+
+两个服务使用同一个 Compose 网络。PostgreSQL 通过 `postgres:5432` 访问，宿主机仅映射需要对外提供的应用端口。
+
+```yaml
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dian115
+      POSTGRES_USER: dian115
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?请在 .env 设置数据库密码}"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "dian115", "-d", "dian115"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  dian115:
+    image: madbrolab/dian115:latest
+    container_name: dian115
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8095:8095"
+      # - "8098:8098" # 启用 Emby 代理时按实例配置添加
+      # - "4534:4534" # 启用独立音乐服务时按实际配置添加
+    environment:
+      PORT: "8095"
+      TZ: Asia/Shanghai
+      DIAN115_DB_DRIVER: pgsql
+      DIAN115_PG_DSN: "postgres://dian115:${POSTGRES_PASSWORD}@postgres:5432/dian115?sslmode=disable"
+    volumes:
+      - ./config:/config
+      - ./dian115AI:/dian115AI
+      - /mnt/user/media:/媒体库
+      - /mnt/cache/CloudNAS:/CloudNAS:rslave
+      # 需要 DianCupLite 容器管理时，按部署方案配置 Docker 访问。
+      # - /var/run/docker.sock:/var/run/docker.sock
+```
+
+多个 Emby 代理实例或其他独立服务端口需要分别映射。使用反向代理时，将目标指向实际的服务地址与端口。
+
+### 启动与检查
+
+在部署目录执行以下命令。应用会在 PostgreSQL 就绪后启动，并为新库初始化表结构。
 
 ```bash
-docker compose pull
+docker compose config --quiet
 docker compose up -d
 docker compose ps
 docker compose logs --tail=200 dian115
 ```
 
-访问 `http://服务器IP:8095`，设置管理员密码并完成授权激活。`network_mode: host` 下无需添加 `ports`；Emby 代理和音乐服务也直接使用各自在页面中配置的宿主机端口，多个服务或实例应设置不同端口。
-
-### 可选部署：桥接网络
-
-需要 Docker 网络隔离时，可改用桥接网络。从上方示例中移除 `network_mode: host`，在 `dian115` 服务下添加：
-
-```yaml
-ports:
-  - "8095:8095"
-  - "8098:8098" # 第一个 Emby 代理实例，按实际配置调整
-  # - "4534:4534" # 使用独立音乐服务器时按实际配置启用
-```
-
-多个 Emby 代理实例或其他独立服务端口需要分别映射。使用反向代理时，将目标指向实际的服务地址与端口。
+访问 `http://服务器IP:8095`，设置管理员密码并完成[授权激活](#授权激活)。
 
 ### 端口与目录
 
@@ -71,7 +142,8 @@ ports:
 | Web 管理端 | `8095` | 管理后台、API 与插件入口；可通过 `PORT` 调整。 |
 | Emby 代理 | `8098` | 第一个实例的默认端口，其他实例按页面配置。 |
 | 独立音乐服务器 | `4534` | 按音乐服务配置启用。 |
-| 应用数据 | `/config` | 数据库、账号与设置，必须持久化并备份。 |
+| 应用数据 | `/config` | 保留应用配置与本地文件，必须持久化并备份。 |
+| PostgreSQL 数据 | `./postgres-data` | 宿主机上的数据库目录，采用 PGSQL 时应另做数据库备份。 |
 | AI 工作区 | `/dian115AI` | 使用 AI 文件与仓库工具时持久化。 |
 | 媒体目录 | `/媒体库` | 本示例的媒体和 STRM 输出目录，需与 Emby 保持一致。 |
 | 云盘挂载根 | `/CloudNAS` | CD2 向 DIAN-115 与 Emby 提供的共享目录。 |
@@ -80,7 +152,9 @@ CD2 使用 `/mnt/cache/CloudNAS:/CloudNAS:shared` 发布挂载，DIAN-115 与 Em
 
 ### PostgreSQL 与旧 SQLite 数据迁移
 
-新装 PostgreSQL 直接配置数据库类型和连接串，参见[新装教程](https://madbrolab.github.io/dian115/docs/database-postgresql/)。已有 SQLite 数据的实例，先停止并备份完整配置目录，再使用公开脚本将业务数据导入空 PG 库，最后保留原目录并以 PG 连接启动。
+- **已有 PostgreSQL**。可移除示例中的 `postgres` 服务和应用的 `depends_on`，将 `DIAN115_PG_DSN` 改为应用可达的数据库连接串。数据库账号须有建表权限，远程连接按服务方要求配置 TLS。密码含特殊字符时，对连接串中的密码做 URL 百分号编码。详见 [PostgreSQL 部署教程](https://madbrolab.github.io/dian115/docs/database-postgresql/)。
+- **新装选用 SQLite**。在任一示例中移除 `postgres` 服务及应用的 `depends_on` 和 `DIAN115_PG_DSN`，将 `DIAN115_DB_DRIVER` 改为 `sqlite`，保留 `/config` 挂载。
+- **已有 SQLite 要切换到 PostgreSQL**。先停止 DIAN115 并备份完整配置目录，用兼容镜像和下方脚本将业务数据导入空 PostgreSQL 库，最后保留原配置目录并以 PG 连接启动。
 
 - [迁移脚本与详细使用教程](../../tools/database-migration/README.md)：配置目录、兼容镜像、空目标库、Host / Docker 网络、特殊密码、自定义参数、错误处理和回退。
 - [直接下载 Shell 脚本](https://raw.githubusercontent.com/madbrolab/dian115/main/tools/database-migration/migrate-sqlite-to-pgsql.sh)。
@@ -148,7 +222,7 @@ docker compose up -d flaresolverr
 
 ## 更新与维护
 
-- 优先备份完整 `/config`，同时保存 STRM 输出、路径规则和关键插件配置；使用 AI 工作区时一并备份。
+- 优先备份完整 `/config`。使用 PostgreSQL 时同时备份数据库，并保存 STRM 输出、路径规则、关键插件配置和使用中的 AI 工作区。
 - 更新前结束重要任务并完成备份，再执行以下命令，更新后核对账号、连接与最近日志。
 
 ```bash
