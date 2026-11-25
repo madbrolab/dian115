@@ -10,13 +10,13 @@
     {
       "id": "bot.guanying.v3",
       "name": "观影 · 订阅管家",
-      "version": "3.6.2",
+      "version": "3.6.4",
       "author": "癫哥",
       "description": "多站点观影资源检索、季集匹配、115 离线与分享转存、入库核对和订阅集数回写。",
-      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/plugins-pwa-20261122",
-      "changelog": "手机页头可打开主菜单、返回插件中心，编辑订阅时弹窗随可用高度调整。",
-      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/plugins-pwa-20261122/bot.guanying.v3-850a6d24-39f4-48ad-94fd-6e3f44b24306.dian115p",
-      "sha256": "1ed8bfb2c7ebdcb51e9847b3938be621c156c876a844240b073aea26ff406337",
+      "homepage": "https://github.com/madbrolab/dian115-plugin-releases/releases/tag/guanying-3.6.4",
+      "changelog": "- 修复热门榜、分类片库和搜索结果的海报无法显示问题。\n- 作品详情切换季数时会显示对应海报。图片加载失败后，重新读取列表即可重试。\n- 加快片库首次打开速度，搜索和详情查到结果后即可显示。\n- 新配置的默认请求间隔从 1200 毫秒缩短至 500 毫秒，已保存的设置继续生效。",
+      "source_url": "https://github.com/madbrolab/dian115-plugin-releases/releases/download/guanying-3.6.4/bot.guanying.v3-3.6.4.dian115p",
+      "sha256": "f9bd4600878ddbbf0e9fec407d1563fb6b5e15d99b1b46afb30f9cbc390b190e",
       "delivery": "protected-v4",
       "permissions": [
         "browser"
@@ -52,7 +52,7 @@
           "https://www.xn--wcv59z.com；安装后由用户填写的观影镜像地址",
           "https://static.1234cdn.com：只读页面引用的登录协议脚本，不执行代码，不发送账号或站点Cookie",
           "用户配置的 FlareSolverr 服务，仅用于已确认的站点安全挑战；普通动态页面使用宿主共享 Chromium",
-          "站点HTML中返回的HTTP(S)海报CDN（例如 s.tutu.pm），页面直接加载且不发送 Referer",
+          "https://img.1234cdn.com 及站点页面提供的 HTTP(S) 海报地址，页面直接加载且不发送 Referer；旧海报域名 s.tutu.pm 的作品图片改用 img.1234cdn.com",
           "https://115.com、https://115cdn.com、https://anxia.com：分享链接识别和规范化，实际接收由宿主115接口执行，不读取115 Cookie",
           "https://www.imdb.com：作品链接展示与编号识别，不携带站点Cookie访问",
           "page.invalid：本地相对URL解析占位，不发起网络请求",
