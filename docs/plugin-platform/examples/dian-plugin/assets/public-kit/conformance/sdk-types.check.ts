@@ -3,6 +3,11 @@ import type { OfflineTaskList, ShareReceiveResult, TmdbMovieDetail } from '../ex
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false
 const assert = <T extends true>() => {}
 export async function run(ctx: BackgroundContext) {
+  const catalog = await ctx.ai.providers()
+  const reply = await ctx.ai.complete({provider_id: catalog.default_provider_id, messages: [{role:'user', images:[{path:'cover.jpg'}]}]})
+  assert<Equal<typeof reply.text, string>>()
+  // @ts-expect-error only user and assistant conversation roles are supported
+  await ctx.ai.complete({messages:[{role:'tool', content:'result'}]})
   const browser = await ctx.browser.open({profile:'login',proxy_mode:'custom',proxy_url:'socks5://127.0.0.1:1080'})
   assert<Equal<typeof browser.proxy_mode,'system'|'direct'|'custom'>>()
   const browserEvents = await ctx.browser.events({session:browser.id,after:0,wait_ms:500})

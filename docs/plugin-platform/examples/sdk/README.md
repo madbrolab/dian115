@@ -20,3 +20,5 @@ API 3.11 为 open 增加 proxy_mode（system/direct/custom）与 proxy_url；会
 API 3.12 支持清单顶层 queue 总开关与按插件合并的任务队列条目；后台仍按入口及依赖加载，按分支加载大功能使用动态 import()。详见[开发指南](../../developer-guide.md)。
 
 页面调用 `await ctx.navigation.close()` 返回插件中心并释放当前页面，后台任务继续运行。调用 `await ctx.navigation.openSidebar()` 在当前页面打开宿主的手机主菜单。HTML 页面通过 `window.DIAN115Plugin.navigation` 调用相同方法。插件自行安排入口的位置，兼容旧宿主时先检测 `typeof ctx.navigation?.openSidebar === 'function'`。独立创建客户端时通过 options 分别提供 `close` 和 `openSidebar` 回调，调用缺少回调的方法会报错。详见[页面与主题](../../ui-theme.md)。
+
+API 3.14 在页面和后台均提供 `ctx.ai.providers()` 和 `ctx.ai.complete(input)`，支持选择宿主供应商和模型、发送图片及延续对话。[图文调用示例](../../media-and-ai.md#ai-图文与对话)

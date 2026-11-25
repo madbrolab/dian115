@@ -1,10 +1,14 @@
 export type JSONValue = null | boolean | number | string | JSONValue[] | { [key:string]:JSONValue }
 export type OK = {ok:true}
 export type Headers = Record<string,string[]>
-import type { TypedHostAPI } from './host-api.js'
+import type { ExtensionAIRequest, ExtensionAICompletion, ExtensionAIProviders, TypedHostAPI } from './host-api.js'
 export type * from './host-api.js'
 /** ctx.api with request/response types inferred from documented host routes. */
 export type HostAPI = TypedHostAPI
+export interface AIClient {
+ providers(): Promise<ExtensionAIProviders>
+ complete(input: ExtensionAIRequest): Promise<ExtensionAICompletion>
+}
 export interface Cookie { name:string;value:string;domain:string;path:string;host_only:boolean;secure:boolean;http_only:boolean;same_site?:'lax'|'strict'|'none'|'';expires_at?:number }
 export interface MultipartFile {field:string;filename?:string;content_type?:string;path?:string;base64?:string;text?:string}
 export interface HTTPRequest {url:string;method?:string;headers?:Headers|Record<string,string>;body?:string;body_base64?:string|Uint8Array;body_file?:string;form?:Record<string,JSONValue>;json?:JSONValue;multipart?:{fields?:Record<string,JSONValue>;files?:MultipartFile[]};

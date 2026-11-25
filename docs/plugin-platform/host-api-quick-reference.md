@@ -50,7 +50,7 @@
 | GET | `/api/extensions/v3/_events` | 宿主业务事件目录（events[].types 可订阅的类型） |
 | GET | `/api/extensions/v3/_notify/channels` | 列出通知渠道及插件可用的格式与功能 |
 | GET | `/api/extensions/v3/{id}` | 安装元数据、风险报告及资源基础地址 |
-| POST | `/api/extensions/v3/{id}/ai/complete` | 复用宿主 AI 生成或翻译文本 |
+| POST | `/api/extensions/v3/{id}/ai/complete` | 调用宿主 AI 进行文本与图文对话 |
 | GET | `/api/extensions/v3/{id}/ai/providers` | 读取可用于插件的 AI 提供商与模型 |
 | POST | `/api/extensions/v3/{id}/browser` | 调用宿主共享浏览器（API 3.11） |
 | POST | `/api/extensions/v3/{id}/cd2/{method}` | 复用宿主 CD2 gRPC 客户端 |

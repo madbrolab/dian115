@@ -99,6 +99,8 @@ API 3.9 起，除受保护路径外，宿主和 CD2 挂载路径均开放内容�
 - 消息与按钮：`message`/`callback` 事件，输入为宿主投影的消息或回调。
 - 定时：`default_schedule`（五段 cron）或 `interval_seconds`。
 
+页面和后台任务均可使用 `ctx.ai.providers()` 读取供应商与模型，使用 `ctx.ai.complete(input)` 发送文字、图片和多轮消息（API 3.14）。[图文与对话示例](media-and-ai.md#ai-图文与对话)
+
 ## 7. 宿主业务接口（`ctx.api`）
 
 逐个接口的参数、字段、调用与示例见[宿主接口参考](host-api-reference.md)；SDK 的 `host-api.d.ts` 为 `ctx.api` 提供按路径推断的类型。返回值是接口原始 JSON；非 2xx 抛错，错误对象的 `data.error` 为原因。公开契约只收录插件可调用的接口，宿主仍执行[权限检查](security.md)。

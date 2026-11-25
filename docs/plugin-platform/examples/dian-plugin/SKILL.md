@@ -5,7 +5,7 @@ description: 开发、修改、排错和审查 DIAN115 v3 第三方插件（.dia
 
 # DIAN115 插件开发与审查
 
-当前契约是宿主插件 API 3.13。按实际使用的能力声明最低 `requires.api`，不要无故提高已有插件的最低版本。先判断任务类型：
+当前契约是宿主插件 API 3.14。插件页面和后台通过 `ctx.ai.providers()` 选择宿主供应商及模型，`ctx.ai.complete()` 支持图文与多轮对话，见 `assets/public-kit/media-and-ai.md`。按实际使用的能力声明最低 `requires.api`，不要无故提高已有插件的最低版本。先判断任务类型：
 
 - **审查插件**（用户问是否安全、有没有恶意代码、能不能装）：读 [references/malware-review.md](references/malware-review.md) 并照做。全程只读，绝不运行插件，不写新代码。
 - **开发或修改插件**：继续看下面。

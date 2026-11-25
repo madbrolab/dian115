@@ -42,3 +42,17 @@ test('opening the sidebar calls only its host callback and reports a missing con
   assert.equal(opens, 1)
   await assert.rejects(createPluginContext('standalone', unexpected).navigation.openSidebar(), /未连接宿主侧边栏/)
 })
+
+test('AI choices and multimodal turns stay bound to the calling plugin', async () => {
+  const calls = []
+  const ctx = createPluginContext('example.ai', async (method, path, body, source) => {
+    calls.push({ method, path, body, source })
+    return method === 'GET' ? { default_provider_id: 'vision' } : { text: '山海经' }
+  }, {generation: 'installed', revision: 'current'})
+  const catalog = await ctx.ai.providers()
+  const input = { provider_id: catalog.default_provider_id, model: 'cover-reader', messages: [{role:'user', images:[{path:'cover.jpg'}]}] }
+  assert.equal((await ctx.ai.complete(input)).text, '山海经')
+  assert.deepEqual(calls.map(c => [c.method, c.path]), [['GET','/api/extensions/v3/example.ai/ai/providers'],['POST','/api/extensions/v3/example.ai/ai/complete']])
+  assert.equal(calls[1].body, input)
+  assert.deepEqual(calls[1].source, {plugin_id:'example.ai',generation:'installed',revision:'current'})
+})

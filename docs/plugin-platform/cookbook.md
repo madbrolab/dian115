@@ -245,7 +245,12 @@ const links = ctx.html.load(page.body, { baseURL: url }).find('a.title').map(ite
 ## 调用 AI
 
 ```js
-const reply = await ctx.api.post(`/api/extensions/v3/${ctx.plugin.id}/ai/complete`, { prompt: '翻译：hello' })
+// 页面与后台均可用，清单声明 requires.api 为 3.14。
+const catalog = await ctx.ai.providers()
+const reply = await ctx.ai.complete({
+  provider_id: catalog.default_provider_id, model: catalog.default_model,
+  prompt: '读出封面标题', images: [{path: 'cover.jpg'}]
+})
 ```
 
 参数见[媒体与 AI](media-and-ai.md)。

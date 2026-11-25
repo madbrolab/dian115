@@ -513,6 +513,30 @@
           }
         }
       }
+    },
+    "POST /api/extensions/v3/{id}/ai/complete": {
+      "description": "API 3.3 支持文本。3.14 起支持图片和多轮对话，可按调用选择启用的宿主供应商及模型。使用 Chat Completions 或 Responses 协议，全局并发 4，总时限 150 秒。",
+      "request": {
+        "provider_id": "example",
+        "model": "vision-model",
+        "prompt": "这张封面上的书名是什么？",
+        "images": [
+          {
+            "path": "covers/book.jpg"
+          }
+        ]
+      },
+      "response": {
+        "text": "山海经",
+        "model": "vision-model",
+        "provider_id": "example",
+        "usage": {
+          "prompt_tokens": 120,
+          "completion_tokens": 5,
+          "total_tokens": 125
+        },
+        "finish_reason": "stop"
+      }
     }
   },
   "schemas": {

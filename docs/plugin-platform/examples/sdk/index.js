@@ -6,6 +6,10 @@ export function createPluginContext(id, request, options = {}) {
   const api = Object.fromEntries(['get','post','put','patch','delete','head'].map(method => [method, (path, body) => request(method.toUpperCase(), path, body, source)]))
   return {
     id, api,
+    ai: {
+      providers: () => own('GET', '/ai/providers'),
+      complete: input => own('POST', '/ai/complete', input),
+    },
     navigation: {
       async close() {
         if (!options.close) throw new Error('当前客户端未连接宿主页面导航')

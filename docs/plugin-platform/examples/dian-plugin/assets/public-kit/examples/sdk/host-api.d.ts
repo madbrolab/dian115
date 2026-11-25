@@ -191,6 +191,22 @@ export type ExtensionAICompletion = {
   }
 }
 
+/** 一张图片，path 与 url 二选一。 */
+export type ExtensionAIImage = {
+  /** 插件文件相对路径或允许读取的宿主绝对路径。 */
+  path?: string
+  /** 供应商可访问的 HTTP(S) 地址，或带 MIME 的 Base64 图片 data URL。 */
+  url?: string
+}
+
+export type ExtensionAIMessage = {
+  role: "user" | "assistant"
+  /** 该轮的文本。 */
+  content?: string
+  /** 仅 user 消息可附图。 */
+  images?: Array<ExtensionAIImage>
+}
+
 export type ExtensionAIProviders = {
   configured: boolean
   default_model: string
@@ -206,15 +222,19 @@ export type ExtensionAIProviders = {
 }
 
 export type ExtensionAIRequest = {
-  /** 任意 JSON 数据，作为用户提示的数据上下文；总请求体最多 128 KiB */
+  /** 任意 JSON，附在最后一条用户消息后。文本及上下文合计最多 128 KiB。 */
   context?: unknown
+  /** API 3.14。所有消息合计最多 8 张，本地和内嵌图片合计最多 8 MiB。 */
+  images?: Array<ExtensionAIImage>
   /** 默认 4096 */
   max_tokens?: number
+  /** API 3.14。按时间排序的插件对话，包含当前提问最多 64 条，末条为 user。 */
+  messages?: Array<ExtensionAIMessage>
   /** 模型覆盖；省略使用该提供商配置 */
   model?: string
-  /** 必填任务说明 */
-  prompt: string
-  /** 已配置提供商 ID；省略使用整理场景默认 */
+  /** 当前提问。可以单用，或在 messages 之后追加一条 user 消息。 */
+  prompt?: string
+  /** 已启用的宿主供应商 ID。省略按整理场景选择，显式指定的供应商失效时返回错误。 */
   provider_id?: string
   /** 调用方指令；不会自动附加宿主对话历史或工具 */
   system?: string
@@ -3961,7 +3981,7 @@ export interface HostRoutes {
       asset_base: string
       installation: ExtensionInstallation
     } }
-  /** 复用宿主 AI 生成或翻译文本。宿主插件 API 3.3。支持宿主 Chat Completions 和 Responses 协议；不执行工具、不共享聊天记录、不返回密钥；并发 4、总时限 150 秒。 */
+  /** 调用宿主 AI 进行文本与图文对话。API 3.3 支持文本。3.14 起支持图片和多轮对话，可按调用选择启用的宿主供应商及模型。使用 Chat Completions 或 Responses 协议，全局并发 4，总时限 150 秒。 */
   "POST /api/extensions/v3/{id}/ai/complete": { query: never; body: ExtensionAIRequest; response: ExtensionAICompletion }
   /** 读取可用于插件的 AI 提供商与模型。宿主插件 API 3.3。仅已启用提供商的 ID/名称/模型/协议和默认选择；不返回 URL、API Key。 */
   "GET /api/extensions/v3/{id}/ai/providers": { query: never; body: never; response: ExtensionAIProviders }
