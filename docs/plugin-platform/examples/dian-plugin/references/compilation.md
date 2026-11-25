@@ -2,7 +2,7 @@
 
 开发和调试使用源码目录或 `check.mjs --pack` 生成的可读 `.dian115p`，通过自己管理的 DIAN115 插件中心直接导入。宿主将源码编译为本机字节码并显示“本机调试”。修改后通过更新流程重新导入，不改宿主已安装目录。该包没有正式发布资格，不能覆盖同 ID 的正式安装。
 
-正式交付前读 [编译 MCP 契约](../assets/public-kit/encrypted-delivery.md#编译-mcp-与正式发布)：
+正式交付前读 [编译 MCP 契约](../assets/public-kit/guides/encrypted-delivery.md#编译-mcp-与正式发布)：
 
 1. 开发工具直连 `/api/openapi/v1/plugin-build/mcp`，请求头携带系统设置的 OpenAPI Key。完成 MCP 初始化并查询 `tools/list`。当前入口拒绝浏览器 Origin，不用查询串传 Key。
 2. 查询 `dian115_build_environment` 的 `formal_compile_configured`、ABI、预算、账号和阻塞项。环境查询没有产物，返回 `release_ready: false` 属于正常；`release_signing: dian115-local` 表示由 DIAN115 本地签名，会员资料读取沿用现有接口。

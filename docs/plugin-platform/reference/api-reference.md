@@ -1,6 +1,6 @@
 # 插件 API 完整参考（宿主插件 API 3.11）
 
-本页列出插件可用的全部能力。第一次开发先看[快速开始](quickstart.md)，字段规则见[清单参考](manifest.md)，常见写法见[配方](cookbook.md)。业务细节见[开发指南](developer-guide.md)、[网络](network.md)、[生命周期](storage-and-lifecycle.md)、[页面](ui-theme.md)；接口契约见 [OpenAPI](openapi-v3.json) 与[速查](host-api-quick-reference.md)；类型见 [SDK](examples/sdk/)。
+本页列出插件可用的全部能力。第一次开发先看[快速开始](../guides/quickstart.md)，字段规则见[清单参考](manifest.md)，常见写法见[配方](../guides/cookbook.md)。业务细节见[开发指南](../guides/developer-guide.md)、[网络](network.md)、[生命周期](../guides/storage-and-lifecycle.md)、[页面](ui-theme.md)；接口契约见 [OpenAPI](../openapi-v3.json) 与[速查](../host-api-quick-reference.md)；类型见 [SDK](../examples/sdk/)。
 
 ## 1. 清单 plugin.json
 
@@ -53,7 +53,7 @@ UI、jobs、http 至少提供一项。
 | `api.*` | 进程内调用宿主 `/api/` 路由，返回原接口 JSON；失败抛错含 status/method/path/data |
 | `storage.get/set/remove` | set 返回版本号 |
 | `settings.get()` | 设置值 |
-| `task.id/checkpointValue/update({stage,message,progress,total,done,failed})/log(text)/checkpoint(value)` | 任务进度、日志（单条 ≤8 KiB，最多保留最近 500 条且总计 ≤256 KiB）、检查点；进度实时显示在宿主任务队列，见[开发指南](developer-guide.md#任务队列与进度) |
+| `task.id/checkpointValue/update({stage,message,progress,total,done,failed})/log(text)/checkpoint(value)` | 任务进度、日志（单条 ≤8 KiB，最多保留最近 500 条且总计 ≤256 KiB）、检查点；进度实时显示在宿主任务队列，见[开发指南](../guides/developer-guide.md#任务队列与进度) |
 | `http.request/cookies/importCookies/render` | 见[网络](network.md) |
 | `files.call(options)` | 见第 5 节，宿主文件进度自动写入当前任务 |
 | `notify(options)` / `notifications.send`、`notifications.channels()` | 通知：channels 选渠道、format 选 text/markdown/html、overrides 按渠道内容，返回逐渠道 deliveries（见[插件通知](notifications.md)） |
@@ -103,11 +103,11 @@ API 3.9 起，除受保护路径外，宿主和 CD2 挂载路径均开放内容�
 
 ## 7. 宿主业务接口（`ctx.api`）
 
-逐个接口的参数、字段、调用与示例见[宿主接口参考](host-api-reference.md)；SDK 的 `host-api.d.ts` 为 `ctx.api` 提供按路径推断的类型。返回值是接口原始 JSON；非 2xx 抛错，错误对象的 `data.error` 为原因。公开契约只收录插件可调用的接口，宿主仍执行[权限检查](security.md)。
+逐个接口的参数、字段、调用与示例见[宿主接口参考](../host-api-reference.md)；SDK 的 `host-api.d.ts` 为 `ctx.api` 提供按路径推断的类型。返回值是接口原始 JSON；非 2xx 抛错，错误对象的 `data.error` 为原因。公开契约只收录插件可调用的接口，宿主仍执行[权限检查](security.md)。
 
 ## 8. 插件自有能力路由
 
-插件使用 `/api/extensions/v3/${ctx.id}` 下的自有数据、任务、网络、文件、媒体和 AI 能力；共享事件与通知渠道由 `ctx.events`、`ctx.notifications` 获取。完整字段与可用操作见[速查](host-api-quick-reference.md)。
+插件使用 `/api/extensions/v3/${ctx.id}` 下的自有数据、任务、网络、文件、媒体和 AI 能力；共享事件与通知渠道由 `ctx.events`、`ctx.notifications` 获取。完整字段与可用操作见[速查](../host-api-quick-reference.md)。
 
 ## 9. 资源与限额
 
@@ -121,7 +121,7 @@ API 3.9 起，除受保护路径外，宿主和 CD2 挂载路径均开放内容�
 | 调用栈与定时器 | 每次运行嵌套调用 ≤10000 层，同时存在的定时器 ≤1000 个 |
 | 代码缓存 | 已安装代码解析、校验一次后在内存中复用，空闲 10 分钟释放；总量按估算堆计 64 MiB（`DIAN115_EXTENSION_CODE_CACHE_MB`，0 为关闭） |
 | 目录快照 | 并发 4（`DIAN115_EXTENSION_WATCH_CONCURRENCY`），实时监听 ≤8192 个目录 |
-| 任务 | 默认 30 分钟，最多 365 天；日志单条 8 KiB、最多 500 条且总计 256 KiB，已结束 30 天后删除日志，宿主自动发起的运行（定时、事件、监听、消息）整条删除；可声明 retry 自动重试瞬时失败（API 3.13）；后台任务共享 4 个执行名额，HTTP 脚本另共享 4 个，详见[资源调度](storage-and-lifecycle.md) |
+| 任务 | 默认 30 分钟，最多 365 天；日志单条 8 KiB、最多 500 条且总计 256 KiB，已结束 30 天后删除日志，宿主自动发起的运行（定时、事件、监听、消息）整条删除；可声明 retry 自动重试瞬时失败（API 3.13）；后台任务共享 4 个执行名额，HTTP 脚本另共享 4 个，详见[资源调度](../guides/storage-and-lifecycle.md) |
 | HTTP 缓存 | 每插件 128 MiB；Cookie 每会话 4096 条 |
 | 长连接 | 每插件 16 条，含 WebSocket、流式读取、TCP 和对外推送；WebSocket 单条消息默认 1 MiB，最大 16 MiB；TCP 单次写入 16 MiB |
 | 常驻任务 | 重启等待 1 秒到 5 分钟；最多保留最近 200 条日志且总计 256 KiB |

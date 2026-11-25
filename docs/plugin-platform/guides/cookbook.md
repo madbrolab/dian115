@@ -1,6 +1,6 @@
 # 配方
 
-可以直接改用的写法。接口细节查[接口参考](host-api-reference.md)。
+可以直接改用的写法。接口细节查[接口参考](../host-api-reference.md)。
 
 ## 可恢复的写操作
 
@@ -228,7 +228,7 @@ const state = await ctx.storage.get('state')
 
 ## 登录外部站点
 
-账号密码写在设置里，用固定的 `session` 复用 Cookie，见[网络与登录](network.md)。
+账号密码写在设置里，用固定的 `session` 复用 Cookie，见[网络与登录](../reference/network.md)。
 
 ```js
 await ctx.http.request({ url: 'https://site.example/login', method: 'POST', form: { user, password }, session: 'site' })
@@ -253,4 +253,4 @@ const reply = await ctx.ai.complete({
 })
 ```
 
-参数见[媒体与 AI](media-and-ai.md)。
+参数见[媒体与 AI](../reference/media-and-ai.md)。

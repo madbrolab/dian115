@@ -65,7 +65,7 @@ LocalPluginInstall 负责热加载和持久化恢复；仅将文件放在容器�
 
 种子内容上限为 5 MiB。`mteam_window` 是 `capabilities` 返回的能力标记，通过 `search` 参数使用，不是独立端点。
 
-1.1.0 已移除原型的 `downloader` 转发接口及 `file_selection` / `delete_keep_files` 标记。公共 MoviePilot 连接器仍可供 DIAN115 第三方插件独立调用 MoviePilot 原生 HTTP API，详见[公共连接器文档](../../dianying-and-moviepilot.md)。
+1.1.0 已移除原型的 `downloader` 转发接口及 `file_selection` / `delete_keep_files` 标记。公共 MoviePilot 连接器仍可供 DIAN115 第三方插件独立调用 MoviePilot 原生 HTTP API，详见[公共连接器文档](../../guides/dianying-and-moviepilot.md)。
 
 ## 验证与兼容性
 

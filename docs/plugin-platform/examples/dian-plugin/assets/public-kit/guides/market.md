@@ -2,7 +2,7 @@
 
 市场索引仍使用 v3 Schema。保护材料与准入存储就绪的宿主要求新正式安装与更新采用 `protected-v4` 编译包；已登记的具体历史内容保留兼容。本机源码调试包不能上架。编译和签发已在本地实现，线上可用性须查询宿主真实环境，参见[实施状态](encrypted-delivery.md#编译-mcp-与正式发布)。
 
-本文规定插件进入市场的要求。仓库是 HTTP/HTTPS 索引，格式见[索引 Schema](market-index.schema.json)。发布前运行：
+本文规定插件进入市场的要求。仓库是 HTTP/HTTPS 索引，格式见[索引 Schema](../market-index.schema.json)。发布前运行：
 
 ```bash
 node conformance/project-check.mjs <插件目录>
@@ -12,7 +12,7 @@ node conformance/audit.mjs <插件目录>
 
 ## 上架条目
 
-带页面的插件应在上架或更新前完成手机横竖屏、软键盘和主屏幕模式的交互验收。验收步骤见 [iPhone PWA 页面适配契约](ui-theme.md#iphone-pwa-页面适配契约)。
+带页面的插件应在上架或更新前完成手机横竖屏、软键盘和主屏幕模式的交互验收。验收步骤见 [iPhone PWA 页面适配契约](../reference/ui-theme.md#iphone-pwa-页面适配契约)。
 
 每个版本是一条记录，缺少必填字段时，宿主会把整个仓库标记为错误。
 

@@ -1,6 +1,6 @@
 # 图片、宿主 badge、FFP 与 AI（API 3.5）
 
-插件清单使用 `"requires":{"api":"3.3"}`。页面和后台都通过现有 `ctx.api` 调用自己的 `/api/extensions/v3/${ctx.id}` 路径，无需独立服务或额外密钥。任务取消、停用和卸载会取消这些调用；不得访问其他插件的路径。接口和完整字段见 [OpenAPI](openapi-v3.json) 与 [逐接口参考](host-api-reference.md)。
+插件清单使用 `"requires":{"api":"3.3"}`。页面和后台都通过现有 `ctx.api` 调用自己的 `/api/extensions/v3/${ctx.id}` 路径，无需独立服务或额外密钥。任务取消、停用和卸载会取消这些调用；不得访问其他插件的路径。接口和完整字段见 [OpenAPI](../openapi-v3.json) 与 [逐接口参考](../host-api-reference.md)。
 
 ## 图片处理和 badge
 
@@ -52,7 +52,7 @@ const media = await ctx.api.post(`${base}/media/probe`, {path:'/media/movie.mkv'
 
 ## AI 图文与对话
 
-宿主插件 API 3.14 在页面和后台都提供 `ctx.ai`。清单中声明 `"requires":{"api":"3.14"}`。先读目录，用 `providers[].name` 展示供应商名称，提交对应的 `id`。模型选项来自该项的 `models` 和 `model`。默认选择来自目录顶层的 `default_provider_id` 和 `default_model`。可运行的选择器见[插件 API 测试台](examples/complete-plugin/ui/ai.js)。
+宿主插件 API 3.14 在页面和后台都提供 `ctx.ai`。清单中声明 `"requires":{"api":"3.14"}`。先读目录，用 `providers[].name` 展示供应商名称，提交对应的 `id`。模型选项来自该项的 `models` 和 `model`。默认选择来自目录顶层的 `default_provider_id` 和 `default_model`。可运行的选择器见[插件 API 测试台](../examples/complete-plugin/ui/ai.js)。
 
 ```js
 const catalog = await ctx.ai.providers()

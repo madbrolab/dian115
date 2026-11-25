@@ -3,7 +3,7 @@
 - 首次页面加载失败：查看页面显示的资源 URL、HTTP 状态和模块报错。确认 ui.entry 存在，JS 导出 mount，资源用相对路径，服务未停用该安装。
 - UI 关闭后仍有副作用：检查 mount 清理函数、AbortSignal、订阅和定时器。后台任务与页面分离，按任务记录判断是否需要取消。
 - 宿主重启后任务为 attention_required：原业务可能已成功，先查询结果。recover 返回 complete、resume 或 attention；不靠新业务标识绕过未确认结果。
-- 请求慢：分别测量 HTTP、验证计算、渲染和前台轮询时间。`render.wait_seconds` 是固定等待；Loading 外壳可能已经带有可直接解析的业务 JSON。先看 [网络文档](network.md#避免每次查询都等待浏览器)，不要仅增加超时或用旧缓存隐藏慢请求。
+- 请求慢：分别测量 HTTP、验证计算、渲染和前台轮询时间。`render.wait_seconds` 是固定等待；Loading 外壳可能已经带有可直接解析的业务 JSON。先看 [网络文档](../reference/network.md#避免每次查询都等待浏览器)，不要仅增加超时或用旧缓存隐藏慢请求。
 - Cookie 未生效：检查 session、URL、Domain/Path/Secure、UA、Cookie 到期时间。importCookies 用于保留完整属性。
 - 有 Cookie 仍退避：Cookie 存在不等于登录有效。更新后增加会话修订号，清除普通旧失败窗口并独立核验账号页，保留 429 等待；防止旧运行覆盖新会话状态。
 - 浏览器通过但 HTTP 一直验证：两个传输通道可能不能共享机器验证结果。优先使用已返回的浏览器文档，或按该站点已确认的公开机器验证协议在同一 HTTP 会话内完成验证；不要无限重试登录。
@@ -26,8 +26,8 @@
 - `console.warn is not a function`（旧宿主）：API 3.13 前后台只有 `console.log`；需要 warn/error 时声明 `requires.api: "3.13"`。
 - 安装预览提示 `plugin.json 中的 … 不是清单字段`：清单里有拼写错误的字段，宿主会忽略它，例如 `timout_seconds`。发布前运行 `project-check.mjs`，它会直接报错。
 - 任务一直显示等待中且带 `retry_at`：任务声明了 retry，正在等待自动重试；可在任务记录中取消。
-- `Cannot read property 'xxx' of undefined or null`：代码读取了不存在的对象的属性，比如写错 ctx 成员。错误末尾的括号是文件和行号。后台 ctx 没有 `tasks`、`events`、`usage`，可用成员见 [API 参考](api-reference.md)。
-- `SyntaxError ... for await`：脚本引擎不支持 `for await` 和异步生成器，循环调用 `next()`，见[长连接](long-connections.md)。
+- `Cannot read property 'xxx' of undefined or null`：代码读取了不存在的对象的属性，比如写错 ctx 成员。错误末尾的括号是文件和行号。后台 ctx 没有 `tasks`、`events`、`usage`，可用成员见 [API 参考](../reference/api-reference.md)。
+- `SyntaxError ... for await`：脚本引擎不支持 `for await` 和异步生成器，循环调用 `next()`，见[长连接](../reference/long-connections.md)。
 - `permission ... is not granted`：清单声明了权限但用户没开，到插件卡片打开；或者代码用了清单没声明的渠道。
 - 关键字不触发：确认授权已开。`/` 开头的文本和宿主能识别的链接由宿主优先处理；只有白名单用户的消息会进入插件。
 - 账号事件收不到：账号要登录且客户端在运行；默认不包含账号自己发的消息。

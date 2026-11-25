@@ -1,6 +1,6 @@
 # 清单参考 plugin.json
 
-清单放在插件根目录。这里的规则就是宿主安装时的校验规则，不满足会拒绝安装。机器可读版本见 [Schema](manifest.schema.json)。
+清单放在插件根目录。这里的规则就是宿主安装时的校验规则，不满足会拒绝安装。机器可读版本见 [Schema](../manifest.schema.json)。
 
 ## 顶层字段
 
@@ -38,7 +38,7 @@
 | `id` | 必填，同 `id` 规则，不可重复 |
 | `entry` | 必填，存在的文件 |
 | `handler` | 导出的函数名，默认 `run` |
-| `recover` | 恢复函数名，见[开发指南](developer-guide.md) |
+| `recover` | 恢复函数名，见[开发指南](../guides/developer-guide.md) |
 | `title` | 任务名称，最多 40 字，在插件合并条目的明细中显示 |
 | `queue` | `false` 隐藏此任务；顶层 `queue:false` 时所有任务均隐藏，不能由任务级 `true` 覆盖 |
 | `default_schedule` | 五段 cron |
@@ -46,7 +46,7 @@
 | `timeout_seconds` | 默认 30 分钟，最大 365 天 |
 | `allow_overlap` | 是否允许同时运行多个实例 |
 | `daemon` | 常驻任务，不能同时设置定时或超时，见[长连接](long-connections.md) |
-| `retry` | API 3.13：`{attempts, delay_seconds}`，瞬时失败（error_code 为 busy/timeout/unavailable/upstream）后自动重跑；attempts 1–10，delay_seconds 0–3600（默认 10），间隔按次翻倍，最长 1 小时；daemon 不可设置。见[错误码与自动重试](developer-guide.md#错误码与自动重试api-313) |
+| `retry` | API 3.13：`{attempts, delay_seconds}`，瞬时失败（error_code 为 busy/timeout/unavailable/upstream）后自动重跑；attempts 1–10，delay_seconds 0–3600（默认 10），间隔按次翻倍，最长 1 小时；daemon 不可设置。见[错误码与自动重试](../guides/developer-guide.md#错误码与自动重试api-313) |
 
 同一安装的可见任务合并为一个稳定的插件条目，列表、SSE 与首页卡片一致；实际运行、取消上下文与插件历史仍按次独立。合并条目的取消操作只取消此插件当前显示的运行中和等待中任务；清除条目只清除队列记录，不删除插件内历史。使用顶层 `queue` 请声明 `requires.api: "3.12"`。
 

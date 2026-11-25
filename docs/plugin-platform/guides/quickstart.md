@@ -29,7 +29,7 @@ my-plugin/
 }
 ```
 
-全部字段见[清单参考](manifest.md)。
+全部字段见[清单参考](../reference/manifest.md)。
 
 ## 3. 写后台任务
 
@@ -46,7 +46,7 @@ export async function run(ctx, input) {
 
 ## 4. 写页面
 
-使用开发 skill 的 `starter` 模板时，页面已有手机导航和滚动区。手工建目录时，可以将下面的最小页面保存为 `ui/page.js`。完整 HTML 和 ESM 模块遵守同一份 [iPhone PWA 适配契约](ui-theme.md#iphone-pwa-页面适配契约)。
+使用开发 skill 的 `starter` 模板时，页面已有手机导航和滚动区。手工建目录时，可以将下面的最小页面保存为 `ui/page.js`。完整 HTML 和 ESM 模块遵守同一份 [iPhone PWA 适配契约](../reference/ui-theme.md#iphone-pwa-页面适配契约)。
 
 ```js
 export function mount(element, ctx) {
@@ -109,9 +109,9 @@ node conformance/pack.mjs /绝对路径/my-plugin /绝对路径/输出/my-plugin
 | 想做什么 | 看哪里 |
 | --- | --- |
 | 找现成写法 | [配方](cookbook.md) |
-| 收发 TG、企微消息 | [消息渠道](messaging.md) |
-| 长连接、开机常驻 | [长连接与常驻任务](long-connections.md) |
-| 所有 ctx 能力 | [API 参考](api-reference.md) |
-| 所有宿主接口 | [接口速查](host-api-quick-reference.md) |
+| 收发 TG、企微消息 | [消息渠道](../reference/messaging.md) |
+| 长连接、开机常驻 | [长连接与常驻任务](../reference/long-connections.md) |
+| 所有 ctx 能力 | [API 参考](../reference/api-reference.md) |
+| 所有宿主接口 | [接口速查](../host-api-quick-reference.md) |
 | 用 AI 开发 | [开发 skill](skill-installation.md) |
 | 安装前查恶意代码 | [安全审查](security-audit.md) |

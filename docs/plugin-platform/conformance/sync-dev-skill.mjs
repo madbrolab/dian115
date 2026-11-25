@@ -4,7 +4,37 @@ import {fileURLToPath} from 'node:url'
 import {createHash} from 'node:crypto'
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),target=resolve(root,'examples/dian-plugin/assets/public-kit'),check=process.argv.includes('--check'),expected=new Map()
 const add=(path)=>expected.set(path,readFileSync(resolve(root,path)))
-for(const name of ['README.md','api-reference.md','media-and-ai.md','subscriptions.md','dianying-and-moviepilot.md','notifications.md','messaging.md','long-connections.md','quickstart.md','manifest.md','cookbook.md','security-audit.md','developer-guide.md','storage-and-lifecycle.md','network.md','browser.md','ui-theme.md','encrypted-delivery.md','package-format.md','troubleshooting.md','publication-policy.md','security.md','skill-installation.md','manifest.schema.json','market-index.schema.json','market.md','openapi-v3.json','host-api-reference.md','host-api-quick-reference.md'])add(name)
+for(const name of [
+  'README.md',
+  'publication-policy.md',
+  'manifest.schema.json',
+  'market-index.schema.json',
+  'openapi-v3.json',
+  'host-api-reference.md',
+  'host-api-quick-reference.md',
+  'guides/dianying-and-moviepilot.md',
+  'guides/quickstart.md',
+  'guides/cookbook.md',
+  'guides/security-audit.md',
+  'guides/developer-guide.md',
+  'guides/storage-and-lifecycle.md',
+  'guides/encrypted-delivery.md',
+  'guides/package-format.md',
+  'guides/troubleshooting.md',
+  'guides/skill-installation.md',
+  'guides/market.md',
+  'reference/api-reference.md',
+  'reference/media-and-ai.md',
+  'reference/subscriptions.md',
+  'reference/notifications.md',
+  'reference/messaging.md',
+  'reference/long-connections.md',
+  'reference/manifest.md',
+  'reference/network.md',
+  'reference/browser.md',
+  'reference/ui-theme.md',
+  'reference/security.md',
+])add(name)
 for(const name of ['project-check.mjs','audit.mjs','audit.test.mjs','market-check.mjs','runtime-check.mjs','pack.mjs','openapi-check.mjs','generate-reference.mjs','openapi-model.mjs','annotate-openapi.mjs','generate-sdk-types.mjs','api-glossary.json','api-cookbook.json','sdk-types.check.ts','sdk.test.mjs','verify-public-surface.mjs','README.md'])add('conformance/'+name)
 for(const name of ['index.js','index.d.ts','core-types.d.ts','background.d.ts','host-api.d.ts','README.md'])add('examples/sdk/'+name)
 for(const name of ['plugin.json','ui/page.js','ui/ai.js','ui/icon.svg','jobs/job.js','jobs/events.js','jobs/http.js','README.md'])add('examples/complete-plugin/'+name)

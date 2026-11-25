@@ -108,7 +108,7 @@ const intent = await ctx.api.post('/api/subscribe/pool/intents', {
 
 ## 癫影稳定业务接口
 
-统一前缀 `/api/plugin-host/dianying`。第三方插件仅开放下表 10 个接口，范围为查询、解锁、签到和脱敏账号信息；账号相关能力包括账号列表、状态、积分、会员及社区资料查询。其他癫影能力不开放给插件。返回结构沿用各业务端点，**不统一多包一层 `data`**；具体字段见 [OpenAPI](openapi-v3.json) 与 [宿主接口参考](host-api-reference.md)。
+统一前缀 `/api/plugin-host/dianying`。第三方插件仅开放下表 10 个接口，范围为查询、解锁、签到和脱敏账号信息；账号相关能力包括账号列表、状态、积分、会员及社区资料查询。其他癫影能力不开放给插件。返回结构沿用各业务端点，**不统一多包一层 `data`**；具体字段见 [OpenAPI](../openapi-v3.json) 与 [宿主接口参考](../host-api-reference.md)。
 
 | 方法与相对路径 | 用途与关键字段 |
 | --- | --- |

@@ -6,7 +6,7 @@
 - `business_key` 要稳定：相同 key 和输入返回原任务，重试不重复执行。用户每次点击都是新业务时才带时间戳。
 - 任务写 `title`，用于队列明细中的运行名称。API 3.12 起，同一插件的可见任务合并为一个条目；批量取消作用于当前可见的运行和等待任务，执行上下文、结果与插件历史仍各自独立。
 - 测试、预览这类短任务在 job 设置 `queue: false`。插件顶层 `queue: false` 可关闭全部队列展示，包括页面文件操作；任务级开关不能覆盖关闭的总开关，使用顶层开关声明 `requires.api: "3.12"`。
-- 每个普通后台任务只加载自身入口及其依赖。把重逻辑拆成独立文件，在需要的分支 `await import('./heavy.js')`；静态导入会提前加载，巨型单文件不会自动按函数拆分。详见 `assets/public-kit/developer-guide.md` 的“按任务加载逻辑”。
+- 每个普通后台任务只加载自身入口及其依赖。把重逻辑拆成独立文件，在需要的分支 `await import('./heavy.js')`；静态导入会提前加载，巨型单文件不会自动按函数拆分。详见 `assets/public-kit/guides/developer-guide.md` 的“按任务加载逻辑”。
 - 批量用 `ctx.task.update({total,done,failed,message})` 上报计数。
 - 不允许重叠的任务被重启打断后处于“需要核对”，会拒绝新运行。页面要提供 `ctx.tasks.retry(id)`。
 - 通知用稳定的 `dedupe_key`，不要换 key 绕过未知结果。
@@ -23,7 +23,7 @@
 
 ## 页面
 
-有页面的插件必须遵守 [iPhone PWA 页面适配契约](../assets/public-kit/ui-theme.md#iphone-pwa-页面适配契约)。按挂载区排版，安全区由宿主预留。验收覆盖主屏幕模式的横竖屏、软键盘、导航和后台恢复。
+有页面的插件必须遵守 [iPhone PWA 页面适配契约](../assets/public-kit/reference/ui-theme.md#iphone-pwa-页面适配契约)。按挂载区排版，安全区由宿主预留。验收覆盖主屏幕模式的横竖屏、软键盘、导航和后台恢复。
 
 - `mount(element, ctx)` 返回清理函数，异步请求传 `ctx.signal` 或在清理时取消。
 - 宿主隐藏顶栏并预留安全区。插件安排内容间距和导航入口，返回按钮调用 `ctx.navigation.close()`，手机主菜单入口调用 `ctx.navigation.openSidebar()`。HTML 使用 `window.DIAN115Plugin.navigation`。打开主菜单时页面继续挂载，返回插件中心时卸载页面，后台任务继续运行。

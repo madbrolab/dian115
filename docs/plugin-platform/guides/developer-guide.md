@@ -22,7 +22,7 @@ UI 和 jobs 至少提供一项。ID 使用小写字母、数字、点和连字�
 
 SDK 只是便捷函数，不是强制协议。浏览器也可直接 fetch；在跨域部署或 APP 中，优先使用传入的客户端处理服务器地址和登录。`api.get/post/put/patch/delete/head` 返回原接口 JSON；非成功状态抛错。后台 API 错误含 status/method/path/data，message 展示路由、状态及服务端错误；页面客户端沿用普通 Axios 错误结构。GET 查询参数放在 URL 中。上传、大文件下载和流式接口使用页面原生 HTTP 或宿主现有专用接口；后台的通用 JSON 客户端适合业务编排，单次响应最多捕获 64 MiB；大文件走文件下载/流式接口，避免在宿主进程中整份缓冲。
 
-每个接口要传什么、返回什么，查[宿主接口参考](host-api-reference.md)：参数表、请求与响应字段说明、可直接复制的 `ctx.api` 调用和示例。用 TypeScript 或支持 JSDoc 的编辑器时，SDK 的 `host-api.d.ts` 会按路径推断：
+每个接口要传什么、返回什么，查[宿主接口参考](../host-api-reference.md)：参数表、请求与响应字段说明、可直接复制的 `ctx.api` 调用和示例。用 TypeScript 或支持 JSDoc 的编辑器时，SDK 的 `host-api.d.ts` 会按路径推断：
 
 ```ts
 const tasks = await ctx.api.get('/api/115/offline/tasks?status=downloading') // 推断为 OfflineTaskList
@@ -30,7 +30,7 @@ tasks.items[0].progress                                                       //
 await ctx.api.post('/api/115/share/receive', { share_url, target_cid })      // 请求体字段拼错会报错
 ```
 
-稳定业务输入输出以 [OpenAPI](openapi-v3.json) 为准。公开目录仅收录插件可调用的接口，权限由宿主检查；未写入稳定契约的接口随宿主版本变化，不保证可用。先用 `conformance/project-check.mjs` 检查结构，再由宿主安装检查确认可接受性，见[安全限制](security.md)。
+稳定业务输入输出以 [OpenAPI](../openapi-v3.json) 为准。公开目录仅收录插件可调用的接口，权限由宿主检查；未写入稳定契约的接口随宿主版本变化，不保证可用。先用 `conformance/project-check.mjs` 检查结构，再由宿主安装检查确认可接受性，见[安全限制](../reference/security.md)。
 
 ## 后台任务
 
@@ -91,7 +91,7 @@ for (const item of items) {
 
 每次运行另有三项保护，均不影响其他插件：嵌套调用最多 10000 层，无限递归立即失败（以前会一直占用内存，直到共享内存保护中止所有正在运行的插件）；同时进行的宿主异步调用最多 32 个，超过时返回 `busy`，请分批等待；同时存在的 setTimeout/setInterval 最多 1000 个。
 
-通知见[插件通知](notifications.md)：`ctx.notify({title, body, format, channels, overrides})` 可选择 Telegram / 企业微信、内容格式与按渠道内容，并返回逐渠道结果。
+通知见[插件通知](../reference/notifications.md)：`ctx.notify({title, body, format, channels, overrides})` 可选择 Telegram / 企业微信、内容格式与按渠道内容，并返回逐渠道结果。
 
 后台 ctx 包含 api、storage.get/set/remove、http、files.call、watch.add/remove、cd2.call、notify、cookiecloud、sleep、settings.get、server、codec、crypto、html、xml、plugin（id/version/generation/revision/host_api）、deadline、remaining()，以及 task.id/update/log/checkpoint/checkpointValue。后台 storage.set 返回版本数字；页面 storage.set 返回 `{revision}`，分别对应进程内存储和普通 HTTP 响应。宿主返回的结构统一使用文档中的小写 JSON 字段名。
 
@@ -156,7 +156,7 @@ export async function run(ctx, input) {
 
 ## 文件与 CD2
 
-API 3.9 起，除受保护路径外，插件可直接读写宿主文件，包括 CD2 挂载路径；允许的宿主文件也可复制或移动到插件自有目录。路径保护规则见[安全限制](security.md)。依赖此能力时声明 `requires.api: "3.9"`。文件有两类路径：
+API 3.9 起，除受保护路径外，插件可直接读写宿主文件，包括 CD2 挂载路径；允许的宿主文件也可复制或移动到插件自有目录。路径保护规则见[安全限制](../reference/security.md)。依赖此能力时声明 `requires.api: "3.9"`。文件有两类路径：
 
 - **插件自有路径**（相对路径，位于插件 data/files）：可 read/write/append，用于配置导出、下载暂存、生成待交付文件；单次 read 最多 16 MiB（用 offset/length 分段）。不能通过 `..` 或符号链接逃出该目录，卸载时清空。
 - **宿主路径**（绝对 Linux 路径，CD2 文件写挂载路径）：可 read/write/append 及原有文件管理操作；内容读写直接使用文件系统，CD2 文件直接读写其挂载路径。单次 read 最多 16 MiB，可用 offset/length 分段。
@@ -203,7 +203,7 @@ await ctx.watch.add({id:'cloud',path:'/mnt/cd2/115/Inbox',job:'organize',interva
 
 local 监听默认实时：宿主用 inotify 订阅目录，事件发生后经 `debounce_ms`（默认 500）立即做一次快照比较；interval_seconds 仍作为兜底全量扫描，可调大（例如 300）。`realtime:false` 关闭实时；`patterns:['*.mkv','*.mp4']` 按文件名过滤；`recursive:false` 只看第一层。超过 8192 个目录或系统 inotify 上限时自动退回轮询。cd2 为当前目录的完整 gRPC 列表轮询。首次快照建立基线，后续变化以 `{watch,changes:[{path,kind:'created|changed|removed'}]}` 提交任务。目录读取、挂载或 CD2 流失败会保留上次快照与错误，不把失败当作删除。待提交事件持久保存；后台任务恢复仍由插件核对。替换监听先 remove 再 add。此功能不改变内置整理的轮询策略。
 
-可选清单 events：`{event:'message',job:'search',commands:['find'],prefixes:['搜索 ']}`（关键字、正则和账号消息见[消息渠道](messaging.md)）、`{event:'callback',job:'buttons'}` 或宿主业务事件 `{event:'host',job:'on-organize',types:['library_organize_*','media_library_add']}`。宿主事件在推送渠道开关、静默时段和聚合之前投递，与是否开启通知无关；`types` 支持 `*` 和前缀通配，可用类型由 `GET /api/extensions/v3/_events` 列出（整理成功/跳过/失败、STRM 生成、入库、播放、订阅、签到等）。任务输入为 `{id,type,title,content,data,at}`；事件可能密集到达，订阅任务建议设置 `allow_overlap:true`，否则上一条未结束时后续事件提交会失败。消息命中后入队；输入为宿主投影的消息或按钮事件。插件任务自行调用通知接口反馈；不会占用一个常驻脚本。同一消息分发给所有命中的插件，作者应使用独特前缀。
+可选清单 events：`{event:'message',job:'search',commands:['find'],prefixes:['搜索 ']}`（关键字、正则和账号消息见[消息渠道](../reference/messaging.md)）、`{event:'callback',job:'buttons'}` 或宿主业务事件 `{event:'host',job:'on-organize',types:['library_organize_*','media_library_add']}`。宿主事件在推送渠道开关、静默时段和聚合之前投递，与是否开启通知无关；`types` 支持 `*` 和前缀通配，可用类型由 `GET /api/extensions/v3/_events` 列出（整理成功/跳过/失败、STRM 生成、入库、播放、订阅、签到等）。任务输入为 `{id,type,title,content,data,at}`；事件可能密集到达，订阅任务建议设置 `allow_overlap:true`，否则上一条未结束时后续事件提交会失败。消息命中后入队；输入为宿主投影的消息或按钮事件。插件任务自行调用通知接口反馈；不会占用一个常驻脚本。同一消息分发给所有命中的插件，作者应使用独特前缀。
 
 ## 监听端口与 Webhook
 
@@ -255,12 +255,12 @@ export async function handle(ctx, req) {
 
 ## 媒体与 AI 插件
 
-图片裁剪、宿主 badge 水印、真实分辨率、翻译与 Emby 演员头像使用 [API 3.3 的共享能力](media-and-ai.md)。先在插件目录暂存远程图片，再由宿主处理和移动；不要自己搭建 FFP、AI 代理或读取系统配置。业务字段策略、任务恢复、并发和订阅存储仍由插件编排。
+图片裁剪、宿主 badge 水印、真实分辨率、翻译与 Emby 演员头像使用 [API 3.3 的共享能力](../reference/media-and-ai.md)。先在插件目录暂存远程图片，再由宿主处理和移动；不要自己搭建 FFP、AI 代理或读取系统配置。业务字段策略、任务恢复、并发和订阅存储仍由插件编排。
 
 ### 订阅时间基线（API 3.5）
 
-复用 [订阅增量接口](subscriptions.md)，不按固定周期重复读取整份磁力 / ED2K 缓存或全部 PT 搜索结果。基线与未提交候选一起保存，完整空结果也推进；查询错误与未完成分页必须保留原基线。
+复用 [订阅增量接口](../reference/subscriptions.md)，不按固定周期重复读取整份磁力 / ED2K 缓存或全部 PT 搜索结果。基线与未提交候选一起保存，完整空结果也推进；查询错误与未完成分页必须保留原基线。
 
 ## 共享浏览器
 
-API 3.10 的 `ctx.browser` 在页面和后台共用同一宿主服务，先读[共享浏览器](browser.md)。声明并取得 browser 授权，不自行下载内核或暴露调试端口。后台会话随任务结束关闭，登录档案按 profile 保留；页面退出时主动 close。
+API 3.10 的 `ctx.browser` 在页面和后台共用同一宿主服务，先读[共享浏览器](../reference/browser.md)。声明并取得 browser 授权，不自行下载内核或暴露调试端口。后台会话随任务结束关闭，登录档案按 profile 保留；页面退出时主动 close。
