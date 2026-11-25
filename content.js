@@ -1342,7 +1342,7 @@ window.DIAN_WIKI = {
         ],
         [
           "版本价格与购买",
-          "个人版（高级版）199 元，适合个人、家庭与小范围共享；S.O. 版 499 元，适合更多门户用户、Emby 代理实例、推送助手与群组管理。选定版本后通过 Telegram 联系 @succt 购买。授权有效期与附加功能以收到的密钥为准。",
+          "个人版（高级版）199 元，适合个人、家庭与小范围共享；S.O. 版 499 元，适合更多门户用户、Emby 代理实例、推送助手与群组管理。选定版本后通过 Telegram 联系 @succtxx_bot 购买。授权有效期与附加功能以收到的密钥为准。",
           {
             "guides": [
               "license"
@@ -1354,7 +1354,7 @@ window.DIAN_WIKI = {
     "license": {
       "title": "购买与授权码激活",
       "kicker": "YOUR ACCESS KEY",
-      "lead": "个人版 199 元 · S.O. 版 499 元。通过 Telegram 联系 @succt 购买授权。",
+      "lead": "个人版 199 元 · S.O. 版 499 元。通过 Telegram 联系 @succtxx_bot 购买授权。",
       "sections": [
         [
           "选择版本",
@@ -1362,7 +1362,7 @@ window.DIAN_WIKI = {
         ],
         [
           "联系 Telegram 购买",
-          "通过 Telegram 联系 @succt，确认版本和购买方式。取得 License Key 后妥善保管，再按下方步骤激活。"
+          "通过 Telegram 联系 @succtxx_bot，确认版本和购买方式。取得 License Key 后妥善保管，再按下方步骤激活。"
         ],
         [
           "填写 License Key",
@@ -1370,7 +1370,7 @@ window.DIAN_WIKI = {
         ],
         [
           "未收到或验证异常",
-          "购买或授权码获取遇到问题时，可通过 Telegram 联系 @succt。验证异常先检查网络、系统时间和日志；反馈问题时隐藏完整密钥。"
+          "购买或授权码获取遇到问题时，可通过 Telegram 联系 @succtxx_bot。验证异常先检查网络、系统时间和日志；反馈问题时隐藏完整密钥。"
         ]
       ],
       "contact": true
