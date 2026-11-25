@@ -18,7 +18,7 @@
 | **插件商店** | 在 DIAN115 的插件中心安装与更新 · [官方插件安装包和版本说明](https://github.com/madbrolab/dian115-plugin-releases/releases) |
 | **插件开发与集成** | [开发文档](docs/plugin-platform/README.md) · [快速开始](docs/plugin-platform/guides/quickstart.md) · [MoviePilot PT 连接](docs/plugin-platform/examples/moviepilot-bridge/README.md) |
 | **规则与配套** | [在线规则](online-rules/README.md) · [识别词表](rules/recognition/) · [通知模板](docs/user/notifications/README.md) · [浏览器扩展](browser-extension/video-downloader/README.md) · [Madby](https://github.com/madbrolab/madby) |
-| **问题反馈** | [GitHub Issues](https://github.com/madbrolab/dian115/issues) · [Telegram 交流群](https://t.me/dian115group) · [授权支持 @succt](https://t.me/succt) |
+| **问题反馈** | [GitHub Issues](https://github.com/madbrolab/dian115/issues) · [Telegram 交流群](https://t.me/dian115group) · [授权私聊 @succtxx_bot](https://t.me/succtxx_bot) |
 
 DIAN115 面向个人、家庭与自托管用户，将资源发现、订阅、转存、整理、STRM 生成、入库与播放串在一起。主程序通过 [Docker 镜像](https://hub.docker.com/r/madbrolab/dian115)部署，使用 License Key 激活。
 
