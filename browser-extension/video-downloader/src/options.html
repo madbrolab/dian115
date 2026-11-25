@@ -2,29 +2,56 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <link rel="stylesheet" href="style.css">
   <title>DIAN115 推送助手 · 设置</title>
 </head>
-<body>
-  <div class="wrap wide">
-    <div class="card">
+<body class="settings-body">
+  <main class="wrap wide">
+    <header class="settings-title"><img src="../icons/icon48.png" alt="" width="44" height="44"><div><span>DIAN115 推送助手</span><h1>设置</h1></div></header>
+    <nav aria-label="设置分组" class="segmented"><a href="#connection">连接</a><a href="#cookiecloud">CookieCloud</a><a href="#push">推送</a></nav>
+    <div class="pane" id="connection"><div class="card">
       <h2>连接 DIAN115</h2>
       <label class="field">
         <span>服务器地址</span>
         <input type="text" id="baseUrl" placeholder="http://192.168.1.10:8080">
       </label>
       <label class="field">
-        <span>OpenAPI Key（系统设置里的 openapi key）</span>
-        <input type="password" id="apiKey" placeholder="粘贴系统设置中生成的 OpenAPI Key">
+        <span>OpenAPI Key</span>
+        <input type="password" id="apiKey" placeholder="从 DIAN115 系统设置复制">
       </label>
       <div class="row">
         <button id="test">测试连接</button>
-        <button class="primary" id="save">保存</button>
+
       </div>
-      <div class="hint" id="test-result" hidden></div>
+
     </div>
 
-    <div class="card">
+</div>
+    <div class="pane" id="cookiecloud" hidden>
+      <section class="card site-directory">
+        <div class="sync-heading"><div><h2>同步范围</h2><strong id="cloud-total">全部域名</strong></div><button id="cloud-now" disabled>立即同步</button></div>
+        <div class="cloud-status"><p id="cloud-summary" role="status">等待首次同步</p><small id="cloud-last" class="muted"></small></div>
+      </section>
+      <form id="cloud-settings" class="card" aria-label="CookieCloud 同步设置">
+        <label class="check preference"><span>自动同步</span><input type="checkbox" role="switch" id="cloud-auto" name="auto" disabled></label>
+        <label class="preference" for="cloud-minutes"><span>同步间隔（分钟）</span>
+          <input type="number" id="cloud-minutes" name="interval" min="1" step="1" value="10" required inputmode="numeric"></label>
+        <details class="cloud-filters">
+          <summary>域名筛选（选填）</summary>
+          <label for="cloud-keywords">同步域名关键词</label>
+          <textarea id="cloud-keywords" name="keywords" autocorrect="off" autocapitalize="none" rows="3" spellcheck="false" aria-describedby="cloud-keywords-help" placeholder="留空同步全部域名"></textarea>
+          <p class="muted small" id="cloud-keywords-help">一行一个关键词，匹配域名及子域名。</p>
+          <label for="cloud-blacklist">排除域名关键词</label>
+          <textarea id="cloud-blacklist" name="blacklist" autocorrect="off" autocapitalize="none" rows="3" spellcheck="false" aria-describedby="cloud-blacklist-help" placeholder="选填"></textarea>
+          <p class="muted small" id="cloud-blacklist-help">同步域名关键词留空时生效。</p>
+        </details>
+        <div class="cloud-target" id="cloud-target"></div>
+        <div class="actions"><button type="submit" id="cloud-save">保存</button></div>
+      </form>
+      <div class="hint" role="status" id="cloud-feedback" hidden></div>
+    </div>
+    <div class="pane" id="push" hidden><div class="card">
       <h2>推送默认值</h2>
       <label class="field">
         <span>下载模式</span>
@@ -49,7 +76,7 @@
         </select>
       </label>
       <label class="field">
-        <span>目标目录（从服务器读取，不再手输）</span>
+        <span>目标目录</span>
         <div class="row">
           <select id="destinationId" class="grow">
             <option value="">使用服务器默认目录</option>
@@ -58,73 +85,66 @@
         </div>
       </label>
       <label class="field">
-        <span>登录态配置 ID（可留空，登录后才可下载的站点需要）</span>
+        <span>登录态配置 ID（选填）</span>
         <input type="text" id="cookieProfileId" placeholder="留空即可">
       </label>
       <label class="check">
         <input type="checkbox" id="autoListProbe">
-        <span>交给站点提取器识别并展开节目单（单视频仍只推送一项）</span>
+        <span>自动展开节目单</span>
       </label>
       <label class="field">
-        <span>多少条以上先让我确认</span>
+        <span>批量确认阈值（条）</span>
         <input type="number" id="localConfirmThreshold" min="1" max="100">
       </label>
       <label class="field">
-        <span>预计体积超过多少 GB 先让我确认（0 表示不检查）</span>
+        <span>体积确认阈值（GB，0 表示关闭）</span>
         <input type="number" id="confirmGb" min="0" step="1">
       </label>
       <label class="field">
-        <span>后台进度刷新间隔（秒，最小 60）</span>
+        <span>进度刷新间隔（秒）</span>
         <input type="number" id="pollSeconds" min="60" max="3600">
       </label>
     </div>
 
-    <div class="card">
+
+<div class="card">
       <h2>站点 CK</h2>
       <label class="check">
         <input type="checkbox" id="updateCookies">
-        <span>推送时同时更新站点 CK（默认关闭）</span>
+        <span>推送视频时更新当前站点的 Cookie</span>
       </label>
-      <div class="small muted">
-        开启后，每次推送会把当前页面的站点 Cookie 一并发送到 DIAN115，用于刷新“站点 CK（登录态）”里对应的配置。
-        关闭时不会读取、也不会发送任何 Cookie。仅建议在自己搭建的服务器上开启。
-      </div>
+      <div class="small muted">写入视频下载器的站点配置。</div>
     </div>
 
-    <div class="card">
+
+<div class="card">
       <h2>页面叠加层</h2>
       <label class="check"><input type="checkbox" id="pageOverlay"><span>在 115 分享、磁力与 ED2K 链接旁显示推送图标</span></label>
-      <div class="small muted">自动去重；多个链接时显示批量按钮，可单选、多选、删除和推送全部。关闭后移除页面图标与浮层，仍可从扩展弹窗推送。</div>
+
     </div>
 
-    <div class="card">
+
+<div class="card">
       <h2>通知</h2>
       <label class="check"><input type="checkbox" id="notifyOnQueued"><span>推送成功时提醒</span></label>
       <label class="check"><input type="checkbox" id="notifyOnComplete"><span>下载完成时提醒</span></label>
       <label class="check"><input type="checkbox" id="notifyOnFailed"><span>下载失败时提醒</span></label>
     </div>
 
-    <div class="card">
+
+<div class="card">
       <h2>115 转存 / 离线默认值</h2>
-      <div class="small muted">
-        账号与目标目录在扩展弹窗里选择（用 DIAN115 已保存的 115 账号浏览目录），点「保存为默认」后写入这里。
-        这些默认值独立保存，**不会影响页面推送的下载配置**。
-      </div>
+      <div class="small muted">在弹窗中选定账号和目录后，可保存为默认值。</div>
       <div class="hint mono" id="push115-summary">未设置</div>
       <div class="row" style="margin-top:8px">
         <button id="clear115" type="button">清除 115 默认值</button>
       </div>
     </div>
 
-    <div class="card">
-      <h2>关于隐私</h2>
-      <div class="small muted">
-        默认情况下，本扩展只发送页面地址和你在设置里填写的选项，不会上传 Cookie、账号或浏览历史。
-        只有在你手动开启“推送时同时更新站点 CK”后，才会把当前页面的站点 Cookie 发送到你自己的 DIAN115 服务器。
-        OpenAPI Key 保存在浏览器本地存储中，仅用于访问你填写的服务器地址。
-      </div>
-    </div>
-  </div>
+</div>
+    <div class="settings-save"><span role="status" class="hint" id="test-result" hidden></span><button class="primary" id="save">保存设置</button></div>
+  </main>
   <script type="module" src="options.js"></script>
+  <script type="module" src="cloud-ui.js"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ import test from 'node:test'
 
 const commonSource = await readFile(new URL('../src/common.js', import.meta.url), 'utf8')
 const linksSource = await readFile(new URL('../src/links.js', import.meta.url), 'utf8')
+const cloudSource = await readFile(new URL('../src/cloud.js', import.meta.url), 'utf8')
 const backgroundSource = await readFile(new URL('../src/background.js', import.meta.url), 'utf8')
 const copy = value => structuredClone(value)
 
@@ -40,7 +41,9 @@ async function extension(fetchHandler, initial = {}) {
   await links.link(() => { throw new Error('unexpected import') })
   await common.link(() => links)
   const background = new vm.SourceTextModule(backgroundSource, { context })
-  await background.link(() => common)
+  const cloud = new vm.SourceTextModule(cloudSource, { context })
+  await cloud.link(() => common)
+  await background.link(name => name === './cloud.js' ? cloud : common)
   await background.evaluate()
   return { state, requests, cookieReads, menuUpdates, listeners, common: common.namespace, send: (message, sender = {}) => new Promise(resolve => listeners.message(message, sender, resolve)) }
 }

@@ -2,18 +2,22 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="style.css">
   <title>DIAN115 推送助手</title>
 </head>
-<body style="width: 380px">
+<body class="popup-body">
   <div class="wrap">
-    <div class="card">
+    <header class="popup-head"><div class="app-signature"><img src="../icons/icon48.png" alt="" width="26" height="26"><h1>推送助手</h1></div>
+      <button class="ghost tiny" id="open-options" title="设置">设置</button></header>
+    <div class="card current-page">
+      <div class="section-caption">当前页面</div>
       <div class="row between">
         <div class="row grow">
           <span id="conn-dot" class="dot"></span>
           <strong class="grow ellipsis" id="page-title">正在读取当前页面…</strong>
         </div>
-        <button class="ghost tiny" id="open-options" title="设置">设置</button>
+
       </div>
       <div class="small muted ellipsis" id="page-url"></div>
       <div class="row" id="video-controls" style="margin-top:10px">
@@ -70,6 +74,8 @@
       </div>
     </div>
 
+    <div class="card cloud-strip"><span class="cloud-icon" aria-hidden="true">☁︎</span><div class="grow"><h2>CookieCloud</h2><div class="small muted" id="cloud-summary" role="status">读取同步状态中…</div></div>
+      <button id="cloud-open" class="tiny">管理</button><button id="cloud-now" class="tiny" disabled>同步</button></div>
     <div class="card">
       <div class="row between">
         <h2>最近推送</h2>
@@ -124,5 +130,6 @@
   </div>
   <div class="toast" id="toast"></div>
   <script type="module" src="popup.js"></script>
+  <script type="module" src="cloud-ui.js"></script>
 </body>
 </html>

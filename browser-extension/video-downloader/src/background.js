@@ -1,5 +1,7 @@
 // MV3 service worker: context menus, pre-flight, confirmation, tracking.
 
+import { cloudAction, cloudAlarm, forgetCloudTarget, scheduleCloud, syncCloud } from './cloud.js'
+
 import {
   ACTIVE_STATUSES,
   collectSiteCookies,
@@ -86,6 +88,7 @@ async function bootstrap() {
   if (!Array.isArray(stored.tracked)) {
     await chrome.storage.local.set({ tracked: [] })
   }
+  await scheduleCloud()
   await buildMenus()
   await schedulePoll()
   await refreshBadge()
@@ -98,12 +101,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
   const previous = changes.settings.oldValue
   const next = changes.settings.newValue
   if (previous && next && previous.baseUrl !== next.baseUrl) {
+    void forgetCloudTarget(previous.baseUrl)
     void updateTracked(() => []).then(() => refreshBadge())
     void updatePending(() => null)
   }
 })
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === cloudAlarm) void syncCloud()
   if (alarm.name === POLL_ALARM) void pollTracked()
   if (alarm.name === BATCH115_ALARM) void runBatch115()
 })
@@ -700,6 +705,7 @@ async function schedulePoll() {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   void (async () => {
     const type = message && message.type
+    if (type === 'cloud') { sendResponse(await cloudAction(message, _sender)); return }
     // Page scripts receive only these narrow operations, never settings or keys.
     if (_sender.tab && !['overlayState', 'push115Defaults', 'push115', 'push115Batch', 'batch115State', 'push115Status', 'context115'].includes(type)) {
       sendResponse({ ok: false, code: 'page_operation_denied' }); return
