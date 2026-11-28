@@ -3,13 +3,13 @@
 # 来源：rules.txt
 
 #奥本海默
-Oppenheimer\.2023 => 奥本海默
+^((?:(?:\[[^\]/\r\n]+\]|【[^】/\r\n]+】)[ ._-]*)*)Oppenheimer[ ._-]+2023(?=$|[^\p{L}\p{N}/]) => ${1}奥本海默
 
 #战争与和平
-War and Peace 1966 Criterion Collection Part IV => 战争与和平4：皮埃尔·别祖霍夫
-War and Peace 1966 Criterion Collection Part III => 战争与和平3：1812年
-War and Peace 1966 Criterion Collection Part II => 战争与和平2：娜塔莎·罗斯托娃
-War and Peace 1966 Criterion Collection Part I => 战争与和平1：安德烈·博尔孔斯基
+^((?:(?:\[[^\]/\r\n]+\]|【[^】/\r\n]+】)[ ._-]*)*)War[ ._-]+and[ ._-]+Peace[ ._-]+1966[ ._-]+Criterion[ ._-]+Collection[ ._-]+Part[ ._-]+IV(?=$|[^\p{L}\p{N}/]) => ${1}战争与和平4：皮埃尔·别祖霍夫
+^((?:(?:\[[^\]/\r\n]+\]|【[^】/\r\n]+】)[ ._-]*)*)War[ ._-]+and[ ._-]+Peace[ ._-]+1966[ ._-]+Criterion[ ._-]+Collection[ ._-]+Part[ ._-]+III(?=$|[^\p{L}\p{N}/]) => ${1}战争与和平3：1812年
+^((?:(?:\[[^\]/\r\n]+\]|【[^】/\r\n]+】)[ ._-]*)*)War[ ._-]+and[ ._-]+Peace[ ._-]+1966[ ._-]+Criterion[ ._-]+Collection[ ._-]+Part[ ._-]+II(?=$|[^\p{L}\p{N}/]) => ${1}战争与和平2：娜塔莎·罗斯托娃
+^((?:(?:\[[^\]/\r\n]+\]|【[^】/\r\n]+】)[ ._-]*)*)War[ ._-]+and[ ._-]+Peace[ ._-]+1966[ ._-]+Criterion[ ._-]+Collection[ ._-]+Part[ ._-]+I(?=$|[^\p{L}\p{N}/]) => ${1}战争与和平1：安德烈·博尔孔斯基
 
 #行骗天下JP：运势篇
-The.Confidenceman.JP.Unsei.Hen.SP => 行骗天下JP：运势篇
+^((?:(?:\[[^\]/\r\n]+\]|【[^】/\r\n]+】)[ ._-]*)*)The[ ._-]+Confidenceman[ ._-]+JP[ ._-]+Unsei[ ._-]+Hen[ ._-]+SP(?=$|[^\p{L}\p{N}/]) => ${1}行骗天下JP：运势篇
